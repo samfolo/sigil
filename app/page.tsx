@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { DataInput } from '@/components/data-input';
-import { DataCanvas } from '@/components/data-canvas';
-import { DetectionResult } from '@/lib/format-detector';
+import { DataInput } from '@/components/DataInput';
+import { DataCanvas } from '@/components/DataCanvas';
+import { DetectionResult } from '@/lib/formatDetector';
 
 export default function Home() {
   const [result, setResult] = useState<DetectionResult | null>(null);

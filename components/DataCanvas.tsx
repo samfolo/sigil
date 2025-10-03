@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { DetectionResult } from '@/lib/format-detector';
+import { DetectionResult } from '@/lib/formatDetector';
 
 interface DataCanvasProps {
   result: DetectionResult | null;

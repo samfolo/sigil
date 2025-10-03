@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { detectFormat, DetectionResult } from '@/lib/format-detector';
+import { detectFormat, DetectionResult } from '@/lib/formatDetector';
 
 interface DataInputProps {
   onAnalyze: (result: DetectionResult) => void;

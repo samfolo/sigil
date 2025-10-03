@@ -3,6 +3,7 @@ import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
+import checkFile from "eslint-plugin-check-file";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,6 +27,7 @@ const eslintConfig = [
   {
     plugins: {
       react: reactPlugin,
+      "check-file": checkFile,
     },
     rules: {
       // Enforce fat arrow syntax for all functions
@@ -83,6 +85,52 @@ const eslintConfig = [
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
+        },
+      ],
+
+      // File naming conventions
+      "check-file/filename-naming-convention": [
+        "error",
+        {
+          // Component files at root of components/: PascalCase
+          "components/*.{tsx,jsx}": "PASCAL_CASE",
+
+          // Component files in subdirectories (except ui/): PascalCase
+          "components/!(ui)/**/*.{tsx,jsx}": "PASCAL_CASE",
+
+          // UI components: kebab-case (shadcn/ui convention)
+          "components/ui/*.{tsx,jsx}": "KEBAB_CASE",
+
+          // Test files: PascalCase with .spec suffix
+          "**/*.spec.{ts,tsx}": "PASCAL_CASE",
+
+          // Fixture files: PascalCase with .fixtures suffix
+          "**/*.fixtures.{ts,tsx}": "PASCAL_CASE",
+
+          // Utility and type files: camelCase
+          "**/utils.ts": "CAMEL_CASE",
+          "**/types.ts": "CAMEL_CASE",
+
+          // Other lib files: camelCase
+          "lib/**/*.ts": "CAMEL_CASE",
+
+          // Common directories: camelCase
+          "**/common/**/*.{ts,tsx}": "CAMEL_CASE",
+        },
+        {
+          // Ignore Next.js special files - they must stay lowercase
+          ignoreMiddleExtensions: true,
+        },
+      ],
+
+      "check-file/folder-naming-convention": [
+        "error",
+        {
+          // Component folders: PascalCase
+          "components/!(ui)*/": "PASCAL_CASE",
+
+          // Allow 'common' folders (lowercase/camelCase)
+          "**/common/": "CAMEL_CASE",
         },
       ],
     },
