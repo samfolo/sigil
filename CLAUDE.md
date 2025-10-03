@@ -28,10 +28,10 @@ npm run lint       # Run ESLint
 
 The application follows a unidirectional data flow:
 
-1. **Input** (`components/data-input.tsx`): Client component with textarea that captures user input
-2. **Detection** (`lib/format-detector.ts`): Attempts to parse input in order: JSON → XML → CSV → YAML
+1. **Input** (`components/DataInput.tsx`): Client component with textarea that captures user input
+2. **Detection** (`lib/formatDetector.ts`): Attempts to parse input in order: JSON → XML → CSV → YAML
 3. **Parsing** (`lib/parsers.ts`): Individual parser functions for each format
-4. **Display** (`components/data-canvas.tsx`): Renders parsed data as pretty-printed JSON
+4. **Display** (`components/DataCanvas.tsx`): Renders parsed data as pretty-printed JSON
 
 State management happens at the root page level (`app/page.tsx`) using React hooks, passing detection results from DataInput to DataCanvas via callbacks.
 
@@ -39,7 +39,7 @@ State management happens at the root page level (`app/page.tsx`) using React hoo
 
 **Critical ordering**: Format detection tries parsers in a specific sequence because some parsers (especially YAML) are permissive and may incorrectly match other formats.
 
-Detection order in `lib/format-detector.ts`:
+Detection order in `lib/formatDetector.ts`:
 1. JSON (strict, fails fast)
 2. XML (moderate strictness)
 3. CSV (moderate strictness)
@@ -60,6 +60,32 @@ Detection order in `lib/format-detector.ts`:
 - **Environment**: `.env.local` requires `ANTHROPIC_API_KEY` (currently unused, placeholder for future AI features)
 - **Import alias**: `@/*` maps to project root
 - **Theme**: Dark mode enforced via `className="dark"` on `<html>` element in `app/layout.tsx`
+
+## File Naming Conventions
+
+**CRITICAL**: All file and folder names MUST follow these conventions (enforced by ESLint):
+
+### Component Files
+- **React components**: `PascalCase.tsx` (e.g., `DataInput.tsx`, `DataCanvas.tsx`)
+- **UI components** (shadcn/ui): `kebab-case.tsx` in `components/ui/` only (e.g., `button.tsx`, `card.tsx`)
+- **Test files**: `ComponentName.spec.tsx` (PascalCase with `.spec` suffix)
+- **Fixture files**: `ComponentName.fixtures.tsx` (PascalCase with `.fixtures` suffix)
+
+### Non-Component Files
+- **Utilities**: `camelCase.ts` (e.g., `utils.ts`, `formatDetector.ts`)
+- **Type definitions**: `camelCase.ts` (e.g., `types.ts`)
+- **Library files**: `camelCase.ts` in `lib/` directory
+
+### Folders
+- **Component folders**: `PascalCase` (except `ui/`)
+- **Common directories**: `common/` (lowercase)
+- **UI directory**: `ui/` (lowercase, for shadcn/ui components)
+
+### Next.js Special Files (Exceptions)
+These files MUST keep their required lowercase names:
+- `page.tsx`, `layout.tsx`, `route.ts`, `error.tsx`, `loading.tsx`, `not-found.tsx`, `template.tsx`
+
+**Run `npm run lint` after creating new files to verify compliance.**
 
 ## Key Constraints
 
