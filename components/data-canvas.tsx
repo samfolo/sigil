@@ -5,7 +5,7 @@ interface DataCanvasProps {
   result: DetectionResult | null;
 }
 
-export function DataCanvas({ result }: DataCanvasProps) {
+export const DataCanvas = ({ result }: DataCanvasProps) => {
   if (!result) {
     return (
       <div className="flex-1 p-6">

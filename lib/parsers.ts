@@ -2,7 +2,7 @@ import Papa from 'papaparse';
 import yaml from 'js-yaml';
 import { XMLParser } from 'fast-xml-parser';
 
-export function parseJSON(data: string): any | null {
+export const parseJSON = (data: string): any | null => {
   try {
     return JSON.parse(data);
   } catch {
@@ -10,7 +10,7 @@ export function parseJSON(data: string): any | null {
   }
 }
 
-export function parseCSV(data: string): any | null {
+export const parseCSV = (data: string): any | null => {
   try {
     const result = Papa.parse(data, {
       header: true,
@@ -32,7 +32,7 @@ export function parseCSV(data: string): any | null {
   }
 }
 
-export function parseYAML(data: string): any | null {
+export const parseYAML = (data: string): any | null => {
   try {
     const result = yaml.load(data);
 
@@ -51,7 +51,7 @@ export function parseYAML(data: string): any | null {
   }
 }
 
-export function parseXML(data: string): any | null {
+export const parseXML = (data: string): any | null => {
   try {
     const parser = new XMLParser({
       ignoreAttributes: false,

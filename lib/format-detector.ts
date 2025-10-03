@@ -7,7 +7,7 @@ export interface DetectionResult {
   data: any;
 }
 
-export function detectFormat(input: string): DetectionResult {
+export const detectFormat = (input: string): DetectionResult => {
   if (!input || input.trim().length === 0) {
     return { format: 'unknown', data: null };
   }
