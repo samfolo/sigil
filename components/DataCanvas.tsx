@@ -4,6 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { Analysis } from '@/lib/analysisSchema';
 import { TableView } from '@/components/visualizations/TableView';
 import { TreeView } from '@/components/visualizations/TreeView';
+import { MapView } from '@/components/visualizations/MapView';
 
 interface DataCanvasProps {
   result: DetectionResult | null;
@@ -96,6 +97,7 @@ export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
                       case 'tree':
                         return <TreeView data={result.data} />;
                       case 'map':
+                        return <MapView data={result.data} />;
                       case 'chart':
                       case 'cards':
                         return (

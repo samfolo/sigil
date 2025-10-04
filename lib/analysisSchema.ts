@@ -9,8 +9,8 @@ export const analysisSchema = z.object({
   description: z
     .string()
     .min(10)
-    .max(200)
-    .describe('A detailed description of what this data semantically represents'),
+    .max(400)
+    .describe('A detailed description of what this data semantically represents (aim for 1-2 sentences, ~200 characters)'),
   keyFields: z
     .array(
       z.object({
@@ -26,8 +26,8 @@ export const analysisSchema = z.object({
   rationale: z
     .string()
     .min(10)
-    .max(200)
-    .describe('Why this visualization approach is recommended for this data'),
+    .max(500)
+    .describe('Why this visualization approach is recommended for this data (aim for 1-2 sentences, ~200 characters)'),
 }).describe('Analysis of structured data format and recommended visualization');
 
 export type Analysis = z.infer<typeof analysisSchema>;
