@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useMapBounds } from '@/lib/useMapBounds';
 
 // Fix for default marker icons in react-leaflet
 const icon = L.icon({
@@ -113,6 +114,42 @@ function calculateCenter(data: any): [number, number] {
   return [20, 0];
 }
 
+function MapContent({ data, isGeoJSONData, points }: {
+  data: any;
+  isGeoJSONData: boolean;
+  points: Array<{ lat: number; lng: number; label?: string }>;
+}) {
+  useMapBounds(data, points, isGeoJSONData);
+
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      />
+
+      {isGeoJSONData ? (
+        <GeoJSON
+          data={data}
+          pointToLayer={(feature, latlng) => {
+            return L.marker(latlng, { icon });
+          }}
+        />
+      ) : (
+        points.map((point, idx) => (
+          <Marker key={idx} position={[point.lat, point.lng]} icon={icon}>
+            <Popup>
+              {point.label || `Location`}
+              <br />
+              Lat: {point.lat.toFixed(6)}, Lng: {point.lng.toFixed(6)}
+            </Popup>
+          </Marker>
+        ))
+      )}
+    </>
+  );
+}
+
 export const MapView = ({ data }: MapViewProps) => {
   const center = calculateCenter(data);
   const isGeoJSONData = isGeoJSON(data);
@@ -122,32 +159,10 @@ export const MapView = ({ data }: MapViewProps) => {
     <div className="w-full h-[600px] rounded-lg overflow-hidden">
       <MapContainer
         center={center}
-        zoom={isGeoJSONData ? 2 : points.length > 1 ? 4 : 10}
+        zoom={2}
         style={{ height: '100%', width: '100%' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-
-        {isGeoJSONData ? (
-          <GeoJSON
-            data={data}
-            pointToLayer={(feature, latlng) => {
-              return L.marker(latlng, { icon });
-            }}
-          />
-        ) : (
-          points.map((point, idx) => (
-            <Marker key={idx} position={[point.lat, point.lng]} icon={icon}>
-              <Popup>
-                {point.label || `Location`}
-                <br />
-                Lat: {point.lat.toFixed(6)}, Lng: {point.lng.toFixed(6)}
-              </Popup>
-            </Marker>
-          ))
-        )}
+        <MapContent data={data} isGeoJSONData={isGeoJSONData} points={points} />
       </MapContainer>
     </div>
   );

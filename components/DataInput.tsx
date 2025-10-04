@@ -62,7 +62,7 @@ export const DataInput = ({ onAnalyze }: DataInputProps) => {
         <h2 className="text-lg font-semibold">Data Input</h2>
         <Textarea
           placeholder="Paste your data here..."
-          className="min-h-[400px] font-mono text-sm"
+          className="h-[calc(100vh-200px)] resize-none overflow-y-auto font-mono text-sm"
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
