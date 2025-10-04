@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { analysisSchema, Analysis } from '@/lib/analysisSchema';
+import { z, ZodError } from 'zod';
+import { Tool, ToolUnion } from '@anthropic-ai/sdk/resources';
 
 const limitDataSample = (data: any, format: string): string => {
   let sample = '';
@@ -16,6 +19,13 @@ const limitDataSample = (data: any, format: string): string => {
   }
 
   return sample;
+};
+
+
+const ANALYSIS_TOOL: ToolUnion = {
+  name: 'provide_analysis',
+  description: 'Provide a structured analysis of the data sample including data type, description, key fields, recommended visualization, and rationale.',
+  input_schema: z.toJSONSchema(analysisSchema, {target: 'draft-2020-12'}) as Tool.InputSchema,
 };
 
 export const POST = async (request: NextRequest) => {
@@ -40,10 +50,8 @@ export const POST = async (request: NextRequest) => {
 
     const dataSample = limitDataSample(data, format);
 
-    const prompt = `Analyze this ${format} data and tell me:
-- What this data semantically represents (e.g., transactions, user records, API response)
-- What the key fields are and what they mean
-- How this data should best be visualized (table, tree, card list, etc.)
+
+    const prompt = `Analyze this ${format} data sample and provide your analysis using the tool.
 
 Data sample:
 ${dataSample}`;
@@ -54,14 +62,31 @@ ${dataSample}`;
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 1024,
       messages: [{ role: 'user', content: prompt }],
+      tools: [ANALYSIS_TOOL],
+      tool_choice: { type: 'tool', name: 'provide_analysis' },
     });
 
-    const analysisText = response.content[0].type === 'text'
-      ? response.content[0].text
-      : '';
+    const toolUse = response.content.find((block) => block.type === 'tool_use');
 
-    return NextResponse.json({ analysis: analysisText });
+    if (!toolUse || toolUse.type !== 'tool_use') {
+      return NextResponse.json(
+        { error: 'No tool use found in response' },
+        { status: 500 }
+      );
+    }
+
+    const analysis: Analysis = analysisSchema.parse(toolUse.input);
+
+    return NextResponse.json({ analysis });
   } catch (error) {
+    if (error instanceof ZodError) {
+      console.error('Schema validation error:', error.issues);
+      return NextResponse.json(
+        { error: 'Invalid analysis response format', details: error.issues },
+        { status: 500 }
+      );
+    }
+
     console.error('Error calling Claude API:', error);
     return NextResponse.json(
       { error: 'Failed to analyze data' },

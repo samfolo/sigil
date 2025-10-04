@@ -6,9 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { detectFormat, DetectionResult } from '@/lib/formatDetector';
 import { QueryState } from '@/lib/queryState';
+import { Analysis } from '@/lib/analysisSchema';
 
 interface DataInputProps {
-  onAnalyze: (result: DetectionResult, analysis: string | null) => void;
+  onAnalyze: (result: DetectionResult, analysis: Analysis | null) => void;
 }
 
 export const DataInput = ({ onAnalyze }: DataInputProps) => {

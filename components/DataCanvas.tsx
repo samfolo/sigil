@@ -1,10 +1,11 @@
 import { Card } from '@/components/ui/card';
 import { DetectionResult } from '@/lib/formatDetector';
 import { Separator } from '@/components/ui/separator';
+import { Analysis } from '@/lib/analysisSchema';
 
 interface DataCanvasProps {
   result: DetectionResult | null;
-  analysis?: string | null;
+  analysis?: Analysis | null;
 }
 
 export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
@@ -37,10 +38,38 @@ export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
             <>
               {analysis && (
                 <>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-primary">AI Analysis</h3>
-                    <div className="bg-muted/50 p-4 rounded-lg text-sm whitespace-pre-wrap">
-                      {analysis}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-primary">AI Analysis</h3>
+                      <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
+                        {analysis.dataType}
+                      </span>
+                    </div>
+
+                    <div className="bg-muted/50 p-4 rounded-lg space-y-3 text-sm">
+                      <div>
+                        <p className="font-medium mb-1">Description</p>
+                        <p className="text-muted-foreground">{analysis.description}</p>
+                      </div>
+
+                      <div>
+                        <p className="font-medium mb-1">Key Fields</p>
+                        <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
+                          {analysis.keyFields.map((field, idx) => (
+                            <li key={idx}>{field}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-medium mb-1">Recommended Visualization</p>
+                        <p className="text-muted-foreground capitalize">{analysis.recommendedVisualization}</p>
+                      </div>
+
+                      <div>
+                        <p className="font-medium mb-1">Rationale</p>
+                        <p className="text-muted-foreground">{analysis.rationale}</p>
+                      </div>
                     </div>
                   </div>
                   <Separator />
