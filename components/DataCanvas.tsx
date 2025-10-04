@@ -2,6 +2,8 @@ import { Card } from '@/components/ui/card';
 import { DetectionResult } from '@/lib/formatDetector';
 import { Separator } from '@/components/ui/separator';
 import { Analysis } from '@/lib/analysisSchema';
+import { TableView } from '@/components/visualizations/TableView';
+import { TreeView } from '@/components/visualizations/TreeView';
 
 interface DataCanvasProps {
   result: DetectionResult | null;
@@ -56,7 +58,7 @@ export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
                         <p className="font-medium mb-1">Key Fields</p>
                         <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
                           {analysis.keyFields.map((field, idx) => (
-                            <li key={idx}>{field}</li>
+                            <li key={idx}>{field.label}</li>
                           ))}
                         </ul>
                       </div>
@@ -77,10 +79,43 @@ export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
               )}
 
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold">Raw Data</h3>
-                <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
-                  {JSON.stringify(result.data, null, 2)}
-                </pre>
+                <h3 className="text-sm font-semibold">
+                  {analysis ? 'Visualization' : 'Raw Data'}
+                </h3>
+                {analysis ? (
+                  (() => {
+                    switch (analysis.recommendedVisualization) {
+                      case 'table':
+                        return Array.isArray(result.data) ? (
+                          <TableView data={result.data} keyFields={analysis.keyFields} />
+                        ) : (
+                          <p className="text-muted-foreground text-sm">
+                            Table view requires array data
+                          </p>
+                        );
+                      case 'tree':
+                        return <TreeView data={result.data} />;
+                      case 'map':
+                      case 'chart':
+                      case 'cards':
+                        return (
+                          <div className="bg-muted/50 p-8 rounded-lg text-center">
+                            <p className="text-muted-foreground text-sm">
+                              {analysis.recommendedVisualization.charAt(0).toUpperCase() +
+                                analysis.recommendedVisualization.slice(1)}{' '}
+                              visualization coming soon
+                            </p>
+                          </div>
+                        );
+                      default:
+                        return <TreeView data={result.data} />;
+                    }
+                  })()
+                ) : (
+                  <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
+                    {JSON.stringify(result.data, null, 2)}
+                  </pre>
+                )}
               </div>
             </>
           )}

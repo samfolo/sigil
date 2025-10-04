@@ -12,7 +12,12 @@ export const analysisSchema = z.object({
     .max(200)
     .describe('A detailed description of what this data semantically represents'),
   keyFields: z
-    .array(z.string())
+    .array(
+      z.object({
+        path: z.string().min(1).describe("Actual accessor key or path to the data field (e.g., 'A', 'user.name', 'items[0].id')"),
+        label: z.string().min(1).describe("Human-readable field description for display")
+      })
+    )
     .max(5)
     .describe('The most important fields in the data and what they mean'),
   recommendedVisualization: z
