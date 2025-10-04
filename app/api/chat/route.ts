@@ -3,6 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Analysis } from '@/lib/analysisSchema';
 import { filterData, aggregateData, getUniqueValues, sortData } from '@/lib/dataTools';
 import { Message, ToolCall, ChatResponse } from '@/lib/chatTypes';
+import { supabase } from '@/lib/supabase';
+import { generateEmbedding } from '@/lib/embeddings';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -10,6 +12,7 @@ const anthropic = new Anthropic({
 
 interface ChatRequest {
   messages: Message[];
+  sessionId: string | null;
   dataContext: {
     format: string;
     analysis: Analysis;
@@ -23,7 +26,7 @@ type ToolFunction = (input: Record<string, any>) => any;
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequest = await request.json();
-    const { messages, dataContext } = body;
+    const { messages, sessionId, dataContext } = body;
 
     const originalData = dataContext.fullData;
     let currentData = originalData;
@@ -170,6 +173,32 @@ export async function POST(request: NextRequest) {
       },
     ];
 
+    // Retrieve RAG context if sessionId is provided
+    let ragContext = '';
+    if (sessionId && messages.length > 0) {
+      try {
+        const userQuestion = messages[messages.length - 1].content;
+        const questionEmbedding = await generateEmbedding(userQuestion);
+
+        const { data: similarSessions, error } = await supabase.rpc('match_sessions', {
+          query_embedding: questionEmbedding,
+          match_threshold: 0.7,
+          match_count: 3,
+        });
+
+        if (!error && similarSessions && similarSessions.length > 0) {
+          ragContext = `\n\nRelevant context from similar datasets:\n${similarSessions
+            .map((session: any, idx: number) =>
+              `${idx + 1}. ${session.analysis.description} (Format: ${session.format}, Similarity: ${(session.similarity * 100).toFixed(0)}%)`
+            )
+            .join('\n')}\n`;
+        }
+      } catch (error) {
+        console.error('Failed to retrieve RAG context:', error);
+        // Continue without RAG context - don't fail the chat
+      }
+    }
+
     // Detect data structure type for better prompting
     const dataStructureInfo = Array.isArray(currentData)
       ? 'array of objects'
@@ -186,8 +215,8 @@ Description: ${dataContext.analysis.description}
 Data Structure: ${dataStructureInfo}
 ${recordCount !== 'N/A' ? `Current Record Count: ${recordCount}` : ''}
 
-Key Fields Available:
-${dataContext.analysis.keyFields.map(f => `- ${f.label}: ${f.description}`).join('\n')}
+Key Fields Available (use the quoted "path" value in tool calls):
+${dataContext.analysis.keyFields.map(f => `- "${f.path}" → ${f.label}: ${f.description}`).join('\n')}
 
 Recommended Visualization: ${dataContext.analysis.recommendedVisualization}
 Rationale: ${dataContext.analysis.rationale}
@@ -223,7 +252,12 @@ When the user asks questions about the data, use these tools to analyze it. Exam
 - "What's the total/average of X?" → aggregate_data with field='X' and operation='sum' or 'average'
 - "Show me only records where..." → filter_data
 
-The tools handle various data structures automatically (arrays, GeoJSON, nested objects). Be concise and helpful.`;
+EXAMPLES FOR THIS SPECIFIC DATASET (use these exact field paths):
+${dataContext.analysis.keyFields.slice(0, 3).map(f => `- get_unique_values(field="${f.path}") to analyze unique values in ${f.label}
+- aggregate_data(field="${f.path}", operation="sum") to sum ${f.label}
+- filter_data(field="${f.path}", operator="equals", value=<value>) to filter by ${f.label}`).join('\n')}
+
+The tools handle various data structures automatically (arrays, GeoJSON, nested objects). Be concise and helpful.${ragContext}`;
 
     // Convert messages to Anthropic format
     const apiMessages: Anthropic.MessageParam[] = messages.map(msg => ({
@@ -236,7 +270,7 @@ The tools handle various data structures automatically (arrays, GeoJSON, nested 
 
     // Make initial API call
     let response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       system: systemPrompt,
       messages: apiMessages,
@@ -308,7 +342,7 @@ The tools handle various data structures automatically (arrays, GeoJSON, nested 
       });
 
       response = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 4096,
         system: systemPrompt,
         messages: apiMessages,

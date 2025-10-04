@@ -21,9 +21,10 @@ const MapView = dynamic(
 interface DataCanvasProps {
   result: DetectionResult | null;
   analysisState: QueryState<Analysis, string>;
+  sessionId: string | null;
 }
 
-export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
+export const DataCanvas = ({ result, analysisState, sessionId }: DataCanvasProps) => {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(true);
   const [displayData, setDisplayData] = useState(result?.data);
 
@@ -183,6 +184,7 @@ export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
                         data={displayData}
                         analysis={analysisState.data}
                         onDataUpdate={handleDataUpdate}
+                        sessionId={sessionId}
                       />
                     </>
                   )}

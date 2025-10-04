@@ -10,16 +10,18 @@ import { QueryState } from '@/lib/queryState';
 export default function Home() {
   const [result, setResult] = useState<DetectionResult | null>(null);
   const [analysisState, setAnalysisState] = useState<QueryState<Analysis, string>>({ status: 'idle' });
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const handleAnalyze = (detectionResult: DetectionResult, newAnalysisState: QueryState<Analysis, string>) => {
+  const handleAnalyze = (detectionResult: DetectionResult, newAnalysisState: QueryState<Analysis, string>, newSessionId: string | null) => {
     setResult(detectionResult);
     setAnalysisState(newAnalysisState);
+    setSessionId(newSessionId);
   };
 
   return (
     <div className="flex h-screen">
       <DataInput onAnalyze={handleAnalyze} />
-      <DataCanvas result={result} analysisState={analysisState} />
+      <DataCanvas result={result} analysisState={analysisState} sessionId={sessionId} />
     </div>
   );
 }

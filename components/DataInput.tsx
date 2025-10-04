@@ -10,7 +10,7 @@ import { Analysis } from '@/lib/analysisSchema';
 import { Loader2 } from 'lucide-react';
 
 interface DataInputProps {
-  onAnalyze: (result: DetectionResult, analysisState: QueryState<Analysis, string>) => void;
+  onAnalyze: (result: DetectionResult, analysisState: QueryState<Analysis, string>, sessionId: string | null) => void;
 }
 
 export const DataInput = ({ onAnalyze }: DataInputProps) => {
@@ -21,12 +21,12 @@ export const DataInput = ({ onAnalyze }: DataInputProps) => {
     const result = detectFormat(input);
 
     if (result.format === 'unknown' || !result.data) {
-      onAnalyze(result, { status: 'idle' });
+      onAnalyze(result, { status: 'idle' }, null);
       return;
     }
 
     setAnalysisState({ status: 'loading' });
-    onAnalyze(result, { status: 'loading' });
+    onAnalyze(result, { status: 'loading' }, null);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -45,18 +45,18 @@ export const DataInput = ({ onAnalyze }: DataInputProps) => {
         const errorMessage = error.error || 'Analysis failed';
         console.error('Analysis failed:', error);
         setAnalysisState({ status: 'error', error: errorMessage });
-        onAnalyze(result, { status: 'error', error: errorMessage });
+        onAnalyze(result, { status: 'error', error: errorMessage }, null);
         return;
       }
 
-      const { analysis } = await response.json();
+      const { analysis, sessionId } = await response.json();
       setAnalysisState({ status: 'success', data: analysis });
-      onAnalyze(result, { status: 'success', data: analysis });
+      onAnalyze(result, { status: 'success', data: analysis }, sessionId);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error calling analyze endpoint';
       console.error('Error calling analyze endpoint:', error);
       setAnalysisState({ status: 'error', error: errorMessage });
-      onAnalyze(result, { status: 'error', error: errorMessage });
+      onAnalyze(result, { status: 'error', error: errorMessage }, null);
     }
   };
 

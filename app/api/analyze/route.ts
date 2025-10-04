@@ -3,6 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { analysisSchema, Analysis } from '@/lib/analysisSchema';
 import { z, ZodError } from 'zod';
 import { Tool, ToolUnion } from '@anthropic-ai/sdk/resources';
+import { supabase } from '@/lib/supabase';
+import { generateEmbedding } from '@/lib/embeddings';
 
 const limitDataSample = (data: any, format: string): string => {
   let sample = '';
@@ -83,7 +85,45 @@ ${dataSample}`;
 
     const analysis: Analysis = analysisSchema.parse(toolUse.input);
 
-    return NextResponse.json({ analysis });
+    // Generate embedding from analysis description and store in Supabase
+    try {
+      const embedding = await generateEmbedding(analysis.description);
+      console.log('Generated embedding successfully, length:', embedding.length);
+
+      const { data: session, error: insertError } = await supabase
+        .from('sessions')
+        .insert({
+          format,
+          data,
+          analysis,
+          embedding,
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('Failed to store session in Supabase:', {
+          error: insertError,
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+        });
+        // Continue without session storage - don't fail the analysis
+        return NextResponse.json({ analysis, sessionId: null });
+      }
+
+      console.log('Session stored successfully:', session.id);
+      return NextResponse.json({ analysis, sessionId: session.id });
+    } catch (embeddingError) {
+      console.error('Failed to generate embedding from OpenAI:', {
+        error: embeddingError,
+        message: embeddingError instanceof Error ? embeddingError.message : String(embeddingError),
+        stack: embeddingError instanceof Error ? embeddingError.stack : undefined,
+      });
+      // Continue without session storage - don't fail the analysis
+      return NextResponse.json({ analysis, sessionId: null });
+    }
   } catch (error) {
     if (error instanceof ZodError) {
       console.error('Schema validation error:', error.issues);

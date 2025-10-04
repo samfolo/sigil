@@ -13,9 +13,10 @@ interface ChatInterfaceProps {
   data: any;
   analysis: Analysis;
   onDataUpdate?: (newData: any) => void;
+  sessionId: string | null;
 }
 
-export const ChatInterface = ({ data, analysis, onDataUpdate }: ChatInterfaceProps) => {
+export const ChatInterface = ({ data, analysis, onDataUpdate, sessionId }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [chatState, setChatState] = useState<QueryState<Message, string>>({ status: 'idle' });
@@ -44,6 +45,7 @@ export const ChatInterface = ({ data, analysis, onDataUpdate }: ChatInterfacePro
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: updatedMessages,
+          sessionId,
           dataContext: {
             format: analysis.dataType,
             analysis,

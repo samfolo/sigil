@@ -146,11 +146,23 @@ export function aggregateData(
     case 'average':
       return meanBy(arrayData, (item) => Number(get(item, field)) || 0);
     case 'min': {
-      const minItem = minBy(arrayData, (item) => Number(get(item, field)));
+      // Filter out null/undefined values before finding min
+      const validItems = arrayData.filter((item) => {
+        const value = get(item, field);
+        return value !== null && value !== undefined && value !== '';
+      });
+      if (validItems.length === 0) return 0;
+      const minItem = minBy(validItems, (item) => Number(get(item, field)));
       return minItem ? Number(get(minItem, field)) : 0;
     }
     case 'max': {
-      const maxItem = maxBy(arrayData, (item) => Number(get(item, field)));
+      // Filter out null/undefined values before finding max
+      const validItems = arrayData.filter((item) => {
+        const value = get(item, field);
+        return value !== null && value !== undefined && value !== '';
+      });
+      if (validItems.length === 0) return 0;
+      const maxItem = maxBy(validItems, (item) => Number(get(item, field)));
       return maxItem ? Number(get(maxItem, field)) : 0;
     }
     default:
