@@ -1,0 +1,211 @@
+import { get, sortBy, uniq, sumBy, meanBy, minBy, maxBy } from 'lodash';
+
+type FilterOperator = 'equals' | 'contains' | 'greaterThan' | 'lessThan';
+type AggregateOperation = 'sum' | 'average' | 'count' | 'min' | 'max';
+type SortDirection = 'asc' | 'desc';
+
+/**
+ * Extract an array from various data structures (GeoJSON, nested objects, etc.)
+ */
+function extractArray(data: any): any[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  // Handle GeoJSON FeatureCollection
+  if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
+    return data.features;
+  }
+
+  // Handle GeoJSON GeometryCollection
+  if (data.type === 'GeometryCollection' && Array.isArray(data.geometries)) {
+    return data.geometries;
+  }
+
+  // Handle object with known array properties
+  const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
+  for (const prop of commonArrayProps) {
+    if (Array.isArray(data[prop])) {
+      return data[prop];
+    }
+  }
+
+  throw new Error(
+    `Unable to extract array from data. ` +
+    `Type: ${data.type || typeof data}. ` +
+    `Available properties: ${Object.keys(data || {}).join(', ')}`
+  );
+}
+
+/**
+ * Wrap array back into original structure
+ */
+function wrapArray(originalData: any, newArray: any[]): any {
+  if (Array.isArray(originalData)) {
+    return newArray;
+  }
+
+  // Handle GeoJSON FeatureCollection
+  if (originalData.type === 'FeatureCollection') {
+    return { ...originalData, features: newArray };
+  }
+
+  // Handle GeoJSON GeometryCollection
+  if (originalData.type === 'GeometryCollection') {
+    return { ...originalData, geometries: newArray };
+  }
+
+  // Handle object with known array properties
+  const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
+  for (const prop of commonArrayProps) {
+    if (Array.isArray(originalData[prop])) {
+      return { ...originalData, [prop]: newArray };
+    }
+  }
+
+  return newArray;
+}
+
+/**
+ * Filter an array of data by field value using various operators
+ */
+export function filterData(
+  data: any,
+  field: string,
+  operator: FilterOperator,
+  value: any
+): any {
+  const arrayData = extractArray(data);
+
+  const filtered = arrayData.filter((item) => {
+    const fieldValue = get(item, field);
+
+    switch (operator) {
+      case 'equals':
+        return fieldValue === value;
+      case 'contains':
+        if (typeof fieldValue === 'string') {
+          return fieldValue
+            .toLocaleLowerCase()
+            .includes(String(value).toLocaleLowerCase());
+        }
+        return false;
+      case 'greaterThan': {
+        // Handle booleans
+        const a = typeof fieldValue === 'boolean' ? Number(fieldValue) : fieldValue;
+        const b = typeof value === 'boolean' ? Number(value) : value;
+
+        // Use localeCompare for strings, numeric comparison for numbers
+        if (typeof a === 'string' && typeof b === 'string') {
+          return a.localeCompare(b, undefined, { numeric: true }) > 0;
+        }
+        return Number(a) > Number(b);
+      }
+      case 'lessThan': {
+        // Handle booleans
+        const a = typeof fieldValue === 'boolean' ? Number(fieldValue) : fieldValue;
+        const b = typeof value === 'boolean' ? Number(value) : value;
+
+        // Use localeCompare for strings, numeric comparison for numbers
+        if (typeof a === 'string' && typeof b === 'string') {
+          return a.localeCompare(b, undefined, { numeric: true }) < 0;
+        }
+        return Number(a) < Number(b);
+      }
+      default:
+        return false;
+    }
+  });
+
+  return wrapArray(data, filtered);
+}
+
+/**
+ * Aggregate data by field using various operations
+ */
+export function aggregateData(
+  data: any,
+  field: string | null,
+  operation: AggregateOperation
+): number {
+  // Special handling for count operation
+  if (operation === 'count') {
+    return countItems(data, field);
+  }
+
+  // For other operations, we need an array
+  const arrayData = extractArray(data);
+
+  if (!field) {
+    throw new Error(`Field is required for ${operation} operation`);
+  }
+
+  switch (operation) {
+    case 'sum':
+      return sumBy(arrayData, (item) => Number(get(item, field)) || 0);
+    case 'average':
+      return meanBy(arrayData, (item) => Number(get(item, field)) || 0);
+    case 'min': {
+      const minItem = minBy(arrayData, (item) => Number(get(item, field)));
+      return minItem ? Number(get(minItem, field)) : 0;
+    }
+    case 'max': {
+      const maxItem = maxBy(arrayData, (item) => Number(get(item, field)));
+      return maxItem ? Number(get(maxItem, field)) : 0;
+    }
+    default:
+      throw new Error(`Unknown operation: ${operation}`);
+  }
+}
+
+/**
+ * Intelligently count items in various data structures
+ */
+export function countItems(data: any, field: string | null): number {
+  // If field is specified, try to count items in that nested path
+  if (field) {
+    const nestedData = get(data, field);
+    if (Array.isArray(nestedData)) {
+      return nestedData.length;
+    }
+    throw new Error(`Field "${field}" does not contain an array. Found: ${typeof nestedData}`);
+  }
+
+  // Handle single GeoJSON Feature specially
+  if (data.type === 'Feature') {
+    return 1;
+  }
+
+  // Use extractArray for all other cases
+  try {
+    const arrayData = extractArray(data);
+    return arrayData.length;
+  } catch (error) {
+    throw new Error(
+      `Unable to count items. ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+/**
+ * Get unique values from a specific field
+ */
+export function getUniqueValues(data: any, field: string): any[] {
+  const arrayData = extractArray(data);
+  const values = arrayData.map((item) => get(item, field));
+  return uniq(values);
+}
+
+/**
+ * Sort data by field in ascending or descending order
+ */
+export function sortData(
+  data: any,
+  field: string,
+  direction: SortDirection = 'asc'
+): any {
+  const arrayData = extractArray(data);
+  const sorted = sortBy(arrayData, (item) => get(item, field));
+  const result = direction === 'desc' ? sorted.reverse() : sorted;
+  return wrapArray(data, result);
+}

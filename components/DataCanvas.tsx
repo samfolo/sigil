@@ -25,6 +25,16 @@ interface DataCanvasProps {
 
 export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(true);
+  const [displayData, setDisplayData] = useState(result?.data);
+
+  // Update display data when result changes
+  if (result?.data !== displayData && result?.data) {
+    setDisplayData(result.data);
+  }
+
+  const handleDataUpdate = (newData: any) => {
+    setDisplayData(newData);
+  };
 
   if (!result) {
     return (
@@ -133,17 +143,17 @@ export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
                       (() => {
                         switch (analysisState.data.recommendedVisualization) {
                           case 'table':
-                            return Array.isArray(result.data) ? (
-                              <TableView data={result.data} keyFields={analysisState.data.keyFields} />
+                            return Array.isArray(displayData) ? (
+                              <TableView data={displayData} keyFields={analysisState.data.keyFields} />
                             ) : (
                               <p className="text-muted-foreground text-sm">
                                 Table view requires array data
                               </p>
                             );
                           case 'tree':
-                            return <TreeView data={result.data} />;
+                            return <TreeView data={displayData} />;
                           case 'map':
-                            return <MapView data={result.data} />;
+                            return <MapView data={displayData} />;
                           case 'chart':
                           case 'cards':
                             return (
@@ -156,12 +166,12 @@ export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
                               </div>
                             );
                           default:
-                            return <TreeView data={result.data} />;
+                            return <TreeView data={displayData} />;
                         }
                       })()
                     ) : (
                       <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
-                        {JSON.stringify(result.data, null, 2)}
+                        {JSON.stringify(displayData, null, 2)}
                       </pre>
                     )}
                   </div>
@@ -169,7 +179,11 @@ export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
                   {isSuccess(analysisState) && (
                     <>
                       <Separator />
-                      <ChatInterface data={result.data} analysis={analysisState.data} />
+                      <ChatInterface
+                        data={displayData}
+                        analysis={analysisState.data}
+                        onDataUpdate={handleDataUpdate}
+                      />
                     </>
                   )}
                 </>
