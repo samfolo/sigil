@@ -5,17 +5,54 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { detectFormat, DetectionResult } from '@/lib/formatDetector';
+import { QueryState } from '@/lib/queryState';
 
 interface DataInputProps {
-  onAnalyze: (result: DetectionResult) => void;
+  onAnalyze: (result: DetectionResult, analysis: string | null) => void;
 }
 
-export function DataInput({ onAnalyze }: DataInputProps) {
+export const DataInput = ({ onAnalyze }: DataInputProps) => {
   const [input, setInput] = useState('');
+  const [queryState, setQueryState] = useState<QueryState>('idle');
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     const result = detectFormat(input);
-    onAnalyze(result);
+
+    if (result.format === 'unknown' || !result.data) {
+      onAnalyze(result, null);
+      return;
+    }
+
+    setQueryState('loading');
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          format: result.format,
+          data: result.data,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Analysis failed:', error);
+        setQueryState('errored');
+        onAnalyze(result, null);
+        return;
+      }
+
+      const { analysis } = await response.json();
+      setQueryState('success');
+      onAnalyze(result, analysis);
+    } catch (error) {
+      console.error('Error calling analyze endpoint:', error);
+      setQueryState('errored');
+      onAnalyze(result, null);
+    }
   };
 
   return (
@@ -30,7 +67,9 @@ export function DataInput({ onAnalyze }: DataInputProps) {
         />
       </div>
       <Separator />
-      <Button onClick={handleAnalyze}>Analyze</Button>
+      <Button onClick={handleAnalyze} disabled={queryState === 'loading'}>
+        {queryState === 'loading' ? 'Analyzing...' : 'Analyze'}
+      </Button>
     </div>
   );
 }

@@ -92,3 +92,42 @@ These files MUST keep their required lowercase names:
 - CSV parser uses `header: true` and `dynamicTyping: true` - assumes first row is headers
 - XML parser preserves attributes with `@_` prefix
 - Client components are explicitly marked with `'use client'` directive (DataInput, root page)
+
+## Code Style Guidelines
+
+### Query State Management
+
+**CRITICAL**: All async request/response states MUST use the `QueryState` type from `lib/queryState.ts`.
+
+Use these string literal values to represent query states:
+- `'idle'` - Query has not been called yet (initial state)
+- `'loading'` - Query is in progress, awaiting data (first fetch)
+- `'success'` - Query completed successfully
+- `'errored'` - Query completed with an error
+- `'reloading'` - Data is being refetched after a previous successful fetch
+
+**Example usage:**
+```typescript
+import { QueryState } from '@/lib/queryState';
+
+const [queryState, setQueryState] = useState<QueryState>('idle');
+
+// Starting a fetch
+setQueryState('loading');
+
+// On success
+setQueryState('success');
+
+// On error
+setQueryState('errored');
+
+// Refetching after previous success
+setQueryState('reloading');
+```
+
+**Never use:**
+- Boolean flags like `isLoading`, `isError`, `isSuccess`
+- Generic state strings that don't match the standard values
+- Numeric state codes
+
+This ensures consistent state management across all async operations in the application.
