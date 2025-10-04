@@ -11,6 +11,7 @@ import { QueryState, isSuccess, isLoading, isError } from '@/lib/queryState';
 import { Loader2, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { ChatInterface } from '@/components/ChatInterface';
 
 const MapView = dynamic(
   () => import('@/components/visualizations/MapView').then(mod => ({ default: mod.MapView })),
@@ -123,46 +124,55 @@ export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
               )}
 
               {!isLoading(analysisState) && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold">
-                    {isSuccess(analysisState) ? 'Visualization' : 'Raw Data'}
-                  </h3>
-                  {isSuccess(analysisState) ? (
-                    (() => {
-                      switch (analysisState.data.recommendedVisualization) {
-                        case 'table':
-                          return Array.isArray(result.data) ? (
-                            <TableView data={result.data} keyFields={analysisState.data.keyFields} />
-                          ) : (
-                            <p className="text-muted-foreground text-sm">
-                              Table view requires array data
-                            </p>
-                          );
-                        case 'tree':
-                          return <TreeView data={result.data} />;
-                        case 'map':
-                          return <MapView data={result.data} />;
-                        case 'chart':
-                        case 'cards':
-                          return (
-                            <div className="bg-muted/50 p-8 rounded-lg text-center">
+                <>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">
+                      {isSuccess(analysisState) ? 'Visualization' : 'Raw Data'}
+                    </h3>
+                    {isSuccess(analysisState) ? (
+                      (() => {
+                        switch (analysisState.data.recommendedVisualization) {
+                          case 'table':
+                            return Array.isArray(result.data) ? (
+                              <TableView data={result.data} keyFields={analysisState.data.keyFields} />
+                            ) : (
                               <p className="text-muted-foreground text-sm">
-                                {analysisState.data.recommendedVisualization.charAt(0).toUpperCase() +
-                                  analysisState.data.recommendedVisualization.slice(1)}{' '}
-                                visualization coming soon
+                                Table view requires array data
                               </p>
-                            </div>
-                          );
-                        default:
-                          return <TreeView data={result.data} />;
-                      }
-                    })()
-                  ) : (
-                    <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
-                      {JSON.stringify(result.data, null, 2)}
-                    </pre>
+                            );
+                          case 'tree':
+                            return <TreeView data={result.data} />;
+                          case 'map':
+                            return <MapView data={result.data} />;
+                          case 'chart':
+                          case 'cards':
+                            return (
+                              <div className="bg-muted/50 p-8 rounded-lg text-center">
+                                <p className="text-muted-foreground text-sm">
+                                  {analysisState.data.recommendedVisualization.charAt(0).toUpperCase() +
+                                    analysisState.data.recommendedVisualization.slice(1)}{' '}
+                                  visualization coming soon
+                                </p>
+                              </div>
+                            );
+                          default:
+                            return <TreeView data={result.data} />;
+                        }
+                      })()
+                    ) : (
+                      <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
+                        {JSON.stringify(result.data, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+
+                  {isSuccess(analysisState) && (
+                    <>
+                      <Separator />
+                      <ChatInterface data={result.data} analysis={analysisState.data} />
+                    </>
                   )}
-                </div>
+                </>
               )}
             </>
           )}
