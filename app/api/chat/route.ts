@@ -25,23 +25,39 @@ export async function POST(request: NextRequest) {
     const body: ChatRequest = await request.json();
     const { messages, dataContext } = body;
 
-    let currentData = dataContext.fullData;
+    const originalData = dataContext.fullData;
+    let currentData = originalData;
     const recordCount = Array.isArray(currentData) ? currentData.length : 'N/A';
+
+    // Helper to extract array for counting
+    const extractArrayForCount = (data: any) => {
+      if (Array.isArray(data)) return data;
+      if (data.type === 'FeatureCollection' && Array.isArray(data.features)) return data.features;
+      if (data.type === 'GeometryCollection' && Array.isArray(data.geometries)) return data.geometries;
+      return [];
+    };
 
     // Define tools with actual implementations
     const toolImplementations: Record<string, ToolFunction> = {
       filter_data: ({ field, operator, value }) => {
         try {
-          currentData = filterData(currentData, field, operator, value);
-          const resultCount = Array.isArray(currentData) ? currentData.length : 0;
-          return `Successfully filtered data by ${field} ${operator} ${value}. ${resultCount} records remain in the dataset.`;
+          // Always filter from original data to avoid chaining issues
+          const filtered = filterData(originalData, field, operator, value);
+          const matchCount = extractArrayForCount(filtered).length;
+          const totalCount = extractArrayForCount(originalData).length;
+
+          // Update currentData for final response
+          currentData = filtered;
+
+          return `Filter: ${field} ${operator} ${value} → Found ${matchCount} matching items out of ${totalCount} total. Dataset will be updated to show only matching items.`;
         } catch (error) {
           return `Error filtering data: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
       aggregate_data: ({ field, operation }) => {
         try {
-          const result = aggregateData(currentData, field || null, operation);
+          // Always use original data for analysis
+          const result = aggregateData(originalData, field || null, operation);
           if (operation === 'count') {
             return field
               ? `The count of items in "${field}" is ${result}`
@@ -55,15 +71,19 @@ export async function POST(request: NextRequest) {
       },
       get_unique_values: ({ field }) => {
         try {
-          const values = getUniqueValues(currentData, field);
-          return `Found ${values.length} unique values for ${field}: ${values.slice(0, 20).join(', ')}${values.length > 20 ? '...' : ''}`;
+          // Always use original data for analysis
+          const values = getUniqueValues(originalData, field);
+          // Use JSON.stringify to show undefined, null, empty strings clearly
+          const valueStrings = values.slice(0, 20).map(v => JSON.stringify(v));
+          return `Found ${values.length} unique value${values.length === 1 ? '' : 's'} for ${field}: ${valueStrings.join(', ')}${values.length > 20 ? '...' : ''}`;
         } catch (error) {
           return `Error getting unique values: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
       sort_data: ({ field, direction }) => {
         try {
-          currentData = sortData(currentData, field, direction);
+          // Sort from original data and update currentData for final response
+          currentData = sortData(originalData, field, direction);
           return `Successfully sorted data by ${field} in ${direction}ending order.`;
         } catch (error) {
           return `Error sorting data: ${error instanceof Error ? error.message : String(error)}`;
@@ -75,13 +95,13 @@ export async function POST(request: NextRequest) {
     const tools: Anthropic.Tool[] = [
       {
         name: 'filter_data',
-        description: 'Filter the current dataset by a field value. This modifies the active dataset. Use this when the user wants to narrow down the data based on conditions.',
+        description: 'Filter the dataset by a field value and returns how many items match. This modifies the active dataset shown to the user. The result includes the count of matching items, so you do NOT need to call aggregate_data(count) after filtering. Use this to narrow down data or count items matching specific conditions. For GeoJSON data, field paths are relative to features.',
         input_schema: {
           type: 'object',
           properties: {
             field: {
               type: 'string',
-              description: 'The field path to filter by (supports nested paths like "user.name")',
+              description: 'The field path to filter by. For GeoJSON: use "geometry.type" or "properties.fieldName" (supports nested paths like "properties.user.name").',
             },
             operator: {
               type: 'string',
@@ -98,13 +118,13 @@ export async function POST(request: NextRequest) {
       },
       {
         name: 'aggregate_data',
-        description: 'Perform aggregation operations on the current dataset. Use this to calculate sums, averages, counts, min, or max values. For "count" operation, field is optional - omit it to count all items in the dataset, or specify a field to count items in a nested array.',
+        description: 'Perform aggregation operations on the current dataset. Use this to calculate sums, averages, counts, min, or max values. For "count" operation, field is optional - omit it to count all items in the dataset, or specify a field to count items in a nested array. For GeoJSON data, field paths are relative to features.',
         input_schema: {
           type: 'object',
           properties: {
             field: {
               type: 'string',
-              description: 'The field path to aggregate. Optional for "count" operation (omit to count root items). Required for sum/average/min/max. Supports nested paths like "features" for GeoJSON.',
+              description: 'The field path to aggregate. Optional for "count" operation (omit to count root items). Required for sum/average/min/max. For GeoJSON: use "properties.fieldName" (e.g., "properties.population").',
             },
             operation: {
               type: 'string',
@@ -117,13 +137,13 @@ export async function POST(request: NextRequest) {
       },
       {
         name: 'get_unique_values',
-        description: 'Get all unique values for a specific field in the current dataset. Use this to understand what values exist in a field.',
+        description: 'Get all unique values for a specific field in the current dataset. Use this to understand what values exist in a field. For GeoJSON data, field paths are relative to features (e.g., "geometry.type" not "features.geometry.type").',
         input_schema: {
           type: 'object',
           properties: {
             field: {
               type: 'string',
-              description: 'The field path to get unique values from',
+              description: 'The field path to get unique values from. For GeoJSON: use "geometry.type" or "properties.fieldName" (the features array is accessed automatically).',
             },
           },
           required: ['field'],
@@ -131,13 +151,13 @@ export async function POST(request: NextRequest) {
       },
       {
         name: 'sort_data',
-        description: 'Sort the current dataset by a field. This modifies the active dataset. Use this when the user wants to reorder the data.',
+        description: 'Sort the current dataset by a field. This modifies the active dataset. Use this when the user wants to reorder the data. For GeoJSON data, field paths are relative to features.',
         input_schema: {
           type: 'object',
           properties: {
             field: {
               type: 'string',
-              description: 'The field path to sort by',
+              description: 'The field path to sort by. For GeoJSON: use "geometry.type" or "properties.fieldName".',
             },
             direction: {
               type: 'string',
@@ -172,21 +192,38 @@ ${dataContext.analysis.keyFields.map(f => `- ${f.label}: ${f.description}`).join
 Recommended Visualization: ${dataContext.analysis.recommendedVisualization}
 Rationale: ${dataContext.analysis.rationale}
 
+IMPORTANT - Field Paths for GeoJSON Data:
+${dataStructureInfo.includes('GeoJSON') ? `
+Since this is GeoJSON data, the tools automatically work on the features array.
+When specifying field paths:
+- Use "geometry.type" NOT "features.geometry.type"
+- Use "properties.name" NOT "features.properties.name"
+- The "features" prefix is handled automatically by the tools
+
+For example:
+- To get geometry types: get_unique_values with field="geometry.type"
+- To filter by a property: filter_data with field="properties.status"
+` : ''}
+
 You have access to tools that can operate on this dataset:
-- aggregate_data: Calculate sum, average, count, min, or max
+- aggregate_data: Calculate sum, average, count, min, or max on ALL items
   * For counting: use operation='count' and omit the field parameter (the tool will intelligently count based on data structure)
   * For other operations: specify both field and operation
-- filter_data: Narrow down the dataset based on conditions
+- filter_data: Narrow down the dataset AND returns count of matching items
+  * Returns both the count and updates the dataset
+  * Use this to count items matching conditions (e.g., "how many Polygons?")
+  * Do NOT call aggregate_data(count) after filter - the count is included in the filter result
 - get_unique_values: See what distinct values exist in a field
 - sort_data: Reorder the dataset
 
 When the user asks questions about the data, use these tools to analyze it. Examples:
-- "How many records/features/items?" → aggregate_data with operation='count' (no field needed)
+- "How many total items?" → aggregate_data with operation='count'
+- "How many Polygons?" → filter_data with field='geometry.type', operator='equals', value='Polygon' (returns count)
+- "What geometry types exist?" → get_unique_values with field='geometry.type'
 - "What's the total/average of X?" → aggregate_data with field='X' and operation='sum' or 'average'
-- "What values are in field X?" → get_unique_values with field='X'
 - "Show me only records where..." → filter_data
 
-The tools handle various data structures automatically (arrays, GeoJSON, nested objects). Always try using the tools even if the structure seems complex. Be concise and helpful.`;
+The tools handle various data structures automatically (arrays, GeoJSON, nested objects). Be concise and helpful.`;
 
     // Convert messages to Anthropic format
     const apiMessages: Anthropic.MessageParam[] = messages.map(msg => ({
