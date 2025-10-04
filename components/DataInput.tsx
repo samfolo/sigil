@@ -5,26 +5,28 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { detectFormat, DetectionResult } from '@/lib/formatDetector';
-import { QueryState } from '@/lib/queryState';
+import { QueryState, isLoading } from '@/lib/queryState';
 import { Analysis } from '@/lib/analysisSchema';
+import { Loader2 } from 'lucide-react';
 
 interface DataInputProps {
-  onAnalyze: (result: DetectionResult, analysis: Analysis | null) => void;
+  onAnalyze: (result: DetectionResult, analysisState: QueryState<Analysis, string>) => void;
 }
 
 export const DataInput = ({ onAnalyze }: DataInputProps) => {
   const [input, setInput] = useState('');
-  const [queryState, setQueryState] = useState<QueryState>('idle');
+  const [analysisState, setAnalysisState] = useState<QueryState<Analysis, string>>({ status: 'idle' });
 
   const handleAnalyze = async () => {
     const result = detectFormat(input);
 
     if (result.format === 'unknown' || !result.data) {
-      onAnalyze(result, null);
+      onAnalyze(result, { status: 'idle' });
       return;
     }
 
-    setQueryState('loading');
+    setAnalysisState({ status: 'loading' });
+    onAnalyze(result, { status: 'loading' });
 
     try {
       const response = await fetch('/api/analyze', {
@@ -40,19 +42,21 @@ export const DataInput = ({ onAnalyze }: DataInputProps) => {
 
       if (!response.ok) {
         const error = await response.json();
+        const errorMessage = error.error || 'Analysis failed';
         console.error('Analysis failed:', error);
-        setQueryState('errored');
-        onAnalyze(result, null);
+        setAnalysisState({ status: 'error', error: errorMessage });
+        onAnalyze(result, { status: 'error', error: errorMessage });
         return;
       }
 
       const { analysis } = await response.json();
-      setQueryState('success');
-      onAnalyze(result, analysis);
+      setAnalysisState({ status: 'success', data: analysis });
+      onAnalyze(result, { status: 'success', data: analysis });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error calling analyze endpoint';
       console.error('Error calling analyze endpoint:', error);
-      setQueryState('errored');
-      onAnalyze(result, null);
+      setAnalysisState({ status: 'error', error: errorMessage });
+      onAnalyze(result, { status: 'error', error: errorMessage });
     }
   };
 
@@ -68,9 +72,21 @@ export const DataInput = ({ onAnalyze }: DataInputProps) => {
         />
       </div>
       <Separator />
-      <Button onClick={handleAnalyze} disabled={queryState === 'loading'}>
-        {queryState === 'loading' ? 'Analyzing...' : 'Analyze'}
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button onClick={handleAnalyze} disabled={isLoading(analysisState)}>
+          {isLoading(analysisState) ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            'Analyze'
+          )}
+        </Button>
+        {analysisState.status === 'error' && (
+          <p className="text-sm text-destructive">{analysisState.error}</p>
+        )}
+      </div>
     </div>
   );
 }

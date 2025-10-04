@@ -1,15 +1,31 @@
 /**
- * Standard query state values for request/response states across the application.
+ * Discriminated union type for async request states.
  *
- * Use these string literals to represent the state of async operations.
+ * Provides type-safe state management for async operations with data and error handling.
  */
-export type QueryState = 'idle' | 'loading' | 'success' | 'errored' | 'reloading';
+export type QueryState<T, E = Error> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: E };
 
 /**
- * Query state definitions:
- * - 'idle': Query has not been called yet
- * - 'loading': Query is in progress, awaiting data
- * - 'success': Query completed successfully
- * - 'errored': Query completed with an error
- * - 'reloading': Data is being refetched after a previous successful fetch
+ * Helper function to check if the query is in loading state.
  */
+export function isLoading<T, E>(state: QueryState<T, E>): state is { status: 'loading' } {
+  return state.status === 'loading';
+}
+
+/**
+ * Helper function to check if the query completed successfully.
+ */
+export function isSuccess<T, E>(state: QueryState<T, E>): state is { status: 'success'; data: T } {
+  return state.status === 'success';
+}
+
+/**
+ * Helper function to check if the query resulted in an error.
+ */
+export function isError<T, E>(state: QueryState<T, E>): state is { status: 'error'; error: E } {
+  return state.status === 'error';
+}

@@ -6,6 +6,8 @@ import { Separator } from '@/components/ui/separator';
 import { Analysis } from '@/lib/analysisSchema';
 import { TableView } from '@/components/visualizations/TableView';
 import { TreeView } from '@/components/visualizations/TreeView';
+import { QueryState, isSuccess, isLoading, isError } from '@/lib/queryState';
+import { Loader2 } from 'lucide-react';
 
 const MapView = dynamic(
   () => import('@/components/visualizations/MapView').then(mod => ({ default: mod.MapView })),
@@ -14,10 +16,10 @@ const MapView = dynamic(
 
 interface DataCanvasProps {
   result: DetectionResult | null;
-  analysis?: Analysis | null;
+  analysisState: QueryState<Analysis, string>;
 }
 
-export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
+export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
   if (!result) {
     return (
       <div className="flex-1 p-6">
@@ -45,26 +47,40 @@ export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
             </p>
           ) : (
             <>
-              {analysis && (
+              {isLoading(analysisState) && (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              )}
+
+              {isError(analysisState) && (
+                <div className="bg-destructive/10 p-4 rounded-lg">
+                  <p className="text-sm text-destructive">
+                    Error: {analysisState.error}
+                  </p>
+                </div>
+              )}
+
+              {isSuccess(analysisState) && (
                 <>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-semibold text-primary">AI Analysis</h3>
                       <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
-                        {analysis.dataType}
+                        {analysisState.data.dataType}
                       </span>
                     </div>
 
                     <div className="bg-muted/50 p-4 rounded-lg space-y-3 text-sm">
                       <div>
                         <p className="font-medium mb-1">Description</p>
-                        <p className="text-muted-foreground">{analysis.description}</p>
+                        <p className="text-muted-foreground">{analysisState.data.description}</p>
                       </div>
 
                       <div>
                         <p className="font-medium mb-1">Key Fields</p>
                         <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
-                          {analysis.keyFields.map((field, idx) => (
+                          {analysisState.data.keyFields.map((field, idx) => (
                             <li key={idx}>{field.label}</li>
                           ))}
                         </ul>
@@ -72,12 +88,12 @@ export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
 
                       <div>
                         <p className="font-medium mb-1">Recommended Visualization</p>
-                        <p className="text-muted-foreground capitalize">{analysis.recommendedVisualization}</p>
+                        <p className="text-muted-foreground capitalize">{analysisState.data.recommendedVisualization}</p>
                       </div>
 
                       <div>
                         <p className="font-medium mb-1">Rationale</p>
-                        <p className="text-muted-foreground">{analysis.rationale}</p>
+                        <p className="text-muted-foreground">{analysisState.data.rationale}</p>
                       </div>
                     </div>
                   </div>
@@ -85,46 +101,48 @@ export const DataCanvas = ({ result, analysis }: DataCanvasProps) => {
                 </>
               )}
 
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold">
-                  {analysis ? 'Visualization' : 'Raw Data'}
-                </h3>
-                {analysis ? (
-                  (() => {
-                    switch (analysis.recommendedVisualization) {
-                      case 'table':
-                        return Array.isArray(result.data) ? (
-                          <TableView data={result.data} keyFields={analysis.keyFields} />
-                        ) : (
-                          <p className="text-muted-foreground text-sm">
-                            Table view requires array data
-                          </p>
-                        );
-                      case 'tree':
-                        return <TreeView data={result.data} />;
-                      case 'map':
-                        return <MapView data={result.data} />;
-                      case 'chart':
-                      case 'cards':
-                        return (
-                          <div className="bg-muted/50 p-8 rounded-lg text-center">
+              {!isLoading(analysisState) && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold">
+                    {isSuccess(analysisState) ? 'Visualization' : 'Raw Data'}
+                  </h3>
+                  {isSuccess(analysisState) ? (
+                    (() => {
+                      switch (analysisState.data.recommendedVisualization) {
+                        case 'table':
+                          return Array.isArray(result.data) ? (
+                            <TableView data={result.data} keyFields={analysisState.data.keyFields} />
+                          ) : (
                             <p className="text-muted-foreground text-sm">
-                              {analysis.recommendedVisualization.charAt(0).toUpperCase() +
-                                analysis.recommendedVisualization.slice(1)}{' '}
-                              visualization coming soon
+                              Table view requires array data
                             </p>
-                          </div>
-                        );
-                      default:
-                        return <TreeView data={result.data} />;
-                    }
-                  })()
-                ) : (
-                  <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
-                    {JSON.stringify(result.data, null, 2)}
-                  </pre>
-                )}
-              </div>
+                          );
+                        case 'tree':
+                          return <TreeView data={result.data} />;
+                        case 'map':
+                          return <MapView data={result.data} />;
+                        case 'chart':
+                        case 'cards':
+                          return (
+                            <div className="bg-muted/50 p-8 rounded-lg text-center">
+                              <p className="text-muted-foreground text-sm">
+                                {analysisState.data.recommendedVisualization.charAt(0).toUpperCase() +
+                                  analysisState.data.recommendedVisualization.slice(1)}{' '}
+                                visualization coming soon
+                              </p>
+                            </div>
+                          );
+                        default:
+                          return <TreeView data={result.data} />;
+                      }
+                    })()
+                  ) : (
+                    <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
+                      {JSON.stringify(result.data, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
