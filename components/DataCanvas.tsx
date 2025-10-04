@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { DetectionResult } from '@/lib/formatDetector';
@@ -7,7 +8,9 @@ import { Analysis } from '@/lib/analysisSchema';
 import { TableView } from '@/components/visualizations/TableView';
 import { TreeView } from '@/components/visualizations/TreeView';
 import { QueryState, isSuccess, isLoading, isError } from '@/lib/queryState';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
 
 const MapView = dynamic(
   () => import('@/components/visualizations/MapView').then(mod => ({ default: mod.MapView })),
@@ -20,6 +23,8 @@ interface DataCanvasProps {
 }
 
 export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(true);
+
   if (!result) {
     return (
       <div className="flex-1 p-6">
@@ -63,40 +68,56 @@ export const DataCanvas = ({ result, analysisState }: DataCanvasProps) => {
 
               {isSuccess(analysisState) && (
                 <>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-primary">AI Analysis</h3>
-                      <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
-                        {analysisState.data.dataType}
-                      </span>
+                  <Collapsible open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-primary">AI Analysis</h3>
+                          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">
+                            {analysisState.data.dataType}
+                          </span>
+                        </div>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform duration-200 ${
+                                isAnalysisOpen ? 'rotate-180' : ''
+                              }`}
+                            />
+                            <span className="sr-only">Toggle analysis</span>
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
+
+                      <CollapsibleContent>
+                        <div className="bg-muted/50 p-4 rounded-lg space-y-3 text-sm">
+                          <div>
+                            <p className="font-medium mb-1">Description</p>
+                            <p className="text-muted-foreground">{analysisState.data.description}</p>
+                          </div>
+
+                          <div>
+                            <p className="font-medium mb-1">Key Fields</p>
+                            <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
+                              {analysisState.data.keyFields.map((field, idx) => (
+                                <li key={idx}>{field.label}</li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div>
+                            <p className="font-medium mb-1">Recommended Visualization</p>
+                            <p className="text-muted-foreground capitalize">{analysisState.data.recommendedVisualization}</p>
+                          </div>
+
+                          <div>
+                            <p className="font-medium mb-1">Rationale</p>
+                            <p className="text-muted-foreground">{analysisState.data.rationale}</p>
+                          </div>
+                        </div>
+                      </CollapsibleContent>
                     </div>
-
-                    <div className="bg-muted/50 p-4 rounded-lg space-y-3 text-sm">
-                      <div>
-                        <p className="font-medium mb-1">Description</p>
-                        <p className="text-muted-foreground">{analysisState.data.description}</p>
-                      </div>
-
-                      <div>
-                        <p className="font-medium mb-1">Key Fields</p>
-                        <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
-                          {analysisState.data.keyFields.map((field, idx) => (
-                            <li key={idx}>{field.label}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div>
-                        <p className="font-medium mb-1">Recommended Visualization</p>
-                        <p className="text-muted-foreground capitalize">{analysisState.data.recommendedVisualization}</p>
-                      </div>
-
-                      <div>
-                        <p className="font-medium mb-1">Rationale</p>
-                        <p className="text-muted-foreground">{analysisState.data.rationale}</p>
-                      </div>
-                    </div>
-                  </div>
+                  </Collapsible>
                   <Separator />
                 </>
               )}
