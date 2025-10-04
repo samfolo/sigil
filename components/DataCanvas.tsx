@@ -1,10 +1,16 @@
+import dynamic from 'next/dynamic';
+
 import { Card } from '@/components/ui/card';
 import { DetectionResult } from '@/lib/formatDetector';
 import { Separator } from '@/components/ui/separator';
 import { Analysis } from '@/lib/analysisSchema';
 import { TableView } from '@/components/visualizations/TableView';
 import { TreeView } from '@/components/visualizations/TreeView';
-import { MapView } from '@/components/visualizations/MapView';
+
+const MapView = dynamic(
+  () => import('@/components/visualizations/MapView').then(mod => ({ default: mod.MapView })),
+  { ssr: false }
+);
 
 interface DataCanvasProps {
   result: DetectionResult | null;
