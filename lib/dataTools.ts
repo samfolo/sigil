@@ -7,7 +7,7 @@ type SortDirection = 'asc' | 'desc';
 /**
  * Extract an array from various data structures (GeoJSON, nested objects, etc.)
  */
-function extractArray(data: any): any[] {
+const extractArray = (data: unknown): unknown[] => {
   if (Array.isArray(data)) {
     return data;
   }
@@ -40,7 +40,7 @@ function extractArray(data: any): any[] {
 /**
  * Wrap array back into original structure
  */
-function wrapArray(originalData: any, newArray: any[]): any {
+const wrapArray = (originalData: unknown, newArray: unknown[]): unknown => {
   if (Array.isArray(originalData)) {
     return newArray;
   }
@@ -69,12 +69,12 @@ function wrapArray(originalData: any, newArray: any[]): any {
 /**
  * Filter an array of data by field value using various operators
  */
-export function filterData(
-  data: any,
+export const filterData = (
+  data: unknown,
   field: string,
   operator: FilterOperator,
-  value: any
-): any {
+  value: unknown
+): unknown => {
   const arrayData = extractArray(data);
 
   const filtered = arrayData.filter((item) => {
@@ -123,11 +123,11 @@ export function filterData(
 /**
  * Aggregate data by field using various operations
  */
-export function aggregateData(
-  data: any,
+export const aggregateData = (
+  data: unknown,
   field: string | null,
   operation: AggregateOperation
-): number {
+): number => {
   // Special handling for count operation
   if (operation === 'count') {
     return countItems(data, field);
@@ -173,7 +173,7 @@ export function aggregateData(
 /**
  * Intelligently count items in various data structures
  */
-export function countItems(data: any, field: string | null): number {
+export const countItems = (data: unknown, field: string | null): number => {
   // If field is specified, try to count items in that nested path
   if (field) {
     const nestedData = get(data, field);
@@ -202,7 +202,7 @@ export function countItems(data: any, field: string | null): number {
 /**
  * Get unique values from a specific field
  */
-export function getUniqueValues(data: any, field: string): any[] {
+export const getUniqueValues = (data: unknown, field: string): unknown[] => {
   const arrayData = extractArray(data);
   const values = arrayData.map((item) => get(item, field));
   return uniq(values);
@@ -211,11 +211,11 @@ export function getUniqueValues(data: any, field: string): any[] {
 /**
  * Sort data by field in ascending or descending order
  */
-export function sortData(
-  data: any,
+export const sortData = (
+  data: unknown,
   field: string,
   direction: SortDirection = 'asc'
-): any {
+): unknown => {
   const arrayData = extractArray(data);
   const sorted = sortBy(arrayData, (item) => get(item, field));
   const result = direction === 'desc' ? sorted.reverse() : sorted;

@@ -6,7 +6,7 @@ import { Tool, ToolUnion } from '@anthropic-ai/sdk/resources';
 import { supabase } from '@/lib/supabase';
 import { generateEmbedding } from '@/lib/embeddings';
 
-const limitDataSample = (data: any, format: string): string => {
+const limitDataSample = (data: unknown, _format: string): string => {
   let sample = '';
 
   if (Array.isArray(data)) {

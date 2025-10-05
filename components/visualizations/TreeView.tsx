@@ -1,5 +1,5 @@
 interface TreeViewProps {
-  data: any;
+  data: unknown;
 }
 
 export const TreeView = ({ data }: TreeViewProps) => {

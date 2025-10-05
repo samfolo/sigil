@@ -4,7 +4,7 @@ export type DataFormat = 'json' | 'csv' | 'yaml' | 'xml' | 'unknown';
 
 export interface DetectionResult {
   format: DataFormat;
-  data: any;
+  data: unknown;
 }
 
 export const detectFormat = (input: string): DetectionResult => {

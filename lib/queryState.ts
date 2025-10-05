@@ -12,20 +12,20 @@ export type QueryState<T, E = Error> =
 /**
  * Helper function to check if the query is in loading state.
  */
-export function isLoading<T, E>(state: QueryState<T, E>): state is { status: 'loading' } {
+export const isLoading = <T, E>(state: QueryState<T, E>): state is { status: 'loading' } => {
   return state.status === 'loading';
 }
 
 /**
  * Helper function to check if the query completed successfully.
  */
-export function isSuccess<T, E>(state: QueryState<T, E>): state is { status: 'success'; data: T } {
+export const isSuccess = <T, E>(state: QueryState<T, E>): state is { status: 'success'; data: T } => {
   return state.status === 'success';
 }
 
 /**
  * Helper function to check if the query resulted in an error.
  */
-export function isError<T, E>(state: QueryState<T, E>): state is { status: 'error'; error: E } {
+export const isError = <T, E>(state: QueryState<T, E>): state is { status: 'error'; error: E } => {
   return state.status === 'error';
 }

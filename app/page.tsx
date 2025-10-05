@@ -7,7 +7,7 @@ import { DetectionResult } from '@/lib/formatDetector';
 import { Analysis } from '@/lib/analysisSchema';
 import { QueryState } from '@/lib/queryState';
 
-export default function Home() {
+const Home = () => {
   const [result, setResult] = useState<DetectionResult | null>(null);
   const [analysisState, setAnalysisState] = useState<QueryState<Analysis, string>>({ status: 'idle' });
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -24,4 +24,6 @@ export default function Home() {
       <DataCanvas result={result} analysisState={analysisState} sessionId={sessionId} />
     </div>
   );
-}
+};
+
+export default Home;

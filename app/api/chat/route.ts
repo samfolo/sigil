@@ -15,23 +15,23 @@ interface ChatRequest {
     format: string;
     analysis: Analysis;
     dataSample: string;
-    fullData: any;
+    fullData: unknown;
   };
 }
 
-type ToolFunction = (input: Record<string, any>) => any;
+type ToolFunction = (input: Record<string, unknown>) => unknown;
 
-export async function POST(request: NextRequest) {
+export const POST = async (request: NextRequest) => {
   try {
     const body: ChatRequest = await request.json();
-    const { messages, sessionId, dataContext } = body;
+    const { messages, dataContext } = body;
 
     const originalData = dataContext.fullData;
     let currentData = originalData;
     const recordCount = Array.isArray(currentData) ? currentData.length : 'N/A';
 
     // Helper to extract array for counting
-    const extractArrayForCount = (data: any) => {
+    const extractArrayForCount = (data: unknown) => {
       if (Array.isArray(data)) return data;
       if (data.type === 'FeatureCollection' && Array.isArray(data.features)) return data.features;
       if (data.type === 'GeometryCollection' && Array.isArray(data.geometries)) return data.geometries;
@@ -262,7 +262,7 @@ The tools handle various data structures automatically (arrays, GeoJSON, nested 
           const errorResult = `Error: Unknown tool ${toolUse.name}`;
           allToolCalls.push({
             name: toolUse.name,
-            input: toolUse.input as Record<string, any>,
+            input: toolUse.input as Record<string, unknown>,
             result: errorResult,
           });
           return {
@@ -274,11 +274,11 @@ The tools handle various data structures automatically (arrays, GeoJSON, nested 
         }
 
         try {
-          const result = implementation(toolUse.input as Record<string, any>);
+          const result = implementation(toolUse.input as Record<string, unknown>);
           const resultString = String(result);
           allToolCalls.push({
             name: toolUse.name,
-            input: toolUse.input as Record<string, any>,
+            input: toolUse.input as Record<string, unknown>,
             result: resultString,
           });
           return {
@@ -290,7 +290,7 @@ The tools handle various data structures automatically (arrays, GeoJSON, nested 
           const errorResult = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
           allToolCalls.push({
             name: toolUse.name,
-            input: toolUse.input as Record<string, any>,
+            input: toolUse.input as Record<string, unknown>,
             result: errorResult,
           });
           return {

@@ -17,10 +17,10 @@ const icon = L.icon({
 });
 
 interface MapViewProps {
-  data: any;
+  data: unknown;
 }
 
-function isGeoJSON(data: any): boolean {
+const isGeoJSON = (data: unknown): boolean => {
   if (!data || typeof data !== 'object') return false;
 
   // Check for GeoJSON FeatureCollection
@@ -42,7 +42,7 @@ function isGeoJSON(data: any): boolean {
   return false;
 }
 
-function extractLatLonPoints(data: any): Array<{ lat: number; lng: number; label?: string }> {
+const extractLatLonPoints = (data: unknown): Array<{ lat: number; lng: number; label?: string }> => {
   const points: Array<{ lat: number; lng: number; label?: string }> = [];
 
   // Handle arrays
@@ -63,7 +63,7 @@ function extractLatLonPoints(data: any): Array<{ lat: number; lng: number; label
   return points;
 }
 
-function extractSinglePoint(item: any): { lat: number; lng: number } | null {
+const extractSinglePoint = (item: unknown): { lat: number; lng: number } | null => {
   if (!item || typeof item !== 'object') return null;
 
   // Common field name variations
@@ -95,7 +95,7 @@ function extractSinglePoint(item: any): { lat: number; lng: number } | null {
   return null;
 }
 
-function calculateCenter(data: any): [number, number] {
+const calculateCenter = (data: unknown): [number, number] => {
   // For GeoJSON, try to calculate bounds
   if (isGeoJSON(data)) {
     // Default to world center
@@ -114,11 +114,11 @@ function calculateCenter(data: any): [number, number] {
   return [20, 0];
 }
 
-function MapContent({ data, isGeoJSONData, points }: {
-  data: any;
+const MapContent = ({ data, isGeoJSONData, points }: {
+  data: unknown;
   isGeoJSONData: boolean;
   points: Array<{ lat: number; lng: number; label?: string }>;
-}) {
+}) => {
   useMapBounds(data, points, isGeoJSONData);
 
   return (

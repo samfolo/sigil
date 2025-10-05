@@ -5,12 +5,12 @@ export interface Message {
 
 export interface ToolCall {
   name: string;
-  input: Record<string, any>;
+  input: Record<string, unknown>;
   result: string;
 }
 
 export interface ChatResponse {
   message: Message;
-  modifiedData?: any;
+  modifiedData?: unknown;
   toolCalls?: ToolCall[];
 }

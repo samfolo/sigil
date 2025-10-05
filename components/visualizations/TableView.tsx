@@ -14,7 +14,7 @@ interface KeyField {
 }
 
 interface TableViewProps {
-  data: any[];
+  data: unknown[];
   keyFields: KeyField[];
 }
 

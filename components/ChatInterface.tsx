@@ -10,9 +10,9 @@ import { QueryState, isLoading } from '@/lib/queryState';
 import { Message, ToolCall } from '@/lib/chatTypes';
 
 interface ChatInterfaceProps {
-  data: any;
+  data: unknown;
   analysis: Analysis;
-  onDataUpdate?: (newData: any) => void;
+  onDataUpdate?: (newData: unknown) => void;
   sessionId: string | null;
 }
 

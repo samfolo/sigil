@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/card';
 import { DetectionResult } from '@/lib/formatDetector';
 import { Separator } from '@/components/ui/separator';
 import { Analysis } from '@/lib/analysisSchema';
-import { TableView } from '@/components/visualizations/TableView';
-import { TreeView } from '@/components/visualizations/TreeView';
+import { TableView } from '@/components/Visualizations/TableView';
+import { TreeView } from '@/components/Visualizations/TreeView';
 import { QueryState, isSuccess, isLoading, isError } from '@/lib/queryState';
 import { Loader2, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ChatInterface } from '@/components/ChatInterface';
 
 const MapView = dynamic(
-  () => import('@/components/visualizations/MapView').then(mod => ({ default: mod.MapView })),
+  () => import('@/components/Visualizations/MapView').then(mod => ({ default: mod.MapView })),
   { ssr: false }
 );
 
@@ -33,7 +33,7 @@ export const DataCanvas = ({ result, analysisState, sessionId }: DataCanvasProps
     setDisplayData(result.data);
   }
 
-  const handleDataUpdate = (newData: any) => {
+  const handleDataUpdate = (newData: unknown) => {
     setDisplayData(newData);
   };
 

@@ -20,7 +20,7 @@ const openai = new OpenAI({ apiKey });
 /**
  * Generate embeddings using OpenAI's text-embedding-3-small model
  */
-export async function generateEmbedding(text: string): Promise<number[]> {
+export const generateEmbedding = async (text: string): Promise<number[]> => {
   const response = await openai.embeddings.create({
     model: 'text-embedding-3-small',
     input: text,
