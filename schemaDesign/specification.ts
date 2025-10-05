@@ -41,7 +41,7 @@ export type DataShape =
 // Layout System
 // ============================================================================
 
-export type LayoutNode = StackLayoutNode | GridLayout;
+export type LayoutNode = StackLayoutNode | GridLayoutNode;
 
 export type LayoutNodeType = "stack" | "grid";
 
@@ -51,7 +51,11 @@ export interface BaseLayoutNode {
   id: string;
   type: LayoutNodeType;
   width?: SizeConstraint;
+  min_width?: SizeConstraint;
+  max_width?: SizeConstraint;
   height?: SizeConstraint;
+  min_height?: SizeConstraint;
+  max_height?: SizeConstraint;
   padding?: Padding;
 }
 
@@ -66,7 +70,7 @@ export interface StackLayoutNode extends BaseLayoutNode {
   children: LayoutChild[];
 }
 
-export interface GridLayout extends BaseLayoutNode {
+export interface GridLayoutNode extends BaseLayoutNode {
   type: "grid";
   columns: number;
   rows?: number;
@@ -97,6 +101,7 @@ export type Padding =
 
 export type SizeConstraint =
   | { type: "fixed"; value: number }
+  | { type: "flex"; value: number }
   | { type: "percentage"; value: number }
   | { type: "content" }; // Size to content
 
@@ -116,19 +121,133 @@ export type ComponentType =
   | "composition"
   | "text-insight";
 
-export interface Affordance {
-  kind: AffordanceKind;
-  config?: Record<string, any>; // Affordance-specific configuration (TODO: Define exhaustively)
+export interface AffordedField {
+  accessor: string; // Field accessor
 }
 
-export type AffordanceKind =
-  | "virtualization"
-  | "sorting"
-  | "filtering"
-  | "pagination"
-  | "export"
-  | "selection"
-  | "search";
+export type Affordance =
+  | VirtualisationAffordance
+  | SortingAffordance
+  | FilteringAffordance
+  | PaginationAffordance
+  | ExportAffordance
+  | SelectionAffordance
+  | SearchAffordance;
+
+export interface VirtualisationAffordance {
+  kind: "virtualisation";
+  item_height?: number; // Fixed height in pixels, omit for dynamic
+  overscan_count?: number; // Number of items to render outside viewport (default: 3)
+  buffer_size?: number; // Number of items to keep in memory (default: 50)
+}
+
+export interface SortingAffordance {
+  kind: "sorting";
+  allowed_fields?: AffordedField[]; // Field accessors that can be sorted, omit for all fields
+  default_field?: AffordedField; // Default sort field
+  default_direction?: "asc" | "desc"; // Default sort direction (default: "asc")
+}
+
+export interface FilteringAffordance {
+  kind: "filtering";
+  allowed_fields?: AffordedField[]; // Field accessors that can be filtered, omit for all fields
+  filter_types?: Record<string, FilterType>; // field_accessor -> filter type
+  default_filters?: FilterCondition[]; // Filters applied by default
+}
+
+export type FilterType = "text" | "number_range" | "date_range" | "select" | "boolean";
+
+export type FilterConditionLogicalOperator = "and" | "or" | "not";
+
+export interface LogicalFilterCondition {
+  type: "logical";
+  operator: FilterConditionLogicalOperator;
+  conditions: FilterCondition[];
+}
+
+export type FilterConditionRelationalOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "greater_than"
+  | "less_than"
+  | "greater_than_or_equal"
+  | "less_than_or_equal"
+  | "between"
+  | "in"
+  | "not_in";
+
+interface ValueRelationalFilterConditionValue {
+  kind: "value";
+  value: string | number | boolean | null;
+}
+
+interface FieldRelationalFilterConditionValue {
+  kind: "field";
+  field: AffordedField;
+}
+
+interface ListRelationalFilterConditionValue {
+  kind: "list";
+  values: Array<string | number | boolean | null>;
+}
+
+interface RangeRelationalFilterConditionValue {
+  kind: "range";
+  start: string | number; // Inclusive
+  end: string | number;   // Inclusive
+}
+
+export type FilterConditionValue =
+  | ValueRelationalFilterConditionValue
+  | FieldRelationalFilterConditionValue
+  | ListRelationalFilterConditionValue
+  | RangeRelationalFilterConditionValue;
+
+export interface RelationalFilterCondition {
+  type: "relational";
+  field: AffordedField;
+  operator: FilterConditionRelationalOperator;
+  value: FilterConditionValue;
+}
+
+export type FilterCondition = LogicalFilterCondition | RelationalFilterCondition;
+
+export interface PaginationAffordance {
+  kind: "pagination";
+  page_size: number; // Default number of items per page
+  show_size_options?: boolean; // Show page size selector (default: true)
+  size_options?: number[]; // Available page sizes (default: [10, 25, 50, 100])
+}
+
+export interface ExportAffordance {
+  kind: "export";
+  formats: ExportAffordanceFormat[]; // Available export formats
+  include_headers?: boolean; // Include column headers (default: true)
+  filename_template?: string; // Template for filename (default: "{title}_{timestamp}")
+}
+
+export type ExportAffordanceFormat = "csv" | "json";
+
+type SelectionAffordanceMode = "single" | "multiple";
+
+export interface SelectionAffordance {
+  kind: "selection";
+  mode: SelectionAffordanceMode; // Single or multiple selection
+  show_checkboxes?: boolean; // Show selection checkboxes (default: true for multiple)
+  preserve_across_pages?: boolean; // Keep selections when paginating (default: false)
+}
+
+
+export interface SearchAffordance {
+  kind: "search";
+  searchable_fields?: AffordedField[]; // Field accessors to search, omit for all text fields
+  case_sensitive?: boolean; // Case-sensitive search (default: false)
+  min_characters?: number; // Minimum characters before search triggers (default: 1)
+}
 
 // Component-specific configs (discriminated union)
 export type ComponentConfig =
@@ -142,7 +261,7 @@ export interface DataTableConfig {
   type: "data-table";
   title?: string;
   description?: string;
-  affordances?: Affordance[];
+  affordances: Affordance[];
   // TODO: Define exhaustive config properties
 }
 
@@ -150,7 +269,7 @@ export interface HierarchyConfig {
   type: "hierarchy";
   title?: string;
   description?: string;
-  affordances?: Affordance[];
+  affordances: Affordance[];
   // TODO: Define exhaustive config properties
 }
 
@@ -158,7 +277,7 @@ export interface CompositionConfig {
   type: "composition";
   title?: string;
   description?: string;
-  affordances?: Affordance[];
+  affordances: Affordance[];
   // TODO: Define exhaustive config properties
 }
 
@@ -166,7 +285,7 @@ export interface TextInsightConfig {
   type: "text-insight";
   title?: string;
   description?: string;
-  affordances?: Affordance[];
+  affordances: Affordance[];
   // TODO: Define exhaustive config properties
 }
 
@@ -177,11 +296,6 @@ export interface TextInsightConfig {
 export interface RenderContext {
   data: any; // Already parsed to JSON
   accessor_bindings: Record<string, Record<string, FieldMetadata>>; // component_id -> (field_path -> metadata)
-}
-
-export interface AccessorBinding {
-  properties: Record<string, any>
-  metadata: FieldMetadata;
 }
 
 // ============================================================================
@@ -210,7 +324,6 @@ export type ValueMappingDisplayDetails =
 
 export interface ValueMappingDisplayConfigBase {
   type: ValueMappingDisplayType;
-  details?: ValueMappingDisplayDetails;
 }
 
 interface ValueMappingChipDisplayConfig extends ValueMappingDisplayConfigBase {
@@ -239,11 +352,10 @@ export interface ValueMapping {
 }
 
 export interface FieldMetadata {
-  accessor: string; // JSONPath
   roles: string[]; // Always array, e.g., ["x", "time"]
   data_types: DataType[]; // First element is primary type, rest are fallbacks
-  value_mappings: Record<string, ValueMapping>; // source_value -> display_value and config
+  value_mappings?: Record<string, ValueMapping>; // source_value -> display_value and config
   format?: string; // Display format hint (e.g., "DD/MM/YYYY", "£0,0.00")
 }
 
-export type DataType = "number" | "string" | "date" | "boolean" | "null" | "array" | "object";
+export type DataType = "number" | "string" | "date" | "boolean" | "null" | "array" | "object" | "undefined" | "unknown";
