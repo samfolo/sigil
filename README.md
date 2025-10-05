@@ -4,7 +4,7 @@ AI-native data analysis tool that automatically detects, parses, and visualises 
 
 ## Features
 
-- **Auto-format detection**: Supports JSON, CSV, YAML, XML, and GeoJSON
+- **Auto-format detection**: Supports JSON (including GeoJSON), CSV, YAML, XML
 - **AI-powered analysis**: Claude analyses your data structure and recommends optimal visualisations
 - **Interactive chat**: Ask questions about your data using natural language
 - **Data manipulation tools**: Filter, aggregate, sort, and analyse data through conversational interface
