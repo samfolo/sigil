@@ -26,7 +26,7 @@ const limitDataSample = (data: unknown, _format: string): string => {
 
 const ANALYSIS_TOOL: ToolUnion = {
   name: 'provide_analysis',
-  description: 'Provide a structured analysis of the data sample including data type, description, key fields, recommended visualization, and rationale.',
+  description: 'Provide a structured analysis of the data sample including data type, description, key fields, recommended visualisation, and rationale.',
   input_schema: z.toJSONSchema(analysisSchema, {target: 'draft-2020-12'}) as Tool.InputSchema,
 };
 
@@ -53,7 +53,7 @@ export const POST = async (request: NextRequest) => {
     const dataSample = limitDataSample(data, format);
 
 
-    const prompt = `Analyze this ${format} data sample and provide your analysis using the tool.
+    const prompt = `Analyse this ${format} data sample and provide your analysis using the tool.
 
 IMPORTANT for keyFields:
 - "path" must be the actual key or accessor path in the data (e.g., 'name', 'user.email', 'items[0].id')
@@ -135,7 +135,7 @@ ${dataSample}`;
 
     console.error('Error calling Claude API:', error);
     return NextResponse.json(
-      { error: 'Failed to analyze data' },
+      { error: 'Failed to analyse data' },
       { status: 500 }
     );
   }

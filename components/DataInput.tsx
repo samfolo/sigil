@@ -10,26 +10,26 @@ import { Analysis } from '@/lib/analysisSchema';
 import { Loader2 } from 'lucide-react';
 
 interface DataInputProps {
-  onAnalyze: (result: DetectionResult, analysisState: QueryState<Analysis, string>, sessionId: string | null) => void;
+  onAnalyse: (result: DetectionResult, analysisState: QueryState<Analysis, string>, sessionId: string | null) => void;
 }
 
-export const DataInput = ({ onAnalyze }: DataInputProps) => {
+export const DataInput = ({ onAnalyse }: DataInputProps) => {
   const [input, setInput] = useState('');
   const [analysisState, setAnalysisState] = useState<QueryState<Analysis, string>>({ status: 'idle' });
 
-  const handleAnalyze = async () => {
+  const handleAnalyse = async () => {
     const result = detectFormat(input);
 
     if (result.format === 'unknown' || !result.data) {
-      onAnalyze(result, { status: 'idle' }, null);
+      onAnalyse(result, { status: 'idle' }, null);
       return;
     }
 
     setAnalysisState({ status: 'loading' });
-    onAnalyze(result, { status: 'loading' }, null);
+    onAnalyse(result, { status: 'loading' }, null);
 
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await fetch('/api/analyse', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,18 +45,18 @@ export const DataInput = ({ onAnalyze }: DataInputProps) => {
         const errorMessage = error.error || 'Analysis failed';
         console.error('Analysis failed:', error);
         setAnalysisState({ status: 'error', error: errorMessage });
-        onAnalyze(result, { status: 'error', error: errorMessage }, null);
+        onAnalyse(result, { status: 'error', error: errorMessage }, null);
         return;
       }
 
       const { analysis, sessionId } = await response.json();
       setAnalysisState({ status: 'success', data: analysis });
-      onAnalyze(result, { status: 'success', data: analysis }, sessionId);
+      onAnalyse(result, { status: 'success', data: analysis }, sessionId);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error calling analyze endpoint';
-      console.error('Error calling analyze endpoint:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error calling analyse endpoint';
+      console.error('Error calling analyse endpoint:', error);
       setAnalysisState({ status: 'error', error: errorMessage });
-      onAnalyze(result, { status: 'error', error: errorMessage }, null);
+      onAnalyse(result, { status: 'error', error: errorMessage }, null);
     }
   };
 
@@ -73,14 +73,14 @@ export const DataInput = ({ onAnalyze }: DataInputProps) => {
       </div>
       <Separator />
       <div className="flex flex-col gap-2">
-        <Button onClick={handleAnalyze} disabled={isLoading(analysisState)}>
+        <Button onClick={handleAnalyse} disabled={isLoading(analysisState)}>
           {isLoading(analysisState) ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing...
+              Analysing...
             </>
           ) : (
-            'Analyze'
+            'Analyse'
           )}
         </Button>
         {analysisState.status === 'error' && (

@@ -12,7 +12,7 @@ const Home = () => {
   const [analysisState, setAnalysisState] = useState<QueryState<Analysis, string>>({ status: 'idle' });
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const handleAnalyze = (detectionResult: DetectionResult, newAnalysisState: QueryState<Analysis, string>, newSessionId: string | null) => {
+  const handleAnalyse = (detectionResult: DetectionResult, newAnalysisState: QueryState<Analysis, string>, newSessionId: string | null) => {
     setResult(detectionResult);
     setAnalysisState(newAnalysisState);
     setSessionId(newSessionId);
@@ -20,7 +20,7 @@ const Home = () => {
 
   return (
     <div className="flex h-screen">
-      <DataInput onAnalyze={handleAnalyze} />
+      <DataInput onAnalyse={handleAnalyse} />
       <DataCanvas result={result} analysisState={analysisState} sessionId={sessionId} />
     </div>
   );

@@ -190,7 +190,7 @@ ${recordCount !== 'N/A' ? `Current Record Count: ${recordCount}` : ''}
 Key Fields Available (use the quoted "path" value in tool calls):
 ${dataContext.analysis.keyFields.map(f => `- "${f.path}" → ${f.label}: ${f.description}`).join('\n')}
 
-Recommended Visualization: ${dataContext.analysis.recommendedVisualization}
+Recommended Visualisation: ${dataContext.analysis.recommendedVisualisation}
 Rationale: ${dataContext.analysis.rationale}
 
 IMPORTANT - Field Paths for GeoJSON Data:
@@ -217,7 +217,7 @@ You have access to tools that can operate on this dataset:
 - get_unique_values: See what distinct values exist in a field
 - sort_data: Reorder the dataset
 
-When the user asks questions about the data, use these tools to analyze it. Examples:
+When the user asks questions about the data, use these tools to analyse it. Examples:
 - "How many total items?" → aggregate_data with operation='count'
 - "How many Polygons?" → filter_data with field='geometry.type', operator='equals', value='Polygon' (returns count)
 - "What geometry types exist?" → get_unique_values with field='geometry.type'
@@ -225,7 +225,7 @@ When the user asks questions about the data, use these tools to analyze it. Exam
 - "Show me only records where..." → filter_data
 
 EXAMPLES FOR THIS SPECIFIC DATASET (use these exact field paths):
-${dataContext.analysis.keyFields.slice(0, 3).map(f => `- get_unique_values(field="${f.path}") to analyze unique values in ${f.label}
+${dataContext.analysis.keyFields.slice(0, 3).map(f => `- get_unique_values(field="${f.path}") to analyse unique values in ${f.label}
 - aggregate_data(field="${f.path}", operation="sum") to sum ${f.label}
 - filter_data(field="${f.path}", operator="equals", value=<value>) to filter by ${f.label}`).join('\n')}
 

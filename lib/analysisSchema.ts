@@ -20,14 +20,14 @@ export const analysisSchema = z.object({
     )
     .max(5)
     .describe('The most important fields in the data and what they mean'),
-  recommendedVisualization: z
+  recommendedVisualisation: z
     .enum(['table', 'map', 'tree', 'cards', 'chart'])
-    .describe('The best way to visualize this data structure'),
+    .describe('The best way to visualise this data structure'),
   rationale: z
     .string()
     .min(10)
     .max(500)
-    .describe('Why this visualization approach is recommended for this data (aim for 1-2 sentences, ~200 characters)'),
-}).describe('Analysis of structured data format and recommended visualization');
+    .describe('Why this visualisation approach is recommended for this data (aim for 1-2 sentences, ~200 characters)'),
+}).describe('Analysis of structured data format and recommended visualisation');
 
 export type Analysis = z.infer<typeof analysisSchema>;

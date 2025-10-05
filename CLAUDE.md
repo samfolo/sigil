@@ -53,7 +53,7 @@ Detection order in `lib/formatDetector.ts`:
 
 ### API Routes
 
-- `/app/api/analyze/route.ts`: Placeholder for future Claude Agent SDK integration (not yet implemented)
+- `/app/api/analyse/route.ts`: Placeholder for future Claude Agent SDK integration (not yet implemented)
 
 ## Configuration
 

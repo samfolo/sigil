@@ -118,8 +118,8 @@ export const DataCanvas = ({ result, analysisState, sessionId }: DataCanvasProps
                           </div>
 
                           <div>
-                            <p className="font-medium mb-1">Recommended Visualization</p>
-                            <p className="text-muted-foreground capitalize">{analysisState.data.recommendedVisualization}</p>
+                            <p className="font-medium mb-1">Recommended Visualisation</p>
+                            <p className="text-muted-foreground capitalize">{analysisState.data.recommendedVisualisation}</p>
                           </div>
 
                           <div>
@@ -138,11 +138,11 @@ export const DataCanvas = ({ result, analysisState, sessionId }: DataCanvasProps
                 <>
                   <div className="space-y-2">
                     <h3 className="text-sm font-semibold">
-                      {isSuccess(analysisState) ? 'Visualization' : 'Raw Data'}
+                      {isSuccess(analysisState) ? 'Visualisation' : 'Raw Data'}
                     </h3>
                     {isSuccess(analysisState) ? (
                       (() => {
-                        switch (analysisState.data.recommendedVisualization) {
+                        switch (analysisState.data.recommendedVisualisation) {
                           case 'table':
                             return Array.isArray(displayData) ? (
                               <TableView data={displayData} keyFields={analysisState.data.keyFields} />
@@ -160,9 +160,9 @@ export const DataCanvas = ({ result, analysisState, sessionId }: DataCanvasProps
                             return (
                               <div className="bg-muted/50 p-8 rounded-lg text-center">
                                 <p className="text-muted-foreground text-sm">
-                                  {analysisState.data.recommendedVisualization.charAt(0).toUpperCase() +
-                                    analysisState.data.recommendedVisualization.slice(1)}{' '}
-                                  visualization coming soon
+                                  {analysisState.data.recommendedVisualisation.charAt(0).toUpperCase() +
+                                    analysisState.data.recommendedVisualisation.slice(1)}{' '}
+                                  visualisation coming soon
                                 </p>
                               </div>
                             );
