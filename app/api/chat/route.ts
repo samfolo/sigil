@@ -3,8 +3,6 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Analysis } from '@/lib/analysisSchema';
 import { filterData, aggregateData, getUniqueValues, sortData } from '@/lib/dataTools';
 import { Message, ToolCall, ChatResponse } from '@/lib/chatTypes';
-import { supabase } from '@/lib/supabase';
-import { generateEmbedding } from '@/lib/embeddings';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -173,32 +171,6 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    // Retrieve RAG context if sessionId is provided
-    let ragContext = '';
-    if (sessionId && messages.length > 0) {
-      try {
-        const userQuestion = messages[messages.length - 1].content;
-        const questionEmbedding = await generateEmbedding(userQuestion);
-
-        const { data: similarSessions, error } = await supabase.rpc('match_sessions', {
-          query_embedding: questionEmbedding,
-          match_threshold: 0.7,
-          match_count: 3,
-        });
-
-        if (!error && similarSessions && similarSessions.length > 0) {
-          ragContext = `\n\nRelevant context from similar datasets:\n${similarSessions
-            .map((session: any, idx: number) =>
-              `${idx + 1}. ${session.analysis.description} (Format: ${session.format}, Similarity: ${(session.similarity * 100).toFixed(0)}%)`
-            )
-            .join('\n')}\n`;
-        }
-      } catch (error) {
-        console.error('Failed to retrieve RAG context:', error);
-        // Continue without RAG context - don't fail the chat
-      }
-    }
-
     // Detect data structure type for better prompting
     const dataStructureInfo = Array.isArray(currentData)
       ? 'array of objects'
@@ -257,7 +229,7 @@ ${dataContext.analysis.keyFields.slice(0, 3).map(f => `- get_unique_values(field
 - aggregate_data(field="${f.path}", operation="sum") to sum ${f.label}
 - filter_data(field="${f.path}", operator="equals", value=<value>) to filter by ${f.label}`).join('\n')}
 
-The tools handle various data structures automatically (arrays, GeoJSON, nested objects). Be concise and helpful.${ragContext}`;
+The tools handle various data structures automatically (arrays, GeoJSON, nested objects). Be concise and helpful.`;
 
     // Convert messages to Anthropic format
     const apiMessages: Anthropic.MessageParam[] = messages.map(msg => ({

@@ -1,3 +1,10 @@
+/**
+ * Embedding utilities for session storage
+ *
+ * Used for storing session embeddings in Supabase.
+ * RAG retrieval functionality to be implemented later.
+ */
+
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
