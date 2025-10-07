@@ -147,17 +147,17 @@ export type LayoutNodeType = "stack" | "grid";
  */
 export type LayoutNodeSpacing =
   /*
-   * Minimal spacing for dense layouts (typically 4-8px)
+   * Minimal spacing for dense layouts
    */
   | "tight"
 
   /*
-   * Default spacing for balanced layouts (typically 12-16px)
+   * Default spacing for balanced layouts
    */
   | "normal"
 
   /*
-   * Generous spacing for spacious layouts (typically 24-32px)
+   * Generous spacing for spacious layouts
    */
   | "relaxed";
 
