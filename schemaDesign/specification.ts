@@ -1,9 +1,10 @@
 /**
  * Sigil Component Specification - Intermediate Representation
- * 
+ *
  * Design principles:
- * - Specs are reusable templates, decoupled from specific data sources
- * - Data bindings, value mappings, and field metadata provided at runtime via RenderContext
+ * - Specs are generated fresh for each dataset, tailored to its semantic meaning
+ * - Field metadata, value mappings, and bindings are embedded directly in the spec
+ * - Data values are provided separately at render time (not embedded in spec)
  * - Layout and components are separate concerns
  * - Type-specific configs via discriminated unions
  * - Everything normalised to JSON before spec generation
@@ -14,11 +15,23 @@
 // ============================================================================
 
 /*
- * ComponentSpec is the root container for a complete, reusable visualisation specification.
+ * ComponentSpec is the root container for a complete visualisation specification.
  *
- * It defines WHAT to render (layout + components) without binding to specific data.
- * Data bindings are provided at runtime via RenderContext, enabling the same spec
- * to be reused across different data sources of the same shape.
+ * Specs are generated fresh for each dataset by LLMs or spec generators, tailored
+ * to the specific semantic meaning and structure of that data. Even datasets with
+ * identical shapes may require different specs if their semantic meaning differs.
+ *
+ * The spec contains everything needed to render the visualisation:
+ * - Layout structure and component arrangement
+ * - Component configurations and affordances
+ * - Field metadata, type information, and value mappings
+ * - Data shape and structural expectations
+ *
+ * The spec does NOT contain the actual data values - those are provided separately
+ * at render time. This separation allows:
+ * - Lightweight serialisation and storage of specs
+ * - Rendering different views of the same dataset (filtered, paginated, etc.)
+ * - Versioning and evolution of specs independently from data
  *
  * The spec is immutable once created - any modifications create a new version.
  */
@@ -68,25 +81,53 @@ export interface ComponentSpec {
    * Components are referenced from LayoutChild nodes via their IDs
    */
   components: Record<string, ComponentNode>;
+
+  /*
+   * Field metadata providing semantic information about data fields for each component
+   *
+   * Structure: { [component_id]: { [field_accessor]: FieldMetadata } }
+   *
+   * This maps each component's fields to their metadata (types, roles, display hints, value mappings).
+   * The component_id keys correspond to IDs in ComponentSpec.components.
+   * The field_accessor keys use dot notation matching AffordedField.accessor syntax.
+   *
+   * Field metadata includes:
+   * - Semantic roles (label, value, category, etc.)
+   * - Data types with fallback options for coercion
+   * - Value mappings for transforming raw values to display values
+   * - Format strings for dates and numbers
+   *
+   * Example:
+   * {
+   *   "table-1": {
+   *     "user.name": { roles: ["label"], data_types: ["string"], ... },
+   *     "user.age": { roles: ["value"], data_types: ["number"], format: "0,0", ... }
+   *   }
+   * }
+   */
+  accessor_bindings: Record<string, Record<string, FieldMetadata>>;
 }
 
 /*
  * Semantic versioning following the semver.org specification
- * Used to track specification evolution and determine compatibility
+ * Tracks iterations and evolution of the spec for a given dataset
  */
 export interface SemVer {
   /*
-   * Major version - increment for breaking changes that require data/rendering updates
+   * Major version - increment for breaking changes to the spec structure or rendering requirements
+   * E.g., changing component types, restructuring layout, altering field bindings
    */
   major: number;
 
   /*
-   * Minor version - increment for backwards-compatible feature additions
+   * Minor version - increment for backwards-compatible additions
+   * E.g., adding new affordances, additional components, new field metadata
    */
   minor: number;
 
   /*
-   * Patch version - increment for backwards-compatible bug fixes
+   * Patch version - increment for backwards-compatible refinements
+   * E.g., fixing field formats, adjusting value mappings, correcting metadata
    */
   patch: number;
 }
@@ -502,7 +543,7 @@ export type ComponentType =
   | "text-insight";
 
 /*
- * Reference to a field in the runtime data using an accessor path
+ * Reference to a field in the provided data using an accessor path
  *
  * Accessor syntax:
  * - Simple field: "name", "age", "status"
@@ -510,7 +551,7 @@ export type ComponentType =
  * - Array index: "items[0]", "users[5].name"
  * - Mixed: "data.users[0].contacts[1].email"
  *
- * The accessor is resolved at runtime against RenderContext.data
+ * The accessor is resolved at inference time against the provided data
  */
 export interface AffordedField {
   /*
@@ -1216,50 +1257,6 @@ export interface TextInsightConfig {
    */
   affordances: Affordance[];
   // TODO: Define exhaustive config properties (formatting, highlighting, etc.)
-}
-
-// ============================================================================
-// Runtime Context (separate from spec, data-specific)
-// ============================================================================
-
-/*
- * Runtime context provides the bridge between the reusable ComponentSpec and actual data
- *
- * CRITICAL DESIGN PRINCIPLE:
- * - ComponentSpec is data-agnostic and reusable across different datasets
- * - RenderContext is data-specific and provided at render time
- * - This separation enables the same spec to visualise different data sources
- *   with the same shape (e.g., development vs production data)
- *
- * The rendering engine combines ComponentSpec + RenderContext to produce the final visualisation.
- */
-export interface RenderContext {
-  /*
-   * The actual data to visualise, already parsed to JSON
-   *
-   * This should match the data_shape declared in ComponentSpec.
-   * The rendering engine will access this data using field accessors from AffordedField.
-   */
-  data: any;
-
-  /*
-   * Field metadata providing semantic information about data fields
-   *
-   * Structure: { [component_id]: { [field_accessor]: FieldMetadata } }
-   *
-   * This maps each component's fields to their metadata (types, roles, display hints).
-   * The component_id keys correspond to IDs in ComponentSpec.components.
-   * The field_accessor keys use dot notation matching AffordedField.accessor syntax.
-   *
-   * Example:
-   * {
-   *   "table-1": {
-   *     "user.name": { roles: ["label"], data_types: ["string"], ... },
-   *     "user.age": { roles: ["value"], data_types: ["number"], ... }
-   *   }
-   * }
-   */
-  accessor_bindings: Record<string, Record<string, FieldMetadata>>;
 }
 
 // ============================================================================
