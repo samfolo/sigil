@@ -132,3 +132,10 @@ setQueryState('reloading');
 
 This ensures consistent state management across all async operations in the application.
 - This project uses Zod V4 - check https://zod.dev for documentation and/or https://zod.dev/api for the API specification when you need context.
+
+## Refactoring Guidelines
+
+**IMPORTANT**: This is an internal development project, not a library or production system:
+- **No deprecation needed**: When consolidating or removing duplicate code, delete it directly without deprecation warnings
+- **No backward compatibility**: Internal APIs can be changed freely without maintaining backwards compatibility
+- **Prefer clarity over compatibility**: Refactor aggressively to improve code quality without worrying about breaking changes

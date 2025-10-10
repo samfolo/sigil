@@ -5,7 +5,6 @@
 import type { JsonSchema, Config } from './types';
 import { mapJsonSchemaTypeToZod, toSchemaName, toTypeName } from './typeMapper';
 import {
-	isDiscriminatedUnion,
 	generateDiscriminatedUnion,
 	getDiscriminatedUnions,
 	validateDiscriminatedUnionVariants,
@@ -60,7 +59,7 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
 
 		if (union) {
 			// Generate discriminated union
-			const { code, exportCode } = generateDiscriminatedUnionSchema(name, union, schema, isRecursive);
+			const { code, exportCode } = generateDiscriminatedUnionSchema(name, union, schema);
 			schemas.push(code);
 			exports.push(exportCode);
 		} else {
@@ -83,9 +82,8 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
  */
 const generateDiscriminatedUnionSchema = (
 	name: string,
-	union: import('./types').DiscriminatedUnion,
-	schema: JsonSchema,
-	isRecursive: boolean
+	union: DiscriminatedUnion,
+	schema: JsonSchema
 ): { code: string; exportCode: string } => {
 	const schemaName = toSchemaName(name);
 	const typeName = toTypeName(schemaName);
@@ -191,11 +189,17 @@ const checkIfNeedsRecursiveHandling = (
 	isRecursive: boolean
 ): { hasRecursiveProps: boolean; recursiveRefs: Set<string> } => {
 	const recursiveRefs = new Set<string>();
-	const properties = schema.properties as Record<string, JsonSchema> | undefined;
 
-	if (!properties) {
+	// Type guard for properties
+	if (
+		!schema.properties ||
+		typeof schema.properties !== 'object' ||
+		Array.isArray(schema.properties)
+	) {
 		return { hasRecursiveProps: false, recursiveRefs };
 	}
+
+	const properties = schema.properties as Record<string, JsonSchema>;
 
 	// Check each property for forward references
 	for (const [_key, propSchema] of Object.entries(properties)) {
@@ -310,11 +314,14 @@ const generateRecursiveObjectSchema = (
 	// For schemas with getters, we can't use .strict() directly on the definition
 	// because it evaluates getters during construction
 	// Instead, use type assertion to indicate strict mode
-	const finalCode = additionalProperties === false && hasGetterProperties
-		? `${objectCode} as z.ZodObject<any, "strict">`
-		: additionalProperties === false
-			? `${objectCode}.strict()`
-			: objectCode;
+	let finalCode: string;
+	if (additionalProperties === false && hasGetterProperties) {
+		finalCode = `${objectCode} as z.ZodObject<any, "strict">`;
+	} else if (additionalProperties === false) {
+		finalCode = `${objectCode}.strict()`;
+	} else {
+		finalCode = objectCode;
+	}
 
 	return `${description}export const ${schemaName} = ${finalCode};`;
 };

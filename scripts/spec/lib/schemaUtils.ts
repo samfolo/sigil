@@ -36,11 +36,13 @@ export const resolveRefs = (obj: unknown): unknown => {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     // Skip $id when copying (we'll set a new one for the bundled schema)
-    if (key !== '$id' && key !== 'title' && key !== 'description') {
-      result[key] = resolveRefs(value);
-    } else if (key === 'description' && typeof value === 'string') {
-      // Keep description at the definition level
+    // Preserve description and title at the definition level
+    if (key === '$id') {
+      continue;
+    } else if ((key === 'description' || key === 'title') && typeof value === 'string') {
       result[key] = value;
+    } else {
+      result[key] = resolveRefs(value);
     }
   }
 
@@ -74,20 +76,38 @@ export const collectRefs = (obj: unknown, refs: Set<string> = new Set()): Set<st
 };
 
 /**
- * Extract definition name from a $ref path
+ * Extract definition name from a local $ref path (#/definitions/Name)
  * Returns null if the ref doesn't match the expected format
  */
-export const extractDefinitionName = (ref: string): string | null => {
+export const extractLocalDefinitionName = (ref: string): string | null => {
   if (ref.startsWith('#/definitions/')) {
     return ref.substring('#/definitions/'.length);
   }
+  return null;
+};
 
-  if (ref.includes('#/definitions/')) {
-    const match = ref.match(/#\/definitions\/(.+)$/);
-    return match ? match[1] : null;
+/**
+ * Extract definition name from a cross-file $ref path (./file.json#/definitions/Name)
+ * Returns null if the ref doesn't match the expected format
+ */
+export const extractCrossFileDefinitionName = (ref: string): string | null => {
+  const match = ref.match(/\.\/[^#]+#\/definitions\/(.+)$/);
+  return match ? match[1] : null;
+};
+
+/**
+ * Extract definition name from any $ref path (local or cross-file)
+ * Returns null if the ref doesn't match the expected format
+ */
+export const extractDefinitionName = (ref: string): string | null => {
+  // Try local ref first
+  const localName = extractLocalDefinitionName(ref);
+  if (localName) {
+    return localName;
   }
 
-  return null;
+  // Try cross-file ref
+  return extractCrossFileDefinitionName(ref);
 };
 
 /**

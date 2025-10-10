@@ -3,6 +3,7 @@
  */
 
 import type { JsonSchema } from './types';
+import { extractDefinitionName } from './schemaUtils';
 
 /**
  * Maps a JSON Schema type to its Zod equivalent code string
@@ -212,22 +213,9 @@ const mapEnumToZod = (values: unknown[]): string => {
 
 /**
  * Extracts the definition name from a $ref string
+ * This is an alias for extractDefinitionName from schemaUtils
  */
-export const extractRefName = (ref: string): string | null => {
-	// Handle local refs: #/definitions/TypeName
-	const localMatch = ref.match(/#\/definitions\/(.+)$/);
-	if (localMatch) {
-		return localMatch[1];
-	}
-
-	// Handle cross-file refs: ./file.schema.json#/definitions/TypeName
-	const crossFileMatch = ref.match(/\.\/[^#]+#\/definitions\/(.+)$/);
-	if (crossFileMatch) {
-		return crossFileMatch[1];
-	}
-
-	return null;
-};
+export const extractRefName = extractDefinitionName;
 
 /**
  * Escapes a string for use in generated code
