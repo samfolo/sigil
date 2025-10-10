@@ -58,78 +58,17 @@ export interface ComponentSpec {
   created_at: string;
 
   /*
-   * Semantic version for tracking spec evolution and compatibility
-   * Increment major for breaking changes, minor for features, patch for fixes
-   */
-  version: SemVer;
-
-  /*
    * Describes the expected structure of input data this spec is designed for
    * This helps validate data compatibility and guides component selection
    */
   data_shape: DataShape;
 
   /*
-   * Root layout node defining the visual structure and component arrangement
-   * Layouts can be nested to create complex hierarchical compositions
-   */
-  layout: LayoutNode;
-
-  /*
-   * Registry of all components used in this spec, keyed by component ID
-   * Using a Record ensures O(1) lookup performance and guarantees ID uniqueness
-   * Components are referenced from LayoutChild nodes via their IDs
-   */
-  components: Record<string, ComponentNode>;
-
-  /*
-   * Field metadata providing semantic information about data fields for each component
-   *
-   * Structure: { [component_id]: { [field_accessor]: FieldMetadata } }
-   *
-   * This maps each component's fields to their metadata (types, roles, display hints, value mappings).
-   * The component_id keys correspond to IDs in ComponentSpec.components.
-   * The field_accessor keys use dot notation matching AffordedField.accessor syntax.
-   *
-   * Field metadata includes:
-   * - Semantic roles (label, value, category, etc.)
-   * - Data types with fallback options for coercion
-   * - Value mappings for transforming raw values to display values
-   * - Format strings for dates and numbers
-   *
-   * Example:
-   * {
-   *   "table-1": {
-   *     "user.name": { roles: ["label"], data_types: ["string"], ... },
-   *     "user.age": { roles: ["value"], data_types: ["number"], format: "0,0", ... }
-   *   }
-   * }
-   */
-  accessor_bindings: Record<string, Record<string, FieldMetadata>>;
-}
-
-/*
- * Semantic versioning following the semver.org specification
- * Tracks iterations and evolution of the spec for a given dataset
- */
-export interface SemVer {
-  /*
-   * Major version - increment for breaking changes to the spec structure or rendering requirements
-   * E.g., changing component types, restructuring layout, altering field bindings
-   */
-  major: number;
-
-  /*
-   * Minor version - increment for backwards-compatible additions
-   * E.g., adding new affordances, additional components, new field metadata
-   */
-  minor: number;
-
-  /*
-   * Patch version - increment for backwards-compatible refinements
-   * E.g., fixing field formats, adjusting value mappings, correcting metadata
-   */
-  patch: number;
+    * The root node containing the full layout, components, and field bindings
+    * This encapsulates the entire visualisation specification
+    * The rendering engine starts here to build the UI
+    */
+  root: Component;
 }
 
 /*
@@ -272,21 +211,12 @@ export type StackLayoutNodeDirection =
   | "vertical";
 
 /*
- * Linear layout that arranges children in a single row or column
- *
- * Stack layouts are simpler than grids and ideal for:
- * - Toolbars and navigation
- * - Form fields in sequence
- * - Card lists
- * - Any linear arrangement of components
- *
- * Alignment works on two axes:
- * - Primary axis (direction of flow): controlled by spacing and flex behaviour
- * - Cross axis: controlled by horizontal_alignment (for vertical stacks) or vertical_alignment (for horizontal stacks)
+ * Base interface for stack layouts with common properties
  */
-export interface StackLayoutNode extends BaseLayoutNode {
+interface BaseStackLayoutNode extends BaseLayoutNode {
   /*
    * Discriminator value for stack layouts
+   * Fixed to "stack" for this interface
    */
   type: "stack";
 
@@ -301,24 +231,70 @@ export interface StackLayoutNode extends BaseLayoutNode {
   spacing: LayoutNodeSpacing;
 
   /*
-   * How children align horizontally
-   * - For vertical stacks: aligns children horizontally (left/center/right/fill)
-   * - For horizontal stacks: typically leave undefined and use vertical_alignment instead
+   * Ordered list of children to render in sequence
    */
-  horizontal_alignment?: "start" | "center" | "end" | "stretch";
+  children: LayoutChild[];
+}
+
+/*
+ * Alignment options for stack layout children along the cross axis
+ * - "start": align to the start (left/top)
+ * - "center": align to the center
+ * - "end": align to the end (right/bottom)
+ * - "stretch": stretch to fill the cross axis
+ */
+export type StackLayoutNodeAlignment = "start" | "center" | "end" | "stretch";
+
+/*
+ * Specialised interface for horizontal stack layouts
+ */
+export interface HorizontalStackLayoutNode extends BaseStackLayoutNode {
+  /*
+   * Flow direction of children
+   * Fixed to "horizontal" for this interface
+   */
+  direction: "horizontal";
 
   /*
    * How children align vertically
    * - For horizontal stacks: aligns children vertically (top/center/bottom/fill)
    * - For vertical stacks: typically leave undefined and use horizontal_alignment instead
    */
-  vertical_alignment?: "start" | "center" | "end" | "stretch";
+  vertical_alignment?: StackLayoutNodeAlignment;
+}
+
+/*
+ * Specialised interface for vertical stack layouts
+ */
+export interface VerticalStackLayoutNode extends BaseStackLayoutNode {
+  /*
+   * Flow direction of children
+   * Fixed to "vertical" for this interface
+   */
+  direction: "vertical";
 
   /*
-   * Ordered list of children to render in sequence
+   * How children align horizontally
+   * - For vertical stacks: aligns children horizontally (left/center/right/fill)
+   * - For horizontal stacks: typically leave undefined and use vertical_alignment instead
    */
-  children: LayoutChild[];
+  horizontal_alignment?: StackLayoutNodeAlignment;
 }
+
+/*
+ * Linear layout that arranges children in a single row or column
+ *
+ * Stack layouts are simpler than grids and ideal for:
+ * - Toolbars and navigation
+ * - Form fields in sequence
+ * - Card lists
+ * - Any linear arrangement of components
+ *
+ * Alignment works on two axes:
+ * - Primary axis (direction of flow): controlled by spacing and flex behaviour
+ * - Cross axis: controlled by horizontal_alignment (for vertical stacks) or vertical_alignment (for horizontal stacks)
+ */
+export type StackLayoutNode = HorizontalStackLayoutNode | VerticalStackLayoutNode;
 
 /*
  * Grid layout that arranges children in rows and columns
@@ -350,9 +326,14 @@ export interface GridLayoutNode extends BaseLayoutNode {
   rows?: number;
 
   /*
-   * Space between grid cells (both row and column gaps)
+   * Spacing between rows
    */
-  gap?: LayoutNodeSpacing;
+  row_gap?: LayoutNodeSpacing;
+
+  /*
+   * Spacing between columns
+   */
+  column_gap?: LayoutNodeSpacing;
 
   /*
    * Children with optional positioning and spanning information
@@ -422,6 +403,16 @@ export type LayoutChild =
   | { type: "component"; component_id: string };
 
 /*
+ * Explicit padding values for all four sides
+ */
+interface PaddingProperties {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+};
+
+/*
  * Flexible padding definition supporting shorthand and explicit sides
  *
  * Follows CSS-like conventions for ease of use
@@ -436,12 +427,7 @@ export type Padding =
    * Explicit: specify each side independently
    * Omitted sides default to 0
    */
-  | {
-      top?: number;
-      right?: number;
-      bottom?: number;
-      left?: number;
-    };
+  | PaddingProperties;
 
 /*
  * Defines how an element's size is calculated
@@ -483,12 +469,56 @@ export type SizeConstraint =
 // ============================================================================
 
 /*
- * A component is a leaf node in the layout tree that renders data
+ * A complete component specification including layout, components, and field bindings
+ * This is the root structure used by the rendering engine to build a component in the UI
+ */
+export interface Component {
+  /*
+   * Root layout node defining the visual structure and component arrangement
+   * Layouts can be nested to create complex hierarchical compositions
+   */
+  layout: LayoutNode;
+
+  /*
+   * Registry of all component nodes used in this component, keyed by component ID
+   * Using a Record ensures O(1) lookup performance and guarantees ID uniqueness
+   * Components are referenced from LayoutChild nodes via their IDs
+   */
+  nodes: Record<string, ComponentNode>;
+
+  /*
+   * Field metadata providing semantic information about data fields for each component
+   *
+   * Structure: { [component_id]: { [field_accessor]: FieldMetadata } }
+   *
+   * This maps each component's fields to their metadata (types, roles, display hints, value mappings).
+   * The component_id keys correspond to IDs in ComponentSpec.components.
+   * The field_accessor keys use dot notation matching AffordedField.accessor syntax.
+   *
+   * Field metadata includes:
+   * - Semantic roles (label, value, category, etc.)
+   * - Data types with fallback options for coercion
+   * - Value mappings for transforming raw values to display values
+   * - Format strings for dates and numbers
+   *
+   * Example:
+   * {
+   *   "table-1": {
+   *     "user.name": { roles: ["label"], data_types: ["string"], ... },
+   *     "user.age": { roles: ["value"], data_types: ["number"], format: "0,0", ... }
+   *   }
+   * }
+   */
+  accessor_bindings: Record<string, Record<string, FieldMetadata>>;
+}
+
+/*
+ * A ComponentNode is a leaf node in the layout tree that renders data
  *
- * Components are stored in ComponentSpec.components and referenced from
+ * ComponentNodes are stored in Component.nodes and referenced from
  * LayoutChild nodes via their IDs. This separation enables:
  * - Component reuse across multiple layout positions
- * - Centralized component configuration
+ * - Centralised component configuration
  * - Efficient lookups without tree traversal
  */
 export interface ComponentNode {
@@ -1115,21 +1145,26 @@ export interface SearchAffordance {
   min_characters?: number;
 }
 
-/*
- * Component-specific configuration using discriminated unions
- *
- * Each component type has its own config interface with a discriminator
- * field that matches the ComponentType. This provides type safety - when
- * you know the component type, TypeScript narrows to the correct config.
- *
- * All configs share common properties (title, description, affordances)
- * plus type-specific properties defined in each interface.
- */
-export type ComponentConfig =
-  | DataTableConfig
-  | HierarchyConfig
-  | CompositionConfig
-  | TextInsightConfig;
+// ============================================================================
+// Component Configurations
+// ============================================================================
+
+interface BaseComponentConfig {
+  /*
+   * Discriminator matching ComponentType
+   */
+  type: ComponentType;
+
+  /*
+   * Optional title for the component
+   */
+  title?: string;
+
+  /*
+   * Optional description explaining the component's purpose
+   */
+  description?: string;
+}
 
 /*
  * Configuration for data table components
@@ -1139,21 +1174,11 @@ export type ComponentConfig =
  *
  * Best used with: data_shape = "tabular"
  */
-export interface DataTableConfig {
+export interface DataTableConfig extends BaseComponentConfig {
   /*
    * Discriminator matching ComponentType
    */
   type: "data-table";
-
-  /*
-   * Optional title displayed above the table
-   */
-  title?: string;
-
-  /*
-   * Optional description explaining the data
-   */
-  description?: string;
 
   /*
    * Interactive capabilities enabled for this table
@@ -1171,21 +1196,11 @@ export interface DataTableConfig {
  *
  * Best used with: data_shape = "hierarchical"
  */
-export interface HierarchyConfig {
+export interface HierarchyConfig extends BaseComponentConfig {
   /*
    * Discriminator matching ComponentType
    */
   type: "hierarchy";
-
-  /*
-   * Optional title displayed above the hierarchy
-   */
-  title?: string;
-
-  /*
-   * Optional description explaining the structure
-   */
-  description?: string;
 
   /*
    * Interactive capabilities enabled for this hierarchy
@@ -1203,21 +1218,11 @@ export interface HierarchyConfig {
  *
  * Best used with: any data_shape, depending on sub-components
  */
-export interface CompositionConfig {
+export interface CompositionConfig extends BaseComponentConfig {
   /*
    * Discriminator matching ComponentType
    */
   type: "composition";
-
-  /*
-   * Optional title for the entire composition
-   */
-  title?: string;
-
-  /*
-   * Optional description of what this composition shows
-   */
-  description?: string;
 
   /*
    * Interactive capabilities for the composition as a whole
@@ -1235,21 +1240,11 @@ export interface CompositionConfig {
  *
  * Best used with: data_shape = "key_value"
  */
-export interface TextInsightConfig {
+export interface TextInsightConfig extends BaseComponentConfig {
   /*
    * Discriminator matching ComponentType
    */
   type: "text-insight";
-
-  /*
-   * Optional title for the insight
-   */
-  title?: string;
-
-  /*
-   * Optional description of the insight's purpose
-   */
-  description?: string;
 
   /*
    * Interactive capabilities for text insights
@@ -1258,6 +1253,22 @@ export interface TextInsightConfig {
   affordances: Affordance[];
   // TODO: Define exhaustive config properties (formatting, highlighting, etc.)
 }
+
+/*
+ * Component-specific configuration using discriminated unions
+ *
+ * Each component type has its own config interface with a discriminator
+ * field that matches the ComponentType. This provides type safety - when
+ * you know the component type, TypeScript narrows to the correct config.
+ *
+ * All configs share common properties (title, description, affordances)
+ * plus type-specific properties defined in each interface.
+ */
+export type ComponentConfig =
+  | DataTableConfig
+  | HierarchyConfig
+  | CompositionConfig
+  | TextInsightConfig;
 
 // ============================================================================
 // Field Metadata and Value Mappings
