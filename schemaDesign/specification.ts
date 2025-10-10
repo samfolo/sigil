@@ -509,8 +509,18 @@ export interface Component {
    *   }
    * }
    */
-  accessor_bindings: Record<string, Record<string, FieldMetadata>>;
+  accessor_bindings: Record<ComponentID, Record<FieldAccessor, FieldMetadata>>;
 }
+
+/*
+ * The ID of a component, used for lookups and references
+ */
+export type ComponentID = string;
+
+/*
+ * The path to a field in the data, used for bindings and affordances
+ */
+export type FieldAccessor = string;
 
 /*
  * A ComponentNode is a leaf node in the layout tree that renders data
@@ -628,7 +638,7 @@ export interface VirtualisationAffordance {
   /*
    * Discriminator for affordance type
    */
-  kind: "virtualisation";
+  type: "virtualisation";
 
   /*
    * Fixed height for each item in pixels
@@ -662,7 +672,7 @@ export interface SortingAffordance {
   /*
    * Discriminator for affordance type
    */
-  kind: "sorting";
+  type: "sorting";
 
   /*
    * Fields that can be sorted
@@ -698,7 +708,7 @@ export interface FilteringAffordance {
   /*
    * Discriminator for affordance type
    */
-  kind: "filtering";
+  type: "filtering";
 
   /*
    * Fields that can be filtered
@@ -875,7 +885,7 @@ interface ValueRelationalFilterConditionValue {
   /*
    * Discriminator for value type
    */
-  kind: "value";
+  type: "value";
 
   /*
    * The literal value to compare
@@ -892,7 +902,7 @@ interface FieldRelationalFilterConditionValue {
   /*
    * Discriminator for value type
    */
-  kind: "field";
+  type: "field";
 
   /*
    * The field to compare against
@@ -907,7 +917,7 @@ interface ListRelationalFilterConditionValue {
   /*
    * Discriminator for value type
    */
-  kind: "list";
+  type: "list";
 
   /*
    * The list of acceptable values
@@ -924,7 +934,7 @@ interface RangeRelationalFilterConditionValue {
   /*
    * Discriminator for value type
    */
-  kind: "range";
+  type: "range";
 
   /*
    * Range start (inclusive)
@@ -951,7 +961,7 @@ export type FilterConditionValue =
 /*
  * A single field-value comparison
  *
- * Example: {type: "relational", field: {accessor: "age"}, operator: "greater_than", value: {kind: "value", value: 18}}
+ * Example: {type: "relational", field: {accessor: "age"}, operator: "greater_than", value: {type: "value", value: 18}}
  */
 export interface RelationalFilterCondition {
   /*
@@ -998,7 +1008,7 @@ export interface PaginationAffordance {
   /*
    * Discriminator for affordance type
    */
-  kind: "pagination";
+  type: "pagination";
 
   /*
    * Default number of items displayed per page
@@ -1029,7 +1039,7 @@ export interface ExportAffordance {
   /*
    * Discriminator for affordance type
    */
-  kind: "export";
+  type: "export";
 
   /*
    * Available export formats (e.g., ["csv", "json"])
@@ -1088,7 +1098,7 @@ export interface SelectionAffordance {
   /*
    * Discriminator for affordance type
    */
-  kind: "selection";
+  type: "selection";
 
   /*
    * Single or multiple selection mode
@@ -1123,7 +1133,7 @@ export interface SearchAffordance {
   /*
    * Discriminator for affordance type
    */
-  kind: "search";
+  type: "search";
 
   /*
    * Fields to search within
