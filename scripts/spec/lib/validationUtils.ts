@@ -68,7 +68,7 @@ export const validateReferences = (config: Config, specDir: string, logger: Logg
   }
 
   // Check each fragment's references
-  for (const [name, _fragment] of Object.entries(config.fragments)) {
+  for (const [name, fragment] of Object.entries(config.fragments)) {
     const schema = fragments.get(name);
     if (!schema) {continue;}
 

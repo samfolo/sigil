@@ -244,6 +244,8 @@ const generateRecursiveObjectSchema = (
 
 	// Build property entries, using getters for forward references
 	const propEntries: string[] = [];
+	let hasGetterProperties = false;
+
 	for (const [key, propSchema] of Object.entries(properties)) {
 		const isRequired = required.includes(key);
 
@@ -272,6 +274,7 @@ const generateRecursiveObjectSchema = (
 
 		if (refSchemaName) {
 			// Use getter for forward-referenced properties with explicit type annotation
+			hasGetterProperties = true;
 			const zodBaseType = isArray ? `z.ZodArray<typeof ${refSchemaName}>` : `typeof ${refSchemaName}`;
 			const zodType = isArray ? `z.array(${refSchemaName})` : refSchemaName;
 			const zodTypeName = isRequired ? zodBaseType : `z.ZodOptional<${zodBaseType}>`;
@@ -306,8 +309,8 @@ const generateRecursiveObjectSchema = (
 
 	// For schemas with getters, we can't use .strict() directly on the definition
 	// because it evaluates getters during construction
-	// Instead, wrap in a way that defers evaluation
-	const finalCode = additionalProperties === false && propEntries.some((p) => p.includes('get '))
+	// Instead, use type assertion to indicate strict mode
+	const finalCode = additionalProperties === false && hasGetterProperties
 		? `${objectCode} as z.ZodObject<any, "strict">`
 		: additionalProperties === false
 			? `${objectCode}.strict()`

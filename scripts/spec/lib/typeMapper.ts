@@ -194,17 +194,18 @@ const mapEnumToZod = (values: unknown[]): string => {
 	// Filter to only string values (Zod enum requires strings)
 	const stringValues = values.filter((v) => typeof v === 'string') as string[];
 
-	if (stringValues.length === 0) {
-		// Fall back to union of literals for non-string enums
+	// If we have mixed types or all non-strings, use union of literals
+	if (stringValues.length !== values.length) {
 		const literals = values.map((v) => mapConstToZod(v));
 		return `z.union([${literals.join(', ')}])`;
 	}
 
+	// All strings from here on
 	if (stringValues.length === 1) {
 		return `z.literal(${JSON.stringify(stringValues[0])})`;
 	}
 
-	// Use z.enum for multiple string values
+	// Multiple strings - use z.enum for better type inference
 	const enumValues = stringValues.map((v) => JSON.stringify(v)).join(', ');
 	return `z.enum([${enumValues}])`;
 };
@@ -234,7 +235,8 @@ export const extractRefName = (ref: string): string | null => {
 const escapeString = (str: string): string => {
 	// Use template literal for multi-line strings
 	if (str.includes('\n')) {
-		return '`' + str.replace(/`/g, '\\`').replace(/\$/g, '\\$') + '`';
+		// Escape in order: backslashes first, then backticks, then dollar signs
+		return '`' + str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$') + '`';
 	}
 	return JSON.stringify(str);
 };
