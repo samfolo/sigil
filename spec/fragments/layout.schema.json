@@ -1,0 +1,289 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/layout",
+  "title": "Sigil Layout System",
+  "description": "Layout positioning system (stack and grid layouts)",
+  "definitions": {
+    "LayoutNode": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/StackLayoutNode"
+        },
+        {
+          "$ref": "#/definitions/GridLayoutNode"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "stack": "#/definitions/StackLayoutNode",
+          "grid": "#/definitions/GridLayoutNode"
+        }
+      }
+    },
+    "StackLayoutNode": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HorizontalStackLayoutNode"
+        },
+        {
+          "$ref": "#/definitions/VerticalStackLayoutNode"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "direction",
+        "mapping": {
+          "horizontal": "#/definitions/HorizontalStackLayoutNode",
+          "vertical": "#/definitions/VerticalStackLayoutNode"
+        }
+      }
+    },
+    "HorizontalStackLayoutNode": {
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "items": {
+            "$ref": "#/definitions/LayoutChild"
+          },
+          "type": "array"
+        },
+        "direction": {
+          "const": "horizontal",
+          "type": "string"
+        },
+        "height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "max_width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "min_height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "min_width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "padding": {
+          "$ref": "./primitives.schema.json#/definitions/Padding"
+        },
+        "spacing": {
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+        },
+        "type": {
+          "const": "stack",
+          "type": "string"
+        },
+        "vertical_alignment": {
+          "$ref": "./primitives.schema.json#/definitions/StackLayoutNodeAlignment"
+        },
+        "width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        }
+      },
+      "required": [
+        "children",
+        "direction",
+        "id",
+        "spacing",
+        "type"
+      ],
+      "type": "object"
+    },
+    "VerticalStackLayoutNode": {
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "items": {
+            "$ref": "#/definitions/LayoutChild"
+          },
+          "type": "array"
+        },
+        "direction": {
+          "const": "vertical",
+          "type": "string"
+        },
+        "height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "horizontal_alignment": {
+          "$ref": "./primitives.schema.json#/definitions/StackLayoutNodeAlignment"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "max_width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "min_height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "min_width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "padding": {
+          "$ref": "./primitives.schema.json#/definitions/Padding"
+        },
+        "spacing": {
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+        },
+        "type": {
+          "const": "stack",
+          "type": "string"
+        },
+        "width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        }
+      },
+      "required": [
+        "children",
+        "direction",
+        "id",
+        "spacing",
+        "type"
+      ],
+      "type": "object"
+    },
+    "GridLayoutNode": {
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "items": {
+            "$ref": "#/definitions/GridChild"
+          },
+          "type": "array"
+        },
+        "column_gap": {
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+        },
+        "columns": {
+          "type": "number"
+        },
+        "height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "max_width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "min_height": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "min_width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        },
+        "padding": {
+          "$ref": "./primitives.schema.json#/definitions/Padding"
+        },
+        "row_gap": {
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+        },
+        "rows": {
+          "type": "number"
+        },
+        "type": {
+          "const": "grid",
+          "type": "string"
+        },
+        "width": {
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+        }
+      },
+      "required": [
+        "children",
+        "columns",
+        "id",
+        "type"
+      ],
+      "type": "object"
+    },
+    "GridChild": {
+      "additionalProperties": false,
+      "properties": {
+        "column_span": {
+          "type": "number"
+        },
+        "column_start": {
+          "type": "number"
+        },
+        "element": {
+          "$ref": "#/definitions/LayoutChild"
+        },
+        "row_span": {
+          "type": "number"
+        },
+        "row_start": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "element"
+      ],
+      "type": "object"
+    },
+    "LayoutChild": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LayoutLayoutChild"
+        },
+        {
+          "$ref": "#/definitions/ComponentLayoutChild"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "layout": "#/definitions/LayoutLayoutChild",
+          "component": "#/definitions/ComponentLayoutChild"
+        }
+      }
+    },
+    "LayoutLayoutChild": {
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "$ref": "#/definitions/LayoutNode"
+        },
+        "type": {
+          "const": "layout",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "node"
+      ],
+      "type": "object"
+    },
+    "ComponentLayoutChild": {
+      "additionalProperties": false,
+      "properties": {
+        "component_id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "component",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "component_id"
+      ],
+      "type": "object"
+    }
+  }
+}

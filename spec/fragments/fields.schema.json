@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/fields",
+  "title": "Sigil Field Metadata",
+  "description": "Field metadata and value mapping types for data display configuration",
+  "definitions": {
+    "FieldMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "data_types": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/DataType"
+          },
+          "type": "array"
+        },
+        "format": {
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "value_mappings": {
+          "additionalProperties": {
+            "$ref": "#/definitions/ValueMapping"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "roles",
+        "data_types"
+      ],
+      "type": "object"
+    },
+    "ValueMapping": {
+      "additionalProperties": false,
+      "properties": {
+        "display_config": {
+          "$ref": "#/definitions/ValueMappingDisplayConfig"
+        },
+        "display_value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "display_value"
+      ],
+      "type": "object"
+    },
+    "ValueMappingDisplayConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ChipValueMappingDisplayConfig"
+        },
+        {
+          "$ref": "#/definitions/LabelValueMappingDisplayConfig"
+        },
+        {
+          "$ref": "#/definitions/BadgeValueMappingDisplayConfig"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "chip": "#/definitions/ChipValueMappingDisplayConfig",
+          "label": "#/definitions/LabelValueMappingDisplayConfig",
+          "badge": "#/definitions/BadgeValueMappingDisplayConfig"
+        }
+      }
+    },
+    "ChipValueMappingDisplayConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "type": "string"
+            },
+            "icon": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "chip",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "LabelValueMappingDisplayConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "BadgeValueMappingDisplayConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "badge",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

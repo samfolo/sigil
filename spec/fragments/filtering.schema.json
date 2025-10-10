@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/filtering",
+  "title": "Sigil Filtering System",
+  "description": "Filter conditions and operators for data filtering",
+  "definitions": {
+    "FilterCondition": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LogicalFilterCondition"
+        },
+        {
+          "$ref": "#/definitions/RelationalFilterCondition"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "logical": "#/definitions/LogicalFilterCondition",
+          "relational": "#/definitions/RelationalFilterCondition"
+        }
+      }
+    },
+    "LogicalFilterCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "conditions": {
+          "items": {
+            "$ref": "#/definitions/FilterCondition"
+          },
+          "type": "array"
+        },
+        "operator": {
+          "$ref": "./primitives.schema.json#/definitions/FilterConditionLogicalOperator"
+        },
+        "type": {
+          "const": "logical",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "operator",
+        "conditions"
+      ],
+      "type": "object"
+    },
+    "RelationalFilterCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "./primitives.schema.json#/definitions/AffordedField"
+        },
+        "operator": {
+          "$ref": "./primitives.schema.json#/definitions/FilterConditionRelationalOperator"
+        },
+        "type": {
+          "const": "relational",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/FilterConditionValue"
+        }
+      },
+      "required": [
+        "type",
+        "field",
+        "operator",
+        "value"
+      ],
+      "type": "object"
+    },
+    "FilterConditionValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ValueFilterConditionValue"
+        },
+        {
+          "$ref": "#/definitions/FieldFilterConditionValue"
+        },
+        {
+          "$ref": "#/definitions/ListFilterConditionValue"
+        },
+        {
+          "$ref": "#/definitions/RangeFilterConditionValue"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "value": "#/definitions/ValueFilterConditionValue",
+          "field": "#/definitions/FieldFilterConditionValue",
+          "list": "#/definitions/ListFilterConditionValue",
+          "range": "#/definitions/RangeFilterConditionValue"
+        }
+      }
+    },
+    "ValueFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "value",
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "FieldFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "./primitives.schema.json#/definitions/AffordedField"
+        },
+        "type": {
+          "const": "field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "field"
+      ],
+      "type": "object"
+    },
+    "ListFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "list",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "values"
+      ],
+      "type": "object"
+    },
+    "RangeFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "start": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "type": {
+          "const": "range",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "start",
+        "end"
+      ],
+      "type": "object"
+    }
+  }
+}

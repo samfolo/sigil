@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/primitives",
+  "title": "Sigil Primitives",
+  "description": "Basic types, enums, and shared primitives used across the Sigil specification",
+  "definitions": {
+    "DataType": {
+      "enum": [
+        "number",
+        "string",
+        "date",
+        "boolean",
+        "null",
+        "array",
+        "object",
+        "undefined",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "DataShape": {
+      "enum": [
+        "tabular",
+        "hierarchical",
+        "key_value",
+        "graph",
+        "geospatial"
+      ],
+      "type": "string"
+    },
+    "ComponentType": {
+      "enum": [
+        "data-table",
+        "hierarchy",
+        "composition",
+        "text-insight"
+      ],
+      "type": "string"
+    },
+    "ExportAffordanceFormat": {
+      "enum": [
+        "csv",
+        "json"
+      ],
+      "type": "string"
+    },
+    "FilterType": {
+      "enum": [
+        "text",
+        "number_range",
+        "date_range",
+        "select",
+        "boolean"
+      ],
+      "type": "string"
+    },
+    "FilterConditionLogicalOperator": {
+      "enum": [
+        "and",
+        "or",
+        "not"
+      ],
+      "type": "string"
+    },
+    "FilterConditionRelationalOperator": {
+      "enum": [
+        "equals",
+        "not_equals",
+        "contains",
+        "not_contains",
+        "starts_with",
+        "ends_with",
+        "greater_than",
+        "less_than",
+        "greater_than_or_equal",
+        "less_than_or_equal",
+        "between",
+        "in",
+        "not_in"
+      ],
+      "type": "string"
+    },
+    "LayoutNodeSpacing": {
+      "enum": [
+        "tight",
+        "normal",
+        "relaxed"
+      ],
+      "type": "string"
+    },
+    "StackLayoutNodeAlignment": {
+      "enum": [
+        "start",
+        "center",
+        "end",
+        "stretch"
+      ],
+      "type": "string"
+    },
+    "Padding": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "bottom": {
+              "type": "number"
+            },
+            "left": {
+              "type": "number"
+            },
+            "right": {
+              "type": "number"
+            },
+            "top": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "AffordedField": {
+      "additionalProperties": false,
+      "properties": {
+        "accessor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "accessor"
+      ],
+      "type": "object"
+    },
+    "SizeConstraint": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FixedSizeConstraint"
+        },
+        {
+          "$ref": "#/definitions/FlexSizeConstraint"
+        },
+        {
+          "$ref": "#/definitions/PercentageSizeConstraint"
+        },
+        {
+          "$ref": "#/definitions/ContentSizeConstraint"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "fixed": "#/definitions/FixedSizeConstraint",
+          "flex": "#/definitions/FlexSizeConstraint",
+          "percentage": "#/definitions/PercentageSizeConstraint",
+          "content": "#/definitions/ContentSizeConstraint"
+        }
+      }
+    },
+    "FixedSizeConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "fixed",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "FlexSizeConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "flex",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "PercentageSizeConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "percentage",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "ContentSizeConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

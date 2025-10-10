@@ -1,0 +1,228 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Sigil Specification Schema Configuration",
+  "entryPoint": "fragments/core.schema.json",
+  "fragments": {
+    "primitives": {
+      "path": "fragments/primitives.schema.json",
+      "description": "Basic types, enums, and shared primitives",
+      "dependencies": []
+    },
+    "fields": {
+      "path": "fragments/fields.schema.json",
+      "description": "Field metadata and value mapping types",
+      "dependencies": ["primitives"]
+    },
+    "filtering": {
+      "path": "fragments/filtering.schema.json",
+      "description": "Filtering conditions and operators",
+      "dependencies": ["primitives"]
+    },
+    "affordances": {
+      "path": "fragments/affordances.schema.json",
+      "description": "Data affordance types (sorting, filtering, pagination, etc.)",
+      "dependencies": ["primitives", "filtering"]
+    },
+    "layout": {
+      "path": "fragments/layout.schema.json",
+      "description": "Layout system (stack, grid)",
+      "dependencies": ["primitives"]
+    },
+    "components": {
+      "path": "fragments/components.schema.json",
+      "description": "Component configuration types",
+      "dependencies": ["affordances"]
+    },
+    "core": {
+      "path": "fragments/core.schema.json",
+      "description": "Root specification schema",
+      "dependencies": ["components", "layout", "fields", "primitives"]
+    }
+  },
+  "discriminatedUnions": [
+    {
+      "name": "Affordance",
+      "location": "affordances.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "virtualisation",
+          "type": "VirtualisationAffordance"
+        },
+        {
+          "value": "sorting",
+          "type": "SortingAffordance"
+        },
+        {
+          "value": "filtering",
+          "type": "FilteringAffordance"
+        },
+        {
+          "value": "pagination",
+          "type": "PaginationAffordance"
+        },
+        {
+          "value": "export",
+          "type": "ExportAffordance"
+        },
+        {
+          "value": "selection",
+          "type": "SelectionAffordance"
+        },
+        {
+          "value": "search",
+          "type": "SearchAffordance"
+        }
+      ]
+    },
+    {
+      "name": "ComponentConfig",
+      "location": "components.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "data-table",
+          "type": "DataTableConfig"
+        },
+        {
+          "value": "hierarchy",
+          "type": "HierarchyConfig"
+        },
+        {
+          "value": "composition",
+          "type": "CompositionConfig"
+        },
+        {
+          "value": "text-insight",
+          "type": "TextInsightConfig"
+        }
+      ]
+    },
+    {
+      "name": "FilterCondition",
+      "location": "filtering.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "logical",
+          "type": "LogicalFilterCondition"
+        },
+        {
+          "value": "relational",
+          "type": "RelationalFilterCondition"
+        }
+      ]
+    },
+    {
+      "name": "FilterConditionValue",
+      "location": "filtering.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "value",
+          "type": "ValueFilterConditionValue"
+        },
+        {
+          "value": "field",
+          "type": "FieldFilterConditionValue"
+        },
+        {
+          "value": "list",
+          "type": "ListFilterConditionValue"
+        },
+        {
+          "value": "range",
+          "type": "RangeFilterConditionValue"
+        }
+      ]
+    },
+    {
+      "name": "LayoutChild",
+      "location": "layout.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "layout",
+          "type": "LayoutLayoutChild"
+        },
+        {
+          "value": "component",
+          "type": "ComponentLayoutChild"
+        }
+      ]
+    },
+    {
+      "name": "LayoutNode",
+      "location": "layout.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "stack",
+          "type": "StackLayoutNode"
+        },
+        {
+          "value": "grid",
+          "type": "GridLayoutNode"
+        }
+      ]
+    },
+    {
+      "name": "StackLayoutNode",
+      "location": "layout.schema.json",
+      "discriminator": "direction",
+      "variants": [
+        {
+          "value": "horizontal",
+          "type": "HorizontalStackLayoutNode"
+        },
+        {
+          "value": "vertical",
+          "type": "VerticalStackLayoutNode"
+        }
+      ]
+    },
+    {
+      "name": "ValueMappingDisplayConfig",
+      "location": "fields.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "chip",
+          "type": "ChipValueMappingDisplayConfig"
+        },
+        {
+          "value": "label",
+          "type": "LabelValueMappingDisplayConfig"
+        },
+        {
+          "value": "badge",
+          "type": "BadgeValueMappingDisplayConfig"
+        }
+      ]
+    },
+    {
+      "name": "SizeConstraint",
+      "location": "primitives.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "fixed",
+          "type": "FixedSizeConstraint"
+        },
+        {
+          "value": "flex",
+          "type": "FlexSizeConstraint"
+        },
+        {
+          "value": "percentage",
+          "type": "PercentageSizeConstraint"
+        },
+        {
+          "value": "content",
+          "type": "ContentSizeConstraint"
+        }
+      ]
+    }
+  ]
+}

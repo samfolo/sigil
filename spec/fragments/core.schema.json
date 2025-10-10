@@ -1,0 +1,90 @@
+{
+  "$ref": "#/definitions/ComponentSpec",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/core",
+  "title": "Sigil Component Specification",
+  "description": "Root specification schema for Sigil components",
+  "definitions": {
+    "ComponentSpec": {
+      "additionalProperties": false,
+      "description": "Sigil Component Specification - Intermediate Representation\n\nDesign principles:\n- Specs are generated fresh for each dataset, tailored to its semantic meaning\n- Field metadata, value mappings, and bindings are embedded directly in the spec\n- Data values are provided separately at render time (not embedded in spec)\n- Layout and components are separate concerns\n- Type-specific configs via discriminated unions\n- Everything normalised to JSON before spec generation",
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "data_shape": {
+          "$ref": "./primitives.schema.json#/definitions/DataShape"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "root": {
+          "$ref": "#/definitions/Component"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "created_at",
+        "data_shape",
+        "root"
+      ],
+      "type": "object"
+    },
+    "Component": {
+      "additionalProperties": false,
+      "properties": {
+        "accessor_bindings": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "$ref": "./fields.schema.json#/definitions/FieldMetadata"
+            },
+            "type": "object"
+          },
+          "type": "object"
+        },
+        "layout": {
+          "$ref": "./layout.schema.json#/definitions/LayoutNode"
+        },
+        "nodes": {
+          "additionalProperties": {
+            "$ref": "#/definitions/ComponentNode"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "layout",
+        "nodes",
+        "accessor_bindings"
+      ],
+      "type": "object"
+    },
+    "ComponentNode": {
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "$ref": "./components.schema.json#/definitions/ComponentConfig"
+        },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "./primitives.schema.json#/definitions/ComponentType"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "config"
+      ],
+      "type": "object"
+    }
+  }
+}

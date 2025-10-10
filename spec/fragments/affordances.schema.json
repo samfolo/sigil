@@ -1,0 +1,231 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/affordances",
+  "title": "Sigil Affordances",
+  "description": "Data interaction affordances (sorting, filtering, pagination, etc.)",
+  "definitions": {
+    "Affordance": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/VirtualisationAffordance"
+        },
+        {
+          "$ref": "#/definitions/SortingAffordance"
+        },
+        {
+          "$ref": "#/definitions/FilteringAffordance"
+        },
+        {
+          "$ref": "#/definitions/PaginationAffordance"
+        },
+        {
+          "$ref": "#/definitions/ExportAffordance"
+        },
+        {
+          "$ref": "#/definitions/SelectionAffordance"
+        },
+        {
+          "$ref": "#/definitions/SearchAffordance"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "virtualisation": "#/definitions/VirtualisationAffordance",
+          "sorting": "#/definitions/SortingAffordance",
+          "filtering": "#/definitions/FilteringAffordance",
+          "pagination": "#/definitions/PaginationAffordance",
+          "export": "#/definitions/ExportAffordance",
+          "selection": "#/definitions/SelectionAffordance",
+          "search": "#/definitions/SearchAffordance"
+        }
+      }
+    },
+    "VirtualisationAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "buffer_size": {
+          "type": "number"
+        },
+        "item_height": {
+          "type": "number"
+        },
+        "overscan_count": {
+          "type": "number"
+        },
+        "type": {
+          "const": "virtualisation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "SortingAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_fields": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/AffordedField"
+          },
+          "type": "array"
+        },
+        "default_direction": {
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "type": "string"
+        },
+        "default_field": {
+          "$ref": "./primitives.schema.json#/definitions/AffordedField"
+        },
+        "type": {
+          "const": "sorting",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "FilteringAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_fields": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/AffordedField"
+          },
+          "type": "array"
+        },
+        "default_filters": {
+          "items": {
+            "$ref": "./filtering.schema.json#/definitions/FilterCondition"
+          },
+          "type": "array"
+        },
+        "filter_types": {
+          "additionalProperties": {
+            "$ref": "./primitives.schema.json#/definitions/FilterType"
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "filtering",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "PaginationAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "page_size": {
+          "type": "number"
+        },
+        "show_size_options": {
+          "type": "boolean"
+        },
+        "size_options": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "pagination",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "page_size"
+      ],
+      "type": "object"
+    },
+    "ExportAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "filename_template": {
+          "type": "string"
+        },
+        "formats": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/ExportAffordanceFormat"
+          },
+          "type": "array"
+        },
+        "include_headers": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "export",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "formats"
+      ],
+      "type": "object"
+    },
+    "SelectionAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "single",
+            "multiple"
+          ],
+          "type": "string"
+        },
+        "preserve_across_pages": {
+          "type": "boolean"
+        },
+        "show_selection_indicators": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "selection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "mode"
+      ],
+      "type": "object"
+    },
+    "SearchAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "case_sensitive": {
+          "type": "boolean"
+        },
+        "min_characters": {
+          "type": "number"
+        },
+        "searchable_fields": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/AffordedField"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "search",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

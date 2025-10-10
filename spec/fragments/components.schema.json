@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/components",
+  "title": "Sigil Component Configurations",
+  "description": "Component configuration types for different visualization types",
+  "definitions": {
+    "ComponentConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DataTableConfig"
+        },
+        {
+          "$ref": "#/definitions/HierarchyConfig"
+        },
+        {
+          "$ref": "#/definitions/CompositionConfig"
+        },
+        {
+          "$ref": "#/definitions/TextInsightConfig"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "data-table": "#/definitions/DataTableConfig",
+          "hierarchy": "#/definitions/HierarchyConfig",
+          "composition": "#/definitions/CompositionConfig",
+          "text-insight": "#/definitions/TextInsightConfig"
+        }
+      }
+    },
+    "DataTableConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "./affordances.schema.json#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "data-table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    },
+    "HierarchyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "./affordances.schema.json#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "hierarchy",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    },
+    "CompositionConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "./affordances.schema.json#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "composition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    },
+    "TextInsightConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "./affordances.schema.json#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "text-insight",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}
