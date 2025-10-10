@@ -5,28 +5,33 @@
   "description": "Field metadata and value mapping types for data display configuration",
   "definitions": {
     "FieldMetadata": {
+      "description": "Metadata describing how a data field should be interpreted and displayed.\n\nFieldMetadata provides the semantic layer between raw data and visualisation. It tells the rendering engine:\n- What role(s) the field plays (e.g., label, value, time axis)\n- What data type(s) it contains (with fallbacks for type coercion)\n- How to transform values for display (mappings)\n- How to format values (date/number formatting)",
       "additionalProperties": false,
       "properties": {
         "data_types": {
           "items": {
             "$ref": "./primitives.schema.json#/definitions/DataType"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Data types for this field, in order of preference. First element is the primary type, subsequent elements are fallbacks for type coercion if the primary type fails. Example: ['number', 'string'] means 'try to parse as number, fall back to string'"
         },
         "format": {
-          "type": "string"
+          "type": "string",
+          "description": "Format string for displaying values. Uses format strings appropriate to the data type:\n- Dates: 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', 'MMM D, YYYY'\n- Numbers: '0,0.00', '£0,0', '$0.00a', '0%'\n- Strings: typically omitted (displayed as-is)\n\nThe rendering engine determines how to interpret format strings"
         },
         "roles": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Semantic roles this field plays in the visualisation. Always an array to support fields with multiple roles.\n\nCommon roles:\n- 'label': Human-readable identifier (e.g., name, title)\n- 'value': Numeric or quantitative data\n- 'time': Temporal data for time-series\n- 'x', 'y': Positional data for charts\n- 'category': Categorical grouping\n- 'id': Unique identifier\n\nExample: ['x', 'time'] for a time-series x-axis"
         },
         "value_mappings": {
           "additionalProperties": {
             "$ref": "#/definitions/ValueMapping"
           },
-          "type": "object"
+          "type": "object",
+          "description": "Mappings from source values to display values. Maps raw data values to ValueMapping objects that define how to display them. Keys are the source values (as strings), values are the display transformations.\n\nExample:\n{\n  '0': { display_value: 'Inactive', display_config: { type: 'chip', details: { color: 'grey' } } },\n  '1': { display_value: 'Active', display_config: { type: 'chip', details: { color: 'green' } } }\n}"
         }
       },
       "required": [
@@ -36,13 +41,16 @@
       "type": "object"
     },
     "ValueMapping": {
+      "description": "Defines how a raw data value should be displayed.\n\nValue mappings transform source values into human-readable display values with optional visual styling. Common use cases:\n- Status codes: 0 → 'Pending' (yellow chip), 1 → 'Complete' (green chip)\n- Boolean flags: true → 'Yes' (green label), false → 'No' (red label)\n- Categories: 'cat_a' → 'Category A' (blue badge)\n\nThe source value is the key in FieldMetadata.value_mappings, and this ValueMapping is the corresponding value",
       "additionalProperties": false,
       "properties": {
         "display_config": {
-          "$ref": "#/definitions/ValueMappingDisplayConfig"
+          "$ref": "#/definitions/ValueMappingDisplayConfig",
+          "description": "Optional visual styling for the display value. If omitted, the value is displayed as plain text"
         },
         "display_value": {
-          "type": "string"
+          "type": "string",
+          "description": "The human-readable text to display instead of the raw value"
         }
       },
       "required": [
@@ -51,6 +59,7 @@
       "type": "object"
     },
     "ValueMappingDisplayConfig": {
+      "description": "Discriminated union of all display configuration types.\n\nAvailable display styles:\n- chip: Compact pill-shaped element with optional icon\n- label: Simple coloured text\n- badge: Prominent indicator, often circular or rectangular",
       "anyOf": [
         {
           "$ref": "#/definitions/ChipValueMappingDisplayConfig"
@@ -72,19 +81,23 @@
       }
     },
     "ChipValueMappingDisplayConfig": {
+      "description": "Display configuration for chip-style rendering. Chips are compact UI elements with optional icons, typically used for tags, statuses, or categories",
       "additionalProperties": false,
       "properties": {
         "details": {
           "additionalProperties": false,
           "properties": {
             "color": {
-              "type": "string"
+              "type": "string",
+              "description": "Chip colour (CSS colour string). Examples: 'red', '#ff0000', 'rgb(255, 0, 0)'"
             },
             "icon": {
-              "type": "string"
+              "type": "string",
+              "description": "Icon identifier to display in the chip. Examples: 'check', 'alert', 'info'. The specific icon set is determined by the rendering engine"
             }
           },
-          "type": "object"
+          "type": "object",
+          "description": "Optional chip-specific styling"
         },
         "type": {
           "const": "chip",
@@ -97,16 +110,19 @@
       "type": "object"
     },
     "LabelValueMappingDisplayConfig": {
+      "description": "Display configuration for label-style rendering. Labels are simple text with optional colouring, used for inline annotations",
       "additionalProperties": false,
       "properties": {
         "details": {
           "additionalProperties": false,
           "properties": {
             "color": {
-              "type": "string"
+              "type": "string",
+              "description": "Label text colour (CSS colour string). Examples: 'blue', '#0000ff'"
             }
           },
-          "type": "object"
+          "type": "object",
+          "description": "Optional label-specific styling"
         },
         "type": {
           "const": "label",
@@ -119,16 +135,19 @@
       "type": "object"
     },
     "BadgeValueMappingDisplayConfig": {
+      "description": "Display configuration for badge-style rendering. Badges are prominent indicators, typically used for counts or status indicators",
       "additionalProperties": false,
       "properties": {
         "details": {
           "additionalProperties": false,
           "properties": {
             "color": {
-              "type": "string"
+              "type": "string",
+              "description": "Badge colour (CSS colour string). Examples: 'green', '#00ff00'"
             }
           },
-          "type": "object"
+          "type": "object",
+          "description": "Optional badge-specific styling"
         },
         "type": {
           "const": "badge",

@@ -5,6 +5,7 @@
   "description": "Basic types, enums, and shared primitives used across the Sigil specification",
   "definitions": {
     "DataType": {
+      "description": "Supported data types for field values. These types are used for type validation, coercion, and determining appropriate display components (e.g., date pickers for dates).\n\nAvailable types:\n- number: Numeric values (integers and floats)\n- string: Text values\n- date: Temporal values (dates, timestamps)\n- boolean: Boolean true/false\n- null: Explicit null values\n- array: Array/list structures\n- object: Nested object structures\n- undefined: Undefined/missing values\n- unknown: Unknown or mixed types",
       "enum": [
         "number",
         "string",
@@ -19,6 +20,7 @@
       "type": "string"
     },
     "DataShape": {
+      "description": "Describes the structural pattern of the source data being visualised. This is NOT about how data is displayed, but about the inherent structure of the input data. Helps validate data compatibility with the spec and informs appropriate component selection.\n\nAvailable shapes:\n- tabular: Tabular data with rows and columns (e.g., CSV, database tables, spreadsheets)\n- hierarchical: Nested or tree-like structures (e.g., JSON with nested objects, file systems, organisational charts)\n- key_value: Flat key-value pairs (e.g., configuration files, environment variables, metadata)\n- graph: Network structures with nodes and edges (e.g., social networks, dependency graphs, knowledge graphs)\n- geospatial: Location-based data with coordinates (e.g., GeoJSON, GPS data, spatial datasets)",
       "enum": [
         "tabular",
         "hierarchical",
@@ -29,6 +31,7 @@
       "type": "string"
     },
     "ComponentType": {
+      "description": "Available component types, each optimised for specific data shapes. Components are the 'rendering primitives' of the specification system. Each type is designed to handle a particular visualisation pattern.\n\nAvailable types:\n- data-table: Tabular display with rows and columns (best for: tabular data shapes, spreadsheet-like views, data grids)\n- hierarchy: Tree or nested structure display (best for: hierarchical data shapes, file explorers, org charts, JSON viewers)\n- composition: Composed/aggregate visualisations combining multiple sub-components (best for: dashboards, multi-faceted views, complex analytical displays)\n- text-insight: Text-based insights, summaries, or explanations (best for: key_value data shapes, insights, summaries, explanatory text)",
       "enum": [
         "data-table",
         "hierarchy",
@@ -38,6 +41,7 @@
       "type": "string"
     },
     "ExportAffordanceFormat": {
+      "description": "Supported export file formats.\n\nAvailable formats:\n- csv: Comma-separated values (tabular data)\n- json: JSON array of objects",
       "enum": [
         "csv",
         "json"
@@ -45,6 +49,7 @@
       "type": "string"
     },
     "FilterType": {
+      "description": "Filter interaction types that determine appropriate interaction patterns.\n\nAvailable types:\n- text: Text-based filtering with string matching (contains, starts with, equals, etc.)\n- number_range: Numeric range filtering with min/max bounds\n- date_range: Date range filtering with start/end dates\n- select: Selection from predefined options (derived from unique field values)\n- boolean: Boolean filtering",
       "enum": [
         "text",
         "number_range",
@@ -55,6 +60,7 @@
       "type": "string"
     },
     "FilterConditionLogicalOperator": {
+      "description": "Logical operators for combining multiple filter conditions.\n\nAvailable operators:\n- and: All conditions must be true (intersection)\n- or: At least one condition must be true (union)\n- not: Negates the child condition(s)",
       "enum": [
         "and",
         "or",
@@ -63,6 +69,7 @@
       "type": "string"
     },
     "FilterConditionRelationalOperator": {
+      "description": "Comparison operators for relational filter conditions.\n\nAvailable operators:\n- equals: Exact equality (field === value)\n- not_equals: Inequality (field !== value)\n- contains: String contains substring (case-insensitive recommended)\n- not_contains: String does not contain substring\n- starts_with: String starts with prefix\n- ends_with: String ends with suffix\n- greater_than: Numeric/date comparison (field > value)\n- less_than: Numeric/date comparison (field < value)\n- greater_than_or_equal: Numeric/date comparison (field >= value)\n- less_than_or_equal: Numeric/date comparison (field <= value)\n- between: Value is within a range (inclusive) - use with RangeFilterConditionValue\n- in: Value is in a list of options - use with ListFilterConditionValue\n- not_in: Value is not in a list of options - use with ListFilterConditionValue",
       "enum": [
         "equals",
         "not_equals",
@@ -81,6 +88,7 @@
       "type": "string"
     },
     "LayoutNodeSpacing": {
+      "description": "Predefined spacing scales for consistent visual rhythm.\n\nAvailable spacings:\n- tight: Minimal spacing for dense layouts\n- normal: Default spacing for balanced layouts\n- relaxed: Generous spacing for spacious layouts",
       "enum": [
         "tight",
         "normal",
@@ -89,6 +97,7 @@
       "type": "string"
     },
     "StackLayoutNodeAlignment": {
+      "description": "Alignment options for stack layout children along the cross axis.\n\nAvailable alignments:\n- start: Align to the start (left/top)\n- center: Align to the center\n- end: Align to the end (right/bottom)\n- stretch: Stretch to fill the cross axis",
       "enum": [
         "start",
         "center",
@@ -98,6 +107,7 @@
       "type": "string"
     },
     "Padding": {
+      "description": "Flexible padding definition supporting shorthand and explicit sides. Follows CSS-like conventions for ease of use.\n\nCan be either:\n- A number: Same padding on all four sides (top, right, bottom, left)\n- An object: Specify each side independently (omitted sides default to 0)",
       "anyOf": [
         {
           "type": "number"
@@ -123,10 +133,12 @@
       ]
     },
     "AffordedField": {
+      "description": "Reference to a field in the provided data using an accessor path.\n\nAccessor syntax:\n- Simple field: 'name', 'age', 'status'\n- Nested field: 'user.profile.email', 'metadata.created_at'\n- Array index: 'items[0]', 'users[5].name'\n- Mixed: 'data.users[0].contacts[1].email'\n\nThe accessor is resolved at inference time against the provided data.",
       "additionalProperties": false,
       "properties": {
         "accessor": {
-          "type": "string"
+          "type": "string",
+          "description": "Dot-notation path to the field in the data. Supports nested objects and array indexing"
         }
       },
       "required": [
@@ -135,6 +147,7 @@
       "type": "object"
     },
     "SizeConstraint": {
+      "description": "Defines how an element's size is calculated. Different constraint types enable different layout behaviours:\n- Use 'fixed' for exact pixel dimensions (e.g., icons, buttons)\n- Use 'flex' for proportional sizing (e.g., sidebar vs main content)\n- Use 'percentage' for responsive layouts (e.g., 50% width)\n- Use 'content' to size based on children (e.g., auto-sizing containers)",
       "anyOf": [
         {
           "$ref": "#/definitions/FixedSizeConstraint"
@@ -160,6 +173,7 @@
       }
     },
     "FixedSizeConstraint": {
+      "description": "Fixed size in pixels. The element will be exactly this size regardless of content or container",
       "additionalProperties": false,
       "properties": {
         "type": {
@@ -167,7 +181,8 @@
           "type": "string"
         },
         "value": {
-          "type": "number"
+          "type": "number",
+          "description": "Size in pixels"
         }
       },
       "required": [
@@ -177,6 +192,7 @@
       "type": "object"
     },
     "FlexSizeConstraint": {
+      "description": "Flex sizing with a flex factor. Element shares available space proportionally with other flex elements. E.g., flex: 1 and flex: 2 would give 33% and 67% of space respectively",
       "additionalProperties": false,
       "properties": {
         "type": {
@@ -184,7 +200,8 @@
           "type": "string"
         },
         "value": {
-          "type": "number"
+          "type": "number",
+          "description": "Flex factor for proportional sizing"
         }
       },
       "required": [
@@ -194,6 +211,7 @@
       "type": "object"
     },
     "PercentageSizeConstraint": {
+      "description": "Percentage of parent container size. Value should be between 0 and 100",
       "additionalProperties": false,
       "properties": {
         "type": {
@@ -201,7 +219,8 @@
           "type": "string"
         },
         "value": {
-          "type": "number"
+          "type": "number",
+          "description": "Percentage value (0-100)"
         }
       },
       "required": [
@@ -211,6 +230,7 @@
       "type": "object"
     },
     "ContentSizeConstraint": {
+      "description": "Size to fit content. Element sizes based on its children's dimensions",
       "additionalProperties": false,
       "properties": {
         "type": {

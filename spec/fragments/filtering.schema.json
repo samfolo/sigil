@@ -5,6 +5,7 @@
   "description": "Filter conditions and operators for data filtering",
   "definitions": {
     "FilterCondition": {
+      "description": "A filter condition can be either a relational comparison or a logical combination. This recursive structure enables arbitrarily complex filter expressions",
       "anyOf": [
         {
           "$ref": "#/definitions/LogicalFilterCondition"
@@ -22,16 +23,19 @@
       }
     },
     "LogicalFilterCondition": {
+      "description": "Combines multiple filter conditions using logical operators.\n\nEnables complex queries like:\n- (age > 18 AND country = 'UK') OR (status = 'verified')\n- NOT (deleted = true)\n\nConditions can be nested arbitrarily deep for sophisticated filtering",
       "additionalProperties": false,
       "properties": {
         "conditions": {
           "items": {
             "$ref": "#/definitions/FilterCondition"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Child conditions to combine. Can include both relational and other logical conditions (recursive)"
         },
         "operator": {
-          "$ref": "./primitives.schema.json#/definitions/FilterConditionLogicalOperator"
+          "$ref": "./primitives.schema.json#/definitions/FilterConditionLogicalOperator",
+          "description": "How to combine the child conditions"
         },
         "type": {
           "const": "logical",
@@ -46,20 +50,24 @@
       "type": "object"
     },
     "RelationalFilterCondition": {
+      "description": "A single field-value comparison.\n\nExample: {type: 'relational', field: {accessor: 'age'}, operator: 'greater_than', value: {type: 'value', value: 18}}",
       "additionalProperties": false,
       "properties": {
         "field": {
-          "$ref": "./primitives.schema.json#/definitions/AffordedField"
+          "$ref": "./primitives.schema.json#/definitions/AffordedField",
+          "description": "The field to filter on"
         },
         "operator": {
-          "$ref": "./primitives.schema.json#/definitions/FilterConditionRelationalOperator"
+          "$ref": "./primitives.schema.json#/definitions/FilterConditionRelationalOperator",
+          "description": "How to compare the field to the value"
         },
         "type": {
           "const": "relational",
           "type": "string"
         },
         "value": {
-          "$ref": "#/definitions/FilterConditionValue"
+          "$ref": "#/definitions/FilterConditionValue",
+          "description": "What to compare the field against"
         }
       },
       "required": [
@@ -71,6 +79,7 @@
       "type": "object"
     },
     "FilterConditionValue": {
+      "description": "The value side of a filter comparison. Can be a literal value, reference to another field, list, or range",
       "anyOf": [
         {
           "$ref": "#/definitions/ValueFilterConditionValue"
@@ -96,6 +105,7 @@
       }
     },
     "ValueFilterConditionValue": {
+      "description": "A literal value to compare against",
       "additionalProperties": false,
       "properties": {
         "type": {
@@ -108,7 +118,8 @@
             "number",
             "boolean",
             "null"
-          ]
+          ],
+          "description": "The literal value to compare"
         }
       },
       "required": [
@@ -118,10 +129,12 @@
       "type": "object"
     },
     "FieldFilterConditionValue": {
+      "description": "Reference to another field's value for field-to-field comparison.\n\nExample: Filter rows where 'end_date' > 'start_date'",
       "additionalProperties": false,
       "properties": {
         "field": {
-          "$ref": "./primitives.schema.json#/definitions/AffordedField"
+          "$ref": "./primitives.schema.json#/definitions/AffordedField",
+          "description": "The field to compare against"
         },
         "type": {
           "const": "field",
@@ -135,6 +148,7 @@
       "type": "object"
     },
     "ListFilterConditionValue": {
+      "description": "A list of values for 'in' or 'not_in' operators",
       "additionalProperties": false,
       "properties": {
         "type": {
@@ -150,7 +164,8 @@
               "null"
             ]
           },
-          "type": "array"
+          "type": "array",
+          "description": "The list of acceptable values"
         }
       },
       "required": [
@@ -160,19 +175,22 @@
       "type": "object"
     },
     "RangeFilterConditionValue": {
+      "description": "A numeric or date range for 'between' operator. Both start and end are inclusive",
       "additionalProperties": false,
       "properties": {
         "end": {
           "type": [
             "string",
             "number"
-          ]
+          ],
+          "description": "Range end (inclusive)"
         },
         "start": {
           "type": [
             "string",
             "number"
-          ]
+          ],
+          "description": "Range start (inclusive)"
         },
         "type": {
           "const": "range",

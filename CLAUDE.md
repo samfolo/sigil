@@ -131,3 +131,4 @@ setQueryState('reloading');
 - Numeric state codes
 
 This ensures consistent state management across all async operations in the application.
+- This project uses Zod V4 - check https://zod.dev for documentation and/or https://zod.dev/api for the API specification when you need context.

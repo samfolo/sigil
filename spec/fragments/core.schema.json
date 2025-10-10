@@ -7,25 +7,31 @@
   "definitions": {
     "ComponentSpec": {
       "additionalProperties": false,
-      "description": "Sigil Component Specification - Intermediate Representation\n\nDesign principles:\n- Specs are generated fresh for each dataset, tailored to its semantic meaning\n- Field metadata, value mappings, and bindings are embedded directly in the spec\n- Data values are provided separately at render time (not embedded in spec)\n- Layout and components are separate concerns\n- Type-specific configs via discriminated unions\n- Everything normalised to JSON before spec generation",
+      "description": "Sigil Component Specification - Intermediate Representation\n\nDesign principles:\n- Specs are generated fresh for each dataset, tailored to its semantic meaning\n- Field metadata, value mappings, and bindings are embedded directly in the spec\n- Data values are provided separately at render time (not embedded in spec)\n- Layout and components are separate concerns\n- Type-specific configs via discriminated unions\n- Everything normalised to JSON before spec generation\n\nSpecs are generated fresh for each dataset by LLMs or spec generators, tailored to the specific semantic meaning and structure of that data. Even datasets with identical shapes may require different specs if their semantic meaning differs.\n\nThe spec contains everything needed to render the visualisation:\n- Layout structure and component arrangement\n- Component configurations and affordances\n- Field metadata, type information, and value mappings\n- Data shape and structural expectations\n\nThe spec does NOT contain the actual data values - those are provided separately at render time. This separation allows:\n- Lightweight serialisation and storage of specs\n- Rendering different views of the same dataset (filtered, paginated, etc.)\n- Versioning and evolution of specs independently from data\n\nThe spec is immutable once created - any modifications create a new version.",
       "properties": {
         "created_at": {
-          "type": "string"
+          "type": "string",
+          "description": "ISO 8601 timestamp of when this spec was created. Format: YYYY-MM-DDTHH:mm:ss.sssZ"
         },
         "data_shape": {
-          "$ref": "./primitives.schema.json#/definitions/DataShape"
+          "$ref": "./primitives.schema.json#/definitions/DataShape",
+          "description": "Describes the expected structure of input data this spec is designed for. This helps validate data compatibility and guides component selection"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional description explaining the purpose or usage of this spec"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for this specification (UUID v4 recommended)"
         },
         "root": {
-          "$ref": "#/definitions/Component"
+          "$ref": "#/definitions/Component",
+          "description": "The root node containing the full layout, components, and field bindings. This encapsulates the entire visualisation specification. The rendering engine starts here to build the UI"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable title for the visualisation"
         }
       },
       "required": [
@@ -39,6 +45,7 @@
     },
     "Component": {
       "additionalProperties": false,
+      "description": "A complete component specification including layout, components, and field bindings. This is the root structure used by the rendering engine to build a component in the UI",
       "properties": {
         "accessor_bindings": {
           "additionalProperties": {
@@ -47,16 +54,19 @@
             },
             "type": "object"
           },
-          "type": "object"
+          "type": "object",
+          "description": "Field metadata providing semantic information about data fields for each component.\n\nStructure: { [component_id]: { [field_accessor]: FieldMetadata } }\n\nThis maps each component's fields to their metadata (types, roles, display hints, value mappings). The component_id keys correspond to IDs in ComponentSpec.components. The field_accessor keys use dot notation matching AffordedField.accessor syntax.\n\nField metadata includes:\n- Semantic roles (label, value, category, etc.)\n- Data types with fallback options for coercion\n- Value mappings for transforming raw values to display values\n- Format strings for dates and numbers\n\nExample:\n{\n  \"table-1\": {\n    \"user.name\": { roles: [\"label\"], data_types: [\"string\"], ... },\n    \"user.age\": { roles: [\"value\"], data_types: [\"number\"], format: \"0,0\", ... }\n  }\n}"
         },
         "layout": {
-          "$ref": "./layout.schema.json#/definitions/LayoutNode"
+          "$ref": "./layout.schema.json#/definitions/LayoutNode",
+          "description": "Root layout node defining the visual structure and component arrangement. Layouts can be nested to create complex hierarchical compositions"
         },
         "nodes": {
           "additionalProperties": {
             "$ref": "#/definitions/ComponentNode"
           },
-          "type": "object"
+          "type": "object",
+          "description": "Registry of all component nodes used in this component, keyed by component ID. Using a Record ensures O(1) lookup performance and guarantees ID uniqueness. Components are referenced from LayoutChild nodes via their IDs"
         }
       },
       "required": [
@@ -68,15 +78,19 @@
     },
     "ComponentNode": {
       "additionalProperties": false,
+      "description": "A ComponentNode is a leaf node in the layout tree that renders data.\n\nComponentNodes are stored in Component.nodes and referenced from LayoutChild nodes via their IDs. This separation enables:\n- Component reuse across multiple layout positions\n- Centralised component configuration\n- Efficient lookups without tree traversal",
       "properties": {
         "config": {
-          "$ref": "./components.schema.json#/definitions/ComponentConfig"
+          "$ref": "./components.schema.json#/definitions/ComponentConfig",
+          "description": "Type-specific configuration for this component. The config type must match the component type (enforced by discriminated union)"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for this component. Referenced by LayoutChild.component_id"
         },
         "type": {
-          "$ref": "./primitives.schema.json#/definitions/ComponentType"
+          "$ref": "./primitives.schema.json#/definitions/ComponentType",
+          "description": "The kind of visualisation this component provides. Determines which config interface to use"
         }
       },
       "required": [

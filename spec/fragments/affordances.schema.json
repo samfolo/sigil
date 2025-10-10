@@ -2,9 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "sigil://spec/affordances",
   "title": "Sigil Affordances",
-  "description": "Data interaction affordances (sorting, filtering, pagination, etc.)",
+  "description": "Data interaction affordances (sorting, filtering, pagination, etc.)\n\nAffordances are declarative capabilities that enhance component interactivity.\n\nDesign philosophy:\n- Affordances are opt-in: components work without them, but they enable richer interactions\n- They are declarative, not imperative: you specify WHAT capabilities exist, not HOW to implement them\n- Each affordance is independent and composable\n- The rendering engine implements the actual behaviour based on these declarations\n\nCommon affordances enable:\n- Performance optimisations (virtualisation)\n- Data manipulation (sorting, filtering, search)\n- User interaction (selection)\n- Data export (CSV, JSON)",
   "definitions": {
     "Affordance": {
+      "description": "Union type of all available affordance types",
       "anyOf": [
         {
           "$ref": "#/definitions/VirtualisationAffordance"
@@ -42,16 +43,20 @@
       }
     },
     "VirtualisationAffordance": {
+      "description": "Enables efficient rendering of large datasets by only rendering visible items.\n\nVirtualisation is critical for performance when displaying thousands of rows. The rendering engine only creates DOM nodes for items in/near the viewport, dramatically reducing memory usage and initial render time.\n\nUse this for: large tables, long lists, infinite scrolling",
       "additionalProperties": false,
       "properties": {
         "buffer_size": {
-          "type": "number"
+          "type": "number",
+          "description": "Maximum number of items to keep in rendered memory. Items beyond this are unmounted to prevent memory leaks. Default: 50"
         },
         "item_height": {
-          "type": "number"
+          "type": "number",
+          "description": "Fixed height for each item in pixels. Required for optimal performance with fixed-height rows. Omit this for dynamic-height items (slower but more flexible)"
         },
         "overscan_count": {
-          "type": "number"
+          "type": "number",
+          "description": "Number of items to render outside the visible viewport. Higher values provide smoother scrolling but use more memory. Default: 3"
         },
         "type": {
           "const": "virtualisation",
@@ -64,23 +69,27 @@
       "type": "object"
     },
     "SortingAffordance": {
+      "description": "Enables sorting data by one or more fields. Allows sorting data ascending/descending by field values. Sorting can be restricted to specific fields or allowed on all fields",
       "additionalProperties": false,
       "properties": {
         "allowed_fields": {
           "items": {
             "$ref": "./primitives.schema.json#/definitions/AffordedField"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Fields that can be sorted. Omit to allow sorting on all fields in the component"
         },
         "default_direction": {
           "enum": [
             "asc",
             "desc"
           ],
-          "type": "string"
+          "type": "string",
+          "description": "Initial sort direction. Default: 'asc'"
         },
         "default_field": {
-          "$ref": "./primitives.schema.json#/definitions/AffordedField"
+          "$ref": "./primitives.schema.json#/definitions/AffordedField",
+          "description": "Initial sort field when component first renders. Omit to show unsorted data initially"
         },
         "type": {
           "const": "sorting",
@@ -93,25 +102,29 @@
       "type": "object"
     },
     "FilteringAffordance": {
+      "description": "Enables filtering data based on field values.\n\nSupports both simple single-field filters and complex multi-condition queries using logical operators.\n\nFilter behaviour:\n- Multiple default_filters are combined with AND logic\n- User can add/remove filters interactively\n- Filter types determine appropriate interaction patterns",
       "additionalProperties": false,
       "properties": {
         "allowed_fields": {
           "items": {
             "$ref": "./primitives.schema.json#/definitions/AffordedField"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Fields that can be filtered. Omit to allow filtering on all fields in the component"
         },
         "default_filters": {
           "items": {
             "$ref": "./filtering.schema.json#/definitions/FilterCondition"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Filters applied by default when component first renders. Useful for pre-filtering data to a relevant subset. User can modify/remove these filters interactively"
         },
         "filter_types": {
           "additionalProperties": {
             "$ref": "./primitives.schema.json#/definitions/FilterType"
           },
-          "type": "object"
+          "type": "object",
+          "description": "Specifies the filter interaction type for each field. Maps field accessor to FilterType (e.g., {'age': 'number_range', 'name': 'text'}). Omit to auto-detect based on data types from FieldMetadata"
         },
         "type": {
           "const": "filtering",
@@ -124,19 +137,23 @@
       "type": "object"
     },
     "PaginationAffordance": {
+      "description": "Enables paginated display of data with configurable page sizes.\n\nPagination improves performance and usability for large datasets by displaying data in manageable chunks. Users can navigate between pages and optionally adjust the page size.\n\nNote: Pagination and virtualisation serve different purposes:\n- Use pagination for traditional page-based navigation\n- Use virtualisation for continuous scrolling or very large datasets\n- They can be combined (paginated + virtualised pages)",
       "additionalProperties": false,
       "properties": {
         "page_size": {
-          "type": "number"
+          "type": "number",
+          "description": "Default number of items displayed per page"
         },
         "show_size_options": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether to allow users to change page size. Default: true"
         },
         "size_options": {
           "items": {
             "type": "number"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Available page size options. Default: [10, 25, 50, 100]"
         },
         "type": {
           "const": "pagination",
@@ -150,19 +167,23 @@
       "type": "object"
     },
     "ExportAffordance": {
+      "description": "Enables exporting data to various file formats.\n\nProvides ability to export visible or filtered data. Export respects current filters and sorting but typically exports ALL matching data (not just the current page)",
       "additionalProperties": false,
       "properties": {
         "filename_template": {
-          "type": "string"
+          "type": "string",
+          "description": "Template for generated filename. Supports placeholders: {title}, {timestamp}, {date}. Default: '{title}_{timestamp}'"
         },
         "formats": {
           "items": {
             "$ref": "./primitives.schema.json#/definitions/ExportAffordanceFormat"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Available export formats (e.g., ['csv', 'json'])"
         },
         "include_headers": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether to include column headers in exported files. Default: true"
         },
         "type": {
           "const": "export",
@@ -176,6 +197,7 @@
       "type": "object"
     },
     "SelectionAffordance": {
+      "description": "Enables interactive selection of rows/items. Allows selecting data rows, useful for bulk actions, detail views, or highlighting items of interest",
       "additionalProperties": false,
       "properties": {
         "mode": {
@@ -183,13 +205,16 @@
             "single",
             "multiple"
           ],
-          "type": "string"
+          "type": "string",
+          "description": "Selection mode: 'single' (only one item can be selected at a time) or 'multiple' (multiple items can be selected simultaneously)"
         },
         "preserve_across_pages": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether selections persist when navigating between pages. Default: false (selections reset on page change)"
         },
         "show_selection_indicators": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether to provide explicit selection indicators. Default: true for multiple mode, false for single mode"
         },
         "type": {
           "const": "selection",
@@ -203,19 +228,23 @@
       "type": "object"
     },
     "SearchAffordance": {
+      "description": "Enables full-text search across data fields.\n\nFilters data to matching rows based on text queries. Search is typically less structured than filtering but more convenient for quick queries.\n\nSearch vs Filter:\n- Search: Quick, text-based, searches across multiple fields\n- Filter: Structured, field-specific, supports complex conditions",
       "additionalProperties": false,
       "properties": {
         "case_sensitive": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether search is case-sensitive. Default: false (case-insensitive)"
         },
         "min_characters": {
-          "type": "number"
+          "type": "number",
+          "description": "Minimum number of characters before search activates. Prevents expensive searches on very short inputs. Default: 1"
         },
         "searchable_fields": {
           "items": {
             "$ref": "./primitives.schema.json#/definitions/AffordedField"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Fields to search within. Omit to search all text fields in the component"
         },
         "type": {
           "const": "search",

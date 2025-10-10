@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "npm run spec:all && next dev --turbopack",
+    "build": "npm run spec:all && next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test": "npm run spec:all && vitest",
+    "test:ui": "npm run spec:all && vitest --ui",
+    "test:coverage": "npm run spec:all && vitest --coverage",
     "spec:bundle": "tsx scripts/spec/bundle.ts",
     "spec:validate": "tsx scripts/spec/validate.ts",
     "spec:all": "npm run spec:validate && npm run spec:bundle"

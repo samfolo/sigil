@@ -2,9 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "sigil://spec/layout",
   "title": "Sigil Layout System",
-  "description": "Layout positioning system (stack and grid layouts)",
+  "description": "Layout positioning system (stack and grid layouts).\n\nLayouts define how child elements are arranged spatially. Layouts are composable - a LayoutNode can contain other LayoutNodes, enabling complex hierarchical compositions (e.g., a grid containing stacks, or stacks containing grids)",
   "definitions": {
     "LayoutNode": {
+      "description": "A layout node defines how child elements are arranged spatially. Can be either a stack layout (linear arrangement) or grid layout (two-dimensional arrangement)",
       "anyOf": [
         {
           "$ref": "#/definitions/StackLayoutNode"
@@ -22,6 +23,7 @@
       }
     },
     "StackLayoutNode": {
+      "description": "Linear layout that arranges children in a single row or column.\n\nStack layouts are simpler than grids and ideal for:\n- Toolbars and navigation\n- Form fields in sequence\n- Card lists\n- Any linear arrangement of components\n\nAlignment works on two axes:\n- Primary axis (direction of flow): controlled by spacing and flex behaviour\n- Cross axis: controlled by horizontal_alignment (for vertical stacks) or vertical_alignment (for horizontal stacks)",
       "anyOf": [
         {
           "$ref": "#/definitions/HorizontalStackLayoutNode"
@@ -39,51 +41,65 @@
       }
     },
     "HorizontalStackLayoutNode": {
+      "description": "Horizontal stack layout - arranges children left-to-right.\n\nCommon properties:\n- Size constraints work together: if only width is set, it defines the exact or preferred width. If min_width and max_width are set, they bound the width range. The final size is calculated by the rendering engine based on constraints and content",
       "additionalProperties": false,
       "properties": {
         "children": {
           "items": {
             "$ref": "#/definitions/LayoutChild"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Ordered list of children to render in sequence"
         },
         "direction": {
           "const": "horizontal",
-          "type": "string"
+          "type": "string",
+          "description": "Flow direction of children - fixed to 'horizontal' for this layout type"
         },
         "height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Preferred or exact height constraint"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for this layout node"
         },
         "max_height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Maximum height - layout will not grow beyond this"
         },
         "max_width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Maximum width - layout will not grow beyond this"
         },
         "min_height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Minimum height - layout will not shrink below this"
         },
         "min_width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Minimum width - layout will not shrink below this"
         },
         "padding": {
-          "$ref": "./primitives.schema.json#/definitions/Padding"
+          "$ref": "./primitives.schema.json#/definitions/Padding",
+          "description": "Internal spacing between the layout's edges and its children"
         },
         "spacing": {
-          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing",
+          "description": "Space between children along the primary axis"
         },
         "type": {
           "const": "stack",
-          "type": "string"
+          "type": "string",
+          "description": "Discriminator value for stack layouts"
         },
         "vertical_alignment": {
-          "$ref": "./primitives.schema.json#/definitions/StackLayoutNodeAlignment"
+          "$ref": "./primitives.schema.json#/definitions/StackLayoutNodeAlignment",
+          "description": "How children align vertically. For horizontal stacks: aligns children vertically (top/center/bottom/fill)"
         },
         "width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Preferred or exact width constraint"
         }
       },
       "required": [
@@ -96,51 +112,65 @@
       "type": "object"
     },
     "VerticalStackLayoutNode": {
+      "description": "Vertical stack layout - arranges children top-to-bottom.\n\nCommon properties:\n- Size constraints work together: if only width is set, it defines the exact or preferred width. If min_width and max_width are set, they bound the width range. The final size is calculated by the rendering engine based on constraints and content",
       "additionalProperties": false,
       "properties": {
         "children": {
           "items": {
             "$ref": "#/definitions/LayoutChild"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Ordered list of children to render in sequence"
         },
         "direction": {
           "const": "vertical",
-          "type": "string"
+          "type": "string",
+          "description": "Flow direction of children - fixed to 'vertical' for this layout type"
         },
         "height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Preferred or exact height constraint"
         },
         "horizontal_alignment": {
-          "$ref": "./primitives.schema.json#/definitions/StackLayoutNodeAlignment"
+          "$ref": "./primitives.schema.json#/definitions/StackLayoutNodeAlignment",
+          "description": "How children align horizontally. For vertical stacks: aligns children horizontally (left/center/right/fill)"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for this layout node"
         },
         "max_height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Maximum height - layout will not grow beyond this"
         },
         "max_width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Maximum width - layout will not grow beyond this"
         },
         "min_height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Minimum height - layout will not shrink below this"
         },
         "min_width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Minimum width - layout will not shrink below this"
         },
         "padding": {
-          "$ref": "./primitives.schema.json#/definitions/Padding"
+          "$ref": "./primitives.schema.json#/definitions/Padding",
+          "description": "Internal spacing between the layout's edges and its children"
         },
         "spacing": {
-          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing",
+          "description": "Space between children along the primary axis"
         },
         "type": {
           "const": "stack",
-          "type": "string"
+          "type": "string",
+          "description": "Discriminator value for stack layouts"
         },
         "width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Preferred or exact width constraint"
         }
       },
       "required": [
@@ -153,53 +183,68 @@
       "type": "object"
     },
     "GridLayoutNode": {
+      "description": "Grid layout that arranges children in rows and columns.\n\nGrid layouts provide precise two-dimensional control and are ideal for:\n- Dashboard layouts\n- Form layouts with labels and inputs\n- Card grids\n- Any content requiring alignment on both axes\n\nGrid supports both auto-flow (children placed automatically) and explicit positioning (using column_start/row_start on GridChild)",
       "additionalProperties": false,
       "properties": {
         "children": {
           "items": {
             "$ref": "#/definitions/GridChild"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Children with optional positioning and spanning information"
         },
         "column_gap": {
-          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing",
+          "description": "Spacing between columns"
         },
         "columns": {
-          "type": "number"
+          "type": "number",
+          "description": "Number of columns in the grid"
         },
         "height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Preferred or exact height constraint"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for this layout node"
         },
         "max_height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Maximum height - layout will not grow beyond this"
         },
         "max_width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Maximum width - layout will not grow beyond this"
         },
         "min_height": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Minimum height - layout will not shrink below this"
         },
         "min_width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Minimum width - layout will not shrink below this"
         },
         "padding": {
-          "$ref": "./primitives.schema.json#/definitions/Padding"
+          "$ref": "./primitives.schema.json#/definitions/Padding",
+          "description": "Internal spacing between the layout's edges and its children"
         },
         "row_gap": {
-          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing"
+          "$ref": "./primitives.schema.json#/definitions/LayoutNodeSpacing",
+          "description": "Spacing between rows"
         },
         "rows": {
-          "type": "number"
+          "type": "number",
+          "description": "Optional number of rows. If omitted, rows are created automatically as needed (auto-flow)"
         },
         "type": {
           "const": "grid",
-          "type": "string"
+          "type": "string",
+          "description": "Discriminator value for grid layouts"
         },
         "width": {
-          "$ref": "./primitives.schema.json#/definitions/SizeConstraint"
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
+          "description": "Preferred or exact width constraint"
         }
       },
       "required": [
@@ -211,22 +256,28 @@
       "type": "object"
     },
     "GridChild": {
+      "description": "A child within a grid layout with optional positioning and spanning.\n\nPositioning modes:\n- Auto-flow (default): Omit column_start and row_start - child is placed in the next available cell\n- Explicit: Set column_start and row_start to place child at a specific grid position\n\nGrid coordinates are 1-indexed (first column is 1, not 0)",
       "additionalProperties": false,
       "properties": {
         "column_span": {
-          "type": "number"
+          "type": "number",
+          "description": "Number of columns this child spans. Default: 1"
         },
         "column_start": {
-          "type": "number"
+          "type": "number",
+          "description": "Explicit column position (1-indexed). Omit to use auto-flow positioning"
         },
         "element": {
-          "$ref": "#/definitions/LayoutChild"
+          "$ref": "#/definitions/LayoutChild",
+          "description": "The layout or component to render in this grid cell"
         },
         "row_span": {
-          "type": "number"
+          "type": "number",
+          "description": "Number of rows this child spans. Default: 1"
         },
         "row_start": {
-          "type": "number"
+          "type": "number",
+          "description": "Explicit row position (1-indexed). Omit to use auto-flow positioning"
         }
       },
       "required": [
@@ -235,6 +286,7 @@
       "type": "object"
     },
     "LayoutChild": {
+      "description": "A child element within a layout.\n\nCan be either:\n- Another layout node (enabling nested/composable layouts)\n- A component (leaf node referenced by ID from ComponentSpec.components)\n\nThis discriminated union enables type-safe handling of the two cases",
       "anyOf": [
         {
           "$ref": "#/definitions/LayoutLayoutChild"
@@ -252,10 +304,12 @@
       }
     },
     "LayoutLayoutChild": {
+      "description": "Nested layout node for hierarchical composition",
       "additionalProperties": false,
       "properties": {
         "node": {
-          "$ref": "#/definitions/LayoutNode"
+          "$ref": "#/definitions/LayoutNode",
+          "description": "The nested layout node"
         },
         "type": {
           "const": "layout",
@@ -269,10 +323,12 @@
       "type": "object"
     },
     "ComponentLayoutChild": {
+      "description": "Reference to a component by its ID. The component must exist in ComponentSpec.components",
       "additionalProperties": false,
       "properties": {
         "component_id": {
-          "type": "string"
+          "type": "string",
+          "description": "ID of the component to render"
         },
         "type": {
           "const": "component",

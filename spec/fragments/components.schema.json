@@ -2,9 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "sigil://spec/components",
   "title": "Sigil Component Configurations",
-  "description": "Component configuration types for different visualization types",
+  "description": "Component configuration types for different visualisation types.\n\nComponent-specific configuration using discriminated unions. Each component type has its own config interface with a discriminator field that matches the ComponentType. This provides type safety - when you know the component type, TypeScript narrows to the correct config.\n\nAll configs share common properties (title, description, affordances) plus type-specific properties defined in each interface",
   "definitions": {
     "ComponentConfig": {
+      "description": "Discriminated union of all component configuration types",
       "anyOf": [
         {
           "$ref": "#/definitions/DataTableConfig"
@@ -30,19 +31,23 @@
       }
     },
     "DataTableConfig": {
+      "description": "Configuration for data table components.\n\nData tables display tabular data with rows and columns, supporting common tabular operations like sorting, filtering, and pagination.\n\nBest used with: data_shape = 'tabular'",
       "additionalProperties": false,
       "properties": {
         "affordances": {
           "items": {
             "$ref": "./affordances.schema.json#/definitions/Affordance"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Interactive capabilities enabled for this table. Common affordances: sorting, filtering, pagination, virtualisation, search, export"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional description explaining the component's purpose"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional title for the component"
         },
         "type": {
           "const": "data-table",
@@ -56,19 +61,23 @@
       "type": "object"
     },
     "HierarchyConfig": {
+      "description": "Configuration for hierarchy/tree components.\n\nHierarchy components display nested or tree-structured data with expand/collapse functionality and hierarchical navigation.\n\nBest used with: data_shape = 'hierarchical'",
       "additionalProperties": false,
       "properties": {
         "affordances": {
           "items": {
             "$ref": "./affordances.schema.json#/definitions/Affordance"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Interactive capabilities enabled for this hierarchy. Common affordances: search, selection, export"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional description explaining the component's purpose"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional title for the component"
         },
         "type": {
           "const": "hierarchy",
@@ -82,19 +91,23 @@
       "type": "object"
     },
     "CompositionConfig": {
+      "description": "Configuration for composition components.\n\nCompositions are meta-components that combine multiple sub-components into a unified visualisation (e.g., a dashboard with multiple charts).\n\nBest used with: any data_shape, depending on sub-components",
       "additionalProperties": false,
       "properties": {
         "affordances": {
           "items": {
             "$ref": "./affordances.schema.json#/definitions/Affordance"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Interactive capabilities for the composition as a whole. Note: sub-components have their own affordances"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional description explaining the component's purpose"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional title for the component"
         },
         "type": {
           "const": "composition",
@@ -108,19 +121,23 @@
       "type": "object"
     },
     "TextInsightConfig": {
+      "description": "Configuration for text insight components.\n\nText insights display textual information, summaries, or key-value metadata in a readable format.\n\nBest used with: data_shape = 'key_value'",
       "additionalProperties": false,
       "properties": {
         "affordances": {
           "items": {
             "$ref": "./affordances.schema.json#/definitions/Affordance"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Interactive capabilities for text insights. Common affordances: search, export"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional description explaining the component's purpose"
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional title for the component"
         },
         "type": {
           "const": "text-insight",
