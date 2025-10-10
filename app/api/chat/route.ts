@@ -32,9 +32,17 @@ export const POST = async (request: NextRequest) => {
 
     // Helper to extract array for counting
     const extractArrayForCount = (data: unknown) => {
-      if (Array.isArray(data)) {return data;}
-      if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {return data.features;}
-      if (data.type === 'GeometryCollection' && Array.isArray(data.geometries)) {return data.geometries;}
+      if (Array.isArray(data)) {
+        return data;
+      }
+      if (typeof data === 'object' && data !== null && 'type' in data) {
+        if (data.type === 'FeatureCollection' && 'features' in data && Array.isArray(data.features)) {
+          return data.features;
+        }
+        if (data.type === 'GeometryCollection' && 'geometries' in data && Array.isArray(data.geometries)) {
+          return data.geometries;
+        }
+      }
       return [];
     };
 
@@ -172,13 +180,16 @@ export const POST = async (request: NextRequest) => {
     ];
 
     // Detect data structure type for better prompting
-    const dataStructureInfo = Array.isArray(currentData)
-      ? 'array of objects'
-      : currentData.type === 'FeatureCollection'
-      ? 'GeoJSON FeatureCollection (use field="features" to access the features array)'
-      : currentData.type === 'Feature'
-      ? 'single GeoJSON Feature'
-      : 'object';
+    let dataStructureInfo = 'object';
+    if (Array.isArray(currentData)) {
+      dataStructureInfo = 'array of objects';
+    } else if (typeof currentData === 'object' && currentData !== null && 'type' in currentData) {
+      if (currentData.type === 'FeatureCollection') {
+        dataStructureInfo = 'GeoJSON FeatureCollection (use field="features" to access the features array)';
+      } else if (currentData.type === 'Feature') {
+        dataStructureInfo = 'single GeoJSON Feature';
+      }
+    }
 
     const systemPrompt = `You are a data analysis assistant. The user is currently viewing a dataset with the following properties:
 

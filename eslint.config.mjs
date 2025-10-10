@@ -36,6 +36,9 @@ const eslintConfig = [
       // Require curly braces for all control statements (no single-line if statements)
       "curly": ["error", "all"],
 
+      // Ban nested ternary operators
+      "no-nested-ternary": "error",
+
       // TypeScript-specific rules
       "@typescript-eslint/method-signature-style": ["error", "property"],
       "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
