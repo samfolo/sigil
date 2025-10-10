@@ -30,7 +30,7 @@ export const ChatInterface = ({ data, analysis, onDataUpdate, sessionId }: ChatI
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading(chatState)) return;
+    if (!input.trim() || isLoading(chatState)) {return;}
 
     const userMessage: Message = { role: 'user', content: input.trim() };
     const updatedMessages = [...messages, userMessage];

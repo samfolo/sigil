@@ -21,7 +21,7 @@ interface MapViewProps {
 }
 
 const isGeoJSON = (data: unknown): boolean => {
-  if (!data || typeof data !== 'object') return false;
+  if (!data || typeof data !== 'object') {return false;}
 
   // Check for GeoJSON FeatureCollection
   if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
@@ -64,7 +64,7 @@ const extractLatLonPoints = (data: unknown): Array<{ lat: number; lng: number; l
 }
 
 const extractSinglePoint = (item: unknown): { lat: number; lng: number } | null => {
-  if (!item || typeof item !== 'object') return null;
+  if (!item || typeof item !== 'object') {return null;}
 
   // Common field name variations
   const latFields = ['lat', 'latitude', 'Lat', 'Latitude'];

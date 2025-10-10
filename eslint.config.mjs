@@ -33,6 +33,9 @@ const eslintConfig = [
       // Enforce fat arrow syntax for all functions
       "prefer-arrow-callback": ["error", { allowNamedFunctions: false }],
 
+      // Require curly braces for all control statements (no single-line if statements)
+      "curly": ["error", "all"],
+
       // TypeScript-specific rules
       "@typescript-eslint/method-signature-style": ["error", "property"],
       "@typescript-eslint/consistent-type-definitions": ["error", "interface"],

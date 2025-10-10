@@ -32,9 +32,9 @@ export const POST = async (request: NextRequest) => {
 
     // Helper to extract array for counting
     const extractArrayForCount = (data: unknown) => {
-      if (Array.isArray(data)) return data;
-      if (data.type === 'FeatureCollection' && Array.isArray(data.features)) return data.features;
-      if (data.type === 'GeometryCollection' && Array.isArray(data.geometries)) return data.geometries;
+      if (Array.isArray(data)) {return data;}
+      if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {return data.features;}
+      if (data.type === 'GeometryCollection' && Array.isArray(data.geometries)) {return data.geometries;}
       return [];
     };
 

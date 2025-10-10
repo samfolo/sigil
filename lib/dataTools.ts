@@ -151,7 +151,7 @@ export const aggregateData = (
         const value = get(item, field);
         return value !== null && value !== undefined && value !== '';
       });
-      if (validItems.length === 0) return 0;
+      if (validItems.length === 0) {return 0;}
       const minItem = minBy(validItems, (item) => Number(get(item, field)));
       return minItem ? Number(get(minItem, field)) : 0;
     }
@@ -161,7 +161,7 @@ export const aggregateData = (
         const value = get(item, field);
         return value !== null && value !== undefined && value !== '';
       });
-      if (validItems.length === 0) return 0;
+      if (validItems.length === 0) {return 0;}
       const maxItem = maxBy(validItems, (item) => Number(get(item, field)));
       return maxItem ? Number(get(maxItem, field)) : 0;
     }
