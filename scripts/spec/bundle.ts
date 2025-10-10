@@ -8,7 +8,7 @@
  * cross-file $ref references.
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -27,10 +27,6 @@ interface JsonSchema {
   [key: string]: any;
 }
 
-interface FragmentCache {
-  [key: string]: JsonSchema;
-}
-
 /**
  * Load a JSON schema file
  */
@@ -40,87 +36,40 @@ function loadSchema(filePath: string): JsonSchema {
 }
 
 /**
- * Resolve a relative file reference to an absolute path
+ * Recursively resolve all cross-file $ref to local references
  */
-function resolveFragmentPath(fromPath: string, ref: string): string {
-  // Extract file path from reference (e.g., "./primitives.schema.json#/definitions/DataType" -> "./primitives.schema.json")
-  const [filePath] = ref.split('#');
-
-  if (!filePath.startsWith('./')) {
-    return filePath; // Not a relative file reference
-  }
-
-  // Resolve relative to the fragment directory
-  return resolve(fragmentsDir, filePath.substring(2));
-}
-
-/**
- * Recursively resolve all $ref in a schema object
- */
-function resolveRefs(
-  obj: any,
-  cache: FragmentCache,
-  definitions: Record<string, any>,
-  currentFile: string
-): any {
+function resolveRefs(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => resolveRefs(item, cache, definitions, currentFile));
+    return obj.map(item => resolveRefs(item));
   }
 
-  // If this object has a $ref
-  if (obj.$ref && typeof obj.$ref === 'string') {
-    const ref = obj.$ref;
+  // If this object has a $ref to another file
+  if (obj.$ref && typeof obj.$ref === 'string' && obj.$ref.startsWith('./')) {
+    const [filePath, jsonPath] = obj.$ref.split('#');
 
-    // If it's a cross-file reference (starts with ./)
-    if (ref.startsWith('./')) {
-      const [filePath, jsonPath] = ref.split('#');
-      const absolutePath = resolveFragmentPath(currentFile, ref);
-
-      // Load the referenced fragment if not already cached
-      if (!cache[absolutePath]) {
-        cache[absolutePath] = loadSchema(absolutePath);
-      }
-
-      const fragment = cache[absolutePath];
-
-      // Extract the definition name from the JSON path
-      // e.g., "/definitions/DataType" -> "DataType"
-      const match = jsonPath?.match(/\/definitions\/(.+)$/);
-      if (match && fragment.definitions) {
-        const defName = match[1];
-        const definition = fragment.definitions[defName];
-
-        if (definition) {
-          // Add the definition to the bundled definitions
-          if (!definitions[defName]) {
-            definitions[defName] = resolveRefs(definition, cache, definitions, absolutePath);
-          }
-
-          // Return a local reference
-          return { $ref: `#/definitions/${defName}` };
-        }
-      }
-    }
-
-    // For local references (#/definitions/...), keep them as-is
-    if (ref.startsWith('#/')) {
-      return obj;
+    // Extract the definition name from the JSON path
+    // e.g., "/definitions/DataType" -> "DataType"
+    const match = jsonPath?.match(/\/definitions\/(.+)$/);
+    if (match) {
+      const defName = match[1];
+      // Return a local reference
+      return { $ref: `#/definitions/${defName}` };
     }
   }
 
   // Recursively process all properties
   const result: any = {};
   for (const [key, value] of Object.entries(obj)) {
-    if (key === 'definitions') {
-      // Handle definitions specially - merge them
+    // Skip $id when copying (we'll set a new one for the bundled schema)
+    if (key !== '$id' && key !== 'title' && key !== 'description') {
+      result[key] = resolveRefs(value);
+    } else if (key === 'description' && typeof value === 'string') {
+      // Keep description at the definition level
       result[key] = value;
-    } else if (key !== '$id') {
-      // Skip $id when resolving (we'll set a new one for the bundled schema)
-      result[key] = resolveRefs(value, cache, definitions, currentFile);
     }
   }
 
@@ -131,31 +80,40 @@ function resolveRefs(
  * Bundle all schema fragments into a single schema
  */
 function bundleSchemas(): JsonSchema {
-  const cache: FragmentCache = {};
   const bundledDefinitions: Record<string, any> = {};
 
-  // Load the core schema (entry point)
-  const coreSchemaPath = resolve(fragmentsDir, 'core.schema.json');
-  const coreSchema = loadSchema(coreSchemaPath);
-  cache[coreSchemaPath] = coreSchema;
+  // Read all fragment files
+  const fragmentFiles = readdirSync(fragmentsDir).filter(f => f.endsWith('.schema.json'));
 
-  // Resolve all refs starting from the core schema
-  const resolvedCore = resolveRefs(coreSchema, cache, bundledDefinitions, coreSchemaPath);
+  console.log(`Found ${fragmentFiles.length} fragment files`);
 
-  // Merge all fragment definitions into bundled definitions
-  for (const [path, fragment] of Object.entries(cache)) {
+  // Load all fragments and collect all definitions
+  for (const file of fragmentFiles) {
+    const filePath = resolve(fragmentsDir, file);
+    const fragment = loadSchema(filePath);
+
+    console.log(`Processing ${file}...`);
+
     if (fragment.definitions) {
+      const defCount = Object.keys(fragment.definitions).length;
+      console.log(`  Found ${defCount} definitions`);
+
+      // Add all definitions from this fragment
       for (const [defName, definition] of Object.entries(fragment.definitions)) {
-        if (!bundledDefinitions[defName]) {
-          bundledDefinitions[defName] = resolveRefs(definition, cache, bundledDefinitions, path);
+        if (bundledDefinitions[defName]) {
+          console.warn(`  Warning: Definition "${defName}" already exists, skipping duplicate`);
+          continue;
         }
+
+        // Resolve any cross-file $refs in this definition
+        bundledDefinitions[defName] = resolveRefs(definition);
       }
     }
   }
 
   // Create the bundled schema
   const bundled: JsonSchema = {
-    $ref: resolvedCore.$ref || '#/definitions/ComponentSpec',
+    $ref: '#/definitions/ComponentSpec',
     $schema: 'http://json-schema.org/draft-07/schema#',
     definitions: bundledDefinitions
   };
@@ -167,7 +125,7 @@ function bundleSchemas(): JsonSchema {
  * Main execution
  */
 function main() {
-  console.log('🔄 Bundling schema fragments...');
+  console.log('🔄 Bundling schema fragments...\n');
 
   try {
     const bundled = bundleSchemas();
@@ -175,9 +133,9 @@ function main() {
     const outputPath = resolve(specDir, 'specification.schema.json');
     writeFileSync(outputPath, JSON.stringify(bundled, null, 2) + '\n', 'utf-8');
 
-    console.log('✅ Schema bundled successfully!');
+    console.log('\n✅ Schema bundled successfully!');
     console.log(`   Output: ${outputPath}`);
-    console.log(`   Definitions: ${Object.keys(bundled.definitions || {}).length}`);
+    console.log(`   Total definitions: ${Object.keys(bundled.definitions || {}).length}`);
   } catch (error) {
     console.error('❌ Error bundling schema:', error);
     process.exit(1);

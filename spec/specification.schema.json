@@ -39,429 +39,56 @@
         }
       }
     },
-    "AffordedField": {
+    "VirtualisationAffordance": {
       "additionalProperties": false,
       "properties": {
-        "accessor": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "accessor"
-      ],
-      "type": "object"
-    },
-    "Component": {
-      "additionalProperties": false,
-      "properties": {
-        "accessor_bindings": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "$ref": "#/definitions/FieldMetadata"
-            },
-            "type": "object"
-          },
-          "type": "object"
+        "buffer_size": {
+          "type": "number"
         },
-        "layout": {
-          "$ref": "#/definitions/LayoutNode"
+        "item_height": {
+          "type": "number"
         },
-        "nodes": {
-          "additionalProperties": {
-            "$ref": "#/definitions/ComponentNode"
-          },
-          "type": "object"
-        }
-      },
-      "required": [
-        "layout",
-        "nodes",
-        "accessor_bindings"
-      ],
-      "type": "object"
-    },
-    "ComponentConfig": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/DataTableConfig"
-        },
-        {
-          "$ref": "#/definitions/HierarchyConfig"
-        },
-        {
-          "$ref": "#/definitions/CompositionConfig"
-        },
-        {
-          "$ref": "#/definitions/TextInsightConfig"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type",
-        "mapping": {
-          "data-table": "#/definitions/DataTableConfig",
-          "hierarchy": "#/definitions/HierarchyConfig",
-          "composition": "#/definitions/CompositionConfig",
-          "text-insight": "#/definitions/TextInsightConfig"
-        }
-      }
-    },
-    "ComponentNode": {
-      "additionalProperties": false,
-      "properties": {
-        "config": {
-          "$ref": "#/definitions/ComponentConfig"
-        },
-        "id": {
-          "type": "string"
+        "overscan_count": {
+          "type": "number"
         },
         "type": {
-          "$ref": "#/definitions/ComponentType"
-        }
-      },
-      "required": [
-        "id",
-        "type",
-        "config"
-      ],
-      "type": "object"
-    },
-    "ComponentSpec": {
-      "additionalProperties": false,
-      "description": "Sigil Component Specification - Intermediate Representation\n\nDesign principles:\n- Specs are generated fresh for each dataset, tailored to its semantic meaning\n- Field metadata, value mappings, and bindings are embedded directly in the spec\n- Data values are provided separately at render time (not embedded in spec)\n- Layout and components are separate concerns\n- Type-specific configs via discriminated unions\n- Everything normalised to JSON before spec generation",
-      "properties": {
-        "created_at": {
-          "type": "string"
-        },
-        "data_shape": {
-          "$ref": "#/definitions/DataShape"
-        },
-        "description": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "root": {
-          "$ref": "#/definitions/Component"
-        },
-        "title": {
+          "const": "virtualisation",
           "type": "string"
         }
       },
       "required": [
-        "id",
-        "title",
-        "created_at",
-        "data_shape",
-        "root"
-      ],
-      "type": "object"
-    },
-    "ComponentType": {
-      "enum": [
-        "data-table",
-        "hierarchy",
-        "composition",
-        "text-insight"
-      ],
-      "type": "string"
-    },
-    "CompositionConfig": {
-      "additionalProperties": false,
-      "properties": {
-        "affordances": {
-          "items": {
-            "$ref": "#/definitions/Affordance"
-          },
-          "type": "array"
-        },
-        "description": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "type": {
-          "const": "composition",
-          "type": "string"
-        }
-      },
-      "required": [
-        "affordances",
         "type"
       ],
       "type": "object"
     },
-    "DataShape": {
-      "enum": [
-        "tabular",
-        "hierarchical",
-        "key_value",
-        "graph",
-        "geospatial"
-      ],
-      "type": "string"
-    },
-    "DataTableConfig": {
+    "SortingAffordance": {
       "additionalProperties": false,
       "properties": {
-        "affordances": {
+        "allowed_fields": {
           "items": {
-            "$ref": "#/definitions/Affordance"
+            "$ref": "#/definitions/AffordedField"
           },
           "type": "array"
         },
-        "description": {
+        "default_direction": {
+          "enum": [
+            "asc",
+            "desc"
+          ],
           "type": "string"
         },
-        "title": {
-          "type": "string"
+        "default_field": {
+          "$ref": "#/definitions/AffordedField"
         },
         "type": {
-          "const": "data-table",
+          "const": "sorting",
           "type": "string"
         }
       },
       "required": [
-        "affordances",
         "type"
       ],
       "type": "object"
-    },
-    "DataType": {
-      "enum": [
-        "number",
-        "string",
-        "date",
-        "boolean",
-        "null",
-        "array",
-        "object",
-        "undefined",
-        "unknown"
-      ],
-      "type": "string"
-    },
-    "ExportAffordance": {
-      "additionalProperties": false,
-      "properties": {
-        "filename_template": {
-          "type": "string"
-        },
-        "formats": {
-          "items": {
-            "$ref": "#/definitions/ExportAffordanceFormat"
-          },
-          "type": "array"
-        },
-        "include_headers": {
-          "type": "boolean"
-        },
-        "type": {
-          "const": "export",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "formats"
-      ],
-      "type": "object"
-    },
-    "ExportAffordanceFormat": {
-      "enum": [
-        "csv",
-        "json"
-      ],
-      "type": "string"
-    },
-    "FieldMetadata": {
-      "additionalProperties": false,
-      "properties": {
-        "data_types": {
-          "items": {
-            "$ref": "#/definitions/DataType"
-          },
-          "type": "array"
-        },
-        "format": {
-          "type": "string"
-        },
-        "roles": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "value_mappings": {
-          "additionalProperties": {
-            "$ref": "#/definitions/ValueMapping"
-          },
-          "type": "object"
-        }
-      },
-      "required": [
-        "roles",
-        "data_types"
-      ],
-      "type": "object"
-    },
-    "FilterCondition": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/LogicalFilterCondition"
-        },
-        {
-          "$ref": "#/definitions/RelationalFilterCondition"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type",
-        "mapping": {
-          "logical": "#/definitions/LogicalFilterCondition",
-          "relational": "#/definitions/RelationalFilterCondition"
-        }
-      }
-    },
-    "FilterConditionLogicalOperator": {
-      "enum": [
-        "and",
-        "or",
-        "not"
-      ],
-      "type": "string"
-    },
-    "FilterConditionRelationalOperator": {
-      "enum": [
-        "equals",
-        "not_equals",
-        "contains",
-        "not_contains",
-        "starts_with",
-        "ends_with",
-        "greater_than",
-        "less_than",
-        "greater_than_or_equal",
-        "less_than_or_equal",
-        "between",
-        "in",
-        "not_in"
-      ],
-      "type": "string"
-    },
-    "FilterConditionValue": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "type": {
-              "const": "value",
-              "type": "string"
-            },
-            "value": {
-              "type": [
-                "string",
-                "number",
-                "boolean",
-                "null"
-              ]
-            }
-          },
-          "required": [
-            "type",
-            "value"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "field": {
-              "$ref": "#/definitions/AffordedField"
-            },
-            "type": {
-              "const": "field",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "field"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "type": {
-              "const": "list",
-              "type": "string"
-            },
-            "values": {
-              "items": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
-              },
-              "type": "array"
-            }
-          },
-          "required": [
-            "type",
-            "values"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "end": {
-              "type": [
-                "string",
-                "number"
-              ]
-            },
-            "start": {
-              "type": [
-                "string",
-                "number"
-              ]
-            },
-            "type": {
-              "const": "range",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "start",
-            "end"
-          ],
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type",
-        "mapping": {
-          "value": "#/definitions/FilterConditionValue/anyOf/0",
-          "field": "#/definitions/FilterConditionValue/anyOf/1",
-          "list": "#/definitions/FilterConditionValue/anyOf/2",
-          "range": "#/definitions/FilterConditionValue/anyOf/3"
-        }
-      }
-    },
-    "FilterType": {
-      "enum": [
-        "text",
-        "number_range",
-        "date_range",
-        "select",
-        "boolean"
-      ],
-      "type": "string"
     },
     "FilteringAffordance": {
       "additionalProperties": false,
@@ -494,27 +121,753 @@
       ],
       "type": "object"
     },
-    "GridChild": {
+    "PaginationAffordance": {
       "additionalProperties": false,
       "properties": {
-        "column_span": {
+        "page_size": {
           "type": "number"
         },
-        "column_start": {
-          "type": "number"
+        "show_size_options": {
+          "type": "boolean"
         },
-        "element": {
-          "$ref": "#/definitions/LayoutChild"
+        "size_options": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
         },
-        "row_span": {
-          "type": "number"
-        },
-        "row_start": {
-          "type": "number"
+        "type": {
+          "const": "pagination",
+          "type": "string"
         }
       },
       "required": [
-        "element"
+        "type",
+        "page_size"
+      ],
+      "type": "object"
+    },
+    "ExportAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "filename_template": {
+          "type": "string"
+        },
+        "formats": {
+          "items": {
+            "$ref": "#/definitions/ExportAffordanceFormat"
+          },
+          "type": "array"
+        },
+        "include_headers": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "export",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "formats"
+      ],
+      "type": "object"
+    },
+    "SelectionAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "single",
+            "multiple"
+          ],
+          "type": "string"
+        },
+        "preserve_across_pages": {
+          "type": "boolean"
+        },
+        "show_selection_indicators": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "selection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "mode"
+      ],
+      "type": "object"
+    },
+    "SearchAffordance": {
+      "additionalProperties": false,
+      "properties": {
+        "case_sensitive": {
+          "type": "boolean"
+        },
+        "min_characters": {
+          "type": "number"
+        },
+        "searchable_fields": {
+          "items": {
+            "$ref": "#/definitions/AffordedField"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "search",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "ComponentConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DataTableConfig"
+        },
+        {
+          "$ref": "#/definitions/HierarchyConfig"
+        },
+        {
+          "$ref": "#/definitions/CompositionConfig"
+        },
+        {
+          "$ref": "#/definitions/TextInsightConfig"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "data-table": "#/definitions/DataTableConfig",
+          "hierarchy": "#/definitions/HierarchyConfig",
+          "composition": "#/definitions/CompositionConfig",
+          "text-insight": "#/definitions/TextInsightConfig"
+        }
+      }
+    },
+    "DataTableConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "data-table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    },
+    "HierarchyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "hierarchy",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    },
+    "CompositionConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "composition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    },
+    "TextInsightConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "affordances": {
+          "items": {
+            "$ref": "#/definitions/Affordance"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "text-insight",
+          "type": "string"
+        }
+      },
+      "required": [
+        "affordances",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ComponentSpec": {
+      "additionalProperties": false,
+      "description": "Sigil Component Specification - Intermediate Representation\n\nDesign principles:\n- Specs are generated fresh for each dataset, tailored to its semantic meaning\n- Field metadata, value mappings, and bindings are embedded directly in the spec\n- Data values are provided separately at render time (not embedded in spec)\n- Layout and components are separate concerns\n- Type-specific configs via discriminated unions\n- Everything normalised to JSON before spec generation",
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "data_shape": {
+          "$ref": "#/definitions/DataShape"
+        },
+        "id": {
+          "type": "string"
+        },
+        "root": {
+          "$ref": "#/definitions/Component"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "created_at",
+        "data_shape",
+        "root"
+      ],
+      "type": "object"
+    },
+    "Component": {
+      "additionalProperties": false,
+      "properties": {
+        "accessor_bindings": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "$ref": "#/definitions/FieldMetadata"
+            },
+            "type": "object"
+          },
+          "type": "object"
+        },
+        "layout": {
+          "$ref": "#/definitions/LayoutNode"
+        },
+        "nodes": {
+          "additionalProperties": {
+            "$ref": "#/definitions/ComponentNode"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "layout",
+        "nodes",
+        "accessor_bindings"
+      ],
+      "type": "object"
+    },
+    "ComponentNode": {
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/ComponentConfig"
+        },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/ComponentType"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "config"
+      ],
+      "type": "object"
+    },
+    "FieldMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "data_types": {
+          "items": {
+            "$ref": "#/definitions/DataType"
+          },
+          "type": "array"
+        },
+        "format": {
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "value_mappings": {
+          "additionalProperties": {
+            "$ref": "#/definitions/ValueMapping"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "roles",
+        "data_types"
+      ],
+      "type": "object"
+    },
+    "ValueMapping": {
+      "additionalProperties": false,
+      "properties": {
+        "display_config": {
+          "$ref": "#/definitions/ValueMappingDisplayConfig"
+        },
+        "display_value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "display_value"
+      ],
+      "type": "object"
+    },
+    "ValueMappingDisplayConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ChipValueMappingDisplayConfig"
+        },
+        {
+          "$ref": "#/definitions/LabelValueMappingDisplayConfig"
+        },
+        {
+          "$ref": "#/definitions/BadgeValueMappingDisplayConfig"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "chip": "#/definitions/ChipValueMappingDisplayConfig",
+          "label": "#/definitions/LabelValueMappingDisplayConfig",
+          "badge": "#/definitions/BadgeValueMappingDisplayConfig"
+        }
+      }
+    },
+    "ChipValueMappingDisplayConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "type": "string"
+            },
+            "icon": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "chip",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "LabelValueMappingDisplayConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "BadgeValueMappingDisplayConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "badge",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "FilterCondition": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LogicalFilterCondition"
+        },
+        {
+          "$ref": "#/definitions/RelationalFilterCondition"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "logical": "#/definitions/LogicalFilterCondition",
+          "relational": "#/definitions/RelationalFilterCondition"
+        }
+      }
+    },
+    "LogicalFilterCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "conditions": {
+          "items": {
+            "$ref": "#/definitions/FilterCondition"
+          },
+          "type": "array"
+        },
+        "operator": {
+          "$ref": "#/definitions/FilterConditionLogicalOperator"
+        },
+        "type": {
+          "const": "logical",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "operator",
+        "conditions"
+      ],
+      "type": "object"
+    },
+    "RelationalFilterCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/definitions/AffordedField"
+        },
+        "operator": {
+          "$ref": "#/definitions/FilterConditionRelationalOperator"
+        },
+        "type": {
+          "const": "relational",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/FilterConditionValue"
+        }
+      },
+      "required": [
+        "type",
+        "field",
+        "operator",
+        "value"
+      ],
+      "type": "object"
+    },
+    "FilterConditionValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ValueFilterConditionValue"
+        },
+        {
+          "$ref": "#/definitions/FieldFilterConditionValue"
+        },
+        {
+          "$ref": "#/definitions/ListFilterConditionValue"
+        },
+        {
+          "$ref": "#/definitions/RangeFilterConditionValue"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "value": "#/definitions/ValueFilterConditionValue",
+          "field": "#/definitions/FieldFilterConditionValue",
+          "list": "#/definitions/ListFilterConditionValue",
+          "range": "#/definitions/RangeFilterConditionValue"
+        }
+      }
+    },
+    "ValueFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "value",
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "FieldFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/definitions/AffordedField"
+        },
+        "type": {
+          "const": "field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "field"
+      ],
+      "type": "object"
+    },
+    "ListFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "list",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "values"
+      ],
+      "type": "object"
+    },
+    "RangeFilterConditionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "start": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "type": {
+          "const": "range",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "start",
+        "end"
+      ],
+      "type": "object"
+    },
+    "LayoutNode": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/StackLayoutNode"
+        },
+        {
+          "$ref": "#/definitions/GridLayoutNode"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "stack": "#/definitions/StackLayoutNode",
+          "grid": "#/definitions/GridLayoutNode"
+        }
+      }
+    },
+    "StackLayoutNode": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HorizontalStackLayoutNode"
+        },
+        {
+          "$ref": "#/definitions/VerticalStackLayoutNode"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "direction",
+        "mapping": {
+          "horizontal": "#/definitions/HorizontalStackLayoutNode",
+          "vertical": "#/definitions/VerticalStackLayoutNode"
+        }
+      }
+    },
+    "HorizontalStackLayoutNode": {
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "items": {
+            "$ref": "#/definitions/LayoutChild"
+          },
+          "type": "array"
+        },
+        "direction": {
+          "const": "horizontal",
+          "type": "string"
+        },
+        "height": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_height": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "max_width": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "min_height": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "min_width": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "padding": {
+          "$ref": "#/definitions/Padding"
+        },
+        "spacing": {
+          "$ref": "#/definitions/LayoutNodeSpacing"
+        },
+        "type": {
+          "const": "stack",
+          "type": "string"
+        },
+        "vertical_alignment": {
+          "$ref": "#/definitions/StackLayoutNodeAlignment"
+        },
+        "width": {
+          "$ref": "#/definitions/SizeConstraint"
+        }
+      },
+      "required": [
+        "children",
+        "direction",
+        "id",
+        "spacing",
+        "type"
+      ],
+      "type": "object"
+    },
+    "VerticalStackLayoutNode": {
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "items": {
+            "$ref": "#/definitions/LayoutChild"
+          },
+          "type": "array"
+        },
+        "direction": {
+          "const": "vertical",
+          "type": "string"
+        },
+        "height": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "horizontal_alignment": {
+          "$ref": "#/definitions/StackLayoutNodeAlignment"
+        },
+        "id": {
+          "type": "string"
+        },
+        "max_height": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "max_width": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "min_height": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "min_width": {
+          "$ref": "#/definitions/SizeConstraint"
+        },
+        "padding": {
+          "$ref": "#/definitions/Padding"
+        },
+        "spacing": {
+          "$ref": "#/definitions/LayoutNodeSpacing"
+        },
+        "type": {
+          "const": "stack",
+          "type": "string"
+        },
+        "width": {
+          "$ref": "#/definitions/SizeConstraint"
+        }
+      },
+      "required": [
+        "children",
+        "direction",
+        "id",
+        "spacing",
+        "type"
       ],
       "type": "object"
     },
@@ -576,150 +929,156 @@
       ],
       "type": "object"
     },
-    "HierarchyConfig": {
+    "GridChild": {
       "additionalProperties": false,
       "properties": {
-        "affordances": {
-          "items": {
-            "$ref": "#/definitions/Affordance"
-          },
-          "type": "array"
+        "column_span": {
+          "type": "number"
         },
-        "description": {
-          "type": "string"
+        "column_start": {
+          "type": "number"
         },
-        "title": {
-          "type": "string"
+        "element": {
+          "$ref": "#/definitions/LayoutChild"
         },
-        "type": {
-          "const": "hierarchy",
-          "type": "string"
+        "row_span": {
+          "type": "number"
+        },
+        "row_start": {
+          "type": "number"
         }
       },
       "required": [
-        "affordances",
-        "type"
-      ],
-      "type": "object"
-    },
-    "HorizontalStackLayoutNode": {
-      "additionalProperties": false,
-      "properties": {
-        "children": {
-          "items": {
-            "$ref": "#/definitions/LayoutChild"
-          },
-          "type": "array"
-        },
-        "direction": {
-          "const": "horizontal",
-          "type": "string"
-        },
-        "height": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "id": {
-          "type": "string"
-        },
-        "max_height": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "max_width": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "min_height": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "min_width": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "padding": {
-          "$ref": "#/definitions/Padding"
-        },
-        "spacing": {
-          "$ref": "#/definitions/LayoutNodeSpacing"
-        },
-        "type": {
-          "const": "stack",
-          "type": "string"
-        },
-        "vertical_alignment": {
-          "$ref": "#/definitions/StackLayoutNodeAlignment"
-        },
-        "width": {
-          "$ref": "#/definitions/SizeConstraint"
-        }
-      },
-      "required": [
-        "children",
-        "direction",
-        "id",
-        "spacing",
-        "type"
+        "element"
       ],
       "type": "object"
     },
     "LayoutChild": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "node": {
-              "$ref": "#/definitions/LayoutNode"
-            },
-            "type": {
-              "const": "layout",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "node"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/LayoutLayoutChild"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "component_id": {
-              "type": "string"
-            },
-            "type": {
-              "const": "component",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "component_id"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/ComponentLayoutChild"
         }
       ],
       "discriminator": {
         "propertyName": "type",
         "mapping": {
-          "layout": "#/definitions/LayoutChild/anyOf/0",
-          "component": "#/definitions/LayoutChild/anyOf/1"
+          "layout": "#/definitions/LayoutLayoutChild",
+          "component": "#/definitions/ComponentLayoutChild"
         }
       }
     },
-    "LayoutNode": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/StackLayoutNode"
+    "LayoutLayoutChild": {
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "$ref": "#/definitions/LayoutNode"
         },
-        {
-          "$ref": "#/definitions/GridLayoutNode"
+        "type": {
+          "const": "layout",
+          "type": "string"
         }
+      },
+      "required": [
+        "type",
+        "node"
       ],
-      "discriminator": {
-        "propertyName": "type",
-        "mapping": {
-          "stack": "#/definitions/StackLayoutNode",
-          "grid": "#/definitions/GridLayoutNode"
+      "type": "object"
+    },
+    "ComponentLayoutChild": {
+      "additionalProperties": false,
+      "properties": {
+        "component_id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "component",
+          "type": "string"
         }
-      }
+      },
+      "required": [
+        "type",
+        "component_id"
+      ],
+      "type": "object"
+    },
+    "DataType": {
+      "enum": [
+        "number",
+        "string",
+        "date",
+        "boolean",
+        "null",
+        "array",
+        "object",
+        "undefined",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "DataShape": {
+      "enum": [
+        "tabular",
+        "hierarchical",
+        "key_value",
+        "graph",
+        "geospatial"
+      ],
+      "type": "string"
+    },
+    "ComponentType": {
+      "enum": [
+        "data-table",
+        "hierarchy",
+        "composition",
+        "text-insight"
+      ],
+      "type": "string"
+    },
+    "ExportAffordanceFormat": {
+      "enum": [
+        "csv",
+        "json"
+      ],
+      "type": "string"
+    },
+    "FilterType": {
+      "enum": [
+        "text",
+        "number_range",
+        "date_range",
+        "select",
+        "boolean"
+      ],
+      "type": "string"
+    },
+    "FilterConditionLogicalOperator": {
+      "enum": [
+        "and",
+        "or",
+        "not"
+      ],
+      "type": "string"
+    },
+    "FilterConditionRelationalOperator": {
+      "enum": [
+        "equals",
+        "not_equals",
+        "contains",
+        "not_contains",
+        "starts_with",
+        "ends_with",
+        "greater_than",
+        "less_than",
+        "greater_than_or_equal",
+        "less_than_or_equal",
+        "between",
+        "in",
+        "not_in"
+      ],
+      "type": "string"
     },
     "LayoutNodeSpacing": {
       "enum": [
@@ -729,29 +1088,14 @@
       ],
       "type": "string"
     },
-    "LogicalFilterCondition": {
-      "additionalProperties": false,
-      "properties": {
-        "conditions": {
-          "items": {
-            "$ref": "#/definitions/FilterCondition"
-          },
-          "type": "array"
-        },
-        "operator": {
-          "$ref": "#/definitions/FilterConditionLogicalOperator"
-        },
-        "type": {
-          "const": "logical",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "operator",
-        "conditions"
+    "StackLayoutNodeAlignment": {
+      "enum": [
+        "start",
+        "center",
+        "end",
+        "stretch"
       ],
-      "type": "object"
+      "type": "string"
     },
     "Padding": {
       "anyOf": [
@@ -778,434 +1122,99 @@
         }
       ]
     },
-    "PaginationAffordance": {
+    "AffordedField": {
       "additionalProperties": false,
       "properties": {
-        "page_size": {
-          "type": "number"
-        },
-        "show_size_options": {
-          "type": "boolean"
-        },
-        "size_options": {
-          "items": {
-            "type": "number"
-          },
-          "type": "array"
-        },
-        "type": {
-          "const": "pagination",
+        "accessor": {
           "type": "string"
         }
       },
       "required": [
-        "type",
-        "page_size"
-      ],
-      "type": "object"
-    },
-    "RelationalFilterCondition": {
-      "additionalProperties": false,
-      "properties": {
-        "field": {
-          "$ref": "#/definitions/AffordedField"
-        },
-        "operator": {
-          "$ref": "#/definitions/FilterConditionRelationalOperator"
-        },
-        "type": {
-          "const": "relational",
-          "type": "string"
-        },
-        "value": {
-          "$ref": "#/definitions/FilterConditionValue"
-        }
-      },
-      "required": [
-        "type",
-        "field",
-        "operator",
-        "value"
-      ],
-      "type": "object"
-    },
-    "SearchAffordance": {
-      "additionalProperties": false,
-      "properties": {
-        "case_sensitive": {
-          "type": "boolean"
-        },
-        "min_characters": {
-          "type": "number"
-        },
-        "searchable_fields": {
-          "items": {
-            "$ref": "#/definitions/AffordedField"
-          },
-          "type": "array"
-        },
-        "type": {
-          "const": "search",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "SelectionAffordance": {
-      "additionalProperties": false,
-      "properties": {
-        "mode": {
-          "enum": [
-            "single",
-            "multiple"
-          ],
-          "type": "string"
-        },
-        "preserve_across_pages": {
-          "type": "boolean"
-        },
-        "show_selection_indicators": {
-          "type": "boolean"
-        },
-        "type": {
-          "const": "selection",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "mode"
+        "accessor"
       ],
       "type": "object"
     },
     "SizeConstraint": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "type": {
-              "const": "fixed",
-              "type": "string"
-            },
-            "value": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "type",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FixedSizeConstraint"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "type": {
-              "const": "flex",
-              "type": "string"
-            },
-            "value": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "type",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FlexSizeConstraint"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "type": {
-              "const": "percentage",
-              "type": "string"
-            },
-            "value": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "type",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/PercentageSizeConstraint"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "type": {
-              "const": "content",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/ContentSizeConstraint"
         }
       ],
       "discriminator": {
         "propertyName": "type",
         "mapping": {
-          "fixed": "#/definitions/SizeConstraint/anyOf/0",
-          "flex": "#/definitions/SizeConstraint/anyOf/1",
-          "percentage": "#/definitions/SizeConstraint/anyOf/2",
-          "content": "#/definitions/SizeConstraint/anyOf/3"
+          "fixed": "#/definitions/FixedSizeConstraint",
+          "flex": "#/definitions/FlexSizeConstraint",
+          "percentage": "#/definitions/PercentageSizeConstraint",
+          "content": "#/definitions/ContentSizeConstraint"
         }
       }
     },
-    "SortingAffordance": {
+    "FixedSizeConstraint": {
       "additionalProperties": false,
       "properties": {
-        "allowed_fields": {
-          "items": {
-            "$ref": "#/definitions/AffordedField"
-          },
-          "type": "array"
-        },
-        "default_direction": {
-          "enum": [
-            "asc",
-            "desc"
-          ],
-          "type": "string"
-        },
-        "default_field": {
-          "$ref": "#/definitions/AffordedField"
-        },
         "type": {
-          "const": "sorting",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "StackLayoutNode": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/HorizontalStackLayoutNode"
-        },
-        {
-          "$ref": "#/definitions/VerticalStackLayoutNode"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "direction",
-        "mapping": {
-          "horizontal": "#/definitions/HorizontalStackLayoutNode",
-          "vertical": "#/definitions/VerticalStackLayoutNode"
-        }
-      }
-    },
-    "StackLayoutNodeAlignment": {
-      "enum": [
-        "start",
-        "center",
-        "end",
-        "stretch"
-      ],
-      "type": "string"
-    },
-    "TextInsightConfig": {
-      "additionalProperties": false,
-      "properties": {
-        "affordances": {
-          "items": {
-            "$ref": "#/definitions/Affordance"
-          },
-          "type": "array"
-        },
-        "description": {
+          "const": "fixed",
           "type": "string"
         },
-        "title": {
-          "type": "string"
-        },
-        "type": {
-          "const": "text-insight",
-          "type": "string"
-        }
-      },
-      "required": [
-        "affordances",
-        "type"
-      ],
-      "type": "object"
-    },
-    "ValueMapping": {
-      "additionalProperties": false,
-      "properties": {
-        "display_config": {
-          "$ref": "#/definitions/ValueMappingDisplayConfig"
-        },
-        "display_value": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "display_value"
-      ],
-      "type": "object"
-    },
-    "ValueMappingDisplayConfig": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "details": {
-              "additionalProperties": false,
-              "properties": {
-                "color": {
-                  "type": "string"
-                },
-                "icon": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": {
-              "const": "chip",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "details": {
-              "additionalProperties": false,
-              "properties": {
-                "color": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": {
-              "const": "label",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "details": {
-              "additionalProperties": false,
-              "properties": {
-                "color": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": {
-              "const": "badge",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type",
-        "mapping": {
-          "chip": "#/definitions/ValueMappingDisplayConfig/anyOf/0",
-          "label": "#/definitions/ValueMappingDisplayConfig/anyOf/1",
-          "badge": "#/definitions/ValueMappingDisplayConfig/anyOf/2"
-        }
-      }
-    },
-    "VerticalStackLayoutNode": {
-      "additionalProperties": false,
-      "properties": {
-        "children": {
-          "items": {
-            "$ref": "#/definitions/LayoutChild"
-          },
-          "type": "array"
-        },
-        "direction": {
-          "const": "vertical",
-          "type": "string"
-        },
-        "height": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "horizontal_alignment": {
-          "$ref": "#/definitions/StackLayoutNodeAlignment"
-        },
-        "id": {
-          "type": "string"
-        },
-        "max_height": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "max_width": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "min_height": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "min_width": {
-          "$ref": "#/definitions/SizeConstraint"
-        },
-        "padding": {
-          "$ref": "#/definitions/Padding"
-        },
-        "spacing": {
-          "$ref": "#/definitions/LayoutNodeSpacing"
-        },
-        "type": {
-          "const": "stack",
-          "type": "string"
-        },
-        "width": {
-          "$ref": "#/definitions/SizeConstraint"
-        }
-      },
-      "required": [
-        "children",
-        "direction",
-        "id",
-        "spacing",
-        "type"
-      ],
-      "type": "object"
-    },
-    "VirtualisationAffordance": {
-      "additionalProperties": false,
-      "properties": {
-        "buffer_size": {
+        "value": {
           "type": "number"
-        },
-        "item_height": {
-          "type": "number"
-        },
-        "overscan_count": {
-          "type": "number"
-        },
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "FlexSizeConstraint": {
+      "additionalProperties": false,
+      "properties": {
         "type": {
-          "const": "virtualisation",
+          "const": "flex",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "PercentageSizeConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "percentage",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "ContentSizeConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "content",
           "type": "string"
         }
       },
