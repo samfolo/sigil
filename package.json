@@ -7,6 +7,9 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "spec:bundle": "tsx scripts/spec/bundle.ts",
     "spec:validate": "tsx scripts/spec/validate.ts",
     "spec:all": "npm run spec:validate && npm run spec:bundle"

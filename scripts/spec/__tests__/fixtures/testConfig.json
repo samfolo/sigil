@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "entryPoint": "testSchema.json",
+  "fragments": {
+    "test": {
+      "path": "testSchema.json",
+      "description": "Test schema",
+      "dependencies": []
+    }
+  },
+  "discriminatedUnions": []
+}
