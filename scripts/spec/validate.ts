@@ -10,7 +10,7 @@
  * 4. All discriminated unions are properly defined
  */
 
-import { readFileSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,15 +19,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = resolve(__dirname, '../..');
 const specDir = resolve(projectRoot, 'spec');
-const fragmentsDir = resolve(specDir, 'fragments');
 const configPath = resolve(specDir, 'config.json');
 
 interface JsonSchema {
   $schema?: string;
   $id?: string;
   $ref?: string;
-  definitions?: Record<string, any>;
-  [key: string]: any;
+  definitions?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 interface Config {
@@ -51,27 +50,27 @@ interface Config {
 
 let errorCount = 0;
 
-function error(message: string) {
+const error = (message: string) => {
   console.error(`❌ ${message}`);
   errorCount++;
-}
+};
 
-function warn(message: string) {
+const warn = (message: string) => {
   console.warn(`⚠️  ${message}`);
-}
+};
 
-function success(message: string) {
+const success = (message: string) => {
   console.log(`✅ ${message}`);
-}
+};
 
-function info(message: string) {
+const info = (message: string) => {
   console.log(`ℹ️  ${message}`);
-}
+};
 
 /**
  * Load and parse JSON file
  */
-function loadJson<T>(filePath: string, label: string): T | null {
+const loadJson = <T,>(filePath: string, label: string): T | null => {
   try {
     const content = readFileSync(filePath, 'utf-8');
     return JSON.parse(content) as T;
@@ -82,12 +81,12 @@ function loadJson<T>(filePath: string, label: string): T | null {
     }
     return null;
   }
-}
+};
 
 /**
  * Validate that all fragments exist and are valid JSON
  */
-function validateFragmentsExist(config: Config): boolean {
+const validateFragmentsExist = (config: Config): boolean => {
   info('Validating fragment files...');
   let valid = true;
 
@@ -120,12 +119,12 @@ function validateFragmentsExist(config: Config): boolean {
   }
 
   return valid;
-}
+};
 
 /**
  * Collect all $ref values from a schema object
  */
-function collectRefs(obj: any, refs: Set<string> = new Set()): Set<string> {
+const collectRefs = (obj: unknown, refs: Set<string> = new Set()): Set<string> => {
   if (obj === null || typeof obj !== 'object') {
     return refs;
   }
@@ -135,8 +134,9 @@ function collectRefs(obj: any, refs: Set<string> = new Set()): Set<string> {
     return refs;
   }
 
-  if (obj.$ref && typeof obj.$ref === 'string') {
-    refs.add(obj.$ref);
+  const objWithRef = obj as { $ref?: unknown };
+  if (objWithRef.$ref && typeof objWithRef.$ref === 'string') {
+    refs.add(objWithRef.$ref);
   }
 
   for (const value of Object.values(obj)) {
@@ -144,12 +144,12 @@ function collectRefs(obj: any, refs: Set<string> = new Set()): Set<string> {
   }
 
   return refs;
-}
+};
 
 /**
  * Validate that all $ref references can be resolved
  */
-function validateReferences(config: Config): boolean {
+const validateReferences = (config: Config): boolean => {
   info('Validating $ref references...');
   let valid = true;
 
@@ -164,7 +164,7 @@ function validateReferences(config: Config): boolean {
   }
 
   // Check each fragment's references
-  for (const [name, fragment] of Object.entries(config.fragments)) {
+  for (const [name, _fragment] of Object.entries(config.fragments)) {
     const schema = fragments.get(name);
     if (!schema) continue;
 
@@ -222,12 +222,12 @@ function validateReferences(config: Config): boolean {
   }
 
   return valid;
-}
+};
 
 /**
  * Validate discriminated unions
  */
-function validateDiscriminatedUnions(config: Config): boolean {
+const validateDiscriminatedUnions = (config: Config): boolean => {
   info('Validating discriminated unions...');
   let valid = true;
 
@@ -280,12 +280,12 @@ function validateDiscriminatedUnions(config: Config): boolean {
   }
 
   return valid;
-}
+};
 
 /**
  * Main validation
  */
-function main() {
+const main = () => {
   console.log('🔍 Validating Sigil specification...\n');
 
   // Load config
@@ -297,13 +297,13 @@ function main() {
   success('config.json is valid JSON\n');
 
   // Run validations
-  const fragmentsValid = validateFragmentsExist(config);
+  validateFragmentsExist(config);
   console.log('');
 
-  const referencesValid = validateReferences(config);
+  validateReferences(config);
   console.log('');
 
-  const unionsValid = validateDiscriminatedUnions(config);
+  validateDiscriminatedUnions(config);
   console.log('');
 
   // Summary
@@ -314,6 +314,6 @@ function main() {
     console.log(`❌ Validation failed with ${errorCount} error(s)`);
     process.exit(1);
   }
-}
+};
 
 main();

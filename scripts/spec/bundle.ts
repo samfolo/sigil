@@ -23,22 +23,22 @@ interface JsonSchema {
   $schema?: string;
   $id?: string;
   $ref?: string;
-  definitions?: Record<string, any>;
-  [key: string]: any;
+  definitions?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 /**
  * Load a JSON schema file
  */
-function loadSchema(filePath: string): JsonSchema {
+const loadSchema = (filePath: string): JsonSchema => {
   const content = readFileSync(filePath, 'utf-8');
   return JSON.parse(content);
-}
+};
 
 /**
  * Recursively resolve all cross-file $ref to local references
  */
-function resolveRefs(obj: any): any {
+const resolveRefs = (obj: unknown): unknown => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -48,8 +48,9 @@ function resolveRefs(obj: any): any {
   }
 
   // If this object has a $ref to another file
-  if (obj.$ref && typeof obj.$ref === 'string' && obj.$ref.startsWith('./')) {
-    const [filePath, jsonPath] = obj.$ref.split('#');
+  const objWithRef = obj as { $ref?: unknown };
+  if (objWithRef.$ref && typeof objWithRef.$ref === 'string' && objWithRef.$ref.startsWith('./')) {
+    const [_filePath, jsonPath] = objWithRef.$ref.split('#');
 
     // Extract the definition name from the JSON path
     // e.g., "/definitions/DataType" -> "DataType"
@@ -62,7 +63,7 @@ function resolveRefs(obj: any): any {
   }
 
   // Recursively process all properties
-  const result: any = {};
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     // Skip $id when copying (we'll set a new one for the bundled schema)
     if (key !== '$id' && key !== 'title' && key !== 'description') {
@@ -74,13 +75,13 @@ function resolveRefs(obj: any): any {
   }
 
   return result;
-}
+};
 
 /**
  * Bundle all schema fragments into a single schema
  */
-function bundleSchemas(): JsonSchema {
-  const bundledDefinitions: Record<string, any> = {};
+const bundleSchemas = (): JsonSchema => {
+  const bundledDefinitions: Record<string, unknown> = {};
 
   // Read all fragment files
   const fragmentFiles = readdirSync(fragmentsDir).filter(f => f.endsWith('.schema.json'));
@@ -119,12 +120,12 @@ function bundleSchemas(): JsonSchema {
   };
 
   return bundled;
-}
+};
 
 /**
  * Main execution
  */
-function main() {
+const main = () => {
   console.log('🔄 Bundling schema fragments...\n');
 
   try {
@@ -140,6 +141,6 @@ function main() {
     console.error('❌ Error bundling schema:', error);
     process.exit(1);
   }
-}
+};
 
 main();
