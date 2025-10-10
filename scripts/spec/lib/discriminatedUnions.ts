@@ -46,10 +46,15 @@ export const getDiscriminatedUnions = (config: Config): Map<string, Discriminate
 /**
  * Validates that a discriminated union's variants exist in the schema
  */
+interface ValidationResult {
+	valid: boolean;
+	missingVariants: string[];
+}
+
 export const validateDiscriminatedUnionVariants = (
 	union: DiscriminatedUnion,
 	definitions: Record<string, unknown>
-): { valid: boolean; missingVariants: string[] } => {
+): ValidationResult => {
 	const missingVariants: string[] = [];
 
 	for (const variant of union.variants) {

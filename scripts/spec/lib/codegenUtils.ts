@@ -80,11 +80,16 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
 /**
  * Generates code for a discriminated union schema
  */
+interface GenerateSchemaResult {
+	code: string;
+	exportCode: string;
+}
+
 const generateDiscriminatedUnionSchema = (
 	name: string,
 	union: DiscriminatedUnion,
 	schema: JsonSchema
-): { code: string; exportCode: string } => {
+): GenerateSchemaResult => {
 	const schemaName = toSchemaName(name);
 	const typeName = toTypeName(schemaName);
 
@@ -109,7 +114,7 @@ const generateRegularSchema = (
 	name: string,
 	schema: JsonSchema,
 	isRecursive: boolean
-): { code: string; exportCode: string } => {
+): GenerateSchemaResult => {
 	const schemaName = toSchemaName(name);
 	const typeName = toTypeName(schemaName);
 
@@ -183,11 +188,16 @@ export const assembleGeneratedFile = (generated: GeneratedCode): string => {
 /**
  * Checks if a schema needs recursive handling (uses forward references)
  */
+interface RecursiveCheckResult {
+	hasRecursiveProps: boolean;
+	recursiveRefs: Set<string>;
+}
+
 const checkIfNeedsRecursiveHandling = (
 	name: string,
 	schema: JsonSchema,
 	isRecursive: boolean
-): { hasRecursiveProps: boolean; recursiveRefs: Set<string> } => {
+): RecursiveCheckResult => {
 	const recursiveRefs = new Set<string>();
 
 	// Type guard for properties

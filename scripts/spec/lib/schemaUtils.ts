@@ -127,7 +127,12 @@ export const isCrossFileRef = (ref: string): boolean => {
 /**
  * Parse a cross-file reference into file path and JSON path components
  */
-export const parseCrossFileRef = (ref: string): { filePath: string; jsonPath: string } | null => {
+interface CrossFileRefParts {
+  filePath: string;
+  jsonPath: string;
+}
+
+export const parseCrossFileRef = (ref: string): CrossFileRefParts | null => {
   if (!isCrossFileRef(ref)) {
     return null;
   }
@@ -143,9 +148,14 @@ export const parseCrossFileRef = (ref: string): { filePath: string; jsonPath: st
  * Merge definitions from multiple schemas into a single definitions object
  * Returns a map of definition names to their schemas and a list of conflicts
  */
+interface MergeDefinitionsResult {
+  definitions: Record<string, unknown>;
+  conflicts: string[];
+}
+
 export const mergeDefinitions = (
   schemas: Map<string, JsonSchema>
-): { definitions: Record<string, unknown>; conflicts: string[] } => {
+): MergeDefinitionsResult => {
   const definitions: Record<string, unknown> = {};
   const conflicts: string[] = [];
 

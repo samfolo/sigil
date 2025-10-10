@@ -120,11 +120,11 @@ const eslintConfig = [
           // UI components: kebab-case (shadcn/ui convention)
           "components/ui/*.{tsx,jsx}": "KEBAB_CASE",
 
-          // Test files: PascalCase with .spec suffix
-          "**/*.spec.{ts,tsx}": "PASCAL_CASE",
+          // Test files: PascalCase with .spec suffix (tsx only)
+          "**/*.spec.tsx": "PASCAL_CASE",
 
-          // Fixture files: PascalCase with .fixtures suffix
-          "**/*.fixtures.{ts,tsx}": "PASCAL_CASE",
+          // Fixture files: camelCase
+          "**/*.fixtures.{ts,tsx}": "CAMEL_CASE",
 
           // Utility and type files: camelCase
           "**/utils.ts": "CAMEL_CASE",

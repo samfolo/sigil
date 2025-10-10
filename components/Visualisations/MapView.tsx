@@ -44,8 +44,14 @@ const isGeoJSON = (data: unknown): boolean => {
   return false;
 }
 
-const extractLatLonPoints = (data: unknown): Array<{ lat: number; lng: number; label?: string }> => {
-  const points: Array<{ lat: number; lng: number; label?: string }> = [];
+interface LatLonPoint {
+  lat: number;
+  lng: number;
+  label?: string;
+}
+
+const extractLatLonPoints = (data: unknown): Array<LatLonPoint> => {
+  const points: Array<LatLonPoint> = [];
 
   // Handle arrays
   if (Array.isArray(data)) {
@@ -65,7 +71,12 @@ const extractLatLonPoints = (data: unknown): Array<{ lat: number; lng: number; l
   return points;
 }
 
-const extractSinglePoint = (item: unknown): { lat: number; lng: number } | null => {
+interface LatLon {
+  lat: number;
+  lng: number;
+}
+
+const extractSinglePoint = (item: unknown): LatLon | null => {
   if (!item || typeof item !== 'object') {
     return null;
   }
@@ -120,11 +131,13 @@ const calculateCenter = (data: unknown): [number, number] => {
   return [20, 0];
 }
 
-const MapContent = ({ data, isGeoJSONData, points }: {
+interface MapContentProps {
   data: unknown;
   isGeoJSONData: boolean;
-  points: Array<{ lat: number; lng: number; label?: string }>;
-}) => {
+  points: Array<LatLonPoint>;
+}
+
+const MapContent = ({ data, isGeoJSONData, points }: MapContentProps) => {
   useMapBounds(data, points, isGeoJSONData);
 
   return (
