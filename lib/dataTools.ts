@@ -12,28 +12,32 @@ const extractArray = (data: unknown): unknown[] => {
     return data;
   }
 
-  // Handle GeoJSON FeatureCollection
-  if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
-    return data.features;
-  }
+  if (typeof data === 'object' && data !== null) {
+    const dataRecord = data as Record<string, unknown>;
 
-  // Handle GeoJSON GeometryCollection
-  if (data.type === 'GeometryCollection' && Array.isArray(data.geometries)) {
-    return data.geometries;
-  }
+    // Handle GeoJSON FeatureCollection
+    if ('type' in dataRecord && dataRecord.type === 'FeatureCollection' && 'features' in dataRecord && Array.isArray(dataRecord.features)) {
+      return dataRecord.features;
+    }
 
-  // Handle object with known array properties
-  const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
-  for (const prop of commonArrayProps) {
-    if (Array.isArray(data[prop])) {
-      return data[prop];
+    // Handle GeoJSON GeometryCollection
+    if ('type' in dataRecord && dataRecord.type === 'GeometryCollection' && 'geometries' in dataRecord && Array.isArray(dataRecord.geometries)) {
+      return dataRecord.geometries;
+    }
+
+    // Handle object with known array properties
+    const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
+    for (const prop of commonArrayProps) {
+      if (prop in dataRecord && Array.isArray(dataRecord[prop])) {
+        return dataRecord[prop] as unknown[];
+      }
     }
   }
 
   throw new Error(
     `Unable to extract array from data. ` +
-    `Type: ${data.type || typeof data}. ` +
-    `Available properties: ${Object.keys(data || {}).join(', ')}`
+    `Type: ${typeof data === 'object' && data !== null && 'type' in data ? data.type : typeof data}. ` +
+    `Available properties: ${typeof data === 'object' && data !== null ? Object.keys(data).join(', ') : 'none'}`
   );
 }
 
@@ -45,21 +49,25 @@ const wrapArray = (originalData: unknown, newArray: unknown[]): unknown => {
     return newArray;
   }
 
-  // Handle GeoJSON FeatureCollection
-  if (originalData.type === 'FeatureCollection') {
-    return { ...originalData, features: newArray };
-  }
+  if (typeof originalData === 'object' && originalData !== null) {
+    const dataRecord = originalData as Record<string, unknown>;
 
-  // Handle GeoJSON GeometryCollection
-  if (originalData.type === 'GeometryCollection') {
-    return { ...originalData, geometries: newArray };
-  }
+    // Handle GeoJSON FeatureCollection
+    if ('type' in dataRecord && dataRecord.type === 'FeatureCollection') {
+      return { ...dataRecord, features: newArray };
+    }
 
-  // Handle object with known array properties
-  const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
-  for (const prop of commonArrayProps) {
-    if (Array.isArray(originalData[prop])) {
-      return { ...originalData, [prop]: newArray };
+    // Handle GeoJSON GeometryCollection
+    if ('type' in dataRecord && dataRecord.type === 'GeometryCollection') {
+      return { ...dataRecord, geometries: newArray };
+    }
+
+    // Handle object with known array properties
+    const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
+    for (const prop of commonArrayProps) {
+      if (prop in dataRecord && Array.isArray(dataRecord[prop])) {
+        return { ...dataRecord, [prop]: newArray };
+      }
     }
   }
 
@@ -184,7 +192,7 @@ export const countItems = (data: unknown, field: string | null): number => {
   }
 
   // Handle single GeoJSON Feature specially
-  if (data.type === 'Feature') {
+  if (typeof data === 'object' && data !== null && 'type' in data && data.type === 'Feature') {
     return 1;
   }
 

@@ -5,7 +5,7 @@ import {
   loadSchema,
   loadConfig,
   fileExists,
-} from '../lib/fileSystem.ts';
+} from '../lib/fileSystem';
 
 const FIXTURES_DIR = resolve(__dirname, 'fixtures');
 

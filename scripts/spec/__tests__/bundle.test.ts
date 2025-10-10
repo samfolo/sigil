@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'path';
-import { bundleSchemas } from '../bundle.ts';
+import { bundleSchemas } from '../bundle';
 
 const FIXTURES_DIR = resolve(__dirname, 'fixtures');
 

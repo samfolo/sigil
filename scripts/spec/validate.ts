@@ -12,9 +12,9 @@
 
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { loadConfig } from './lib/fileSystem.ts';
-import { createLogger } from './lib/logger.ts';
-import { validateFragmentsExist, validateReferences, validateDiscriminatedUnions } from './lib/validationUtils.ts';
+import { loadConfig } from './lib/fileSystem';
+import { createLogger } from './lib/logger';
+import { validateFragmentsExist, validateReferences, validateDiscriminatedUnions } from './lib/validationUtils';
 
 // Get the project root directory
 const __filename = fileURLToPath(import.meta.url);

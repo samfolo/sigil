@@ -10,9 +10,9 @@
 
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { loadSchema, writeJson, listFiles } from './lib/fileSystem.ts';
-import { mergeDefinitions } from './lib/schemaUtils.ts';
-import type { JsonSchema } from './lib/types.ts';
+import { loadSchema, writeJson, listFiles } from './lib/fileSystem';
+import { mergeDefinitions } from './lib/schemaUtils';
+import type { JsonSchema } from './lib/types';
 
 // Get the project root directory
 const __filename = fileURLToPath(import.meta.url);

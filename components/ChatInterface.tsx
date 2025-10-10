@@ -88,7 +88,7 @@ export const ChatInterface = ({ data, analysis, onDataUpdate, sessionId }: ChatI
           {messages.map((msg, idx) => (
             <div key={idx} className="space-y-2">
               {/* Tool calls display (if any) */}
-              {'toolCalls' in msg && msg.toolCalls && msg.toolCalls.length > 0 && (
+              {'toolCalls' in msg && msg.toolCalls && Array.isArray(msg.toolCalls) && msg.toolCalls.length > 0 ? (
                 <div className="flex justify-start">
                   <div className="max-w-[80%] rounded-lg p-2 bg-muted/50 border border-border">
                     <p className="text-xs font-medium text-muted-foreground mb-1">
@@ -111,7 +111,7 @@ export const ChatInterface = ({ data, analysis, onDataUpdate, sessionId }: ChatI
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Regular message display */}
               <div

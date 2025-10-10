@@ -3,8 +3,8 @@
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
-import type { JsonSchema, Config } from './types.ts';
-import { ConfigSchema } from './types.ts';
+import type { JsonSchema, Config } from './types';
+import { ConfigSchema } from './types';
 
 /**
  * Load and parse a JSON file

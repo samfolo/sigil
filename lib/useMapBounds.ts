@@ -12,7 +12,7 @@ export const useMapBounds = (
   useEffect(() => {
     if (isGeoJSONData) {
       // Calculate bounds from GeoJSON features
-      const geojsonLayer = L.geoJSON(data);
+      const geojsonLayer = L.geoJSON(data as GeoJSON.GeoJsonObject);
       const bounds = geojsonLayer.getBounds();
       if (bounds.isValid()) {
         map.fitBounds(bounds, { padding: [50, 50] });

@@ -51,7 +51,12 @@ export const POST = async (request: NextRequest) => {
       filter_data: ({ field, operator, value }) => {
         try {
           // Always filter from original data to avoid chaining issues
-          const filtered = filterData(originalData, field, operator, value);
+          const filtered = filterData(
+            originalData,
+            field as string,
+            operator as 'equals' | 'contains' | 'greaterThan' | 'lessThan',
+            value
+          );
           const matchCount = extractArrayForCount(filtered).length;
           const totalCount = extractArrayForCount(originalData).length;
 
@@ -66,7 +71,11 @@ export const POST = async (request: NextRequest) => {
       aggregate_data: ({ field, operation }) => {
         try {
           // Always use original data for analysis
-          const result = aggregateData(originalData, field || null, operation);
+          const result = aggregateData(
+            originalData,
+            (field as string | undefined) || null,
+            operation as 'sum' | 'average' | 'count' | 'min' | 'max'
+          );
           if (operation === 'count') {
             return field
               ? `The count of items in "${field}" is ${result}`
@@ -81,7 +90,7 @@ export const POST = async (request: NextRequest) => {
       get_unique_values: ({ field }) => {
         try {
           // Always use original data for analysis
-          const values = getUniqueValues(originalData, field);
+          const values = getUniqueValues(originalData, field as string);
           // Use JSON.stringify to show undefined, null, empty strings clearly
           const valueStrings = values.slice(0, 20).map(v => JSON.stringify(v));
           return `Found ${values.length} unique value${values.length === 1 ? '' : 's'} for ${field}: ${valueStrings.join(', ')}${values.length > 20 ? '...' : ''}`;
@@ -92,7 +101,7 @@ export const POST = async (request: NextRequest) => {
       sort_data: ({ field, direction }) => {
         try {
           // Sort from original data and update currentData for final response
-          currentData = sortData(originalData, field, direction);
+          currentData = sortData(originalData, field as string, direction as 'asc' | 'desc');
           return `Successfully sorted data by ${field} in ${direction}ending order.`;
         } catch (error) {
           return `Error sorting data: ${error instanceof Error ? error.message : String(error)}`;
@@ -199,7 +208,7 @@ Data Structure: ${dataStructureInfo}
 ${recordCount !== 'N/A' ? `Current Record Count: ${recordCount}` : ''}
 
 Key Fields Available (use the quoted "path" value in tool calls):
-${dataContext.analysis.keyFields.map(f => `- "${f.path}" → ${f.label}: ${f.description}`).join('\n')}
+${dataContext.analysis.keyFields.map(f => `- "${f.path}" → ${f.label}`).join('\n')}
 
 Recommended Visualisation: ${dataContext.analysis.recommendedVisualisation}
 Rationale: ${dataContext.analysis.rationale}

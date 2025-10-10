@@ -3,10 +3,10 @@
  */
 
 import { resolve } from 'path';
-import type { Config, JsonSchema } from './types.ts';
-import { loadSchema, fileExists } from './fileSystem.ts';
-import { collectRefs, extractDefinitionName, isLocalRef, isCrossFileRef, parseCrossFileRef, hasDefinition } from './schemaUtils.ts';
-import type { Logger } from './logger.ts';
+import type { Config, JsonSchema } from './types';
+import { loadSchema, fileExists } from './fileSystem';
+import { collectRefs, extractDefinitionName, isLocalRef, isCrossFileRef, parseCrossFileRef, hasDefinition } from './schemaUtils';
+import type { Logger } from './logger';
 
 /**
  * Validate that all fragments exist and are valid JSON

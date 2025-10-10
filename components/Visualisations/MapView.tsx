@@ -21,21 +21,23 @@ interface MapViewProps {
 }
 
 const isGeoJSON = (data: unknown): boolean => {
-  if (!data || typeof data !== 'object') {return false;}
+  if (!data || typeof data !== 'object') {
+    return false;
+  }
 
   // Check for GeoJSON FeatureCollection
-  if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
+  if ('type' in data && data.type === 'FeatureCollection' && 'features' in data && Array.isArray(data.features)) {
     return true;
   }
 
   // Check for GeoJSON Feature
-  if (data.type === 'Feature' && data.geometry) {
+  if ('type' in data && data.type === 'Feature' && 'geometry' in data && data.geometry) {
     return true;
   }
 
   // Check for GeoJSON Geometry
-  if (data.type && data.coordinates &&
-      ['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon'].includes(data.type)) {
+  if ('type' in data && 'coordinates' in data && data.type && data.coordinates &&
+      ['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon'].includes(data.type as string)) {
     return true;
   }
 
@@ -64,7 +66,11 @@ const extractLatLonPoints = (data: unknown): Array<{ lat: number; lng: number; l
 }
 
 const extractSinglePoint = (item: unknown): { lat: number; lng: number } | null => {
-  if (!item || typeof item !== 'object') {return null;}
+  if (!item || typeof item !== 'object') {
+    return null;
+  }
+
+  const itemRecord = item as Record<string, unknown>;
 
   // Common field name variations
   const latFields = ['lat', 'latitude', 'Lat', 'Latitude'];
@@ -74,15 +80,15 @@ const extractSinglePoint = (item: unknown): { lat: number; lng: number } | null 
   let lng: number | undefined;
 
   for (const field of latFields) {
-    if (field in item && typeof item[field] === 'number') {
-      lat = item[field];
+    if (field in itemRecord && typeof itemRecord[field] === 'number') {
+      lat = itemRecord[field] as number;
       break;
     }
   }
 
   for (const field of lngFields) {
-    if (field in item && typeof item[field] === 'number') {
-      lng = item[field];
+    if (field in itemRecord && typeof itemRecord[field] === 'number') {
+      lng = itemRecord[field] as number;
       break;
     }
   }
@@ -130,7 +136,7 @@ const MapContent = ({ data, isGeoJSONData, points }: {
 
       {isGeoJSONData ? (
         <GeoJSON
-          data={data}
+          data={data as GeoJSON.GeoJsonObject}
           pointToLayer={(feature, latlng) => {
             return L.marker(latlng, { icon });
           }}

@@ -2,7 +2,7 @@
  * JSON Schema manipulation utilities
  */
 
-import type { JsonSchema } from './types.ts';
+import type { JsonSchema } from './types';
 
 /**
  * Recursively resolve all cross-file $ref to local references
