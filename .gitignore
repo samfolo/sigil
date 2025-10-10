@@ -42,3 +42,4 @@ next-env.d.ts
 
 # generated spec files
 /spec/specification.schema.json
+/lib/generated/
