@@ -9,7 +9,7 @@ export class Logger {
   private errorCount = 0;
 
   error(message: string): void {
-    console.error(`❌ ${message}`);
+    console.error(`× ${message}`);
     this.errorCount++;
   }
 
@@ -18,7 +18,7 @@ export class Logger {
   }
 
   success(message: string): void {
-    console.log(`✅ ${message}`);
+    console.log(`✓ ${message}`);
   }
 
   info(message: string): void {

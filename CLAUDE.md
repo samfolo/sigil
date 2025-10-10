@@ -139,3 +139,23 @@ This ensures consistent state management across all async operations in the appl
 - **No deprecation needed**: When consolidating or removing duplicate code, delete it directly without deprecation warnings
 - **No backward compatibility**: Internal APIs can be changed freely without maintaining backwards compatibility
 - **Prefer clarity over compatibility**: Refactor aggressively to improve code quality without worrying about breaking changes
+
+## Unicode Character Usage
+
+**CRITICAL**: Always use these specific unicode characters for checks and crosses:
+- **Check/success**: `✓` (U+2713) - NOT ✅ or ☑
+- **Cross/error**: `×` (U+00D7) - NOT ❌ or ✗
+
+**Usage:**
+- Console output for success/failure states
+- Logger messages
+- Test assertions
+- Documentation examples
+- Comments indicating correctness
+
+**Never use:**
+- Emoji variants (✅, ❌)
+- Alternative unicode crosses (✗, ✕)
+- Alternative unicode checks (☑, ✔)
+
+This ensures consistent, clean output across terminals and maintains a professional appearance in logs and documentation.

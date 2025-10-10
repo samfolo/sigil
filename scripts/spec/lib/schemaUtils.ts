@@ -35,11 +35,11 @@ export const resolveRefs = (obj: unknown): unknown => {
   // Recursively process all properties
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    // Skip $id when copying (we'll set a new one for the bundled schema)
-    // Preserve description and title at the definition level
-    if (key === '$id') {
+    // Skip $id and title when copying (we'll set new ones for the bundled schema)
+    // Preserve description at the definition level for documentation
+    if (key === '$id' || key === 'title') {
       continue;
-    } else if ((key === 'description' || key === 'title') && typeof value === 'string') {
+    } else if (key === 'description' && typeof value === 'string') {
       result[key] = value;
     } else {
       result[key] = resolveRefs(value);

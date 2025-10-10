@@ -21,7 +21,7 @@ describe('Logger', () => {
   describe('error', () => {
     it('should log error message with emoji', () => {
       logger.error('Test error');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Test error');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('× Test error');
     });
 
     it('should increment error count', () => {
@@ -48,7 +48,7 @@ describe('Logger', () => {
   describe('success', () => {
     it('should log success message with emoji', () => {
       logger.success('Test success');
-      expect(consoleLogSpy).toHaveBeenCalledWith('✅ Test success');
+      expect(consoleLogSpy).toHaveBeenCalledWith('✓ Test success');
     });
   });
 

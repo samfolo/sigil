@@ -48,10 +48,10 @@ const main = () => {
 
     // Summary
     if (!logger.hasErrors()) {
-      console.log('✅ All validations passed!');
+      console.log('✓ All validations passed!');
       process.exit(0);
     } else {
-      console.log(`❌ Validation failed with ${logger.getErrorCount()} error(s)`);
+      console.log(`× Validation failed with ${logger.getErrorCount()} error(s)`);
       process.exit(1);
     }
   } catch (error) {

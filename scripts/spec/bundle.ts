@@ -76,11 +76,11 @@ const main = () => {
     const outputPath = resolve(specDir, 'specification.schema.json');
     writeJson(outputPath, bundled);
 
-    console.log('\n✅ Schema bundled successfully!');
+    console.log('\n✓ Schema bundled successfully!');
     console.log(`   Output: ${outputPath}`);
     console.log(`   Total definitions: ${Object.keys(bundled.definitions || {}).length}`);
   } catch (error) {
-    console.error('❌ Error bundling schema:', error);
+    console.error('× Error bundling schema:', error);
     process.exit(1);
   }
 };

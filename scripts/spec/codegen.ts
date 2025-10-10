@@ -66,13 +66,13 @@ const main = () => {
 		// Write specification.ts
 		const specificationPath = resolve(outputDir, 'specification.ts');
 		writeFileSync(specificationPath, fileContent, 'utf-8');
-		console.log(`\n✅ Generated ${specificationPath}`);
+		console.log(`\n✓ Generated ${specificationPath}`);
 
 		// Write index.ts
 		const indexPath = resolve(outputDir, 'index.ts');
 		const indexContent = generateIndexFile();
 		writeFileSync(indexPath, indexContent, 'utf-8');
-		console.log(`✅ Generated ${indexPath}`);
+		console.log(`✓ Generated ${indexPath}`);
 
 		console.log('\n🎉 Zod schema generation complete!');
 		console.log('\n📝 Next steps:');
@@ -80,7 +80,7 @@ const main = () => {
 		console.log('   2. Use for validation: ComponentSpecSchema.parse(data)');
 		console.log('   3. Infer types: type ComponentSpec = z.infer<typeof ComponentSpecSchema>');
 	} catch (error) {
-		console.error('\n❌ Error generating Zod schemas:', error);
+		console.error('\n× Error generating Zod schemas:', error);
 		if (error instanceof Error) {
 			console.error(error.stack);
 		}

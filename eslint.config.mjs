@@ -81,6 +81,19 @@ const eslintConfig = [
           selector: "MemberExpression[object.name='React']",
           message: "Import React utilities directly instead of using React.* namespace (e.g., import { useState } from 'react')",
         },
+        // Ban inline interface definitions - require separate interface declarations
+        {
+          selector: "VariableDeclarator[init.typeAnnotation.typeAnnotation.type='TSTypeLiteral']",
+          message: "Define interfaces separately instead of using inline type literals. Create a named interface above the variable declaration.",
+        },
+        {
+          selector: "FunctionDeclaration > :matches(TSTypeParameterDeclaration, TSTypeAnnotation) TSTypeLiteral",
+          message: "Define interfaces separately instead of using inline type literals in function signatures.",
+        },
+        {
+          selector: "ArrowFunctionExpression > :matches(TSTypeParameterDeclaration, TSTypeAnnotation) TSTypeLiteral",
+          message: "Define interfaces separately instead of using inline type literals in function signatures.",
+        },
       ],
 
       // Relax some strict TypeScript rules that might be too aggressive
