@@ -62,7 +62,7 @@ export const ChatInterface = ({data, analysis, onDataUpdate, sessionId}: ChatInt
       }
 
       const {message, modifiedData, toolCalls} = await response.json();
-      const assistantMessage: Message & { toolCalls?: ToolCall[] } = {
+      const assistantMessage: Message & {toolCalls?: ToolCall[]} = {
         ...message,
         toolCalls,
       };

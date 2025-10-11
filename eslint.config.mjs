@@ -164,7 +164,7 @@ const eslintConfig = [
         // Ban React.* namespace usage - require named imports
         {
           selector: "MemberExpression[object.name='React']",
-          message: "Import React utilities directly instead of using React.* namespace (e.g., import { useState } from 'react')",
+          message: "Import React utilities directly instead of using React.* namespace (e.g., import {useState } from 'react')",
         },
         // Ban inline interface definitions - require separate interface declarations
         {

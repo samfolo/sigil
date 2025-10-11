@@ -4,7 +4,7 @@ import {useMap} from 'react-leaflet';
 
 export const useMapBounds = (
   data: unknown,
-  points: Array<{ lat: number; lng: number }>,
+  points: Array<{lat: number; lng: number}>,
   isGeoJSONData: boolean
 ) => {
   const map = useMap();

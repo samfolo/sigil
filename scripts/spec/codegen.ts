@@ -76,9 +76,9 @@ const main = () => {
 
 		console.log('\n✓ Zod schema generation complete!');
 		console.log('\n📝 Usage:');
-		console.log('   • Import schemas: import { ComponentSpecSchema } from "@sigil/lib/generated/schemas"');
+		console.log('   • Import schemas: import {ComponentSpecSchema} from "@sigil/lib/generated/schemas"');
 		console.log('   • Validate data: ComponentSpecSchema.parse(data)');
-		console.log('   • Import types: import type { ComponentSpec } from "@sigil/lib/generated/types"');
+		console.log('   • Import types: import type {ComponentSpec} from "@sigil/lib/generated/types"');
 	} catch (error) {
 		console.error('\n× Error generating Zod schemas:', error);
 		if (error instanceof Error) {

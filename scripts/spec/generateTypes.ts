@@ -90,7 +90,7 @@ export * from './specification';
 
 		console.log('\n🎉 TypeScript interface generation complete!');
 		console.log('\n📝 Next steps:');
-		console.log('   1. Import types: import type { ComponentSpec } from "@sigil/lib/generated/types"');
+		console.log('   1. Import types: import type {ComponentSpec } from "@sigil/lib/generated/types"');
 		console.log('   2. Use for type annotations and IntelliSense');
 	} catch (error) {
 		console.error('\n× Error generating TypeScript interfaces:', error);

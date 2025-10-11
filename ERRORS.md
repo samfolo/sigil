@@ -227,7 +227,7 @@ function validateUser(user: User): ValidationResult {
   const errors: string[] = [];
   if (!user.name) errors.push('Name required');
   if (!user.email) errors.push('Email required');
-  return { valid: errors.length === 0, errors };
+  return {valid: errors.length === 0, errors };
 }
 ```
 
@@ -251,10 +251,10 @@ function validateUser(user: User): Result<User, string[]> {
 
 ```typescript
 // Good: Clear error type
-function loadConfig(): Result<Config, 'not_found' | 'invalid_json'> { ... }
+function loadConfig(): Result<Config, 'not_found' | 'invalid_json'> {... }
 
 // Avoid: Generic error
-function loadConfig(): Result<Config, string> { ... }
+function loadConfig(): Result<Config, string> {... }
 ```
 
 ### 2. Document Error Conditions
@@ -265,7 +265,9 @@ function loadConfig(): Result<Config, string> { ... }
  *
  * @returns Result containing User on success, or array of validation errors on failure
  */
-function parseUser(input: unknown): Result<User, string[]> { ... }
+function parseUser(input: unknown): Result<User, string[]> {
+  ...
+}
 ```
 
 ### 3. Prefer Early Returns
@@ -324,7 +326,7 @@ processUser(result.data); // TypeScript can't narrow as well
 When testing functions that return Results:
 
 ```typescript
-import { describe, it, expect } from 'vitest';
+import {describe, it, expect} from 'vitest';
 import {isOk, isErr} from '@sigil/lib/errors';
 
 describe('divide', () => {

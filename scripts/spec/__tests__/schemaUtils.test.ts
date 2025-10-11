@@ -282,7 +282,7 @@ describe('schemaUtils', () => {
       ]);
 
       const {definitions} = mergeDefinitions(schemas);
-      const type1 = definitions.Type1 as { properties?: { field?: { $ref?: string } } };
+      const type1 = definitions.Type1 as {properties?: {field?: {$ref?: string}}};
       expect(type1.properties?.field?.$ref).toBe('#/definitions/Type2');
     });
 

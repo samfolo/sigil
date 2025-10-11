@@ -108,7 +108,7 @@ Use these string literal values to represent query states:
 
 **Example usage:**
 ```typescript
-import { QueryState } from '@sigil/lib/queryState';
+import {QueryState} from '@sigil/lib/queryState';
 
 const [queryState, setQueryState] = useState<QueryState>('idle');
 
@@ -141,7 +141,9 @@ const myFunc = (x: number) => x * 2;
 export const handleClick = () => {...};
 
 // × Wrong
-function myFunc(x: number) { return x * 2; }
+function myFunc(x: number) {
+  return x * 2;
+}
 export function handleClick() {...}
 ```
 
@@ -153,10 +155,38 @@ const {data, error} = result;
 const obj = {key: 'value'};
 
 // × Wrong
-import { useState } from 'react';
-const { data, error } = result;
-const obj = { key: 'value' };
+import {useState} from 'react';
+const {data, error} = result;
+const obj = {key: 'value'};
 ```
+
+**File-level constants**: All file-level static constants MUST use SCREAMING_SNAKE_CASE naming.
+```typescript
+// ✓ Correct
+export const MAX_RETRY_COUNT = 3;
+export const DEFAULT_TIMEOUT_MS = 5000;
+export const BASIC_TABLE: TableProps = {...};  // Fixture constants
+export const EMPTY_DATA_SET: Data[] = [];
+
+// × Wrong
+export const maxRetryCount = 3;
+export const defaultTimeoutMs = 5000;
+export const basicTable: TableProps = {...};
+
+// Exceptions (DO NOT use SCREAMING_SNAKE_CASE for these):
+// - React Context.Provider: const MyContext = createContext(...)
+// - React memo calls: export const MemoizedComponent = memo(...)
+// - React forwardRef: export const ForwardedComponent = forwardRef(...)
+// - Functions (use camelCase): const myFunction = () => {...}
+// - Classes (use PascalCase): class MyClass {...}
+```
+
+This applies especially to:
+- Configuration constants
+- Magic numbers/strings
+- Default values
+- **Test fixtures** (e.g., `BASIC_TABLE`, `EMPTY_TABLE`, `INVALID_SPEC`)
+- Lookup maps and registries
 
 ### Import Organisation
 
@@ -213,8 +243,54 @@ export {buildRenderTree} from './buildRenderTree';
 export {extractColumns, bindData} from './binding';
 
 // × Wrong - index.ts
-export const buildRenderTree = () => { /* implementation */ };
+export const buildRenderTree = () => {
+  /* implementation */
+};
 ```
+
+### Test File Organisation
+
+**CRITICAL**: All tested files MUST follow this directory structure convention:
+
+For any file that has tests, create a directory with the file's name, then place the main file inside with the same name as the directory:
+
+```
+functionName/
+├── index.ts              # Barrel file (exports only)
+├── functionName.ts       # Main implementation
+├── functionName.spec.ts  # Tests
+└── functionName.fixtures.ts  # Test fixtures (if needed)
+```
+
+**Example - render function:**
+```
+render/
+├── index.ts           # export {render} from './render';
+├── render.tsx         # Implementation
+├── render.spec.tsx    # Tests
+└── render.fixtures.ts # Fixtures
+```
+
+**Example - React component:**
+```
+DataTable/
+├── index.ts              # export {DataTable} from './DataTable';
+├── DataTable.tsx         # Component implementation
+├── DataTable.spec.tsx    # Component tests
+└── DataTable.fixtures.ts # Test fixtures
+```
+
+**Why this convention?**
+- Keeps related files (implementation, tests, fixtures) colocated
+- Makes it clear which files have test coverage
+- Maintains clean barrel file exports at the directory level
+- Scales well as codebase grows
+
+**When to use this structure:**
+- ✓ Any file with associated tests (including React components)
+- ✓ Complex modules with multiple related files
+- × Simple utility files without tests (keep them flat)
+- × Untested files (no need for directory wrapper)
 
 ### Error Handling
 
@@ -223,7 +299,8 @@ export const buildRenderTree = () => { /* implementation */ };
 **Never throw exceptions for expected errors.** Use Result types instead:
 
 ```typescript
-import {err, ok, type Result} from '@sigil/lib/errors/result';
+import type {Result} from '@sigil/lib/errors/result';
+import {err, ok} from '@sigil/lib/errors/result';
 
 // ✓ Correct - Return Result type
 const parseData = (input: string): Result<Data, string> => {

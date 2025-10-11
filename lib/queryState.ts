@@ -4,10 +4,10 @@
  * Provides type-safe state management for async operations with data and error handling.
  */
 export type QueryState<T, E = Error> =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'success'; data: T }
-  | { status: 'error'; error: E };
+  | {status: 'idle'}
+  | {status: 'loading'}
+  | {status: 'success'; data: T}
+  | {status: 'error'; error: E};
 
 /**
  * Helper function to check if the query is in loading state.

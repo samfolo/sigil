@@ -22,7 +22,7 @@ export const resolveRefs = (obj: unknown, isRoot = false): unknown => {
   }
 
   // If this object has a $ref to another file
-  const objWithRef = obj as { $ref?: unknown };
+  const objWithRef = obj as {$ref?: unknown };
   if (objWithRef.$ref && typeof objWithRef.$ref === 'string' && objWithRef.$ref.startsWith(REF_PATTERNS.CROSS_FILE_PREFIX)) {
     const [_filePath, jsonPath] = objWithRef.$ref.split('#');
 

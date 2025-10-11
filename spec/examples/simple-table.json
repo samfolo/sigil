@@ -16,7 +16,7 @@
           "component_id": "users-table"
         }
       ]
-    },
+   },
     "nodes": {
       "users-table": {
         "id": "users-table",
@@ -30,51 +30,51 @@
               "accessor": "name",
               "label": "Full Name",
               "width": {"type": "flex", "value": 2}
-            },
+           },
             {
               "accessor": "email",
               "label": "Email Address",
               "width": {"type": "flex", "value": 2}
-            },
+           },
             {
               "accessor": "created_at",
               "label": "Created",
               "width": {"type": "fixed", "value": 150},
               "alignment": "right"
-            },
+           },
             {
               "accessor": "status",
               "label": "Status",
               "width": {"type": "fixed", "value": 120},
               "alignment": "center"
-            }
+           }
           ],
           "affordances": [
             {
               "type": "sorting",
               "allowed_fields": [
-                { "accessor": "name" },
-                { "accessor": "email" },
-                { "accessor": "created_at" }
+                {"accessor": "name"},
+                {"accessor": "email"},
+                {"accessor": "created_at"}
               ],
-              "default_field": { "accessor": "name" },
+              "default_field": {"accessor": "name"},
               "default_direction": "asc"
-            },
+           },
             {
               "type": "pagination",
               "page_size": 25,
               "show_size_options": true,
               "size_options": [10, 25, 50, 100]
-            },
+           },
             {
               "type": "search",
               "searchable_fields": [
-                { "accessor": "name" },
-                { "accessor": "email" }
+                {"accessor": "name"},
+                {"accessor": "email"}
               ],
               "min_characters": 2,
               "case_sensitive": false
-            }
+           }
           ]
         }
       }

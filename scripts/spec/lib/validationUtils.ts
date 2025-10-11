@@ -165,7 +165,7 @@ export const validateDiscriminatedUnions = (config: Config, specDir: string, log
       continue;
     }
 
-    const unionDef = schema.definitions?.[union.name] as { discriminator?: { propertyName?: string } } | undefined;
+    const unionDef = schema.definitions?.[union.name] as {discriminator?: {propertyName?: string } } | undefined;
 
     // Check if it has a discriminator
     if (!unionDef?.discriminator) {
