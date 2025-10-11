@@ -53,8 +53,7 @@ const main = () => {
 		// Generate Zod schemas
 		const generated = generateZodSchemas({ config, bundledSchema });
 
-		console.log(`   Generated ${generated.schemas.length} schema definitions`);
-		console.log(`   Generated ${generated.exports.length} TypeScript types`);
+		console.log(`   Generated ${generated.schemas.length} Zod schema definitions`);
 		console.log(`   Preserved ${config.discriminatedUnions.length} discriminated unions`);
 
 		// Assemble generated file
@@ -74,11 +73,11 @@ const main = () => {
 		writeFileSync(indexPath, indexContent, 'utf-8');
 		console.log(`✓ Generated ${indexPath}`);
 
-		console.log('\n🎉 Zod schema generation complete!');
-		console.log('\n📝 Next steps:');
-		console.log('   1. Import schemas: import { ComponentSpecSchema } from "@/lib/generated/schemas"');
-		console.log('   2. Use for validation: ComponentSpecSchema.parse(data)');
-		console.log('   3. Infer types: type ComponentSpec = z.infer<typeof ComponentSpecSchema>');
+		console.log('\n✓ Zod schema generation complete!');
+		console.log('\n📝 Usage:');
+		console.log('   • Import schemas: import { ComponentSpecSchema } from "@/lib/generated/schemas"');
+		console.log('   • Validate data: ComponentSpecSchema.parse(data)');
+		console.log('   • Import types: import type { ComponentSpec } from "@/lib/generated/types"');
 	} catch (error) {
 		console.error('\n× Error generating Zod schemas:', error);
 		if (error instanceof Error) {
