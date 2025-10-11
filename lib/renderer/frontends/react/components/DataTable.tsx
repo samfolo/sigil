@@ -9,7 +9,7 @@ import type {ReactElement} from 'react';
 
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@sigil/components/ui/table';
 
-import type {TableProps} from '../../core';
+import type {TableProps} from '../../../core';
 
 /**
  * DataTable component

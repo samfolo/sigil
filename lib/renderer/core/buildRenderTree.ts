@@ -97,12 +97,6 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): RenderTre
 				case 'composition':
 				case 'text-insight':
 					throw new Error(`Unsupported component type: ${componentNode.type}`);
-
-				default: {
-					// Exhaustiveness check
-					const _exhaustive: never = componentNode;
-					throw new Error(`Unknown component type: ${(_exhaustive as {type: string}).type}`);
-				}
 			}
 		}
 

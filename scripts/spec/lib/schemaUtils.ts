@@ -8,14 +8,17 @@ import type {JsonSchema} from './types';
 /**
  * Recursively resolve all cross-file $ref to local references
  * This is a pure function with no side effects
+ *
+ * @param obj - The object to process
+ * @param isRoot - Whether this is the root level of a fragment (where $id and title should be stripped)
  */
-export const resolveRefs = (obj: unknown): unknown => {
+export const resolveRefs = (obj: unknown, isRoot = false): unknown => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => resolveRefs(item));
+    return obj.map(item => resolveRefs(item, false));
   }
 
   // If this object has a $ref to another file
@@ -36,14 +39,14 @@ export const resolveRefs = (obj: unknown): unknown => {
   // Recursively process all properties
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    // Skip $id and title when copying (we'll set new ones for the bundled schema)
-    // Preserve description at the definition level for documentation
-    if (key === '$id' || key === 'title') {
+    // Only skip $id and title at the root level of fragments (schema metadata)
+    // Preserve them in nested properties where they are actual data fields
+    if (isRoot && (key === '$id' || key === 'title')) {
       continue;
     } else if (key === 'description' && typeof value === 'string') {
       result[key] = value;
     } else {
-      result[key] = resolveRefs(value);
+      result[key] = resolveRefs(value, false);
     }
   }
 

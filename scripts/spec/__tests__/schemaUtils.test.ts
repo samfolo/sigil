@@ -86,15 +86,20 @@ describe('schemaUtils', () => {
       });
     });
 
-    it('should remove $id and title', () => {
+    it('should only remove $id and title when isRoot=true', () => {
       const input = {
         $id: 'test-id',
         title: 'Test Title',
         type: 'string',
       };
 
-      const result = resolveRefs(input);
-      expect(result).toEqual({
+      // Without isRoot=true, $id and title should be preserved
+      const resultDefault = resolveRefs(input);
+      expect(resultDefault).toEqual(input);
+
+      // With isRoot=true, $id and title should be removed
+      const resultRoot = resolveRefs(input, true);
+      expect(resultRoot).toEqual({
         type: 'string',
       });
     });

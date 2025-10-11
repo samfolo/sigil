@@ -34,10 +34,7 @@ export const render = (spec: ComponentSpec, data: unknown[]): ReactElement => {
 		case 'data-table':
 			return <DataTable {...renderTree.props} />;
 
-		default: {
-			// Exhaustiveness check
-			const _exhaustive: never = renderTree;
-			throw new Error(`Unknown render node type: ${(_exhaustive as {type: string}).type}`);
-		}
+		default:
+			throw new Error(`Unknown render node type: ${renderTree.type}`);
 	}
 };
