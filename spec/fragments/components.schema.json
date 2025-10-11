@@ -30,6 +30,39 @@
         }
       }
     },
+    "DataTableColumn": {
+      "description": "Column configuration for data table components.\n\nDefines display properties for a single column. The accessor references a field in accessor_bindings, linking display config to data semantics.\n\nColumn order in the array determines display order (left-to-right).\n\nSortability and filterability are derived from affordances, not defined per-column.",
+      "additionalProperties": false,
+      "properties": {
+        "accessor": {
+          "type": "string",
+          "description": "JSONPath accessor referencing a field in accessor_bindings. Examples: 'name', 'user.email', 'metadata.created_at'"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable column header text"
+        },
+        "width": {
+          "$ref": "./layout.schema.json#/definitions/SizeConstraint",
+          "description": "Column width constraint. Supports fixed pixels, flex proportions, percentages, or content-based sizing. Omit for default table layout behaviour"
+        },
+        "alignment": {
+          "type": "string",
+          "enum": ["left", "center", "right"],
+          "description": "Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Whether the column is visible. Hidden columns remain in the spec but are not rendered. Default: true"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description for tooltip or help text"
+        }
+      },
+      "required": ["accessor", "label"],
+      "type": "object"
+    },
     "DataTableConfig": {
       "description": "Configuration for data table components.\n\nData tables display tabular data with rows and columns, supporting common tabular operations like sorting, filtering, and pagination.\n\nBest used with: data_shape = 'tabular'",
       "additionalProperties": false,
