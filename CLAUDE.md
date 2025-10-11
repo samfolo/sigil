@@ -197,6 +197,25 @@ Imports are alphabetised within each group.
 
 - This project uses Zod V4 - check https://zod.dev for documentation and/or https://zod.dev/api for the API specification when you need context.
 
+### Modern JavaScript Syntax
+
+**Use modern ES2022+ features:**
+- Array indexing: `.at(0)` instead of `[0]`, `.at(-1)` for last element
+- Type narrowing: Use `switch` statements with discriminated unions, not type assertions
+
+### Barrel Files
+
+**Index files (`index.ts`) are export-only:** Barrel files should only contain `export` statements, no implementation logic. Each function/class should have its own file.
+
+```typescript
+// ✓ Correct - index.ts
+export {buildRenderTree} from './buildRenderTree';
+export {extractColumns, bindData} from './binding';
+
+// × Wrong - index.ts
+export const buildRenderTree = () => { /* implementation */ };
+```
+
 ## Refactoring Guidelines
 
 **IMPORTANT**: This is an internal development project, not a library or production system:

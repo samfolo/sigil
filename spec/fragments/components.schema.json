@@ -43,7 +43,7 @@
           "description": "Human-readable column header text"
         },
         "width": {
-          "$ref": "./layout.schema.json#/definitions/SizeConstraint",
+          "$ref": "./primitives.schema.json#/definitions/SizeConstraint",
           "description": "Column width constraint. Supports fixed pixels, flex proportions, percentages, or content-based sizing. Omit for default table layout behaviour"
         },
         "alignment": {
@@ -74,6 +74,13 @@
           "type": "array",
           "description": "Interactive capabilities enabled for this table. Common affordances: sorting, filtering, pagination, virtualisation, search, export"
         },
+        "columns": {
+          "items": {
+            "$ref": "#/definitions/DataTableColumn"
+          },
+          "type": "array",
+          "description": "Column definitions specifying which fields to display and how to render them. Column order determines display order (left-to-right). Each column's accessor must reference a field in accessor_bindings"
+        },
         "description": {
           "type": "string",
           "description": "Optional description explaining the component's purpose"
@@ -89,6 +96,7 @@
       },
       "required": [
         "affordances",
+        "columns",
         "type"
       ],
       "type": "object"

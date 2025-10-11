@@ -25,6 +25,30 @@
           "type": "data-table",
           "title": "Users",
           "description": "List of all users in the system",
+          "columns": [
+            {
+              "accessor": "name",
+              "label": "Full Name",
+              "width": {"type": "flex", "value": 2}
+            },
+            {
+              "accessor": "email",
+              "label": "Email Address",
+              "width": {"type": "flex", "value": 2}
+            },
+            {
+              "accessor": "created_at",
+              "label": "Created",
+              "width": {"type": "fixed", "value": 150},
+              "alignment": "right"
+            },
+            {
+              "accessor": "status",
+              "label": "Status",
+              "width": {"type": "fixed", "value": 120},
+              "alignment": "center"
+            }
+          ],
           "affordances": [
             {
               "type": "sorting",

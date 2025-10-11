@@ -28,10 +28,10 @@ export type RenderTree = RenderNode;
  * Phase 1: Only data-table type
  * Future: hierarchy, composition, text-insight
  */
-export type RenderNode = {
+export interface RenderNode {
 	type: 'data-table';
 	props: TableProps;
-};
+}
 
 /**
  * TableProps contains all processed data needed to render a data table
@@ -39,7 +39,7 @@ export type RenderNode = {
  * This is the contract between the core renderer and the presentation layer.
  * All data transformations (value mappings, type coercion, etc.) are complete.
  */
-export type TableProps = {
+export interface TableProps {
 	/** Optional title for the table */
 	title?: string;
 
@@ -51,12 +51,12 @@ export type TableProps = {
 
 	/** Processed row data with transformed values */
 	data: Row[];
-};
+}
 
 /**
  * Column definition derived from FieldMetadata in accessor_bindings
  */
-export type Column = {
+export interface Column {
 	/** Field accessor (e.g., "name", "email") */
 	id: string;
 
@@ -65,18 +65,18 @@ export type Column = {
 
 	/** Primary data type from FieldMetadata.data_types[0] */
 	dataType: string;
-};
+}
 
 /**
  * Row represents a single data record with unique identification
  */
-export type Row = {
+export interface Row {
 	/** Unique identifier for this row (generated from index or hash) */
 	id: string;
 
 	/** Cell values keyed by column accessor */
 	cells: Record<string, CellValue>;
-};
+}
 
 /**
  * CellValue holds both raw and display-transformed values
@@ -86,7 +86,7 @@ export type Row = {
  * - Accessing raw values for sorting, filtering (future phases)
  * - Debugging value transformations
  */
-export type CellValue = {
+export interface CellValue {
 	/** Original value from the data source */
 	raw: unknown;
 
@@ -95,4 +95,4 @@ export type CellValue = {
 	 * Future: May include formatted dates, numbers, etc.
 	 */
 	display: string;
-};
+}
