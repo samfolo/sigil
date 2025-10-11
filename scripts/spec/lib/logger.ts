@@ -14,7 +14,7 @@ export class Logger {
   }
 
   warn(message: string): void {
-    console.warn(`⚠️  ${message}`);
+    console.warn(`⚠  ${message}`);
   }
 
   success(message: string): void {
@@ -22,7 +22,7 @@ export class Logger {
   }
 
   info(message: string): void {
-    console.log(`ℹ️  ${message}`);
+    console.log(`ℹ  ${message}`);
   }
 
   getErrorCount(): number {

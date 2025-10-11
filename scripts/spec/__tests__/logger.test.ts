@@ -34,9 +34,9 @@ describe('Logger', () => {
   });
 
   describe('warn', () => {
-    it('should log warning message with emoji', () => {
+    it('should log warning message with unicode character', () => {
       logger.warn('Test warning');
-      expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️  Test warning');
+      expect(consoleWarnSpy).toHaveBeenCalledWith('⚠  Test warning');
     });
 
     it('should not increment error count', () => {
@@ -53,9 +53,9 @@ describe('Logger', () => {
   });
 
   describe('info', () => {
-    it('should log info message with emoji', () => {
+    it('should log info message with unicode character', () => {
       logger.info('Test info');
-      expect(consoleLogSpy).toHaveBeenCalledWith('ℹ️  Test info');
+      expect(consoleLogSpy).toHaveBeenCalledWith('ℹ  Test info');
     });
   });
 

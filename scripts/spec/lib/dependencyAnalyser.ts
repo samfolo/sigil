@@ -5,7 +5,7 @@
  */
 
 import type { JsonSchema } from './types';
-import { extractRefName } from './typeMapper';
+import { extractDefinitionName } from './schemaUtils';
 
 /**
  * Extracts all $ref dependencies from a schema
@@ -27,7 +27,7 @@ export const extractDependencies = (schema: JsonSchema): Set<string> => {
 
 		// Check for $ref
 		if (record.$ref && typeof record.$ref === 'string') {
-			const refName = extractRefName(record.$ref);
+			const refName = extractDefinitionName(record.$ref);
 			if (refName) {
 				deps.add(refName);
 			}

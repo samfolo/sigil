@@ -10,6 +10,7 @@ import {
 	validateDiscriminatedUnionVariants,
 } from './discriminatedUnions';
 import { buildDependencyGraph, topologicalSort } from './dependencyAnalyser';
+import { isErr } from '../../../lib/errors';
 
 export interface CodegenOptions {
 	config: Config;
@@ -34,9 +35,9 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
 	// Validate discriminated unions
 	for (const [name, union] of discriminatedUnions) {
 		const validation = validateDiscriminatedUnionVariants(union, definitions);
-		if (!validation.valid) {
+		if (isErr(validation)) {
 			throw new Error(
-				`Discriminated union "${name}" has missing variants: ${validation.missingVariants.join(', ')}`
+				`Discriminated union "${name}" has missing variants: ${validation.error.join(', ')}`
 			);
 		}
 	}

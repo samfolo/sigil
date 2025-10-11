@@ -3,6 +3,7 @@
  */
 
 import type { JsonSchema } from './types';
+import { REF_PATTERNS } from './constants';
 
 /**
  * Recursively resolve all cross-file $ref to local references
@@ -19,7 +20,7 @@ export const resolveRefs = (obj: unknown): unknown => {
 
   // If this object has a $ref to another file
   const objWithRef = obj as { $ref?: unknown };
-  if (objWithRef.$ref && typeof objWithRef.$ref === 'string' && objWithRef.$ref.startsWith('./')) {
+  if (objWithRef.$ref && typeof objWithRef.$ref === 'string' && objWithRef.$ref.startsWith(REF_PATTERNS.CROSS_FILE_PREFIX)) {
     const [_filePath, jsonPath] = objWithRef.$ref.split('#');
 
     // Extract the definition name from the JSON path
@@ -28,7 +29,7 @@ export const resolveRefs = (obj: unknown): unknown => {
     if (match) {
       const defName = match[1];
       // Return a local reference
-      return { $ref: `#/definitions/${defName}` };
+      return { $ref: `${REF_PATTERNS.LOCAL_DEFINITIONS_PREFIX}${defName}` };
     }
   }
 
@@ -80,8 +81,8 @@ export const collectRefs = (obj: unknown, refs: Set<string> = new Set()): Set<st
  * Returns null if the ref doesn't match the expected format
  */
 export const extractLocalDefinitionName = (ref: string): string | null => {
-  if (ref.startsWith('#/definitions/')) {
-    return ref.substring('#/definitions/'.length);
+  if (ref.startsWith(REF_PATTERNS.LOCAL_DEFINITIONS_PREFIX)) {
+    return ref.substring(REF_PATTERNS.LOCAL_DEFINITIONS_PREFIX.length);
   }
   return null;
 };
@@ -114,14 +115,14 @@ export const extractDefinitionName = (ref: string): string | null => {
  * Check if a ref is a local reference (starts with #/)
  */
 export const isLocalRef = (ref: string): boolean => {
-  return ref.startsWith('#/');
+  return ref.startsWith(REF_PATTERNS.LOCAL_PREFIX);
 };
 
 /**
  * Check if a ref is a cross-file reference (starts with ./)
  */
 export const isCrossFileRef = (ref: string): boolean => {
-  return ref.startsWith('./');
+  return ref.startsWith(REF_PATTERNS.CROSS_FILE_PREFIX);
 };
 
 /**

@@ -15,7 +15,7 @@ export const mapJsonSchemaTypeToZod = (
 ): string => {
 	// Handle $ref references
 	if (schema.$ref && typeof schema.$ref === 'string') {
-		const refName = extractRefName(schema.$ref);
+		const refName = extractDefinitionName(schema.$ref);
 		if (refName) {
 			return `${refName}Schema`;
 		}
@@ -211,11 +211,6 @@ const mapEnumToZod = (values: unknown[]): string => {
 	return `z.enum([${enumValues}])`;
 };
 
-/**
- * Extracts the definition name from a $ref string
- * This is an alias for extractDefinitionName from schemaUtils
- */
-export const extractRefName = extractDefinitionName;
 
 /**
  * Escapes a string for use in generated code

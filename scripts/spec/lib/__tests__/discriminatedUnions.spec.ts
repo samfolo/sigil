@@ -11,6 +11,7 @@ import {
 } from '../discriminatedUnions';
 import * as fixtures from './fixtures';
 import type { Config, DiscriminatedUnion } from '../types';
+import { isOk, isErr } from '../../../../lib/errors';
 
 describe('discriminatedUnions', () => {
 	describe('isDiscriminatedUnion', () => {
@@ -189,8 +190,10 @@ describe('discriminatedUnions', () => {
 			};
 
 			const result = validateDiscriminatedUnionVariants(union, definitions);
-			expect(result.valid).toBe(true);
-			expect(result.missingVariants).toEqual([]);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toEqual(union);
+			}
 		});
 
 		it('should detect missing variants', () => {
@@ -206,10 +209,12 @@ describe('discriminatedUnions', () => {
 			};
 
 			const result = validateDiscriminatedUnionVariants(union, fixtures.definitionsWithMissingVariants);
-			expect(result.valid).toBe(false);
-			expect(result.missingVariants).toContain('Variant2');
-			expect(result.missingVariants).toContain('Variant3');
-			expect(result.missingVariants).not.toContain('Variant1');
+			expect(isErr(result)).toBe(true);
+			if (isErr(result)) {
+				expect(result.error).toContain('Variant2');
+				expect(result.error).toContain('Variant3');
+				expect(result.error).not.toContain('Variant1');
+			}
 		});
 
 		it('should validate union with single variant', () => {
@@ -224,7 +229,7 @@ describe('discriminatedUnions', () => {
 			};
 
 			const result = validateDiscriminatedUnionVariants(union, definitions);
-			expect(result.valid).toBe(true);
+			expect(isOk(result)).toBe(true);
 		});
 
 		it('should handle empty definitions', () => {
@@ -239,8 +244,10 @@ describe('discriminatedUnions', () => {
 			};
 
 			const result = validateDiscriminatedUnionVariants(union, {});
-			expect(result.valid).toBe(false);
-			expect(result.missingVariants).toEqual(['Variant1', 'Variant2']);
+			expect(isErr(result)).toBe(true);
+			if (isErr(result)) {
+				expect(result.error).toEqual(['Variant1', 'Variant2']);
+			}
 		});
 
 		it('should handle union with no variants', () => {
@@ -252,8 +259,7 @@ describe('discriminatedUnions', () => {
 			};
 
 			const result = validateDiscriminatedUnionVariants(union, {});
-			expect(result.valid).toBe(true);
-			expect(result.missingVariants).toEqual([]);
+			expect(isOk(result)).toBe(true);
 		});
 
 		it('should detect partially missing variants', () => {
@@ -273,8 +279,10 @@ describe('discriminatedUnions', () => {
 			};
 
 			const result = validateDiscriminatedUnionVariants(union, definitions);
-			expect(result.valid).toBe(false);
-			expect(result.missingVariants).toEqual(['NonExistent']);
+			expect(isErr(result)).toBe(true);
+			if (isErr(result)) {
+				expect(result.error).toEqual(['NonExistent']);
+			}
 		});
 	});
 
@@ -291,7 +299,7 @@ describe('discriminatedUnions', () => {
 				Variant3: fixtures.discriminatedUnionVariant3,
 			};
 			const validation = validateDiscriminatedUnionVariants(union!, definitions);
-			expect(validation.valid).toBe(true);
+			expect(isOk(validation)).toBe(true);
 
 			// Generate code
 			const code = generateDiscriminatedUnion(union!);
@@ -308,8 +316,10 @@ describe('discriminatedUnions', () => {
 
 			// Missing variants should be caught
 			const validation = validateDiscriminatedUnionVariants(union!, fixtures.definitionsWithMissingVariants);
-			expect(validation.valid).toBe(false);
-			expect(validation.missingVariants.length).toBeGreaterThan(0);
+			expect(isErr(validation)).toBe(true);
+			if (isErr(validation)) {
+				expect(validation.error.length).toBeGreaterThan(0);
+			}
 		});
 	});
 });

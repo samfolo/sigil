@@ -6,6 +6,7 @@
 
 import type { Config, DiscriminatedUnion } from './types';
 import { toSchemaName } from './typeMapper';
+import { type Result, ok, err } from '../../../lib/errors';
 
 /**
  * Checks if a definition is a discriminated union based on config
@@ -45,16 +46,13 @@ export const getDiscriminatedUnions = (config: Config): Map<string, Discriminate
 
 /**
  * Validates that a discriminated union's variants exist in the schema
+ *
+ * @returns Ok with the union if all variants exist, or Err with array of missing variant names
  */
-interface ValidationResult {
-	valid: boolean;
-	missingVariants: string[];
-}
-
 export const validateDiscriminatedUnionVariants = (
 	union: DiscriminatedUnion,
 	definitions: Record<string, unknown>
-): ValidationResult => {
+): Result<DiscriminatedUnion, string[]> => {
 	const missingVariants: string[] = [];
 
 	for (const variant of union.variants) {
@@ -63,8 +61,9 @@ export const validateDiscriminatedUnionVariants = (
 		}
 	}
 
-	return {
-		valid: missingVariants.length === 0,
-		missingVariants,
-	};
+	if (missingVariants.length > 0) {
+		return err(missingVariants);
+	}
+
+	return ok(union);
 };

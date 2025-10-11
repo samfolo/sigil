@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { mapJsonSchemaTypeToZod, extractRefName, toSchemaName, toTypeName } from '../typeMapper';
+import { mapJsonSchemaTypeToZod, toSchemaName, toTypeName } from '../typeMapper';
 import * as fixtures from './fixtures';
 
 describe('typeMapper', () => {
@@ -229,29 +229,6 @@ describe('typeMapper', () => {
 				// Multi-line strings should use template literals
 				expect(result).toMatch(/z\.string\(\)\.describe\(`.*\n.*\n.*`\)/);
 			});
-		});
-	});
-
-	describe('extractRefName', () => {
-		it('should extract name from local ref', () => {
-			const result = extractRefName('#/definitions/TypeName');
-			expect(result).toBe('TypeName');
-		});
-
-		it('should extract name from cross-file ref', () => {
-			const result = extractRefName('./file.schema.json#/definitions/TypeName');
-			expect(result).toBe('TypeName');
-		});
-
-		it('should extract name with special characters', () => {
-			const result = extractRefName('#/definitions/Type-With_Chars123');
-			expect(result).toBe('Type-With_Chars123');
-		});
-
-		it('should return null for invalid ref format', () => {
-			expect(extractRefName('invalid')).toBeNull();
-			expect(extractRefName('http://example.com/schema')).toBeNull();
-			expect(extractRefName('')).toBeNull();
 		});
 	});
 
