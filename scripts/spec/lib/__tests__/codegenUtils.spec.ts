@@ -25,19 +25,12 @@ describe('codegenUtils', () => {
 
 			expect(result.imports).toContain("import { z } from 'zod';");
 			expect(result.schemas.length).toBe(3);
-			expect(result.exports.length).toBe(3);
 
 			// Check schemas contain expected content
 			const schemasText = result.schemas.join('\n');
 			expect(schemasText).toContain('export const StringTypeSchema');
 			expect(schemasText).toContain('export const NumberTypeSchema');
 			expect(schemasText).toContain('export const BooleanTypeSchema');
-
-			// Check exports
-			const exportsText = result.exports.join('\n');
-			expect(exportsText).toContain('export type StringType');
-			expect(exportsText).toContain('export type NumberType');
-			expect(exportsText).toContain('export type BooleanType');
 		});
 
 		it('should generate schemas in dependency order', () => {
@@ -124,7 +117,7 @@ describe('codegenUtils', () => {
 			}).toThrow(/missing variants/i);
 		});
 
-		it('should handle recursive schemas with getters', () => {
+		it('should handle recursive schemas with z.lazy', () => {
 			const bundledSchema: JsonSchema = {
 				definitions: {
 					TreeNode: fixtures.recursiveArraySchema,
@@ -137,9 +130,9 @@ describe('codegenUtils', () => {
 			});
 
 			const schemasText = result.schemas.join('\n');
-			// Should use getter syntax for recursive property
-			expect(schemasText).toContain('get "children"');
-			expect(schemasText).toContain('z.ZodArray<typeof TreeNodeSchema>');
+			// Should use z.lazy() for recursive schemas
+			expect(schemasText).toContain('z.lazy(() =>');
+			expect(schemasText).toContain(': any');
 		});
 
 		it('should handle self-referencing schemas', () => {
@@ -155,43 +148,9 @@ describe('codegenUtils', () => {
 			});
 
 			const schemasText = result.schemas.join('\n');
-			expect(schemasText).toContain('get "next"');
-			expect(schemasText).toContain('typeof SelfReferencingSchema');
-		});
-
-		it('should use type assertion for recursive schemas with strict mode', () => {
-			const bundledSchema: JsonSchema = {
-				definitions: {
-					TreeNode: fixtures.recursiveArraySchema,
-				},
-			};
-
-			const result = generateZodSchemas({
-				config: fixtures.emptyConfig,
-				bundledSchema,
-			});
-
-			const schemasText = result.schemas.join('\n');
-			// Should use type assertion instead of .strict() for schemas with getters
-			expect(schemasText).toContain('as z.ZodObject<any, "strict">');
-			expect(schemasText).not.toMatch(/\}\)\.strict\(\)/); // Should not use .strict() method
-		});
-
-		it('should preserve property descriptions in recursive schemas', () => {
-			const bundledSchema: JsonSchema = {
-				definitions: {
-					TreeNode: fixtures.recursiveArraySchema,
-				},
-			};
-
-			const result = generateZodSchemas({
-				config: fixtures.emptyConfig,
-				bundledSchema,
-			});
-
-			const schemasText = result.schemas.join('\n');
-			// Required properties should have descriptions
-			expect(schemasText).toContain('"name"');
+			// Should use z.lazy() for self-referencing schemas
+			expect(schemasText).toContain('z.lazy(() =>');
+			expect(schemasText).toContain(': any');
 		});
 
 		it('should handle complex nested schemas', () => {
@@ -224,7 +183,6 @@ describe('codegenUtils', () => {
 			});
 
 			expect(result.schemas.length).toBe(0);
-			expect(result.exports.length).toBe(0);
 		});
 
 		it('should add JSDoc descriptions for schemas', () => {
@@ -329,7 +287,6 @@ describe('codegenUtils', () => {
 			const generated = {
 				imports: ["import { z } from 'zod';"],
 				schemas: ['export const TestSchema = z.string();'],
-				exports: ['export type Test = z.infer<typeof TestSchema>;'],
 			};
 
 			const result = assembleGeneratedFile(generated);
@@ -339,15 +296,12 @@ describe('codegenUtils', () => {
 			expect(result).toContain('* DO NOT EDIT MANUALLY');
 			expect(result).toContain("import { z } from 'zod';");
 			expect(result).toContain('export const TestSchema = z.string();');
-			expect(result).toContain('// Inferred TypeScript types');
-			expect(result).toContain('export type Test = z.infer<typeof TestSchema>;');
 		});
 
 		it('should have correct section ordering', () => {
 			const generated = {
 				imports: ["import { z } from 'zod';"],
 				schemas: ['export const Schema1 = z.string();', 'export const Schema2 = z.number();'],
-				exports: ['export type Type1 = z.infer<typeof Schema1>;', 'export type Type2 = z.infer<typeof Schema2>;'],
 			};
 
 			const result = assembleGeneratedFile(generated);
@@ -357,21 +311,16 @@ describe('codegenUtils', () => {
 			const importIndex = lines.findIndex((l) => l.includes("import { z }"));
 			const schema1Index = lines.findIndex((l) => l.includes('Schema1'));
 			const schema2Index = lines.findIndex((l) => l.includes('Schema2'));
-			const typeCommentIndex = lines.findIndex((l) => l.includes('Inferred TypeScript types'));
-			const type1Index = lines.findIndex((l) => l.includes('export type Type1'));
 
 			// Verify order
 			expect(importIndex).toBeLessThan(schema1Index);
 			expect(schema1Index).toBeLessThan(schema2Index);
-			expect(schema2Index).toBeLessThan(typeCommentIndex);
-			expect(typeCommentIndex).toBeLessThan(type1Index);
 		});
 
 		it('should handle empty schemas', () => {
 			const generated = {
 				imports: ["import { z } from 'zod';"],
 				schemas: [],
-				exports: [],
 			};
 
 			const result = assembleGeneratedFile(generated);
@@ -383,7 +332,6 @@ describe('codegenUtils', () => {
 			const generated = {
 				imports: ["import { z } from 'zod';"],
 				schemas: ['export const TestSchema = z.string();'],
-				exports: ['export type Test = z.infer<typeof TestSchema>;'],
 			};
 
 			const result = assembleGeneratedFile(generated);
@@ -396,7 +344,7 @@ describe('codegenUtils', () => {
 			const result = generateIndexFile();
 
 			expect(result).toContain('/**');
-			expect(result).toContain('* Generated Zod schemas and types');
+			expect(result).toContain('* Generated Zod schemas for runtime validation');
 			expect(result).toContain('* DO NOT EDIT MANUALLY');
 			expect(result).toContain("export * from './specification';");
 		});
@@ -448,8 +396,6 @@ describe('codegenUtils', () => {
 			expect(file).toContain("import { z } from 'zod';");
 			expect(file).toContain('export const RoleSchema');
 			expect(file).toContain('export const UserSchema');
-			expect(file).toContain('export type Role');
-			expect(file).toContain('export type User');
 			expect(file).toContain('z.enum(["admin", "user", "guest"])');
 			expect(file).toContain('"id": z.string().describe("User ID")');
 			expect(file).toContain('.strict()');

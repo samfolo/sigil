@@ -45,7 +45,6 @@ describe('codegen integration', () => {
 
 			const result = generateZodSchemas({ config, bundledSchema });
 			expect(result.schemas.length).toBe(definitionCount);
-			expect(result.exports.length).toBe(definitionCount);
 		});
 
 		it('should generate valid-looking TypeScript code', () => {
@@ -55,7 +54,6 @@ describe('codegen integration', () => {
 			// Basic structure checks
 			expect(file).toContain("import { z } from 'zod';");
 			expect(file).toContain('export const');
-			expect(file).toContain('export type');
 
 			// Should not have obvious syntax errors (but "undefined" may appear in enum values)
 			expect(file).not.toContain('[object Object]');
@@ -127,31 +125,20 @@ describe('codegen integration', () => {
 			const result = generateZodSchemas({ config, bundledSchema });
 			const file = assembleGeneratedFile(result);
 
-			// If there are getters (indicating recursive schemas), check they are formatted correctly
-			if (file.includes('get "')) {
-				expect(file).toContain('z.ZodArray<typeof');
-				// Should use type assertion for strict mode
-				expect(file).toContain('as z.ZodObject<any, "strict">');
+			// If there are z.lazy calls (indicating recursive schemas), check they are formatted correctly
+			if (file.includes('z.lazy')) {
+				expect(file).toContain('z.lazy(() =>');
+				expect(file).toContain(': any');
 			}
 		});
 
-		it('should generate valid exports for all schemas', () => {
+		it('should generate valid schema exports', () => {
 			const result = generateZodSchemas({ config, bundledSchema });
 
-			// Each schema should have a corresponding export
-			expect(result.schemas.length).toBe(result.exports.length);
-
-			// Each export should reference the schema
-			for (let i = 0; i < result.schemas.length; i++) {
-				const schema = result.schemas[i];
-				const exportStmt = result.exports[i];
-
-				// Extract schema name
-				const schemaMatch = schema.match(/export const (\w+Schema)/);
-				if (schemaMatch) {
-					const schemaName = schemaMatch[1];
-					expect(exportStmt).toContain(`typeof ${schemaName}`);
-				}
+			// Each schema should be exported
+			for (const schema of result.schemas) {
+				expect(schema).toContain('export const');
+				expect(schema).toMatch(/Schema\s*[=:]/);
 			}
 		});
 
@@ -195,7 +182,6 @@ describe('codegen integration', () => {
 			});
 
 			expect(result.schemas).toEqual([]);
-			expect(result.exports).toEqual([]);
 		});
 
 		it('should handle schema with no definitions', () => {
@@ -377,17 +363,10 @@ describe('codegen integration', () => {
 			const file = assembleGeneratedFile(result);
 
 			// All schema exports should end with "Schema"
-			const schemaExports = file.match(/export const (\w+) =/g) || [];
+			const schemaExports = file.match(/export const (\w+)/g) || [];
 			for (const exp of schemaExports) {
 				const name = exp.match(/export const (\w+)/)?.[1];
 				expect(name).toMatch(/Schema$/);
-			}
-
-			// All type exports should NOT end with "Schema"
-			const typeExports = file.match(/export type (\w+) =/g) || [];
-			for (const exp of typeExports) {
-				const name = exp.match(/export type (\w+)/)?.[1];
-				expect(name).not.toMatch(/Schema$/);
 			}
 		});
 	});

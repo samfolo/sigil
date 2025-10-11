@@ -19,7 +19,6 @@ export interface CodegenOptions {
 export interface GeneratedCode {
 	imports: string[];
 	schemas: string[];
-	exports: string[];
 }
 
 /**
@@ -96,11 +95,11 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
 
 		if (union) {
 			// Generate discriminated union
-			const { code } = generateDiscriminatedUnionSchema(name, union, schema, isRecursive);
+			const code = generateDiscriminatedUnionSchema(name, union, schema, isRecursive);
 			schemas.push(code);
 		} else {
 			// Generate regular schema
-			const { code } = generateRegularSchema(name, schema, isRecursive);
+			const code = generateRegularSchema(name, schema, isRecursive);
 			schemas.push(code);
 		}
 	}
@@ -110,24 +109,18 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
 			"import { z } from 'zod';",
 		],
 		schemas,
-		exports: [], // No type exports - use generated .d.ts files instead
 	};
 };
 
 /**
  * Generates code for a discriminated union schema
  */
-interface GenerateSchemaResult {
-	code: string;
-	exportCode: string;
-}
-
 const generateDiscriminatedUnionSchema = (
 	name: string,
 	union: DiscriminatedUnion,
 	schema: JsonSchema,
 	isRecursive: boolean
-): GenerateSchemaResult => {
+): string => {
 	const schemaName = toSchemaName(name);
 
 	// Generate description comment if available
@@ -136,17 +129,12 @@ const generateDiscriminatedUnionSchema = (
 	// For recursive discriminated unions, use z.lazy() with any type hint to avoid circular reference errors
 	if (isRecursive) {
 		const unionCode = generateDiscriminatedUnion(union);
-		const code = `${description}export const ${schemaName}: any = z.lazy(() => ${unionCode});`;
-		return { code, exportCode: '' };
+		return `${description}export const ${schemaName}: any = z.lazy(() => ${unionCode});`;
 	}
 
 	// Generate discriminated union - simple, no special recursive handling
 	const unionCode = generateDiscriminatedUnion(union);
-
-	const code = `${description}export const ${schemaName} = ${unionCode};`;
-
-	// No type exports - types come from generated .d.ts files
-	return { code, exportCode: '' };
+	return `${description}export const ${schemaName} = ${unionCode};`;
 };
 
 /**
@@ -156,7 +144,7 @@ const generateRegularSchema = (
 	name: string,
 	schema: JsonSchema,
 	isRecursive: boolean
-): GenerateSchemaResult => {
+): string => {
 	const schemaName = toSchemaName(name);
 
 	// Generate description comment if available
@@ -165,17 +153,12 @@ const generateRegularSchema = (
 	// For recursive schemas, use z.lazy() with any type hint to avoid circular reference errors
 	if (isRecursive) {
 		const zodCode = mapJsonSchemaTypeToZod(schema, name);
-		const code = `${description}export const ${schemaName}: any = z.lazy(() => ${zodCode});`;
-		return { code, exportCode: '' };
+		return `${description}export const ${schemaName}: any = z.lazy(() => ${zodCode});`;
 	}
 
 	// Map the schema to Zod code - simple, no special recursive handling
 	const zodCode = mapJsonSchemaTypeToZod(schema, name);
-
-	const code = `${description}export const ${schemaName} = ${zodCode};`;
-
-	// No type exports - types come from generated .d.ts files
-	return { code, exportCode: '' };
+	return `${description}export const ${schemaName} = ${zodCode};`;
 };
 
 /**
