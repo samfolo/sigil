@@ -6,13 +6,30 @@
  */
 
 import type {ReactElement} from 'react';
+import {memo, useId} from 'react';
 
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@sigil/components/ui/table';
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from '@sigil/components/ui/table';
+import {cn} from '@sigil/lib/utils';
 
-import type {TableProps} from '../../../core';
+import type {Column, TableProps} from '../../../core';
 
 /**
- * DataTable component
+ * Maps column alignment to Tailwind CSS classes
+ */
+const getAlignmentClass = (alignment?: Column['alignment']): string => {
+	switch (alignment) {
+		case 'center':
+			return 'text-center';
+		case 'right':
+			return 'text-right';
+		case 'left':
+		default:
+			return 'text-left';
+	}
+};
+
+/**
+ * DataTable component (internal)
  *
  * Renders a simple table with headers and rows. All data processing
  * (value mappings, type coercion, etc.) is already complete in TableProps.
@@ -20,31 +37,36 @@ import type {TableProps} from '../../../core';
  * @param props - Table configuration from RenderTree
  * @returns Rendered table element
  */
-export const DataTable = (props: TableProps): ReactElement => {
+const DataTableComponent = (props: TableProps): ReactElement => {
 	const {title, description, columns, data} = props;
+
+	// Generate stable IDs for ARIA associations
+	const descriptionId = useId();
 
 	return (
 		<div className="space-y-4">
-			{(title || description) && (
-				<div className="space-y-1">
-					{title && <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>}
-					{description && <p className="text-sm text-muted-foreground">{description}</p>}
-				</div>
+			{description && (
+				<p id={descriptionId} className="text-sm text-muted-foreground">
+					{description}
+				</p>
 			)}
 
 			<div className="rounded-md border">
-				<Table>
+				<Table aria-describedby={description ? descriptionId : undefined}>
+					{title && <TableCaption className="caption-top mb-2 text-2xl font-semibold tracking-tight text-foreground">{title}</TableCaption>}
 					<TableHeader>
 						<TableRow>
 							{columns.map((column) => (
-								<TableHead key={column.id}>{column.label}</TableHead>
+								<TableHead key={column.id} scope="col" className={cn(getAlignmentClass(column.alignment))}>
+									{column.label}
+								</TableHead>
 							))}
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{data.length === 0 ? (
 							<TableRow>
-								<TableCell colSpan={columns.length} className="h-24 text-center">
+								<TableCell colSpan={columns.length} className="h-24 text-center" role="status">
 									No results
 								</TableCell>
 							</TableRow>
@@ -53,7 +75,11 @@ export const DataTable = (props: TableProps): ReactElement => {
 								<TableRow key={row.id}>
 									{columns.map((column) => {
 										const cell = row.cells[column.id];
-										return <TableCell key={column.id}>{cell?.display ?? ''}</TableCell>;
+										return (
+											<TableCell key={column.id} className={cn(getAlignmentClass(column.alignment))}>
+												{cell?.display ?? ''}
+											</TableCell>
+										);
 									})}
 								</TableRow>
 							))
@@ -64,3 +90,11 @@ export const DataTable = (props: TableProps): ReactElement => {
 		</div>
 	);
 };
+
+/**
+ * DataTable component
+ *
+ * Memoised to prevent unnecessary re-renders when parent components update.
+ */
+export const DataTable = memo(DataTableComponent);
+DataTable.displayName = 'DataTable';

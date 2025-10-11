@@ -65,6 +65,9 @@ export interface Column {
 
 	/** Primary data type from FieldMetadata.data_types[0] */
 	dataType: string;
+
+	/** Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers */
+	alignment?: 'left' | 'center' | 'right';
 }
 
 /**
@@ -90,9 +93,14 @@ export interface CellValue {
 	/** Original value from the data source */
 	raw: unknown;
 
-	/** Display value after applying value_mappings
-	 * Phase 1: display_value from value_mappings, or stringified raw
-	 * Future: May include formatted dates, numbers, etc.
+	/** Display value after applying value_mappings and formatting
+	 * Applies value_mappings first, then format strings for dates/numbers
 	 */
 	display: string;
+
+	/** Optional format string from FieldMetadata (e.g., 'DD/MM/YYYY', '0,0.00') */
+	format?: string;
+
+	/** Data type from FieldMetadata for format hint */
+	dataType?: string;
 }

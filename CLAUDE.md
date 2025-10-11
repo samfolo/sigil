@@ -216,6 +216,47 @@ export {extractColumns, bindData} from './binding';
 export const buildRenderTree = () => { /* implementation */ };
 ```
 
+### Error Handling
+
+**CRITICAL**: Use the `Result<T, E>` type from `lib/errors/result.ts` for all operations that may fail.
+
+**Never throw exceptions for expected errors.** Use Result types instead:
+
+```typescript
+import {err, ok, type Result} from '@sigil/lib/errors/result';
+
+// ✓ Correct - Return Result type
+const parseData = (input: string): Result<Data, string> => {
+  if (!input) {
+    return err('Input cannot be empty');
+  }
+  return ok(parsedData);
+};
+
+// × Wrong - Throwing exceptions
+const parseData = (input: string): Data => {
+  if (!input) {
+    throw new Error('Input cannot be empty');
+  }
+  return parsedData;
+};
+```
+
+**When to use Result vs throw:**
+- **Use Result**: Expected errors (validation, parsing, not found, user input errors)
+- **Use throw**: Unexpected errors (programming errors, assertion failures, impossible states)
+
+**Result utilities available:**
+- `ok(data)` - Create successful result
+- `err(error)` - Create error result
+- `mapResult()` - Transform success value
+- `mapError()` - Transform error value
+- `chain()` - Compose operations that return Results
+- `unwrapOr()` - Extract value with default
+- `unwrapOrElse()` - Extract value with error handler
+- `all()` - Combine multiple Results
+- `isOk()` / `isErr()` - Type guards
+
 ## Refactoring Guidelines
 
 **IMPORTANT**: This is an internal development project, not a library or production system:

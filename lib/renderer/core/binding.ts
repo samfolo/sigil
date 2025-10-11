@@ -14,6 +14,7 @@ import get from 'lodash/get';
 
 import type {DataTableColumn, FieldMetadata} from '@sigil/lib/generated/types/specification';
 
+import {stringifyCellValue} from './stringifyCellValue';
 import type {CellValue, Column, Row} from './types';
 
 /**
@@ -29,6 +30,7 @@ export const extractColumns = (columns: DataTableColumn[]): Column[] => {
 		id: col.accessor,
 		label: col.label,
 		dataType: 'unknown', // Will be enriched from accessor_bindings in buildRenderTree
+		alignment: col.alignment,
 	}));
 };
 
@@ -90,6 +92,8 @@ export const bindData = (
 			cells[column.id] = {
 				raw: rawValue,
 				display: applyValueMapping(rawValue, metadata),
+				format: metadata?.format,
+				dataType: metadata?.data_types.at(0), // Store primary type for reference
 			};
 		}
 
@@ -129,12 +133,15 @@ const extractValue = (data: unknown, accessor: string): unknown => {
  * Value mapping process:
  * 1. Convert raw value to string key
  * 2. Look up in metadata.value_mappings
- * 3. Return display_value if found, otherwise stringify raw value
+ * 3. Return display_value if found
+ * 4. Otherwise, format the raw value using data type hints and format strings
+ *
+ * Tries each data type in order for type coercion/formatting
  *
  * Phase 1: Only uses display_value, ignores display_config
  *
  * @param rawValue - Original value from data
- * @param metadata - Field metadata containing value_mappings
+ * @param metadata - Field metadata containing value_mappings and format info
  * @returns Display string
  */
 const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): string => {
@@ -143,7 +150,7 @@ const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): string 
 		return '';
 	}
 
-	// Check for value mapping
+	// Check for value mapping first (takes precedence)
 	if (metadata?.value_mappings) {
 		const key = String(rawValue);
 		const mapping = metadata.value_mappings[key];
@@ -153,6 +160,19 @@ const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): string 
 		}
 	}
 
-	// Default: stringify the raw value
-	return String(rawValue);
+	// Try formatting with each data type in order
+	if (metadata?.data_types && metadata.data_types.length > 0) {
+		for (const dataType of metadata.data_types) {
+			const formatted = stringifyCellValue(rawValue, metadata.format, dataType);
+
+			// If formatting succeeded (not fallback), use it
+			// Simple heuristic: if it's not the same as String(rawValue), we formatted it
+			if (formatted !== String(rawValue) || dataType === metadata.data_types.at(-1)) {
+				return formatted;
+			}
+		}
+	}
+
+	// Final fallback: stringify with no type hints
+	return stringifyCellValue(rawValue);
 };

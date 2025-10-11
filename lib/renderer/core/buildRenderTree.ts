@@ -2,9 +2,11 @@
  * Core render tree builder - transforms ComponentSpec into RenderTree
  */
 
+import {err, ok, type Result} from '@sigil/lib/errors/result';
 import type {ComponentSpec} from '@sigil/lib/generated/types/specification';
 
 import {bindData, enrichColumns, extractColumns} from './binding';
+import {extractFirstLayoutChild} from './layoutUtils';
 import type {RenderTree} from './types';
 
 /**
@@ -22,31 +24,17 @@ import type {RenderTree} from './types';
  *
  * @param spec - ComponentSpec from Sigil IR
  * @param data - Raw data array
- * @returns RenderTree ready for presentation layer
- * @throws Error if spec structure is invalid or component type is unsupported
+ * @returns Result containing RenderTree or error message
  */
-export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): RenderTree => {
-	// First, narrow the layout type
-	const layout = spec.root.layout;
+export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<RenderTree, string> => {
+	// Extract first child from layout
+	const layoutChildResult = extractFirstLayoutChild(spec.root.layout);
 
-	// Extract first child based on layout type
-	let layoutChild;
-	switch (layout.type) {
-		case 'stack':
-			layoutChild = layout.children.at(0);
-			break;
-		case 'grid':
-			layoutChild = layout.children.at(0)?.element;
-			break;
-		default: {
-			const _exhaustive: never = layout;
-			throw new Error(`Unknown layout type: ${(_exhaustive as {type: string}).type}`);
-		}
+	if (!layoutChildResult.success) {
+		return layoutChildResult;
 	}
 
-	if (!layoutChild) {
-		throw new Error('Spec must contain at least one component in layout');
-	}
+	const layoutChild = layoutChildResult.data;
 
 	// Use switch for type narrowing with discriminated union
 	switch (layoutChild.type) {
@@ -57,7 +45,7 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): RenderTre
 			const componentNode = spec.root.nodes[componentId];
 
 			if (!componentNode) {
-				throw new Error(`Component "${componentId}" not found in nodes registry`);
+				return err(`Component "${componentId}" not found in nodes registry`);
 			}
 
 			// Use switch for type narrowing on component type
@@ -65,7 +53,7 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): RenderTre
 				case 'data-table': {
 					// TypeScript narrows componentNode but we need to assert config type
 					if (componentNode.config.type !== 'data-table') {
-						throw new Error('Component type and config type mismatch');
+						return err('Component type and config type mismatch');
 					}
 					const config = componentNode.config;
 
@@ -82,7 +70,7 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): RenderTre
 					const rows = bindData(data, enrichedColumns, accessorBindings);
 
 					// Build RenderTree
-					return {
+					return ok({
 						type: 'data-table',
 						props: {
 							title: config.title,
@@ -90,23 +78,23 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): RenderTre
 							columns: enrichedColumns,
 							data: rows,
 						},
-					};
+					});
 				}
 
 				case 'hierarchy':
 				case 'composition':
 				case 'text-insight':
-					throw new Error(`Unsupported component type: ${componentNode.type}`);
+					return err(`Unsupported component type: ${componentNode.type}`);
 			}
 		}
 
 		case 'layout':
-			throw new Error('Nested layouts not yet supported');
+			return err('Nested layouts not yet supported');
 
 		default: {
 			// Exhaustiveness check
 			const _exhaustive: never = layoutChild;
-			throw new Error(`Unknown layout child type: ${(_exhaustive as {type: string}).type}`);
+			return err(`Unknown layout child type: ${(_exhaustive as {type: string}).type}`);
 		}
 	}
 };
