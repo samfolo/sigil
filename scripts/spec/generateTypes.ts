@@ -7,12 +7,14 @@
  * interface definitions that serve as the canonical types for the application.
  */
 
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { mkdirSync, writeFileSync, existsSync } from 'fs';
-import { compile } from 'json-schema-to-typescript';
+import {mkdirSync, writeFileSync, existsSync} from 'fs';
+import {resolve, dirname} from 'path';
+import {fileURLToPath} from 'url';
+
 import $RefParser from '@apidevtools/json-schema-ref-parser';
-import { loadSchema } from './lib/fileSystem';
+import {compile} from 'json-schema-to-typescript';
+
+import {loadSchema} from './lib/fileSystem';
 
 // Get the project root directory
 const __filename = fileURLToPath(import.meta.url);
@@ -26,7 +28,7 @@ const outputDir = resolve(projectRoot, 'lib/generated/types');
  */
 const ensureOutputDirectory = () => {
 	if (!existsSync(outputDir)) {
-		mkdirSync(outputDir, { recursive: true });
+		mkdirSync(outputDir, {recursive: true});
 		console.log(`📁 Created output directory: ${outputDir}`);
 	}
 };
@@ -88,7 +90,7 @@ export * from './specification';
 
 		console.log('\n🎉 TypeScript interface generation complete!');
 		console.log('\n📝 Next steps:');
-		console.log('   1. Import types: import type { ComponentSpec } from "@/lib/generated/types"');
+		console.log('   1. Import types: import type { ComponentSpec } from "@sigil/lib/generated/types"');
 		console.log('   2. Use for type annotations and IntelliSense');
 	} catch (error) {
 		console.error('\n× Error generating TypeScript interfaces:', error);

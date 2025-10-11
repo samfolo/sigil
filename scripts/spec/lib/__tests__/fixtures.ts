@@ -2,7 +2,7 @@
  * Test fixtures for codegen tests
  */
 
-import type { JsonSchema, Config, DiscriminatedUnion } from '../types';
+import type {JsonSchema, Config, DiscriminatedUnion} from '../types';
 
 /**
  * Simple primitive schemas
@@ -61,12 +61,12 @@ export const nullConstSchema: JsonSchema = {
  */
 export const stringArraySchema: JsonSchema = {
 	type: 'array',
-	items: { type: 'string' },
+	items: {type: 'string'},
 };
 
 export const arrayWithRefSchema: JsonSchema = {
 	type: 'array',
-	items: { $ref: '#/definitions/SomeType' },
+	items: {$ref: '#/definitions/SomeType'},
 };
 
 export const arrayWithoutItemsSchema: JsonSchema = {
@@ -79,9 +79,9 @@ export const arrayWithoutItemsSchema: JsonSchema = {
 export const simpleObjectSchema: JsonSchema = {
 	type: 'object',
 	properties: {
-		name: { type: 'string', description: 'User name' },
-		age: { type: 'number' },
-		active: { type: 'boolean' },
+		name: {type: 'string', description: 'User name'},
+		age: {type: 'number'},
+		active: {type: 'boolean'},
 	},
 	required: ['name', 'age'],
 	additionalProperties: false,
@@ -90,8 +90,8 @@ export const simpleObjectSchema: JsonSchema = {
 export const objectWithOptionalPropsSchema: JsonSchema = {
 	type: 'object',
 	properties: {
-		required: { type: 'string' },
-		optional: { type: 'string' },
+		required: {type: 'string'},
+		optional: {type: 'string'},
 	},
 	required: ['required'],
 };
@@ -108,7 +108,7 @@ export const objectWithAdditionalPropsSchema: JsonSchema = {
 
 export const objectWithTypedAdditionalPropsSchema: JsonSchema = {
 	type: 'object',
-	additionalProperties: { type: 'string' },
+	additionalProperties: {type: 'string'},
 };
 
 /**
@@ -126,11 +126,11 @@ export const crossFileRefSchema: JsonSchema = {
  * Union schemas
  */
 export const anyOfSchema: JsonSchema = {
-	anyOf: [{ type: 'string' }, { type: 'number' }],
+	anyOf: [{type: 'string'}, {type: 'number'}],
 };
 
 export const oneOfSchema: JsonSchema = {
-	oneOf: [{ const: 'a' }, { const: 'b' }],
+	oneOf: [{const: 'a'}, {const: 'b'}],
 };
 
 export const primitiveUnionSchema: JsonSchema = {
@@ -146,14 +146,14 @@ export const nestedObjectSchema: JsonSchema = {
 		user: {
 			type: 'object',
 			properties: {
-				name: { type: 'string' },
-				email: { type: 'string' },
+				name: {type: 'string'},
+				email: {type: 'string'},
 			},
 			required: ['name'],
 		},
 		tags: {
 			type: 'array',
-			items: { type: 'string' },
+			items: {type: 'string'},
 		},
 	},
 	required: ['user'],
@@ -165,7 +165,7 @@ export const nestedObjectSchema: JsonSchema = {
  */
 export const schemaWithoutType: JsonSchema = {
 	properties: {
-		field: { type: 'string' },
+		field: {type: 'string'},
 	},
 };
 
@@ -177,8 +177,8 @@ export const unknownSchema: JsonSchema = {};
 export const discriminatedUnionVariant1: JsonSchema = {
 	type: 'object',
 	properties: {
-		type: { const: 'variant1' },
-		value: { type: 'string' },
+		type: {const: 'variant1'},
+		value: {type: 'string'},
 	},
 	required: ['type', 'value'],
 	additionalProperties: false,
@@ -187,8 +187,8 @@ export const discriminatedUnionVariant1: JsonSchema = {
 export const discriminatedUnionVariant2: JsonSchema = {
 	type: 'object',
 	properties: {
-		type: { const: 'variant2' },
-		count: { type: 'number' },
+		type: {const: 'variant2'},
+		count: {type: 'number'},
 	},
 	required: ['type', 'count'],
 	additionalProperties: false,
@@ -197,8 +197,8 @@ export const discriminatedUnionVariant2: JsonSchema = {
 export const discriminatedUnionVariant3: JsonSchema = {
 	type: 'object',
 	properties: {
-		type: { const: 'variant3' },
-		enabled: { type: 'boolean' },
+		type: {const: 'variant3'},
+		enabled: {type: 'boolean'},
 	},
 	required: ['type', 'enabled'],
 	additionalProperties: false,
@@ -209,9 +209,9 @@ export const discriminatedUnionDefinition: DiscriminatedUnion = {
 	location: 'test.schema.json',
 	discriminator: 'type',
 	variants: [
-		{ value: 'variant1', type: 'Variant1' },
-		{ value: 'variant2', type: 'Variant2' },
-		{ value: 'variant3', type: 'Variant3' },
+		{value: 'variant1', type: 'Variant1'},
+		{value: 'variant2', type: 'Variant2'},
+		{value: 'variant3', type: 'Variant3'},
 	],
 };
 
@@ -235,9 +235,9 @@ export const configWithUnions: Config = {
 			location: 'test.schema.json',
 			discriminator: 'type',
 			variants: [
-				{ value: 'variant1', type: 'Variant1' },
-				{ value: 'variant2', type: 'Variant2' },
-				{ value: 'variant3', type: 'Variant3' },
+				{value: 'variant1', type: 'Variant1'},
+				{value: 'variant2', type: 'Variant2'},
+				{value: 'variant3', type: 'Variant3'},
 			],
 		},
 		{
@@ -245,8 +245,8 @@ export const configWithUnions: Config = {
 			location: 'test.schema.json',
 			discriminator: 'direction',
 			variants: [
-				{ value: 'horizontal', type: 'Horizontal' },
-				{ value: 'vertical', type: 'Vertical' },
+				{value: 'horizontal', type: 'Horizontal'},
+				{value: 'vertical', type: 'Vertical'},
 			],
 		},
 	],
@@ -256,31 +256,31 @@ export const configWithUnions: Config = {
  * Dependency graph test fixtures
  */
 export const independentDefinitions: Record<string, JsonSchema> = {
-	TypeA: { type: 'string' },
-	TypeB: { type: 'number' },
-	TypeC: { type: 'boolean' },
+	TypeA: {type: 'string'},
+	TypeB: {type: 'number'},
+	TypeC: {type: 'boolean'},
 };
 
 export const linearDependencies: Record<string, JsonSchema> = {
-	TypeA: { type: 'string' },
-	TypeB: { $ref: '#/definitions/TypeA' },
+	TypeA: {type: 'string'},
+	TypeB: {$ref: '#/definitions/TypeA'},
 	TypeC: {
 		type: 'object',
 		properties: {
-			b: { $ref: '#/definitions/TypeB' },
+			b: {$ref: '#/definitions/TypeB'},
 		},
 	},
 };
 
 export const complexDependencies: Record<string, JsonSchema> = {
-	Base: { type: 'string' },
-	Left: { $ref: '#/definitions/Base' },
-	Right: { $ref: '#/definitions/Base' },
+	Base: {type: 'string'},
+	Left: {$ref: '#/definitions/Base'},
+	Right: {$ref: '#/definitions/Base'},
 	Combined: {
 		type: 'object',
 		properties: {
-			left: { $ref: '#/definitions/Left' },
-			right: { $ref: '#/definitions/Right' },
+			left: {$ref: '#/definitions/Left'},
+			right: {$ref: '#/definitions/Right'},
 		},
 	},
 };
@@ -289,10 +289,10 @@ export const circularDependencies: Record<string, JsonSchema> = {
 	Node: {
 		type: 'object',
 		properties: {
-			value: { type: 'string' },
+			value: {type: 'string'},
 			children: {
 				type: 'array',
-				items: { $ref: '#/definitions/Node' },
+				items: {$ref: '#/definitions/Node'},
 			},
 		},
 	},
@@ -302,13 +302,13 @@ export const mutualCircularDependencies: Record<string, JsonSchema> = {
 	TypeA: {
 		type: 'object',
 		properties: {
-			b: { $ref: '#/definitions/TypeB' },
+			b: {$ref: '#/definitions/TypeB'},
 		},
 	},
 	TypeB: {
 		type: 'object',
 		properties: {
-			a: { $ref: '#/definitions/TypeA' },
+			a: {$ref: '#/definitions/TypeA'},
 		},
 	},
 };
@@ -319,8 +319,8 @@ export const mutualCircularDependencies: Record<string, JsonSchema> = {
 export const selfReferencingSchema: JsonSchema = {
 	type: 'object',
 	properties: {
-		value: { type: 'string' },
-		next: { $ref: '#/definitions/SelfReferencing' },
+		value: {type: 'string'},
+		next: {$ref: '#/definitions/SelfReferencing'},
 	},
 	additionalProperties: false,
 };
@@ -328,10 +328,10 @@ export const selfReferencingSchema: JsonSchema = {
 export const recursiveArraySchema: JsonSchema = {
 	type: 'object',
 	properties: {
-		name: { type: 'string' },
+		name: {type: 'string'},
 		children: {
 			type: 'array',
-			items: { $ref: '#/definitions/TreeNode' },
+			items: {$ref: '#/definitions/TreeNode'},
 		},
 	},
 	required: ['name'],

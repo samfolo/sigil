@@ -2,8 +2,8 @@
  * JSON Schema manipulation utilities
  */
 
-import type { JsonSchema } from './types';
-import { REF_PATTERNS } from './constants';
+import {REF_PATTERNS} from './constants';
+import type {JsonSchema} from './types';
 
 /**
  * Recursively resolve all cross-file $ref to local references
@@ -29,7 +29,7 @@ export const resolveRefs = (obj: unknown): unknown => {
     if (match) {
       const defName = match[1];
       // Return a local reference
-      return { $ref: `${REF_PATTERNS.LOCAL_DEFINITIONS_PREFIX}${defName}` };
+      return {$ref: `${REF_PATTERNS.LOCAL_DEFINITIONS_PREFIX}${defName}`};
     }
   }
 
@@ -51,27 +51,41 @@ export const resolveRefs = (obj: unknown): unknown => {
 };
 
 /**
- * Recursively collect all $ref values from a schema object
- * This is a pure function with no side effects
+ * Generic schema tree traversal utility
+ * Recursively visits all objects in a schema tree and calls a visitor function
+ *
+ * @param obj - The object to traverse
+ * @param visitor - Function called for each non-primitive object encountered
  */
-export const collectRefs = (obj: unknown, refs: Set<string> = new Set()): Set<string> => {
-  if (obj === null || typeof obj !== 'object') {
-    return refs;
+export const traverseSchema = (obj: unknown, visitor: (obj: Record<string, unknown>) => void): void => {
+  if (!obj || typeof obj !== 'object') {
+    return;
   }
 
   if (Array.isArray(obj)) {
-    obj.forEach(item => collectRefs(item, refs));
-    return refs;
+    obj.forEach(item => traverseSchema(item, visitor));
+    return;
   }
 
-  const objWithRef = obj as { $ref?: unknown };
-  if (objWithRef.$ref && typeof objWithRef.$ref === 'string') {
-    refs.add(objWithRef.$ref);
-  }
+  const record = obj as Record<string, unknown>;
+  visitor(record);
 
-  for (const value of Object.values(obj)) {
-    collectRefs(value, refs);
-  }
+  // Recursively traverse all values
+  Object.values(record).forEach(value => traverseSchema(value, visitor));
+};
+
+/**
+ * Recursively collect all $ref values from a schema object
+ * This is a pure function with no side effects
+ */
+export const collectRefs = (obj: unknown): Set<string> => {
+  const refs = new Set<string>();
+
+  traverseSchema(obj, (record) => {
+    if (record.$ref && typeof record.$ref === 'string') {
+      refs.add(record.$ref);
+    }
+  });
 
   return refs;
 };
@@ -175,7 +189,7 @@ export const mergeDefinitions = (
     }
   }
 
-  return { definitions, conflicts };
+  return {definitions, conflicts};
 };
 
 /**

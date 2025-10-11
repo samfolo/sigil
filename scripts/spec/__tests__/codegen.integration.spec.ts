@@ -3,11 +3,13 @@
  * Tests the entire flow from JSON Schema to generated Zod schemas
  */
 
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-import { generateZodSchemas, assembleGeneratedFile } from '../lib/codegenUtils';
-import type { JsonSchema, Config } from '../lib/types';
+import {readFileSync} from 'fs';
+import {resolve} from 'path';
+
+import {describe, it, expect} from 'vitest';
+
+import {generateZodSchemas, assembleGeneratedFile} from '../lib/codegenUtils';
+import type {JsonSchema, Config} from '../lib/types';
 
 describe('codegen integration', () => {
 	// Load the actual bundled schema and config
@@ -21,16 +23,20 @@ describe('codegen integration', () => {
 	try {
 		bundledSchema = JSON.parse(readFileSync(bundledSchemaPath, 'utf-8'));
 		config = JSON.parse(readFileSync(configPath, 'utf-8'));
-	} catch {
-		// If files don't exist, use minimal fixtures
-		bundledSchema = { definitions: {} };
-		config = { discriminatedUnions: {} };
+	} catch (error) {
+		throw new Error(
+			`Failed to load spec files. Run \`npm run spec:bundle\` first.\n` +
+			`  Expected files:\n` +
+			`  - ${bundledSchemaPath}\n` +
+			`  - ${configPath}\n` +
+			`  Error: ${error instanceof Error ? error.message : String(error)}`
+		);
 	}
 
 	describe('real schema generation', () => {
 		it('should generate schemas from actual bundled schema without errors', () => {
 			expect(() => {
-				generateZodSchemas({ config, bundledSchema });
+				generateZodSchemas({config, bundledSchema});
 			}).not.toThrow();
 		});
 
@@ -43,12 +49,12 @@ describe('codegen integration', () => {
 				return;
 			}
 
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			expect(result.schemas.length).toBe(definitionCount);
 		});
 
 		it('should generate valid-looking TypeScript code', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			// Basic structure checks
@@ -68,7 +74,7 @@ describe('codegen integration', () => {
 				return;
 			}
 
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			for (const union of unions) {
@@ -78,7 +84,7 @@ describe('codegen integration', () => {
 		});
 
 		it('should generate schemas in valid dependency order', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			// Extract all schema definitions
@@ -122,7 +128,7 @@ describe('codegen integration', () => {
 		});
 
 		it('should handle recursive schemas correctly', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			// If there are z.lazy calls (indicating recursive schemas), check they are formatted correctly
@@ -133,7 +139,7 @@ describe('codegen integration', () => {
 		});
 
 		it('should generate valid schema exports', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 
 			// Each schema should be exported
 			for (const schema of result.schemas) {
@@ -143,7 +149,7 @@ describe('codegen integration', () => {
 		});
 
 		it('should include descriptions where available', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			const definitions = (bundledSchema.definitions || {}) as Record<string, JsonSchema>;
@@ -168,7 +174,7 @@ describe('codegen integration', () => {
 
 	describe('edge cases', () => {
 		it('should handle empty bundled schema', () => {
-			const emptySchema: JsonSchema = { definitions: {} };
+			const emptySchema: JsonSchema = {definitions: {}};
 			const emptyConfig: Config = {
 				version: '1.0.0',
 				entryPoint: 'test.json',
@@ -193,7 +199,7 @@ describe('codegen integration', () => {
 				discriminatedUnions: [],
 			};
 
-			const result = generateZodSchemas({ config, bundledSchema: schema });
+			const result = generateZodSchemas({config, bundledSchema: schema});
 
 			expect(result.schemas).toEqual([]);
 		});
@@ -202,12 +208,12 @@ describe('codegen integration', () => {
 			const testSchema: JsonSchema = {
 				definitions: {
 					TestUnion: {
-						anyOf: [{ $ref: '#/definitions/Variant1' }],
+						anyOf: [{$ref: '#/definitions/Variant1'}],
 					},
 					Variant1: {
 						type: 'object',
 						properties: {
-							type: { const: 'variant1' },
+							type: {const: 'variant1'},
 						},
 					},
 				},
@@ -223,15 +229,15 @@ describe('codegen integration', () => {
 						location: 'test.json',
 						discriminator: 'type',
 						variants: [
-							{ value: 'variant1', type: 'Variant1' },
-							{ value: 'missing', type: 'MissingVariant' },
+							{value: 'variant1', type: 'Variant1'},
+							{value: 'missing', type: 'MissingVariant'},
 						],
 					},
 				],
 			};
 
 			expect(() => {
-				generateZodSchemas({ config: testConfig, bundledSchema: testSchema });
+				generateZodSchemas({config: testConfig, bundledSchema: testSchema});
 			}).toThrow(/missing variants/i);
 		});
 
@@ -250,7 +256,7 @@ describe('codegen integration', () => {
 											level4: {
 												type: 'object',
 												properties: {
-													value: { type: 'string' },
+													value: {type: 'string'},
 												},
 											},
 										},
@@ -282,14 +288,14 @@ describe('codegen integration', () => {
 						type: 'object',
 						description: 'A complex schema with many features',
 						properties: {
-							string: { type: 'string', description: 'A string' },
-							number: { type: 'number' },
-							boolean: { type: 'boolean' },
-							array: { type: 'array', items: { type: 'string' } },
-							enum: { type: 'string', enum: ['a', 'b', 'c'] },
-							const: { const: 'literal' },
-							union: { anyOf: [{ type: 'string' }, { type: 'number' }] },
-							ref: { $ref: '#/definitions/Simple' },
+							string: {type: 'string', description: 'A string'},
+							number: {type: 'number'},
+							boolean: {type: 'boolean'},
+							array: {type: 'array', items: {type: 'string'}},
+							enum: {type: 'string', enum: ['a', 'b', 'c']},
+							const: {const: 'literal'},
+							union: {anyOf: [{type: 'string'}, {type: 'number'}]},
+							ref: {$ref: '#/definitions/Simple'},
 						},
 						required: ['string', 'number'],
 						additionalProperties: false,
@@ -326,7 +332,7 @@ describe('codegen integration', () => {
 
 	describe('generated code validity', () => {
 		it('should generate code that can be parsed as TypeScript', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			// Basic syntax checks that would fail if TypeScript is invalid
@@ -346,7 +352,7 @@ describe('codegen integration', () => {
 		});
 
 		it('should not generate duplicate exports', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			// Extract all export names
@@ -359,7 +365,7 @@ describe('codegen integration', () => {
 		});
 
 		it('should have consistent naming conventions', () => {
-			const result = generateZodSchemas({ config, bundledSchema });
+			const result = generateZodSchemas({config, bundledSchema});
 			const file = assembleGeneratedFile(result);
 
 			// All schema exports should end with "Schema"

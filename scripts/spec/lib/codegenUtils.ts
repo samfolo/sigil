@@ -2,15 +2,17 @@
  * Code generation utilities for creating Zod schemas from JSON Schema
  */
 
-import type { JsonSchema, Config, DiscriminatedUnion } from './types';
-import { mapJsonSchemaTypeToZod, toSchemaName } from './typeMapper';
+import {isErr} from '../../../lib/errors';
+
+import {buildDependencyGraph, topologicalSort} from './dependencyAnalyser';
 import {
 	generateDiscriminatedUnion,
 	getDiscriminatedUnions,
 	validateDiscriminatedUnionVariants,
 } from './discriminatedUnions';
-import { buildDependencyGraph, topologicalSort } from './dependencyAnalyser';
-import { isErr } from '../../../lib/errors';
+import {mapJsonSchemaTypeToZod, toSchemaName} from './typeMapper';
+import type {JsonSchema, Config, DiscriminatedUnion} from './types';
+
 
 export interface CodegenOptions {
 	config: Config;
@@ -26,7 +28,7 @@ export interface GeneratedCode {
  * Generates Zod schema code from a bundled JSON Schema
  */
 export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
-	const { config, bundledSchema } = options;
+	const {config, bundledSchema} = options;
 	const definitions = (bundledSchema.definitions || {}) as Record<string, JsonSchema>;
 
 	// Get discriminated union metadata
@@ -47,39 +49,82 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
 	const dependencyGraph = buildDependencyGraph(definitions);
 	const orderedNames = topologicalSort(definitionNames, dependencyGraph);
 
-	// Identify recursive schemas (schemas involved in cycles)
+	/**
+	 * Identify recursive schemas (schemas involved in dependency cycles)
+	 *
+	 * Algorithm: Modified Depth-First Search (DFS) cycle detection
+	 *
+	 * For each schema, we perform a DFS traversal following $ref dependencies.
+	 * We maintain a "path" set representing the current traversal path from the
+	 * starting schema to the current schema.
+	 *
+	 * If we encounter a schema already in the current path, we've found a cycle.
+	 * All schemas in the cycle portion of the path are marked as recursive.
+	 *
+	 * Example cycle: A -> B -> C -> B
+	 * When visiting B the second time, path = [A, B, C]
+	 * We detect B is already in path, so B and C form the cycle.
+	 *
+	 * Why this matters:
+	 * Recursive schemas need special handling in Zod using z.lazy() to prevent
+	 * infinite recursion during schema construction.
+	 *
+	 * Time complexity: O(V + E) where V = schemas, E = dependencies
+	 */
 	const recursiveSchemas = new Set<string>();
-	const visited = new Set<string>();
+	const visited = new Set<string>(); // Schemas we've fully explored from
 
+	/**
+	 * Recursively explores dependencies to find cycles
+	 *
+	 * @param start - The schema we started exploration from (for visited tracking)
+	 * @param current - The schema currently being explored
+	 * @param path - Set of schemas in the current traversal path (for cycle detection)
+	 */
 	const findCycles = (start: string, current: string, path: Set<string>): void => {
+		// Cycle detected: current schema is already in our traversal path
 		if (path.has(current)) {
-			// Found a cycle - mark all schemas in the cycle as recursive
+			// Mark all schemas in the cycle as recursive
 			const cycleSchemas = Array.from(path);
-			const cycleStart = cycleSchemas.indexOf(current);
-			for (let i = cycleStart; i < cycleSchemas.length; i++) {
+			const cycleStartIndex = cycleSchemas.indexOf(current);
+
+			// Only mark schemas from the cycle start onwards
+			// e.g., if path = [A, B, C, D] and we revisit B, only B, C, D are in the cycle
+			for (let i = cycleStartIndex; i < cycleSchemas.length; i++) {
 				recursiveSchemas.add(cycleSchemas[i]);
 			}
 			return;
 		}
 
+		// Already fully explored this schema from this starting point
 		if (visited.has(current)) {
 			return;
 		}
 
+		// Add current schema to path (for cycle detection)
 		path.add(current);
+
+		// Explore all dependencies
 		const deps = dependencyGraph.get(current);
 		if (deps) {
 			for (const dep of deps) {
+				// Create a new path Set for each dependency to handle branching correctly
+				// This ensures different paths don't interfere with each other
 				findCycles(start, dep, new Set(path));
 			}
 		}
+
+		// Remove current from path as we backtrack
 		path.delete(current);
 
+		// Mark as visited only when we return to the starting schema
+		// This ensures we fully explore all paths from this starting point
 		if (current === start) {
 			visited.add(current);
 		}
 	};
 
+	// Find cycles starting from each schema
 	for (const name of definitionNames) {
 		if (!visited.has(name)) {
 			findCycles(name, name, new Set());

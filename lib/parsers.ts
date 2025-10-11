@@ -1,6 +1,6 @@
-import Papa from 'papaparse';
+import {XMLParser} from 'fast-xml-parser';
 import yaml from 'js-yaml';
-import { XMLParser } from 'fast-xml-parser';
+import Papa from 'papaparse';
 
 export const parseJSON = (data: string): unknown | null => {
   try {

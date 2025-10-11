@@ -5,7 +5,7 @@
  * See ERRORS.md for usage guidelines and examples.
  */
 
-export type { Result, Ok, Err } from './result';
+export type {Result, Ok, Err} from './result';
 export {
 	ok,
 	err,

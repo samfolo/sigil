@@ -1,9 +1,11 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
+import {MapContainer, TileLayer, Marker, Popup, GeoJSON} from 'react-leaflet';
+
+import {useMapBounds} from '@sigil/lib/useMapBounds';
+
 import 'leaflet/dist/leaflet.css';
-import { useMapBounds } from '@/lib/useMapBounds';
 
 // Fix for default marker icons in react-leaflet
 const icon = L.icon({
@@ -58,7 +60,7 @@ const extractLatLonPoints = (data: unknown): Array<LatLonPoint> => {
     data.forEach((item, idx) => {
       const point = extractSinglePoint(item);
       if (point) {
-        points.push({ ...point, label: `Point ${idx + 1}` });
+        points.push({...point, label: `Point ${idx + 1}`});
       }
     });
   } else {
@@ -106,7 +108,7 @@ const extractSinglePoint = (item: unknown): LatLon | null => {
 
   if (lat !== undefined && lng !== undefined &&
       lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-    return { lat, lng };
+    return {lat, lng};
   }
 
   return null;
@@ -137,7 +139,7 @@ interface MapContentProps {
   points: Array<LatLonPoint>;
 }
 
-const MapContent = ({ data, isGeoJSONData, points }: MapContentProps) => {
+const MapContent = ({data, isGeoJSONData, points}: MapContentProps) => {
   useMapBounds(data, points, isGeoJSONData);
 
   return (
@@ -151,7 +153,7 @@ const MapContent = ({ data, isGeoJSONData, points }: MapContentProps) => {
         <GeoJSON
           data={data as GeoJSON.GeoJsonObject}
           pointToLayer={(feature, latlng) => {
-            return L.marker(latlng, { icon });
+            return L.marker(latlng, {icon});
           }}
         />
       ) : (
@@ -169,7 +171,7 @@ const MapContent = ({ data, isGeoJSONData, points }: MapContentProps) => {
   );
 }
 
-export const MapView = ({ data }: MapViewProps) => {
+export const MapView = ({data}: MapViewProps) => {
   const center = calculateCenter(data);
   const isGeoJSONData = isGeoJSON(data);
   const points = !isGeoJSONData ? extractLatLonPoints(data) : [];
@@ -179,7 +181,7 @@ export const MapView = ({ data }: MapViewProps) => {
       <MapContainer
         center={center}
         zoom={2}
-        style={{ height: '100%', width: '100%' }}
+        style={{height: '100%', width: '100%'}}
       >
         <MapContent data={data} isGeoJSONData={isGeoJSONData} points={points} />
       </MapContainer>

@@ -1,6 +1,6 @@
-import { useMap } from 'react-leaflet';
-import { useEffect } from 'react';
 import L from 'leaflet';
+import {useEffect} from 'react';
+import {useMap} from 'react-leaflet';
 
 export const useMapBounds = (
   data: unknown,
@@ -15,12 +15,12 @@ export const useMapBounds = (
       const geojsonLayer = L.geoJSON(data as GeoJSON.GeoJsonObject);
       const bounds = geojsonLayer.getBounds();
       if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [50, 50] });
+        map.fitBounds(bounds, {padding: [50, 50]});
       }
     } else if (points.length > 0) {
       // Calculate bounds from lat/lon points
       const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-      map.fitBounds(bounds, { padding: [50, 50] });
+      map.fitBounds(bounds, {padding: [50, 50]});
     }
   }, [map, data, points, isGeoJSONData]);
 }

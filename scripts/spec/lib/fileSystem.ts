@@ -2,9 +2,10 @@
  * File system utilities for spec scripts
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
-import type { JsonSchema, Config } from './types';
-import { ConfigSchema } from './types';
+import {readFileSync, writeFileSync, readdirSync, existsSync} from 'fs';
+
+import {ConfigSchema} from './types';
+import type {JsonSchema, Config} from './types';
 
 /**
  * Load and parse a JSON file

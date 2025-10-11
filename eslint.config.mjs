@@ -1,9 +1,11 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-import tseslint from "typescript-eslint";
-import reactPlugin from "eslint-plugin-react";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+
+import {FlatCompat} from "@eslint/eslintrc";
 import checkFile from "eslint-plugin-check-file";
+import importPlugin from "eslint-plugin-import";
+import reactPlugin from "eslint-plugin-react";
+import tseslint from "typescript-eslint";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,16 +30,99 @@ const eslintConfig = [
     plugins: {
       react: reactPlugin,
       "check-file": checkFile,
+      import: importPlugin,
     },
     rules: {
+      // Enforce type imports on separate lines
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          prefer: "type-imports",
+          disallowTypeAnnotations: true,
+          fixStyle: "separate-type-imports",
+        },
+      ],
+
+      // Enforce import order
+      "import/order": [
+        "error",
+        {
+          groups: [
+            "builtin",   // Node.js built-in modules
+            "external",  // Third-party packages
+            "internal",  // Project-level imports (@sigil/...)
+            "parent",    // Parent imports (../)
+            "sibling",   // Sibling imports (./)
+            "index",     // Index imports
+            "object",    // Object imports (CSS and other side-effect imports)
+          ],
+          pathGroups: [
+            {
+              pattern: "**/*.css",
+              group: "object",
+              position: "after",
+            },
+            {
+              pattern: "@sigil/**",
+              group: "internal",
+              position: "after",
+            },
+            {
+              pattern: "../../../../../../../**",
+              group: "parent",
+              position: "before",
+            },
+            {
+              pattern: "../../../../../../**",
+              group: "parent",
+              position: "before",
+            },
+            {
+              pattern: "../../../../../**",
+              group: "parent",
+              position: "before",
+            },
+            {
+              pattern: "../../../../**",
+              group: "parent",
+              position: "before",
+            },
+            {
+              pattern: "../../../**",
+              group: "parent",
+              position: "before",
+            },
+            {
+              pattern: "../../**",
+              group: "parent",
+              position: "before",
+            },
+            {
+              pattern: "../**",
+              group: "parent",
+              position: "before",
+            },
+          ],
+          pathGroupsExcludedImportTypes: ["builtin"],
+          "newlines-between": "always",
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
+          warnOnUnassignedImports: true,
+        },
+      ],
       // Enforce fat arrow syntax for all functions
-      "prefer-arrow-callback": ["error", { allowNamedFunctions: false }],
+      "prefer-arrow-callback": ["error", {allowNamedFunctions: false}],
 
       // Require curly braces for all control statements (no single-line if statements)
       "curly": ["error", "all"],
 
       // Ban nested ternary operators
       "no-nested-ternary": "error",
+
+      // No spaces inside curly braces for destructuring and imports
+      "object-curly-spacing": ["error", "never"],
 
       // TypeScript-specific rules
       "@typescript-eslint/method-signature-style": ["error", "property"],

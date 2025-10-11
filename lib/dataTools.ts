@@ -1,4 +1,4 @@
-import { get, sortBy, uniq, sumBy, meanBy, minBy, maxBy } from 'lodash';
+import {get, sortBy, uniq, sumBy, meanBy, minBy, maxBy} from 'lodash';
 
 type FilterOperator = 'equals' | 'contains' | 'greaterThan' | 'lessThan';
 type AggregateOperation = 'sum' | 'average' | 'count' | 'min' | 'max';
@@ -54,19 +54,19 @@ const wrapArray = (originalData: unknown, newArray: unknown[]): unknown => {
 
     // Handle GeoJSON FeatureCollection
     if ('type' in dataRecord && dataRecord.type === 'FeatureCollection') {
-      return { ...dataRecord, features: newArray };
+      return {...dataRecord, features: newArray};
     }
 
     // Handle GeoJSON GeometryCollection
     if ('type' in dataRecord && dataRecord.type === 'GeometryCollection') {
-      return { ...dataRecord, geometries: newArray };
+      return {...dataRecord, geometries: newArray};
     }
 
     // Handle object with known array properties
     const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
     for (const prop of commonArrayProps) {
       if (prop in dataRecord && Array.isArray(dataRecord[prop])) {
-        return { ...dataRecord, [prop]: newArray };
+        return {...dataRecord, [prop]: newArray};
       }
     }
   }
@@ -105,7 +105,7 @@ export const filterData = (
 
         // Use localeCompare for strings, numeric comparison for numbers
         if (typeof a === 'string' && typeof b === 'string') {
-          return a.localeCompare(b, undefined, { numeric: true }) > 0;
+          return a.localeCompare(b, undefined, {numeric: true}) > 0;
         }
         return Number(a) > Number(b);
       }
@@ -116,7 +116,7 @@ export const filterData = (
 
         // Use localeCompare for strings, numeric comparison for numbers
         if (typeof a === 'string' && typeof b === 'string') {
-          return a.localeCompare(b, undefined, { numeric: true }) < 0;
+          return a.localeCompare(b, undefined, {numeric: true}) < 0;
         }
         return Number(a) < Number(b);
       }

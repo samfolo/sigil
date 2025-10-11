@@ -2,8 +2,8 @@
  * Type mapping utilities for converting JSON Schema types to Zod schema code
  */
 
-import type { JsonSchema } from './types';
-import { extractDefinitionName } from './schemaUtils';
+import {extractDefinitionName} from './schemaUtils';
+import type {JsonSchema} from './types';
 
 /**
  * Maps a JSON Schema type to its Zod equivalent code string

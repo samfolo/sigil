@@ -10,11 +10,12 @@
  * 4. All discriminated unions are properly defined
  */
 
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { loadConfig } from './lib/fileSystem';
-import { createLogger } from './lib/logger';
-import { validateFragmentsExist, validateReferences, validateDiscriminatedUnions } from './lib/validationUtils';
+import {resolve, dirname} from 'path';
+import {fileURLToPath} from 'url';
+
+import {loadConfig} from './lib/fileSystem';
+import {createLogger} from './lib/logger';
+import {validateFragmentsExist, validateReferences, validateDiscriminatedUnions} from './lib/validationUtils';
 
 // Get the project root directory
 const __filename = fileURLToPath(import.meta.url);

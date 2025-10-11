@@ -2,7 +2,7 @@
  * Shared TypeScript types for spec scripts
  */
 
-import { z } from 'zod';
+import {z} from 'zod';
 
 /**
  * JSON Schema representation

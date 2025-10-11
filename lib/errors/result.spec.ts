@@ -2,7 +2,8 @@
  * Tests for Result type utilities
  */
 
-import { describe, it, expect } from 'vitest';
+import {describe, it, expect} from 'vitest';
+
 import {
 	type Result,
 	ok,
@@ -29,7 +30,7 @@ describe('Result', () => {
 
 		it('should work with different types', () => {
 			expect(ok('string').success).toBe(true);
-			expect(ok({ key: 'value' }).success).toBe(true);
+			expect(ok({key: 'value'}).success).toBe(true);
 			expect(ok([1, 2, 3]).success).toBe(true);
 			expect(ok(null).success).toBe(true);
 		});
@@ -54,8 +55,8 @@ describe('Result', () => {
 		});
 
 		it('should work with custom error types', () => {
-			type CustomError = { code: number; message: string };
-			const result: Result<never, CustomError> = err({ code: 404, message: 'Not found' });
+			interface CustomError { code: number; message: string }
+			const result: Result<never, CustomError> = err({code: 404, message: 'Not found'});
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.error.code).toBe(404);
@@ -351,7 +352,7 @@ describe('Result', () => {
 					return ageResult;
 				}
 
-				return ok({ name: nameResult.data, age: ageResult.data });
+				return ok({name: nameResult.data, age: ageResult.data});
 			}
 
 			const validUser = createUser('Alice', 25);

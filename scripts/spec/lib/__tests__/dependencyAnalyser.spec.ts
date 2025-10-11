@@ -2,10 +2,13 @@
  * Tests for dependencyAnalyser.ts
  */
 
-import { describe, it, expect } from 'vitest';
-import { extractDependencies, buildDependencyGraph, topologicalSort } from '../dependencyAnalyser';
+import {describe, it, expect} from 'vitest';
+
+import {extractDependencies, buildDependencyGraph, topologicalSort} from '../dependencyAnalyser';
+import type {JsonSchema} from '../types';
+
 import * as fixtures from './fixtures';
-import type { JsonSchema } from '../types';
+
 
 describe('dependencyAnalyser', () => {
 	describe('extractDependencies', () => {
@@ -25,8 +28,8 @@ describe('dependencyAnalyser', () => {
 			const schema: JsonSchema = {
 				type: 'object',
 				properties: {
-					field1: { $ref: '#/definitions/Type1' },
-					field2: { $ref: '#/definitions/Type2' },
+					field1: {$ref: '#/definitions/Type1'},
+					field2: {$ref: '#/definitions/Type2'},
 				},
 			};
 			const deps = extractDependencies(schema);
@@ -42,7 +45,7 @@ describe('dependencyAnalyser', () => {
 					nested: {
 						type: 'object',
 						properties: {
-							deep: { $ref: '#/definitions/DeepType' },
+							deep: {$ref: '#/definitions/DeepType'},
 						},
 					},
 				},
@@ -53,7 +56,7 @@ describe('dependencyAnalyser', () => {
 
 		it('should extract dependencies from unions', () => {
 			const schema: JsonSchema = {
-				anyOf: [{ $ref: '#/definitions/Type1' }, { $ref: '#/definitions/Type2' }],
+				anyOf: [{$ref: '#/definitions/Type1'}, {$ref: '#/definitions/Type2'}],
 			};
 			const deps = extractDependencies(schema);
 			expect(deps.has('Type1')).toBe(true);
@@ -63,7 +66,7 @@ describe('dependencyAnalyser', () => {
 
 		it('should extract dependencies from oneOf', () => {
 			const schema: JsonSchema = {
-				oneOf: [{ $ref: '#/definitions/Type1' }, { $ref: '#/definitions/Type2' }],
+				oneOf: [{$ref: '#/definitions/Type1'}, {$ref: '#/definitions/Type2'}],
 			};
 			const deps = extractDependencies(schema);
 			expect(deps.has('Type1')).toBe(true);
@@ -84,13 +87,13 @@ describe('dependencyAnalyser', () => {
 			const schema: JsonSchema = {
 				type: 'object',
 				properties: {
-					single: { $ref: '#/definitions/Type1' },
+					single: {$ref: '#/definitions/Type1'},
 					array: {
 						type: 'array',
-						items: { $ref: '#/definitions/Type2' },
+						items: {$ref: '#/definitions/Type2'},
 					},
 					union: {
-						anyOf: [{ $ref: '#/definitions/Type3' }, { $ref: '#/definitions/Type4' }],
+						anyOf: [{$ref: '#/definitions/Type3'}, {$ref: '#/definitions/Type4'}],
 					},
 				},
 			};
@@ -116,9 +119,9 @@ describe('dependencyAnalyser', () => {
 			const schema: JsonSchema = {
 				type: 'object',
 				properties: {
-					field1: { $ref: '#/definitions/SameType' },
-					field2: { $ref: '#/definitions/SameType' },
-					field3: { $ref: '#/definitions/SameType' },
+					field1: {$ref: '#/definitions/SameType'},
+					field2: {$ref: '#/definitions/SameType'},
+					field3: {$ref: '#/definitions/SameType'},
 				},
 			};
 			const deps = extractDependencies(schema);
@@ -246,14 +249,14 @@ describe('dependencyAnalyser', () => {
 
 		it('should handle diamond dependency pattern', () => {
 			const definitions = {
-				Base: { type: 'string' },
-				Left: { $ref: '#/definitions/Base' },
-				Right: { $ref: '#/definitions/Base' },
+				Base: {type: 'string'},
+				Left: {$ref: '#/definitions/Base'},
+				Right: {$ref: '#/definitions/Base'},
 				Top: {
 					type: 'object',
 					properties: {
-						left: { $ref: '#/definitions/Left' },
-						right: { $ref: '#/definitions/Right' },
+						left: {$ref: '#/definitions/Left'},
+						right: {$ref: '#/definitions/Right'},
 					},
 				},
 			};
@@ -272,9 +275,9 @@ describe('dependencyAnalyser', () => {
 
 		it('should maintain stable order for items at same dependency level', () => {
 			const definitions = {
-				A: { type: 'string' },
-				B: { type: 'string' },
-				C: { type: 'string' },
+				A: {type: 'string'},
+				B: {type: 'string'},
+				C: {type: 'string'},
 			};
 			const graph = buildDependencyGraph(definitions);
 			const sorted1 = topologicalSort(['A', 'B', 'C'], graph);
@@ -299,18 +302,18 @@ describe('dependencyAnalyser', () => {
 
 		it('should handle mixed dependency patterns', () => {
 			const definitions = {
-				Primitive: { type: 'string' },
+				Primitive: {type: 'string'},
 				Container: {
 					type: 'object',
 					properties: {
-						value: { $ref: '#/definitions/Primitive' },
+						value: {$ref: '#/definitions/Primitive'},
 					},
 				},
 				Recursive: {
 					type: 'object',
 					properties: {
-						next: { $ref: '#/definitions/Recursive' },
-						container: { $ref: '#/definitions/Container' },
+						next: {$ref: '#/definitions/Recursive'},
+						container: {$ref: '#/definitions/Container'},
 					},
 				},
 			};

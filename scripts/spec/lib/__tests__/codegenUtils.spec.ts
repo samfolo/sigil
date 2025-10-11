@@ -2,10 +2,13 @@
  * Tests for codegenUtils.ts
  */
 
-import { describe, it, expect } from 'vitest';
-import { generateZodSchemas, assembleGeneratedFile, generateIndexFile } from '../codegenUtils';
+import {describe, it, expect} from 'vitest';
+
+import {generateZodSchemas, assembleGeneratedFile, generateIndexFile} from '../codegenUtils';
+import type {JsonSchema, Config} from '../types';
+
 import * as fixtures from './fixtures';
-import type { JsonSchema, Config } from '../types';
+
 
 describe('codegenUtils', () => {
 	describe('generateZodSchemas', () => {
@@ -58,9 +61,9 @@ describe('codegenUtils', () => {
 				definitions: {
 					TestUnion: {
 						anyOf: [
-							{ $ref: '#/definitions/Variant1' },
-							{ $ref: '#/definitions/Variant2' },
-							{ $ref: '#/definitions/Variant3' },
+							{$ref: '#/definitions/Variant1'},
+							{$ref: '#/definitions/Variant2'},
+							{$ref: '#/definitions/Variant3'},
 						],
 					},
 					Variant1: fixtures.discriminatedUnionVariant1,
@@ -79,9 +82,9 @@ describe('codegenUtils', () => {
 						location: 'test.json',
 						discriminator: 'type',
 						variants: [
-							{ value: 'variant1', type: 'Variant1' },
-							{ value: 'variant2', type: 'Variant2' },
-							{ value: 'variant3', type: 'Variant3' },
+							{value: 'variant1', type: 'Variant1'},
+							{value: 'variant2', type: 'Variant2'},
+							{value: 'variant3', type: 'Variant3'},
 						],
 					},
 				],
@@ -103,7 +106,7 @@ describe('codegenUtils', () => {
 			const bundledSchema: JsonSchema = {
 				definitions: {
 					TestUnion: {
-						anyOf: [{ $ref: '#/definitions/Variant1' }],
+						anyOf: [{$ref: '#/definitions/Variant1'}],
 					},
 					...fixtures.definitionsWithMissingVariants,
 				},
@@ -244,8 +247,8 @@ describe('codegenUtils', () => {
 				definitions: {
 					TestUnion: {
 						anyOf: [
-							{ $ref: '#/definitions/Variant1' },
-							{ $ref: '#/definitions/Variant2' },
+							{$ref: '#/definitions/Variant1'},
+							{$ref: '#/definitions/Variant2'},
 						],
 					},
 					Variant1: fixtures.discriminatedUnionVariant1,
@@ -264,8 +267,8 @@ describe('codegenUtils', () => {
 						location: 'test.json',
 						discriminator: 'type',
 						variants: [
-							{ value: 'variant1', type: 'Variant1' },
-							{ value: 'variant2', type: 'Variant2' },
+							{value: 'variant1', type: 'Variant1'},
+							{value: 'variant2', type: 'Variant2'},
 						],
 					},
 				],
@@ -369,10 +372,10 @@ describe('codegenUtils', () => {
 						type: 'object',
 						description: 'A user in the system',
 						properties: {
-							id: { type: 'string', description: 'User ID' },
-							name: { type: 'string', description: 'User name' },
-							email: { type: 'string', description: 'User email' },
-							role: { $ref: '#/definitions/Role' },
+							id: {type: 'string', description: 'User ID'},
+							name: {type: 'string', description: 'User name'},
+							email: {type: 'string', description: 'User email'},
+							role: {$ref: '#/definitions/Role'},
 						},
 						required: ['id', 'name', 'email', 'role'],
 						additionalProperties: false,

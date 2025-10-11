@@ -1,10 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { analysisSchema, Analysis } from '@/lib/analysisSchema';
-import { z, ZodError } from 'zod';
-import { Tool, ToolUnion } from '@anthropic-ai/sdk/resources';
-import { supabase } from '@/lib/supabase';
-import { generateEmbedding } from '@/lib/embeddings';
+import type {Tool, ToolUnion} from '@anthropic-ai/sdk/resources';
+import {NextResponse} from 'next/server';
+import type {NextRequest} from 'next/server';
+import {z, ZodError} from 'zod';
+
+import {analysisSchema} from '@sigil/lib/analysisSchema';
+import type {Analysis} from '@sigil/lib/analysisSchema';
+import {generateEmbedding} from '@sigil/lib/embeddings';
+import {supabase} from '@sigil/lib/supabase';
+
+
 
 const limitDataSample = (data: unknown, _format: string): string => {
   let sample = '';
@@ -33,20 +38,20 @@ const ANALYSIS_TOOL: ToolUnion = {
 export const POST = async (request: NextRequest) => {
   try {
     const body = await request.json();
-    const { format, data } = body;
+    const {format, data} = body;
 
     if (!format || !data) {
       return NextResponse.json(
-        { error: 'Missing format or data in request body' },
-        { status: 400 }
+        {error: 'Missing format or data in request body'},
+        {status: 400}
       );
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'ANTHROPIC_API_KEY not configured' },
-        { status: 500 }
+        {error: 'ANTHROPIC_API_KEY not configured'},
+        {status: 500}
       );
     }
 
@@ -64,22 +69,22 @@ IMPORTANT for keyFields:
 Data sample:
 ${dataSample}`;
 
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({apiKey});
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{role: 'user', content: prompt}],
       tools: [ANALYSIS_TOOL],
-      tool_choice: { type: 'tool', name: 'provide_analysis' },
+      tool_choice: {type: 'tool', name: 'provide_analysis'},
     });
 
     const toolUse = response.content.find((block) => block.type === 'tool_use');
 
     if (!toolUse || toolUse.type !== 'tool_use') {
       return NextResponse.json(
-        { error: 'No tool use found in response' },
-        { status: 500 }
+        {error: 'No tool use found in response'},
+        {status: 500}
       );
     }
 
@@ -90,7 +95,7 @@ ${dataSample}`;
       const embedding = await generateEmbedding(analysis.description);
       console.log('Generated embedding successfully, length:', embedding.length);
 
-      const { data: session, error: insertError } = await supabase
+      const {data: session, error: insertError} = await supabase
         .from('sessions')
         .insert({
           format,
@@ -110,11 +115,11 @@ ${dataSample}`;
           hint: insertError.hint,
         });
         // Continue without session storage - don't fail the analysis
-        return NextResponse.json({ analysis, sessionId: null });
+        return NextResponse.json({analysis, sessionId: null});
       }
 
       console.log('Session stored successfully:', session.id);
-      return NextResponse.json({ analysis, sessionId: session.id });
+      return NextResponse.json({analysis, sessionId: session.id});
     } catch (embeddingError) {
       console.error('Failed to generate embedding from OpenAI:', {
         error: embeddingError,
@@ -122,21 +127,21 @@ ${dataSample}`;
         stack: embeddingError instanceof Error ? embeddingError.stack : undefined,
       });
       // Continue without session storage - don't fail the analysis
-      return NextResponse.json({ analysis, sessionId: null });
+      return NextResponse.json({analysis, sessionId: null});
     }
   } catch (error) {
     if (error instanceof ZodError) {
       console.error('Schema validation error:', error.issues);
       return NextResponse.json(
-        { error: 'Invalid analysis response format', details: error.issues },
-        { status: 500 }
+        {error: 'Invalid analysis response format', details: error.issues},
+        {status: 500}
       );
     }
 
     console.error('Error calling Claude API:', error);
     return NextResponse.json(
-      { error: 'Failed to analyse data' },
-      { status: 500 }
+      {error: 'Failed to analyse data'},
+      {status: 500}
     );
   }
 }

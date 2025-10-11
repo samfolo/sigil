@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Send } from 'lucide-react';
-import { Analysis } from '@/lib/analysisSchema';
-import { QueryState, isLoading } from '@/lib/queryState';
-import { Message, ToolCall } from '@/lib/chatTypes';
+import {Loader2, Send} from 'lucide-react';
+import {useState, useRef, useEffect} from 'react';
+
+import {Button} from '@sigil/components/ui/button';
+import {Card} from '@sigil/components/ui/card';
+import {ScrollArea} from '@sigil/components/ui/scroll-area';
+import type {Analysis} from '@sigil/lib/analysisSchema';
+import type {Message, ToolCall} from '@sigil/lib/chatTypes';
+import {isLoading} from '@sigil/lib/queryState';
+import type {QueryState} from '@sigil/lib/queryState';
 
 interface ChatInterfaceProps {
   data: unknown;
@@ -16,10 +18,10 @@ interface ChatInterfaceProps {
   sessionId: string | null;
 }
 
-export const ChatInterface = ({ data, analysis, onDataUpdate, sessionId }: ChatInterfaceProps) => {
+export const ChatInterface = ({data, analysis, onDataUpdate, sessionId}: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [chatState, setChatState] = useState<QueryState<Message, string>>({ status: 'idle' });
+  const [chatState, setChatState] = useState<QueryState<Message, string>>({status: 'idle'});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,17 +34,17 @@ export const ChatInterface = ({ data, analysis, onDataUpdate, sessionId }: ChatI
     e.preventDefault();
     if (!input.trim() || isLoading(chatState)) {return;}
 
-    const userMessage: Message = { role: 'user', content: input.trim() };
+    const userMessage: Message = {role: 'user', content: input.trim()};
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput('');
-    setChatState({ status: 'loading' });
+    setChatState({status: 'loading'});
 
     try {
       const dataSample = JSON.stringify(data).slice(0, 1000);
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           messages: updatedMessages,
           sessionId,
@@ -59,13 +61,13 @@ export const ChatInterface = ({ data, analysis, onDataUpdate, sessionId }: ChatI
         throw new Error('Failed to get response');
       }
 
-      const { message, modifiedData, toolCalls } = await response.json();
+      const {message, modifiedData, toolCalls} = await response.json();
       const assistantMessage: Message & { toolCalls?: ToolCall[] } = {
         ...message,
         toolCalls,
       };
       setMessages([...updatedMessages, assistantMessage]);
-      setChatState({ status: 'success', data: assistantMessage });
+      setChatState({status: 'success', data: assistantMessage});
 
       // If the API returned modified data, notify parent component
       if (modifiedData && onDataUpdate) {

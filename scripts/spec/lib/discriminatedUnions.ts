@@ -4,9 +4,10 @@
  * Uses config.json metadata to identify and generate proper z.discriminatedUnion() calls
  */
 
-import type { Config, DiscriminatedUnion } from './types';
-import { toSchemaName } from './typeMapper';
-import { type Result, ok, err } from '../../../lib/errors';
+import {type Result, ok, err} from '../../../lib/errors';
+
+import {toSchemaName} from './typeMapper';
+import type {Config, DiscriminatedUnion} from './types';
 
 /**
  * Checks if a definition is a discriminated union based on config

@@ -15,7 +15,7 @@ if (!apiKey) {
   );
 }
 
-const openai = new OpenAI({ apiKey });
+const openai = new OpenAI({apiKey});
 
 /**
  * Generate embeddings using OpenAI's text-embedding-3-small model

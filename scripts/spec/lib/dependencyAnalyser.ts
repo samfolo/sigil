@@ -4,8 +4,8 @@
  * Analyses $ref dependencies to determine the correct generation order
  */
 
-import type { JsonSchema } from './types';
-import { extractDefinitionName } from './schemaUtils';
+import {extractDefinitionName, traverseSchema} from './schemaUtils';
+import type {JsonSchema} from './types';
 
 /**
  * Extracts all $ref dependencies from a schema
@@ -13,31 +13,16 @@ import { extractDefinitionName } from './schemaUtils';
 export const extractDependencies = (schema: JsonSchema): Set<string> => {
 	const deps = new Set<string>();
 
-	const traverse = (obj: unknown) => {
-		if (!obj || typeof obj !== 'object') {
-			return;
-		}
-
-		if (Array.isArray(obj)) {
-			obj.forEach(traverse);
-			return;
-		}
-
-		const record = obj as Record<string, unknown>;
-
-		// Check for $ref
+	traverseSchema(schema, (record) => {
+		// Check for $ref and extract definition name
 		if (record.$ref && typeof record.$ref === 'string') {
 			const refName = extractDefinitionName(record.$ref);
 			if (refName) {
 				deps.add(refName);
 			}
 		}
+	});
 
-		// Recursively traverse all values
-		Object.values(record).forEach(traverse);
-	};
-
-	traverse(schema);
 	return deps;
 };
 

@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { DataInput } from '@/components/DataInput';
-import { DataCanvas } from '@/components/DataCanvas';
-import { DetectionResult } from '@/lib/formatDetector';
-import { Analysis } from '@/lib/analysisSchema';
-import { QueryState } from '@/lib/queryState';
+import {useState} from 'react';
+
+import {DataCanvas} from '@sigil/components/DataCanvas';
+import {DataInput} from '@sigil/components/DataInput';
+import type {Analysis} from '@sigil/lib/analysisSchema';
+import type {DetectionResult} from '@sigil/lib/formatDetector';
+import type {QueryState} from '@sigil/lib/queryState';
 
 const Home = () => {
   const [result, setResult] = useState<DetectionResult | null>(null);
-  const [analysisState, setAnalysisState] = useState<QueryState<Analysis, string>>({ status: 'idle' });
+  const [analysisState, setAnalysisState] = useState<QueryState<Analysis, string>>({status: 'idle'});
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const handleAnalyse = (detectionResult: DetectionResult, newAnalysisState: QueryState<Analysis, string>, newSessionId: string | null) => {

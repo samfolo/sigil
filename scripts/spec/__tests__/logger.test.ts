@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Logger, createLogger } from '../lib/logger';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+
+import {Logger, createLogger} from '../lib/logger';
 
 describe('Logger', () => {
   let logger: Logger;

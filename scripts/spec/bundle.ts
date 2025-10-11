@@ -8,11 +8,12 @@
  * cross-file $ref references.
  */
 
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { loadSchema, writeJson, listFiles } from './lib/fileSystem';
-import { mergeDefinitions } from './lib/schemaUtils';
-import type { JsonSchema } from './lib/types';
+import {resolve, dirname} from 'path';
+import {fileURLToPath} from 'url';
+
+import {loadSchema, writeJson, listFiles} from './lib/fileSystem';
+import {mergeDefinitions} from './lib/schemaUtils';
+import type {JsonSchema} from './lib/types';
 
 // Get the project root directory
 const __filename = fileURLToPath(import.meta.url);
@@ -47,7 +48,7 @@ export const bundleSchemas = (fragmentsDirPath: string): JsonSchema => {
   }
 
   // Merge all definitions
-  const { definitions, conflicts } = mergeDefinitions(fragments);
+  const {definitions, conflicts} = mergeDefinitions(fragments);
 
   // Log conflicts as warnings
   for (const conflict of conflicts) {

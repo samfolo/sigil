@@ -2,7 +2,7 @@ interface TreeViewProps {
   data: unknown;
 }
 
-export const TreeView = ({ data }: TreeViewProps) => {
+export const TreeView = ({data}: TreeViewProps) => {
   return (
     <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm font-mono">
       {JSON.stringify(data, null, 2)}

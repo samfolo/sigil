@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import {describe, it, expect} from 'vitest';
+
 import {
   resolveRefs,
   collectRefs,
@@ -10,7 +11,7 @@ import {
   hasDefinition,
   getDefinition,
 } from '../lib/schemaUtils';
-import type { JsonSchema } from '../lib/types';
+import type {JsonSchema} from '../lib/types';
 
 describe('schemaUtils', () => {
   describe('resolveRefs', () => {
@@ -58,16 +59,16 @@ describe('schemaUtils', () => {
     it('should recursively resolve refs in arrays', () => {
       const input = {
         items: [
-          { $ref: './other.json#/definitions/Type1' },
-          { $ref: './other.json#/definitions/Type2' },
+          {$ref: './other.json#/definitions/Type1'},
+          {$ref: './other.json#/definitions/Type2'},
         ],
       };
 
       const result = resolveRefs(input);
       expect(result).toEqual({
         items: [
-          { $ref: '#/definitions/Type1' },
-          { $ref: '#/definitions/Type2' },
+          {$ref: '#/definitions/Type1'},
+          {$ref: '#/definitions/Type2'},
         ],
       });
     });
@@ -110,8 +111,8 @@ describe('schemaUtils', () => {
     it('should collect all $ref values', () => {
       const input = {
         properties: {
-          field1: { $ref: '#/definitions/Type1' },
-          field2: { $ref: './other.json#/definitions/Type2' },
+          field1: {$ref: '#/definitions/Type1'},
+          field2: {$ref: './other.json#/definitions/Type2'},
         },
       };
 
@@ -125,10 +126,10 @@ describe('schemaUtils', () => {
     it('should collect refs from nested structures', () => {
       const input = {
         items: [
-          { $ref: '#/definitions/Type1' },
+          {$ref: '#/definitions/Type1'},
           {
             properties: {
-              nested: { $ref: '#/definitions/Type2' },
+              nested: {$ref: '#/definitions/Type2'},
             },
           },
         ],
@@ -224,17 +225,17 @@ describe('schemaUtils', () => {
       const schemas = new Map<string, JsonSchema>([
         ['schema1', {
           definitions: {
-            Type1: { type: 'string' },
+            Type1: {type: 'string'},
           },
         }],
         ['schema2', {
           definitions: {
-            Type2: { type: 'number' },
+            Type2: {type: 'number'},
           },
         }],
       ]);
 
-      const { definitions, conflicts } = mergeDefinitions(schemas);
+      const {definitions, conflicts} = mergeDefinitions(schemas);
       expect(definitions).toHaveProperty('Type1');
       expect(definitions).toHaveProperty('Type2');
       expect(conflicts).toHaveLength(0);
@@ -244,17 +245,17 @@ describe('schemaUtils', () => {
       const schemas = new Map<string, JsonSchema>([
         ['schema1', {
           definitions: {
-            Type1: { type: 'string' },
+            Type1: {type: 'string'},
           },
         }],
         ['schema2', {
           definitions: {
-            Type1: { type: 'number' },
+            Type1: {type: 'number'},
           },
         }],
       ]);
 
-      const { definitions, conflicts } = mergeDefinitions(schemas);
+      const {definitions, conflicts} = mergeDefinitions(schemas);
       expect(definitions).toHaveProperty('Type1');
       expect(Object.keys(definitions)).toHaveLength(1);
       expect(conflicts).toHaveLength(1);
@@ -268,29 +269,29 @@ describe('schemaUtils', () => {
             Type1: {
               type: 'object',
               properties: {
-                field: { $ref: './other.json#/definitions/Type2' },
+                field: {$ref: './other.json#/definitions/Type2'},
               },
             },
           },
         }],
       ]);
 
-      const { definitions } = mergeDefinitions(schemas);
+      const {definitions} = mergeDefinitions(schemas);
       const type1 = definitions.Type1 as { properties?: { field?: { $ref?: string } } };
       expect(type1.properties?.field?.$ref).toBe('#/definitions/Type2');
     });
 
     it('should skip schemas without definitions', () => {
       const schemas = new Map<string, JsonSchema>([
-        ['schema1', { type: 'string' }],
+        ['schema1', {type: 'string'}],
         ['schema2', {
           definitions: {
-            Type1: { type: 'string' },
+            Type1: {type: 'string'},
           },
         }],
       ]);
 
-      const { definitions, conflicts } = mergeDefinitions(schemas);
+      const {definitions, conflicts} = mergeDefinitions(schemas);
       expect(Object.keys(definitions)).toHaveLength(1);
       expect(conflicts).toHaveLength(0);
     });
@@ -299,7 +300,7 @@ describe('schemaUtils', () => {
   describe('hasDefinition', () => {
     const schema: JsonSchema = {
       definitions: {
-        Type1: { type: 'string' },
+        Type1: {type: 'string'},
       },
     };
 
@@ -319,13 +320,13 @@ describe('schemaUtils', () => {
   describe('getDefinition', () => {
     const schema: JsonSchema = {
       definitions: {
-        Type1: { type: 'string', description: 'A string type' },
+        Type1: {type: 'string', description: 'A string type'},
       },
     };
 
     it('should return definition for existing types', () => {
       const def = getDefinition(schema, 'Type1');
-      expect(def).toEqual({ type: 'string', description: 'A string type' });
+      expect(def).toEqual({type: 'string', description: 'A string type'});
     });
 
     it('should return null for non-existing definitions', () => {

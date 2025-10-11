@@ -1,21 +1,23 @@
+import {Loader2, ChevronDown} from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import {useState} from 'react';
 
-import { Card } from '@/components/ui/card';
-import { DetectionResult } from '@/lib/formatDetector';
-import { Separator } from '@/components/ui/separator';
-import { Analysis } from '@/lib/analysisSchema';
-import { TableView } from '@/components/Visualisations/TableView';
-import { TreeView } from '@/components/Visualisations/TreeView';
-import { QueryState, isSuccess, isLoading, isError } from '@/lib/queryState';
-import { Loader2, ChevronDown } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Button } from '@/components/ui/button';
-import { ChatInterface } from '@/components/ChatInterface';
+import {ChatInterface} from '@sigil/components/ChatInterface';
+import {Button} from '@sigil/components/ui/button';
+import {Card} from '@sigil/components/ui/card';
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@sigil/components/ui/collapsible';
+import {Separator} from '@sigil/components/ui/separator';
+import {TableView} from '@sigil/components/Visualisations/TableView';
+import {TreeView} from '@sigil/components/Visualisations/TreeView';
+import type {Analysis} from '@sigil/lib/analysisSchema';
+import type {DetectionResult} from '@sigil/lib/formatDetector';
+import {isSuccess, isLoading, isError} from '@sigil/lib/queryState';
+import type {QueryState} from '@sigil/lib/queryState';
+
 
 const MapView = dynamic(
-  () => import('@/components/Visualisations/MapView').then(mod => ({ default: mod.MapView })),
-  { ssr: false }
+  () => import('@sigil/components/Visualisations/MapView').then(mod => ({default: mod.MapView})),
+  {ssr: false}
 );
 
 interface DataCanvasProps {
@@ -24,7 +26,7 @@ interface DataCanvasProps {
   sessionId: string | null;
 }
 
-export const DataCanvas = ({ result, analysisState, sessionId }: DataCanvasProps) => {
+export const DataCanvas = ({result, analysisState, sessionId}: DataCanvasProps) => {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(true);
   const [displayData, setDisplayData] = useState(result?.data);
 

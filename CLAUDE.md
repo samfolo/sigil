@@ -58,7 +58,7 @@ Detection order in `lib/formatDetector.ts`:
 ## Configuration
 
 - **Environment**: `.env.local` requires `ANTHROPIC_API_KEY` (currently unused, placeholder for future AI features)
-- **Import alias**: `@/*` maps to project root
+- **Import alias**: `@sigil/*` maps to project root (use this for all internal imports, NOT `@/`)
 - **Theme**: Dark mode enforced via `className="dark"` on `<html>` element in `app/layout.tsx`
 
 ## File Naming Conventions
@@ -108,7 +108,7 @@ Use these string literal values to represent query states:
 
 **Example usage:**
 ```typescript
-import { QueryState } from '@/lib/queryState';
+import { QueryState } from '@sigil/lib/queryState';
 
 const [queryState, setQueryState] = useState<QueryState>('idle');
 
@@ -131,6 +131,50 @@ setQueryState('reloading');
 - Numeric state codes
 
 This ensures consistent state management across all async operations in the application.
+
+### Import Organisation
+
+**CRITICAL**: All imports MUST follow this ordering (enforced by ESLint):
+
+1. **Third-party packages** (e.g., `react`, `@anthropic-ai/sdk`, `next/server`, `zod`)
+2. **Blank line**
+3. **Internal `@sigil/*` imports** (project-level imports using the `@sigil/` alias)
+4. **Blank line**
+5. **Parent imports by depth** (8-deep `../../../../../../../..`, 7-deep, ..., 1-deep `..`)
+6. **Blank line**
+7. **Sibling imports** (`./`)
+8. **Blank line**
+9. **Stylesheets** (`./styles.css`)
+10. **Blank line**
+11. **Type imports** (separated from value imports using `import type`)
+
+**Type imports:**
+- MUST be on separate lines using `import type { X } from 'module'`
+- NEVER mix type and value imports on the same line
+- Type imports are grouped separately after all value imports
+
+**Example:**
+```typescript
+import { useState } from 'react';
+import { z } from 'zod';
+
+import { analysisSchema } from '@sigil/lib/analysisSchema';
+import { formatData } from '@sigil/lib/formatters';
+
+import { helperFunc } from '../../../utils';
+
+import { localHelper } from './helpers';
+
+import type { Analysis } from '@sigil/lib/analysisSchema';
+import type { QueryState } from '@sigil/lib/queryState';
+```
+
+**Within each group**, imports are alphabetised case-insensitively.
+
+**Run `npm run lint -- --fix` to auto-fix import ordering violations.**
+
+### Zod Version
+
 - This project uses Zod V4 - check https://zod.dev for documentation and/or https://zod.dev/api for the API specification when you need context.
 
 ## Refactoring Guidelines

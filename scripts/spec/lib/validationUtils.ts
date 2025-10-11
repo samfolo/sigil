@@ -2,11 +2,12 @@
  * Validation utilities for spec scripts
  */
 
-import { resolve } from 'path';
-import type { Config, JsonSchema } from './types';
-import { loadSchema, fileExists } from './fileSystem';
-import { collectRefs, extractDefinitionName, isLocalRef, isCrossFileRef, parseCrossFileRef, hasDefinition } from './schemaUtils';
-import type { Logger } from './logger';
+import {resolve} from 'path';
+
+import {loadSchema, fileExists} from './fileSystem';
+import type {Logger} from './logger';
+import {collectRefs, extractDefinitionName, isLocalRef, isCrossFileRef, parseCrossFileRef, hasDefinition} from './schemaUtils';
+import type {Config, JsonSchema} from './types';
 
 /**
  * Validate that all fragments exist and are valid JSON
@@ -94,7 +95,7 @@ export const validateReferences = (config: Config, specDir: string, logger: Logg
           continue;
         }
 
-        const { filePath, jsonPath } = parsed;
+        const {filePath, jsonPath} = parsed;
         const fileName = filePath.substring(2); // Remove './'
 
         // Find the fragment with this filename

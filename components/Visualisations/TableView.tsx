@@ -1,3 +1,5 @@
+import {get} from 'lodash';
+
 import {
   Table,
   TableBody,
@@ -5,8 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { get } from 'lodash';
+} from '@sigil/components/ui/table';
 
 interface KeyField {
   path: string;
@@ -18,7 +19,7 @@ interface TableViewProps {
   keyFields: KeyField[];
 }
 
-export const TableView = ({ data, keyFields }: TableViewProps) => {
+export const TableView = ({data, keyFields}: TableViewProps) => {
   // Limit to first 100 rows for performance
   const displayData = data.slice(0, 100);
 

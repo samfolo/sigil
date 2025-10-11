@@ -2,8 +2,10 @@
  * Tests for typeMapper.ts
  */
 
-import { describe, it, expect } from 'vitest';
-import { mapJsonSchemaTypeToZod, toSchemaName, toTypeName } from '../typeMapper';
+import {describe, it, expect} from 'vitest';
+
+import {mapJsonSchemaTypeToZod, toSchemaName, toTypeName} from '../typeMapper';
+
 import * as fixtures from './fixtures';
 
 describe('typeMapper', () => {
@@ -195,8 +197,8 @@ describe('typeMapper', () => {
 			it('should not duplicate descriptions in union variants', () => {
 				const unionWithDesc = {
 					anyOf: [
-						{ type: 'string', description: 'String variant' } as const,
-						{ type: 'number', description: 'Number variant' } as const,
+						{type: 'string', description: 'String variant'} as const,
+						{type: 'number', description: 'Number variant'} as const,
 					],
 				};
 				const result = mapJsonSchemaTypeToZod(unionWithDesc);

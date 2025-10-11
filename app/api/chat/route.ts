@@ -1,8 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { Analysis } from '@/lib/analysisSchema';
-import { filterData, aggregateData, getUniqueValues, sortData } from '@/lib/dataTools';
-import { Message, ToolCall, ChatResponse } from '@/lib/chatTypes';
+import {NextResponse} from 'next/server';
+import type {NextRequest} from 'next/server';
+
+import type {Analysis} from '@sigil/lib/analysisSchema';
+import type {Message, ToolCall, ChatResponse} from '@sigil/lib/chatTypes';
+import {filterData, aggregateData, getUniqueValues, sortData} from '@sigil/lib/dataTools';
+
+
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -24,7 +28,7 @@ type ToolFunction = (input: Record<string, unknown>) => unknown;
 export const POST = async (request: NextRequest) => {
   try {
     const body: ChatRequest = await request.json();
-    const { messages, dataContext } = body;
+    const {messages, dataContext} = body;
 
     const originalData = dataContext.fullData;
     let currentData = originalData;
@@ -48,7 +52,7 @@ export const POST = async (request: NextRequest) => {
 
     // Define tools with actual implementations
     const toolImplementations: Record<string, ToolFunction> = {
-      filter_data: ({ field, operator, value }) => {
+      filter_data: ({field, operator, value}) => {
         try {
           // Always filter from original data to avoid chaining issues
           const filtered = filterData(
@@ -68,7 +72,7 @@ export const POST = async (request: NextRequest) => {
           return `Error filtering data: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-      aggregate_data: ({ field, operation }) => {
+      aggregate_data: ({field, operation}) => {
         try {
           // Always use original data for analysis
           const result = aggregateData(
@@ -87,7 +91,7 @@ export const POST = async (request: NextRequest) => {
           return `Error performing ${operation}: ${errorMsg}`;
         }
       },
-      get_unique_values: ({ field }) => {
+      get_unique_values: ({field}) => {
         try {
           // Always use original data for analysis
           const values = getUniqueValues(originalData, field as string);
@@ -98,7 +102,7 @@ export const POST = async (request: NextRequest) => {
           return `Error getting unique values: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-      sort_data: ({ field, direction }) => {
+      sort_data: ({field, direction}) => {
         try {
           // Sort from original data and update currentData for final response
           currentData = sortData(originalData, field as string, direction as 'asc' | 'desc');
@@ -367,8 +371,8 @@ The tools handle various data structures automatically (arrays, GeoJSON, nested 
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(
-      { error: 'Failed to process chat request' },
-      { status: 500 }
+      {error: 'Failed to process chat request'},
+      {status: 500}
     );
   }
 }

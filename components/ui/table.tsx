@@ -2,9 +2,9 @@
 
 import * as React from "react"
 
-import { cn } from "@/lib/utils"
+import {cn} from "@sigil/lib/utils"
 
-const Table = ({ className, ...props }: React.ComponentProps<"table">) => {
+const Table = ({className, ...props}: React.ComponentProps<"table">) => {
   return (
     <div
       data-slot="table-container"
@@ -19,7 +19,7 @@ const Table = ({ className, ...props }: React.ComponentProps<"table">) => {
   )
 }
 
-const TableHeader = ({ className, ...props }: React.ComponentProps<"thead">) => {
+const TableHeader = ({className, ...props}: React.ComponentProps<"thead">) => {
   return (
     <thead
       data-slot="table-header"
@@ -29,7 +29,7 @@ const TableHeader = ({ className, ...props }: React.ComponentProps<"thead">) => 
   )
 }
 
-const TableBody = ({ className, ...props }: React.ComponentProps<"tbody">) => {
+const TableBody = ({className, ...props}: React.ComponentProps<"tbody">) => {
   return (
     <tbody
       data-slot="table-body"
@@ -39,7 +39,7 @@ const TableBody = ({ className, ...props }: React.ComponentProps<"tbody">) => {
   )
 }
 
-const TableFooter = ({ className, ...props }: React.ComponentProps<"tfoot">) => {
+const TableFooter = ({className, ...props}: React.ComponentProps<"tfoot">) => {
   return (
     <tfoot
       data-slot="table-footer"
@@ -52,7 +52,7 @@ const TableFooter = ({ className, ...props }: React.ComponentProps<"tfoot">) => 
   )
 }
 
-const TableRow = ({ className, ...props }: React.ComponentProps<"tr">) => {
+const TableRow = ({className, ...props}: React.ComponentProps<"tr">) => {
   return (
     <tr
       data-slot="table-row"
@@ -65,7 +65,7 @@ const TableRow = ({ className, ...props }: React.ComponentProps<"tr">) => {
   )
 }
 
-const TableHead = ({ className, ...props }: React.ComponentProps<"th">) => {
+const TableHead = ({className, ...props}: React.ComponentProps<"th">) => {
   return (
     <th
       data-slot="table-head"
@@ -78,7 +78,7 @@ const TableHead = ({ className, ...props }: React.ComponentProps<"th">) => {
   )
 }
 
-const TableCell = ({ className, ...props }: React.ComponentProps<"td">) => {
+const TableCell = ({className, ...props}: React.ComponentProps<"td">) => {
   return (
     <td
       data-slot="table-cell"
