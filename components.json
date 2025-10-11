@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "components": "@sigil/components",
+    "utils": "@sigil/lib/utils",
+    "ui": "@sigil/components/ui",
+    "lib": "@sigil/lib",
+    "hooks": "@sigil/hooks"
   },
   "registries": {}
 }

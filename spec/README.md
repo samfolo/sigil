@@ -204,7 +204,7 @@ Provide: spec/config.json
 Use the generated Zod schemas:
 
 ```typescript
-import { ComponentSpecSchema } from '@/validation/spec';
+import {ComponentSpecSchema} from '@sigil/validation/spec';
 
 const result = ComponentSpecSchema.safeParse(data);
 ```

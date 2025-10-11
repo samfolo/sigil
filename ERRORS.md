@@ -9,7 +9,7 @@ We use a Rust-inspired `Result<T, E>` type for error handling instead of throwin
 ### Basic Usage
 
 ```typescript
-import { Result, ok, err } from '@/lib/errors';
+import {Result, ok, err} from '@sigil/lib/errors';
 
 function divide(a: number, b: number): Result<number, string> {
   if (b === 0) {
@@ -67,7 +67,7 @@ Result<User, 'not_found' | 'invalid_credentials'>
 #### Type Guards
 
 ```typescript
-import { isOk, isErr } from '@/lib/errors';
+import {isOk, isErr} from '@sigil/lib/errors';
 
 const result = divide(10, 2);
 
@@ -85,7 +85,7 @@ if (isErr(result)) {
 #### Mapping Results
 
 ```typescript
-import { mapResult, mapError } from '@/lib/errors';
+import {mapResult, mapError} from '@sigil/lib/errors';
 
 // Transform success value
 const doubled = mapResult(divide(10, 2), x => x * 2);
@@ -102,7 +102,7 @@ const withError = mapError(
 #### Chaining Operations
 
 ```typescript
-import { chain } from '@/lib/errors';
+import {chain} from '@sigil/lib/errors';
 
 function parseNumber(str: string): Result<number, string> {
   const num = parseInt(str, 10);
@@ -124,7 +124,7 @@ const result = chain(
 #### Unwrapping with Defaults
 
 ```typescript
-import { unwrapOr, unwrapOrElse } from '@/lib/errors';
+import {unwrapOr, unwrapOrElse} from '@sigil/lib/errors';
 
 // Simple default
 const value = unwrapOr(divide(10, 0), 0);
@@ -144,7 +144,7 @@ const value = unwrapOrElse(
 #### Combining Multiple Results
 
 ```typescript
-import { all } from '@/lib/errors';
+import {all} from '@sigil/lib/errors';
 
 const results = [
   parseNumber('1'),
@@ -325,7 +325,7 @@ When testing functions that return Results:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { isOk, isErr } from '@/lib/errors';
+import {isOk, isErr} from '@sigil/lib/errors';
 
 describe('divide', () => {
   it('should return success for valid division', () => {

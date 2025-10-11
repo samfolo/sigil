@@ -152,7 +152,7 @@ export const generateZodSchemas = (options: CodegenOptions): GeneratedCode => {
 
 	return {
 		imports: [
-			"import { z } from 'zod';",
+			"import {z} from 'zod';",
 		],
 		schemas,
 	};
@@ -234,7 +234,7 @@ export const assembleGeneratedFile = (generated: GeneratedCode): string => {
 	parts.push(' * Run `npm run spec:codegen` to regenerate');
 	parts.push(' *');
 	parts.push(' * Note: TypeScript types are generated separately in lib/generated/types/');
-	parts.push(' * Import types from @/lib/generated/types, not from z.infer<>');
+	parts.push(' * Import types from @sigil/lib/generated/types, not from z.infer<>');
 	parts.push(' */');
 	parts.push('');
 
@@ -258,7 +258,7 @@ export const generateIndexFile = (): string => {
  * Generated Zod schemas for runtime validation
  * DO NOT EDIT MANUALLY
  *
- * For TypeScript types, import from @/lib/generated/types instead
+ * For TypeScript types, import from @sigil/lib/generated/types instead
  */
 
 export * from './specification';
