@@ -308,14 +308,14 @@ describe('Result', () => {
 
 	describe('real-world scenarios', () => {
 		it('should handle parsing with validation', () => {
-			function parseNumber(str: string): Result<number, string> {
+			const parseNumber = (str: string): Result<number, string> => {
 				const num = parseInt(str, 10);
 				return isNaN(num) ? err('Invalid number') : ok(num);
-			}
+			};
 
-			function validatePositive(num: number): Result<number, string> {
+			const validatePositive = (num: number): Result<number, string> => {
 				return num > 0 ? ok(num) : err('Number must be positive');
-			}
+			};
 
 			const result = chain(parseNumber('42'), validatePositive);
 			expect(isOk(result)).toBe(true);
@@ -333,15 +333,15 @@ describe('Result', () => {
 				age: number;
 			}
 
-			function validateName(name: string): Result<string, string> {
+			const validateName = (name: string): Result<string, string> => {
 				return name.length > 0 ? ok(name) : err('Name cannot be empty');
-			}
+			};
 
-			function validateAge(age: number): Result<number, string> {
+			const validateAge = (age: number): Result<number, string> => {
 				return age >= 18 ? ok(age) : err('Must be 18 or older');
-			}
+			};
 
-			function createUser(name: string, age: number): Result<User, string> {
+			const createUser = (name: string, age: number): Result<User, string> => {
 				const nameResult = validateName(name);
 				if (isErr(nameResult)) {
 					return nameResult;
@@ -353,7 +353,7 @@ describe('Result', () => {
 				}
 
 				return ok({name: nameResult.data, age: ageResult.data});
-			}
+			};
 
 			const validUser = createUser('Alice', 25);
 			expect(isOk(validUser)).toBe(true);
