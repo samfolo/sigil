@@ -58,7 +58,7 @@ describe('codegen integration', () => {
 			const file = assembleGeneratedFile(result);
 
 			// Basic structure checks
-			expect(file).toContain("import { z } from 'zod';");
+			expect(file).toContain("import {z} from 'zod';");
 			expect(file).toContain('export const');
 
 			// Should not have obvious syntax errors (but "undefined" may appear in enum values)

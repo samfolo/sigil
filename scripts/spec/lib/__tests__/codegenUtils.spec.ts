@@ -26,7 +26,7 @@ describe('codegenUtils', () => {
 				bundledSchema,
 			});
 
-			expect(result.imports).toContain("import { z } from 'zod';");
+			expect(result.imports).toContain("import {z} from 'zod';");
 			expect(result.schemas.length).toBe(3);
 
 			// Check schemas contain expected content
@@ -288,7 +288,7 @@ describe('codegenUtils', () => {
 	describe('assembleGeneratedFile', () => {
 		it('should assemble complete file with all sections', () => {
 			const generated = {
-				imports: ["import { z } from 'zod';"],
+				imports: ["import {z} from 'zod';"],
 				schemas: ['export const TestSchema = z.string();'],
 			};
 
@@ -297,13 +297,13 @@ describe('codegenUtils', () => {
 			expect(result).toContain('/**');
 			expect(result).toContain('* Generated Zod schemas from JSON Schema specification');
 			expect(result).toContain('* DO NOT EDIT MANUALLY');
-			expect(result).toContain("import { z } from 'zod';");
+			expect(result).toContain("import {z} from 'zod';");
 			expect(result).toContain('export const TestSchema = z.string();');
 		});
 
 		it('should have correct section ordering', () => {
 			const generated = {
-				imports: ["import { z } from 'zod';"],
+				imports: ["import {z} from 'zod';"],
 				schemas: ['export const Schema1 = z.string();', 'export const Schema2 = z.number();'],
 			};
 
@@ -311,7 +311,7 @@ describe('codegenUtils', () => {
 			const lines = result.split('\n');
 
 			// Find indices of key sections
-			const importIndex = lines.findIndex((l) => l.includes("import { z }"));
+			const importIndex = lines.findIndex((l) => l.includes("import {z}"));
 			const schema1Index = lines.findIndex((l) => l.includes('Schema1'));
 			const schema2Index = lines.findIndex((l) => l.includes('Schema2'));
 
@@ -322,18 +322,18 @@ describe('codegenUtils', () => {
 
 		it('should handle empty schemas', () => {
 			const generated = {
-				imports: ["import { z } from 'zod';"],
+				imports: ["import {z} from 'zod';"],
 				schemas: [],
 			};
 
 			const result = assembleGeneratedFile(generated);
 			expect(result).toContain('DO NOT EDIT MANUALLY');
-			expect(result).toContain("import { z } from 'zod';");
+			expect(result).toContain("import {z} from 'zod';");
 		});
 
 		it('should end with newline', () => {
 			const generated = {
-				imports: ["import { z } from 'zod';"],
+				imports: ["import {z} from 'zod';"],
 				schemas: ['export const TestSchema = z.string();'],
 			};
 
@@ -396,7 +396,7 @@ describe('codegenUtils', () => {
 			const file = assembleGeneratedFile(generated);
 
 			// Should be valid TypeScript-looking code
-			expect(file).toContain("import { z } from 'zod';");
+			expect(file).toContain("import {z} from 'zod';");
 			expect(file).toContain('export const RoleSchema');
 			expect(file).toContain('export const UserSchema');
 			expect(file).toContain('z.enum(["admin", "user", "guest"])');
