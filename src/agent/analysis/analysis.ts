@@ -6,6 +6,7 @@ import type {Analysis} from '@sigil/lib/analysisSchema';
 import {analysisSchema} from '@sigil/lib/analysisSchema';
 import {generateEmbedding} from '@sigil/lib/embeddings';
 import {supabase} from '@sigil/lib/supabase';
+import {buildAnalysisPrompt} from '@sigil/src/agent/prompts';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
@@ -63,18 +64,7 @@ export const analyseData = async (
 	}
 
 	const dataSample = limitDataSample(data, format);
-
-	const prompt = `Analyse this ${format} data sample and provide your analysis using the tool.
-
-IMPORTANT for keyFields:
-- "path" must be the actual key or accessor path in the data (e.g., 'name', 'user.email', 'items[0].id')
-- "label" is the human-readable description for display
-- Example: { "path": "A", "label": "Column A values" } or { "path": "user.name", "label": "User's full name" }
-- Maximum 5 fields
-
-Data sample:
-${dataSample}`;
-
+	const prompt = buildAnalysisPrompt({format, dataSample});
 	const client = new Anthropic({apiKey});
 
 	try {
