@@ -3,7 +3,7 @@
 import L from 'leaflet';
 import {MapContainer, TileLayer, Marker, Popup, GeoJSON} from 'react-leaflet';
 
-import {useMapBounds} from '@sigil/lib/useMapBounds';
+import {useMapBounds} from '@sigil/src/ui/hooks/useMapBounds';
 
 import 'leaflet/dist/leaflet.css';
 
