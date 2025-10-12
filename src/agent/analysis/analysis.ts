@@ -6,7 +6,6 @@ import type {Analysis} from '@sigil/lib/analysisSchema';
 import {analysisSchema} from '@sigil/lib/analysisSchema';
 import {generateEmbedding} from '@sigil/lib/embeddings';
 import {supabase} from '@sigil/lib/supabase';
-
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
@@ -16,10 +15,10 @@ type AnalysisError =
 	| 'invalid_schema'
 	| 'anthropic_error';
 
-export type AnalysisResult = {
+export interface AnalysisResult {
 	analysis: Analysis;
 	sessionId: string | null;
-};
+}
 
 const limitDataSample = (data: unknown, _format: string): string => {
 	let sample = '';
