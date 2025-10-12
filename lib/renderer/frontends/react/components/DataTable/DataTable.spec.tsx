@@ -9,6 +9,7 @@
 import {render, screen, within} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
+import {DataTable} from './DataTable';
 import {
 	BASIC_TABLE,
 	EMPTY_TABLE,
@@ -19,7 +20,6 @@ import {
 	TABLE_WITH_UNDEFINED_DISPLAY,
 	TABLE_WITHOUT_OPTIONAL_PROPS,
 } from './DataTable.fixtures';
-import {DataTable} from './DataTable';
 
 describe('DataTable', () => {
 	describe('Basic Rendering', () => {

@@ -9,6 +9,7 @@
 import {render as renderComponent, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
+import {render} from './render';
 import {
 	EMPTY_DATA,
 	INVALID_COMPONENT_ID_SPEC,
@@ -18,7 +19,6 @@ import {
 	SIMPLE_USER_SPEC,
 	TYPE_MISMATCH_SPEC,
 } from './render.fixtures';
-import {render} from './render';
 
 describe('render', () => {
 	describe('Successful Rendering', () => {
