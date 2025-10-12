@@ -14,7 +14,7 @@
   "aliases": {
     "components": "@sigil/components",
     "utils": "@sigil/lib/utils",
-    "ui": "@sigil/components/ui",
+    "ui": "@sigil/src/ui/primitives",
     "lib": "@sigil/lib",
     "hooks": "@sigil/hooks"
   },

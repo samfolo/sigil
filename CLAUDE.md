@@ -102,7 +102,7 @@ Never use emoji variants (✅, ❌) or alternative unicode characters (✗, ✕,
 
 Component files: `PascalCase.tsx`
 Utility files: `camelCase.ts`
-UI components (shadcn): `kebab-case.tsx` in `components/ui/` only
+UI components (shadcn): `kebab-case.tsx` in `src/ui/primitives/` only
 Test files: `ComponentName.spec.tsx`
 Fixtures: `ComponentName.fixtures.ts`
 

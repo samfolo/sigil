@@ -3,9 +3,9 @@
 import {Loader2} from 'lucide-react';
 import {useState} from 'react';
 
-import {Button} from '@sigil/components/ui/button';
-import {Separator} from '@sigil/components/ui/separator';
-import {Textarea} from '@sigil/components/ui/textarea';
+import {Button} from '@sigil/src/ui/primitives/button';
+import {Separator} from '@sigil/src/ui/primitives/separator';
+import {Textarea} from '@sigil/src/ui/primitives/textarea';
 import type {Analysis} from '@sigil/lib/analysisSchema';
 import {detectFormat} from '@sigil/src/data/formatDetector';
 import type {DetectionResult} from '@sigil/src/data/formatDetector';

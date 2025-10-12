@@ -7,7 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@sigil/components/ui/table';
+} from '@sigil/src/ui/primitives/table';
 
 interface KeyField {
   path: string;

@@ -3,9 +3,9 @@
 import {Loader2, Send} from 'lucide-react';
 import {useState, useRef, useEffect} from 'react';
 
-import {Button} from '@sigil/components/ui/button';
-import {Card} from '@sigil/components/ui/card';
-import {ScrollArea} from '@sigil/components/ui/scroll-area';
+import {Button} from '@sigil/src/ui/primitives/button';
+import {Card} from '@sigil/src/ui/primitives/card';
+import {ScrollArea} from '@sigil/src/ui/primitives/scroll-area';
 import type {Analysis} from '@sigil/lib/analysisSchema';
 import type {Message, ToolCall} from '@sigil/lib/chatTypes';
 import {isLoading} from '@sigil/lib/queryState';

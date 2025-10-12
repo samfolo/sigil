@@ -3,10 +3,10 @@ import dynamic from 'next/dynamic';
 import {useState} from 'react';
 
 import {ChatInterface} from '@sigil/src/ui/components/ChatInterface';
-import {Button} from '@sigil/components/ui/button';
-import {Card} from '@sigil/components/ui/card';
-import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@sigil/components/ui/collapsible';
-import {Separator} from '@sigil/components/ui/separator';
+import {Button} from '@sigil/src/ui/primitives/button';
+import {Card} from '@sigil/src/ui/primitives/card';
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@sigil/src/ui/primitives/collapsible';
+import {Separator} from '@sigil/src/ui/primitives/separator';
 import {TableView} from '@sigil/src/ui/components/visualisations/TableView';
 import {TreeView} from '@sigil/src/ui/components/visualisations/TreeView';
 import type {Analysis} from '@sigil/lib/analysisSchema';
