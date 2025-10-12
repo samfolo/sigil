@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 import type {Analysis} from '@sigil/lib/analysisSchema';
 import type {Message, ToolCall, ChatResponse} from '@sigil/lib/chatTypes';
-import {filterData, aggregateData, getUniqueValues, sortData} from '@sigil/lib/dataTools';
+import {aggregateData, filterData, getUniqueValues, sortData} from '@sigil/src/agent/tools';
 
 const anthropic = new Anthropic({
 	apiKey: process.env.ANTHROPIC_API_KEY,
