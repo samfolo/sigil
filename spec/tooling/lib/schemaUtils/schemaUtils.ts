@@ -2,8 +2,8 @@
  * JSON Schema manipulation utilities
  */
 
-import {REF_PATTERNS} from './constants';
-import type {JsonSchema} from './types';
+import {REF_PATTERNS} from '../constants';
+import type {JsonSchema} from '../types';
 
 /**
  * Recursively resolve all cross-file $ref to local references

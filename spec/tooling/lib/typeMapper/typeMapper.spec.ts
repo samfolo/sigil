@@ -6,7 +6,7 @@ import {describe, it, expect} from 'vitest';
 
 import {mapJsonSchemaTypeToZod, toSchemaName, toTypeName} from '../typeMapper';
 
-import * as fixtures from './fixtures';
+import * as fixtures from '../fixtures';
 
 describe('typeMapper', () => {
 	describe('mapJsonSchemaTypeToZod', () => {

@@ -13,15 +13,14 @@
 import {resolve, dirname} from 'path';
 import {fileURLToPath} from 'url';
 
-import {loadConfig} from './lib/fileSystem';
+import {loadConfig} from './lib/utils/fileSystem';
 import {createLogger} from './lib/logger';
-import {validateFragmentsExist, validateReferences, validateDiscriminatedUnions} from './lib/validationUtils';
+import {validateFragmentsExist, validateReferences, validateDiscriminatedUnions} from './lib/utils/validation';
 
-// Get the project root directory
+// Get the spec directory (parent of tooling/)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, '../..');
-const specDir = resolve(projectRoot, 'spec');
+const specDir = resolve(__dirname, '..');
 const configPath = resolve(specDir, 'config.json');
 
 /**

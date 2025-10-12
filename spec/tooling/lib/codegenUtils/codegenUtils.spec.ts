@@ -7,7 +7,7 @@ import {describe, it, expect} from 'vitest';
 import {generateZodSchemas, assembleGeneratedFile, generateIndexFile} from '../codegenUtils';
 import type {JsonSchema, Config} from '../types';
 
-import * as fixtures from './fixtures';
+import * as fixtures from '../fixtures';
 
 
 describe('codegenUtils', () => {

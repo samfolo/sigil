@@ -2,40 +2,40 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "version": "1.0.0",
   "description": "Sigil Specification Schema Configuration",
-  "entryPoint": "fragments/core.schema.json",
+  "entryPoint": "schema/fragments/core.schema.json",
   "fragments": {
     "primitives": {
-      "path": "fragments/primitives.schema.json",
+      "path": "schema/fragments/primitives.schema.json",
       "description": "Basic types, enums, and shared primitives",
       "dependencies": []
     },
     "fields": {
-      "path": "fragments/fields.schema.json",
+      "path": "schema/fragments/fields.schema.json",
       "description": "Field metadata and value mapping types",
       "dependencies": ["primitives"]
     },
     "filtering": {
-      "path": "fragments/filtering.schema.json",
+      "path": "schema/fragments/filtering.schema.json",
       "description": "Filtering conditions and operators",
       "dependencies": ["primitives"]
     },
     "affordances": {
-      "path": "fragments/affordances.schema.json",
+      "path": "schema/fragments/affordances.schema.json",
       "description": "Data affordance types (sorting, filtering, pagination, etc.)",
       "dependencies": ["primitives", "filtering"]
     },
     "layout": {
-      "path": "fragments/layout.schema.json",
+      "path": "schema/fragments/layout.schema.json",
       "description": "Layout system (stack, grid)",
       "dependencies": ["primitives"]
     },
     "components": {
-      "path": "fragments/components.schema.json",
+      "path": "schema/fragments/components.schema.json",
       "description": "Component configuration types",
       "dependencies": ["affordances"]
     },
     "core": {
-      "path": "fragments/core.schema.json",
+      "path": "schema/fragments/core.schema.json",
       "description": "Root specification schema",
       "dependencies": ["components", "layout", "fields", "primitives"]
     }

@@ -14,7 +14,7 @@ import {
 } from '../discriminatedUnions';
 import type {Config, DiscriminatedUnion} from '../types';
 
-import * as fixtures from './fixtures';
+import * as fixtures from '../fixtures';
 
 
 describe('discriminatedUnions', () => {

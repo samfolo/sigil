@@ -4,8 +4,8 @@
  * Analyses $ref dependencies to determine the correct generation order
  */
 
-import {extractDefinitionName, traverseSchema} from './schemaUtils';
-import type {JsonSchema} from './types';
+import {extractDefinitionName, traverseSchema} from '../schemaUtils';
+import type {JsonSchema} from '../types';
 
 /**
  * Extracts all $ref dependencies from a schema

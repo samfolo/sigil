@@ -14,13 +14,13 @@ import {fileURLToPath} from 'url';
 import $RefParser from '@apidevtools/json-schema-ref-parser';
 import {compile} from 'json-schema-to-typescript';
 
-import {loadSchema} from './lib/fileSystem';
+import {loadSchema} from './lib/utils/fileSystem';
 
-// Get the project root directory
+// Get the spec and project directories
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, '../..');
-const specDir = resolve(projectRoot, 'spec');
+const specDir = resolve(__dirname, '..');
+const projectRoot = resolve(specDir, '..');
 const outputDir = resolve(projectRoot, 'lib/generated/types');
 
 /**
@@ -41,7 +41,7 @@ const main = async () => {
 
 	try {
 		// Load bundled schema
-		const schemaPath = resolve(specDir, 'specification.schema.json');
+		const schemaPath = resolve(specDir, 'schema/specification.schema.json');
 		console.log(`📖 Loading bundled schema from ${schemaPath}`);
 		const bundledSchema = loadSchema(schemaPath);
 

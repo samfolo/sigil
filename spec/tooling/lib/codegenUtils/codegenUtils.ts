@@ -2,16 +2,16 @@
  * Code generation utilities for creating Zod schemas from JSON Schema
  */
 
-import {isErr} from '../../../lib/errors';
+import {isErr} from '../../../../lib/errors';
 
-import {buildDependencyGraph, topologicalSort} from './dependencyAnalyser';
+import {buildDependencyGraph, topologicalSort} from '../dependencyAnalyser';
 import {
 	generateDiscriminatedUnion,
 	getDiscriminatedUnions,
 	validateDiscriminatedUnionVariants,
-} from './discriminatedUnions';
-import {mapJsonSchemaTypeToZod, toSchemaName} from './typeMapper';
-import type {JsonSchema, Config, DiscriminatedUnion} from './types';
+} from '../discriminatedUnions';
+import {mapJsonSchemaTypeToZod, toSchemaName} from '../typeMapper';
+import type {JsonSchema, Config, DiscriminatedUnion} from '../types';
 
 
 export interface CodegenOptions {

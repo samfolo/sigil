@@ -3,24 +3,23 @@
 /**
  * Bundle JSON Schema fragments into a single specification file
  *
- * This script reads all schema fragments from spec/fragments/ and combines them
- * into a single bundled schema at spec/specification.schema.json, resolving all
+ * This script reads all schema fragments from spec/schema/fragments/ and combines them
+ * into a single bundled schema at spec/schema/specification.schema.json, resolving all
  * cross-file $ref references.
  */
 
 import {resolve, dirname} from 'path';
 import {fileURLToPath} from 'url';
 
-import {loadSchema, writeJson, listFiles} from './lib/fileSystem';
+import {loadSchema, writeJson, listFiles} from './lib/utils/fileSystem';
 import {mergeDefinitions} from './lib/schemaUtils';
 import type {JsonSchema} from './lib/types';
 
-// Get the project root directory
+// Get the spec directory (parent of tooling/)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, '../..');
-const specDir = resolve(projectRoot, 'spec');
-const fragmentsDir = resolve(specDir, 'fragments');
+const specDir = resolve(__dirname, '..');
+const fragmentsDir = resolve(specDir, 'schema/fragments');
 
 /**
  * Bundle all schema fragments into a single schema
@@ -74,7 +73,7 @@ const main = () => {
   try {
     const bundled = bundleSchemas(fragmentsDir);
 
-    const outputPath = resolve(specDir, 'specification.schema.json');
+    const outputPath = resolve(specDir, 'schema/specification.schema.json');
     writeJson(outputPath, bundled);
 
     console.log('\n✓ Schema bundled successfully!');

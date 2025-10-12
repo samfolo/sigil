@@ -13,13 +13,13 @@ import {resolve, dirname} from 'path';
 import {fileURLToPath} from 'url';
 
 import {generateZodSchemas, assembleGeneratedFile, generateIndexFile} from './lib/codegenUtils';
-import {loadSchema, loadConfig} from './lib/fileSystem';
+import {loadSchema, loadConfig} from './lib/utils/fileSystem';
 
-// Get the project root directory
+// Get the spec and project directories
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, '../..');
-const specDir = resolve(projectRoot, 'spec');
+const specDir = resolve(__dirname, '..');
+const projectRoot = resolve(specDir, '..');
 const outputDir = resolve(projectRoot, 'lib/generated/schemas');
 
 /**
@@ -41,7 +41,7 @@ const main = () => {
 	try {
 		// Load config and bundled schema
 		const configPath = resolve(specDir, 'config.json');
-		const schemaPath = resolve(specDir, 'specification.schema.json');
+		const schemaPath = resolve(specDir, 'schema/specification.schema.json');
 
 		console.log(`📖 Loading config from ${configPath}`);
 		const config = loadConfig(configPath);

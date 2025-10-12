@@ -7,7 +7,7 @@ import {describe, it, expect} from 'vitest';
 import {extractDependencies, buildDependencyGraph, topologicalSort} from '../dependencyAnalyser';
 import type {JsonSchema} from '../types';
 
-import * as fixtures from './fixtures';
+import * as fixtures from '../fixtures';
 
 
 describe('dependencyAnalyser', () => {
