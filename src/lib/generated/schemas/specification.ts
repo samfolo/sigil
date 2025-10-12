@@ -23,18 +23,23 @@ export const VirtualisationAffordanceSchema = z.object({
   "type": z.literal("virtualisation")
 }).strict();
 /**
- * Reference to a field in the provided data using an accessor path.
+ * Reference to a field in the provided data using a JSONPath accessor.
  * 
- * Accessor syntax:
- * - Simple field: 'name', 'age', 'status'
- * - Nested field: 'user.profile.email', 'metadata.created_at'
- * - Array index: 'items[0]', 'users[5].name'
- * - Mixed: 'data.users[0].contacts[1].email'
+ * All accessors MUST use valid JSONPath syntax with the `$` root prefix.
  * 
- * The accessor is resolved at inference time against the provided data.
+ * Supported JSONPath features:
+ * - Simple fields: '$.name', '$.age', '$.status'
+ * - Nested fields: '$.user.profile.email', '$.metadata.created_at'
+ * - Array indexing: '$.items[0]', '$.users[5].name'
+ * - Mixed: '$.data.users[0].contacts[1].email'
+ * - Wildcards: '$..book[*]' (all books recursively)
+ * - Filters: '$..book[?(@.price < 10)]' (books under £10)
+ * - Recursive descent: '$..author' (all author fields at any depth)
+ * 
+ * The accessor is resolved at render time using jsonpath-plus.
  */
 export const AffordedFieldSchema = z.object({
-  "accessor": z.string().describe("Dot-notation path to the field in the data. Supports nested objects and array indexing")
+  "accessor": z.string().describe("JSONPath expression (must start with `$`). Supports full JSONPath specification including wildcards, filters, and recursive descent.")
 }).strict();
 /** Enables sorting data by one or more fields. Allows sorting data ascending/descending by field values. Sorting can be restricted to specific fields or allowed on all fields */
 export const SortingAffordanceSchema = z.object({
@@ -269,7 +274,7 @@ export const SizeConstraintSchema = z.discriminatedUnion("type", [
  * Sortability and filterability are derived from affordances, not defined per-column.
  */
 export const DataTableColumnSchema = z.object({
-  "accessor": z.string().describe("JSONPath accessor referencing a field in accessor_bindings. Examples: 'name', 'user.email', 'metadata.created_at'"),
+  "accessor": z.string().describe("JSONPath accessor referencing a field in accessor_bindings (must start with `$`). Examples: '$.name', '$.user.email', '$.metadata.created_at'"),
   "label": z.string().describe("Human-readable column header text"),
   "width": SizeConstraintSchema.optional(),
   "alignment": z.enum(["left", "center", "right"]).optional().describe("Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers"),

@@ -29,6 +29,7 @@
     "clsx": "^2.1.1",
     "fast-xml-parser": "^5.2.5",
     "js-yaml": "^4.1.0",
+    "jsonpath-plus": "^10.3.0",
     "leaflet": "^1.9.4",
     "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",

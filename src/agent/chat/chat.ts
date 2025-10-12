@@ -115,7 +115,7 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 				properties: {
 					field: {
 						type: 'string',
-						description: 'The field path to filter by. For GeoJSON: use "geometry.type" or "properties.fieldName" (supports nested paths like "properties.user.name").',
+						description: 'JSONPath expression to the field (must start with $). For GeoJSON: use "$.geometry.type" or "$.properties.fieldName" (supports nested paths like "$.properties.user.name").',
 					},
 					operator: {
 						type: 'string',
@@ -138,7 +138,7 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 				properties: {
 					field: {
 						type: 'string',
-						description: 'The field path to aggregate. Optional for "count" operation (omit to count root items). Required for sum/average/min/max. For GeoJSON: use "properties.fieldName" (e.g., "properties.population").',
+						description: 'JSONPath expression to the field (must start with $). Optional for "count" operation (omit to count root items). Required for sum/average/min/max. For GeoJSON: use "$.properties.fieldName" (e.g., "$.properties.population").',
 					},
 					operation: {
 						type: 'string',
@@ -151,13 +151,13 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 		},
 		{
 			name: 'get_unique_values',
-			description: 'Get all unique values for a specific field in the current dataset. Use this to understand what values exist in a field. For GeoJSON data, field paths are relative to features (e.g., "geometry.type" not "features.geometry.type").',
+			description: 'Get all unique values for a specific field in the current dataset. Use this to understand what values exist in a field. For GeoJSON data, field paths are relative to features (e.g., "$.geometry.type" not "$.features.geometry.type").',
 			input_schema: {
 				type: 'object',
 				properties: {
 					field: {
 						type: 'string',
-						description: 'The field path to get unique values from. For GeoJSON: use "geometry.type" or "properties.fieldName" (the features array is accessed automatically).',
+						description: 'JSONPath expression to the field (must start with $). For GeoJSON: use "$.geometry.type" or "$.properties.fieldName" (the features array is accessed automatically).',
 					},
 				},
 				required: ['field'],
@@ -171,7 +171,7 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 				properties: {
 					field: {
 						type: 'string',
-						description: 'The field path to sort by. For GeoJSON: use "geometry.type" or "properties.fieldName".',
+						description: 'JSONPath expression to the field (must start with $). For GeoJSON: use "$.geometry.type" or "$.properties.fieldName".',
 					},
 					direction: {
 						type: 'string',

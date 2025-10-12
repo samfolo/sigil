@@ -36,7 +36,7 @@
       "properties": {
         "accessor": {
           "type": "string",
-          "description": "JSONPath accessor referencing a field in accessor_bindings. Examples: 'name', 'user.email', 'metadata.created_at'"
+          "description": "JSONPath accessor referencing a field in accessor_bindings (must start with `$`). Examples: '$.name', '$.user.email', '$.metadata.created_at'"
         },
         "label": {
           "type": "string",

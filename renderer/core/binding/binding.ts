@@ -7,14 +7,14 @@
  * - Data mapping to rows using JSONPath accessors
  * - Value transformations (value_mappings)
  *
- * Uses lodash/get for safe nested property access with JSONPath-like syntax.
+ * Uses jsonpath-plus for full JSONPath specification support.
  */
 
-import get from 'lodash/get';
-
 import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
+import {unwrapOr} from '@sigil/src/common/errors/result';
 
 import type {CellValue, Column, Row} from '../types';
+import {queryJSONPath} from '../utils/queryJSONPath';
 import {stringifyCellValue} from '../utils/stringifyCellValue';
 
 /**
@@ -61,12 +61,12 @@ export const enrichColumns = (
  *
  * For each row in the data:
  * 1. Generates a unique row ID
- * 2. Extracts values using JSONPath accessors (via lodash/get)
+ * 2. Extracts values using JSONPath accessors (via queryJSONPath)
  * 3. Applies value_mappings if present in FieldMetadata
  * 4. Returns structured Row objects
  *
- * Handles nested data structures using lodash/get for safe access.
- * Supports JSONPath-like syntax: "user.profile.email", "items[0].name"
+ * Handles nested data structures using jsonpath-plus for full JSONPath support.
+ * Supports complete JSONPath specification: wildcards, filters, recursive descent.
  *
  * @param data - Raw data array (can be flat or nested objects)
  * @param columns - Column definitions with accessors
@@ -86,7 +86,7 @@ export const bindData = (
 		const cells: Record<string, CellValue> = {};
 
 		for (const column of columns) {
-			const rawValue = extractValue(rowData, column.id);
+			const rawValue = unwrapOr(queryJSONPath(rowData, column.id), undefined);
 			const metadata = accessorBindings[column.id];
 
 			cells[column.id] = {
@@ -102,29 +102,6 @@ export const bindData = (
 			cells,
 		};
 	});
-};
-
-/**
- * Extracts a value from a data object using a JSONPath accessor
- *
- * Uses lodash/get for safe nested property access with dot notation.
- * Supports:
- * - Simple properties: "name"
- * - Nested objects: "user.profile.email"
- * - Array indices: "items[0]", "users[5].name"
- * - Mixed: "data.users[0].contacts[1].email"
- *
- * @param data - Data object (can be nested)
- * @param accessor - JSONPath-style accessor string
- * @returns Value at accessor, or undefined if not found
- */
-const extractValue = (data: unknown, accessor: string): unknown => {
-	if (typeof data !== 'object' || data === null) {
-		return undefined;
-	}
-
-	// lodash/get handles dot notation and array indexing
-	return get(data, accessor);
 };
 
 /**

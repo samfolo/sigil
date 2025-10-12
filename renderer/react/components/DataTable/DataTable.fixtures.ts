@@ -15,25 +15,25 @@ export const BASIC_TABLE: TableProps = {
 	description: 'A table displaying user information',
 	columns: [
 		{
-			id: 'name',
+			id: '$.name',
 			label: 'Full Name',
 			dataType: 'string',
 			alignment: 'left',
 		},
 		{
-			id: 'email',
+			id: '$.email',
 			label: 'Email Address',
 			dataType: 'string',
 			alignment: 'left',
 		},
 		{
-			id: 'age',
+			id: '$.age',
 			label: 'Age',
 			dataType: 'number',
 			alignment: 'right',
 		},
 		{
-			id: 'status',
+			id: '$.status',
 			label: 'Status',
 			dataType: 'string',
 			alignment: 'center',
@@ -43,28 +43,28 @@ export const BASIC_TABLE: TableProps = {
 		{
 			id: 'row-0',
 			cells: {
-				name: {raw: 'Alice Johnson', display: 'Alice Johnson'},
-				email: {raw: 'alice@example.com', display: 'alice@example.com'},
-				age: {raw: 28, display: '28'},
-				status: {raw: 'active', display: 'Active'},
+				'$.name': {raw: 'Alice Johnson', display: 'Alice Johnson'},
+				'$.email': {raw: 'alice@example.com', display: 'alice@example.com'},
+				'$.age': {raw: 28, display: '28'},
+				'$.status': {raw: 'active', display: 'Active'},
 			},
 		},
 		{
 			id: 'row-1',
 			cells: {
-				name: {raw: 'Bob Smith', display: 'Bob Smith'},
-				email: {raw: 'bob@example.com', display: 'bob@example.com'},
-				age: {raw: 35, display: '35'},
-				status: {raw: 'inactive', display: 'Inactive'},
+				'$.name': {raw: 'Bob Smith', display: 'Bob Smith'},
+				'$.email': {raw: 'bob@example.com', display: 'bob@example.com'},
+				'$.age': {raw: 35, display: '35'},
+				'$.status': {raw: 'inactive', display: 'Inactive'},
 			},
 		},
 		{
 			id: 'row-2',
 			cells: {
-				name: {raw: 'Charlie Brown', display: 'Charlie Brown'},
-				email: {raw: 'charlie@example.com', display: 'charlie@example.com'},
-				age: {raw: 42, display: '42'},
-				status: {raw: 'active', display: 'Active'},
+				'$.name': {raw: 'Charlie Brown', display: 'Charlie Brown'},
+				'$.email': {raw: 'charlie@example.com', display: 'charlie@example.com'},
+				'$.age': {raw: 42, display: '42'},
+				'$.status': {raw: 'active', display: 'Active'},
 			},
 		},
 	],
@@ -78,12 +78,12 @@ export const EMPTY_TABLE: TableProps = {
 	description: 'No users found',
 	columns: [
 		{
-			id: 'name',
+			id: '$.name',
 			label: 'Full Name',
 			dataType: 'string',
 		},
 		{
-			id: 'email',
+			id: '$.email',
 			label: 'Email Address',
 			dataType: 'string',
 		},
@@ -97,12 +97,12 @@ export const EMPTY_TABLE: TableProps = {
 export const TABLE_WITHOUT_OPTIONAL_PROPS: TableProps = {
 	columns: [
 		{
-			id: 'id',
+			id: '$.id',
 			label: 'ID',
 			dataType: 'string',
 		},
 		{
-			id: 'value',
+			id: '$.value',
 			label: 'Value',
 			dataType: 'string',
 		},
@@ -111,8 +111,8 @@ export const TABLE_WITHOUT_OPTIONAL_PROPS: TableProps = {
 		{
 			id: 'row-0',
 			cells: {
-				id: {raw: '1', display: '1'},
-				value: {raw: 'test', display: 'test'},
+				'$.id': {raw: '1', display: '1'},
+				'$.value': {raw: 'test', display: 'test'},
 			},
 		},
 	],
@@ -124,13 +124,13 @@ export const TABLE_WITHOUT_OPTIONAL_PROPS: TableProps = {
 export const TABLE_WITH_UNDEFINED_ALIGNMENT: TableProps = {
 	columns: [
 		{
-			id: 'field1',
+			id: '$.field1',
 			label: 'Field 1',
 			dataType: 'string',
 			// alignment is undefined
 		},
 		{
-			id: 'field2',
+			id: '$.field2',
 			label: 'Field 2',
 			dataType: 'number',
 			// alignment is undefined
@@ -140,8 +140,8 @@ export const TABLE_WITH_UNDEFINED_ALIGNMENT: TableProps = {
 		{
 			id: 'row-0',
 			cells: {
-				field1: {raw: 'value1', display: 'value1'},
-				field2: {raw: 123, display: '123'},
+				'$.field1': {raw: 'value1', display: 'value1'},
+				'$.field2': {raw: 123, display: '123'},
 			},
 		},
 	],
@@ -154,17 +154,17 @@ export const TABLE_WITH_UNDEFINED_ALIGNMENT: TableProps = {
 export const TABLE_WITH_MISSING_CELLS: TableProps = {
 	columns: [
 		{
-			id: 'col1',
+			id: '$.col1',
 			label: 'Column 1',
 			dataType: 'string',
 		},
 		{
-			id: 'col2',
+			id: '$.col2',
 			label: 'Column 2',
 			dataType: 'string',
 		},
 		{
-			id: 'col3',
+			id: '$.col3',
 			label: 'Column 3',
 			dataType: 'string',
 		},
@@ -173,9 +173,9 @@ export const TABLE_WITH_MISSING_CELLS: TableProps = {
 		{
 			id: 'row-0',
 			cells: {
-				col1: {raw: 'present', display: 'present'},
+				'$.col1': {raw: 'present', display: 'present'},
 				// col2 is missing
-				col3: {raw: 'also present', display: 'also present'},
+				'$.col3': {raw: 'also present', display: 'also present'},
 			},
 		},
 	],
@@ -188,7 +188,7 @@ export const TABLE_WITH_MISSING_CELLS: TableProps = {
 export const TABLE_WITH_UNDEFINED_DISPLAY: TableProps = {
 	columns: [
 		{
-			id: 'name',
+			id: '$.name',
 			label: 'Name',
 			dataType: 'string',
 		},
@@ -197,7 +197,7 @@ export const TABLE_WITH_UNDEFINED_DISPLAY: TableProps = {
 		{
 			id: 'row-0',
 			cells: {
-				name: {
+				'$.name': {
 					raw: null,
 					display: undefined as unknown as string, // Simulating undefined display
 				},
@@ -212,19 +212,19 @@ export const TABLE_WITH_UNDEFINED_DISPLAY: TableProps = {
 export const TABLE_WITH_ALL_ALIGNMENTS: TableProps = {
 	columns: [
 		{
-			id: 'left',
+			id: '$.left',
 			label: 'Left Aligned',
 			dataType: 'string',
 			alignment: 'left',
 		},
 		{
-			id: 'center',
+			id: '$.center',
 			label: 'Center Aligned',
 			dataType: 'string',
 			alignment: 'center',
 		},
 		{
-			id: 'right',
+			id: '$.right',
 			label: 'Right Aligned',
 			dataType: 'number',
 			alignment: 'right',
@@ -234,9 +234,9 @@ export const TABLE_WITH_ALL_ALIGNMENTS: TableProps = {
 		{
 			id: 'row-0',
 			cells: {
-				left: {raw: 'left text', display: 'left text'},
-				center: {raw: 'center text', display: 'center text'},
-				right: {raw: 42, display: '42'},
+				'$.left': {raw: 'left text', display: 'left text'},
+				'$.center': {raw: 'center text', display: 'center text'},
+				'$.right': {raw: 42, display: '42'},
 			},
 		},
 	],
@@ -248,16 +248,16 @@ export const TABLE_WITH_ALL_ALIGNMENTS: TableProps = {
 export const LARGE_TABLE: TableProps = {
 	title: 'Large Dataset',
 	columns: [
-		{id: 'id', label: 'ID', dataType: 'string'},
-		{id: 'name', label: 'Name', dataType: 'string'},
-		{id: 'value', label: 'Value', dataType: 'number', alignment: 'right'},
+		{id: '$.id', label: 'ID', dataType: 'string'},
+		{id: '$.name', label: 'Name', dataType: 'string'},
+		{id: '$.value', label: 'Value', dataType: 'number', alignment: 'right'},
 	],
 	data: Array.from({length: 100}, (_, i) => ({
 		id: `row-${i}`,
 		cells: {
-			id: {raw: i, display: String(i)},
-			name: {raw: `Item ${i}`, display: `Item ${i}`},
-			value: {raw: i * 10, display: String(i * 10)},
+			'$.id': {raw: i, display: String(i)},
+			'$.name': {raw: `Item ${i}`, display: `Item ${i}`},
+			'$.value': {raw: i * 10, display: String(i * 10)},
 		},
 	})),
 };

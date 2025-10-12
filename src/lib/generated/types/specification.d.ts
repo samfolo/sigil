@@ -802,22 +802,27 @@ export interface SortingAffordance {
 	type: "sorting";
 }
 /**
- * Reference to a field in the provided data using an accessor path.
+ * Reference to a field in the provided data using a JSONPath accessor.
  *
- * Accessor syntax:
- * - Simple field: 'name', 'age', 'status'
- * - Nested field: 'user.profile.email', 'metadata.created_at'
- * - Array index: 'items[0]', 'users[5].name'
- * - Mixed: 'data.users[0].contacts[1].email'
+ * All accessors MUST use valid JSONPath syntax with the `$` root prefix.
  *
- * The accessor is resolved at inference time against the provided data.
+ * Supported JSONPath features:
+ * - Simple fields: '$.name', '$.age', '$.status'
+ * - Nested fields: '$.user.profile.email', '$.metadata.created_at'
+ * - Array indexing: '$.items[0]', '$.users[5].name'
+ * - Mixed: '$.data.users[0].contacts[1].email'
+ * - Wildcards: '$..book[*]' (all books recursively)
+ * - Filters: '$..book[?(@.price < 10)]' (books under £10)
+ * - Recursive descent: '$..author' (all author fields at any depth)
+ *
+ * The accessor is resolved at render time using jsonpath-plus.
  *
  * This interface was referenced by `ComponentSpec`'s JSON-Schema
  * via the `definition` "AffordedField".
  */
 export interface AffordedField {
 	/**
-	 * Dot-notation path to the field in the data. Supports nested objects and array indexing
+	 * JSONPath expression (must start with `$`). Supports full JSONPath specification including wildcards, filters, and recursive descent.
 	 */
 	accessor: string;
 }
@@ -1056,7 +1061,7 @@ export interface SearchAffordance {
  */
 export interface DataTableColumn {
 	/**
-	 * JSONPath accessor referencing a field in accessor_bindings. Examples: 'name', 'user.email', 'metadata.created_at'
+	 * JSONPath accessor referencing a field in accessor_bindings (must start with `$`). Examples: '$.name', '$.user.email', '$.metadata.created_at'
 	 */
 	accessor: string;
 	/**

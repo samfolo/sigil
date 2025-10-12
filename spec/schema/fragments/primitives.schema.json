@@ -133,12 +133,12 @@
       ]
     },
     "AffordedField": {
-      "description": "Reference to a field in the provided data using an accessor path.\n\nAccessor syntax:\n- Simple field: 'name', 'age', 'status'\n- Nested field: 'user.profile.email', 'metadata.created_at'\n- Array index: 'items[0]', 'users[5].name'\n- Mixed: 'data.users[0].contacts[1].email'\n\nThe accessor is resolved at inference time against the provided data.",
+      "description": "Reference to a field in the provided data using a JSONPath accessor.\n\nAll accessors MUST use valid JSONPath syntax with the `$` root prefix.\n\nSupported JSONPath features:\n- Simple fields: '$.name', '$.age', '$.status'\n- Nested fields: '$.user.profile.email', '$.metadata.created_at'\n- Array indexing: '$.items[0]', '$.users[5].name'\n- Mixed: '$.data.users[0].contacts[1].email'\n- Wildcards: '$..book[*]' (all books recursively)\n- Filters: '$..book[?(@.price < 10)]' (books under £10)\n- Recursive descent: '$..author' (all author fields at any depth)\n\nThe accessor is resolved at render time using jsonpath-plus.",
       "additionalProperties": false,
       "properties": {
         "accessor": {
           "type": "string",
-          "description": "Dot-notation path to the field in the data. Supports nested objects and array indexing"
+          "description": "JSONPath expression (must start with `$`). Supports full JSONPath specification including wildcards, filters, and recursive descent."
         }
       },
       "required": [

@@ -40,15 +40,15 @@ export const SIMPLE_USER_SPEC: ComponentSpec = {
 					description: 'List of all users in the system',
 					columns: [
 						{
-							accessor: 'name',
+							accessor: '$.name',
 							label: 'Full Name',
 						},
 						{
-							accessor: 'email',
+							accessor: '$.email',
 							label: 'Email Address',
 						},
 						{
-							accessor: 'status',
+							accessor: '$.status',
 							label: 'Status',
 							alignment: 'center',
 						},
@@ -59,15 +59,15 @@ export const SIMPLE_USER_SPEC: ComponentSpec = {
 		},
 		accessor_bindings: {
 			'users-table': {
-				name: {
+				'$.name': {
 					roles: ['label'],
 					data_types: ['string'],
 				},
-				email: {
+				'$.email': {
 					roles: ['label'],
 					data_types: ['string'],
 				},
-				status: {
+				'$.status': {
 					roles: ['categorical'],
 					data_types: ['string'],
 					value_mappings: {
@@ -191,7 +191,7 @@ export const TYPE_MISMATCH_SPEC: ComponentSpec = {
 };
 
 /**
- * Spec with nested data accessor (tests lodash/get JSONPath support)
+ * Spec with nested data accessor (tests JSONPath support)
  */
 export const NESTED_ACCESSOR_SPEC: ComponentSpec = {
 	id: 'nested-accessor',
@@ -219,11 +219,11 @@ export const NESTED_ACCESSOR_SPEC: ComponentSpec = {
 					type: 'data-table',
 					columns: [
 						{
-							accessor: 'user.name',
+							accessor: '$.user.name',
 							label: 'Name',
 						},
 						{
-							accessor: 'user.profile.email',
+							accessor: '$.user.profile.email',
 							label: 'Email',
 						},
 					],
@@ -233,11 +233,11 @@ export const NESTED_ACCESSOR_SPEC: ComponentSpec = {
 		},
 		accessor_bindings: {
 			'nested-table': {
-				'user.name': {
+				'$.user.name': {
 					roles: ['label'],
 					data_types: ['string'],
 				},
-				'user.profile.email': {
+				'$.user.profile.email': {
 					roles: ['label'],
 					data_types: ['string'],
 				},

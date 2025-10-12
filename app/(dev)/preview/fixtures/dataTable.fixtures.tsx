@@ -52,23 +52,23 @@ export const basicUsersFixture: DataTableFixture = {
 						description: 'List of all users in the system',
 						columns: [
 							{
-								accessor: 'name',
+								accessor: '$.name',
 								label: 'Full Name',
 								width: {type: 'flex', value: 2},
 							},
 							{
-								accessor: 'email',
+								accessor: '$.email',
 								label: 'Email Address',
 								width: {type: 'flex', value: 2},
 							},
 							{
-								accessor: 'created_at',
+								accessor: '$.created_at',
 								label: 'Created',
 								width: {type: 'fixed', value: 150},
 								alignment: 'right',
 							},
 							{
-								accessor: 'status',
+								accessor: '$.status',
 								label: 'Status',
 								width: {type: 'fixed', value: 120},
 								alignment: 'center',
@@ -77,8 +77,8 @@ export const basicUsersFixture: DataTableFixture = {
 						affordances: [
 							{
 								type: 'sorting',
-								allowed_fields: [{accessor: 'name'}, {accessor: 'email'}, {accessor: 'created_at'}],
-								default_field: {accessor: 'name'},
+								allowed_fields: [{accessor: '$.name'}, {accessor: '$.email'}, {accessor: '$.created_at'}],
+								default_field: {accessor: '$.name'},
 								default_direction: 'asc',
 							},
 							{
@@ -89,7 +89,7 @@ export const basicUsersFixture: DataTableFixture = {
 							},
 							{
 								type: 'search',
-								searchable_fields: [{accessor: 'name'}, {accessor: 'email'}],
+								searchable_fields: [{accessor: '$.name'}, {accessor: '$.email'}],
 								min_characters: 2,
 								case_sensitive: false,
 							},
@@ -99,21 +99,21 @@ export const basicUsersFixture: DataTableFixture = {
 			},
 			accessor_bindings: {
 				'users-table': {
-					name: {
+					'$.name': {
 						roles: ['label', 'sortable', 'searchable'],
 						data_types: ['string'],
 					},
-					email: {
+					'$.email': {
 						roles: ['label', 'sortable', 'searchable'],
 						data_types: ['string'],
 						format: 'email',
 					},
-					created_at: {
+					'$.created_at': {
 						roles: ['timestamp', 'sortable'],
 						data_types: ['date'],
 						format: 'iso8601',
 					},
-					status: {
+					'$.status': {
 						roles: ['categorical'],
 						data_types: ['string'],
 						value_mappings: {

@@ -1,5 +1,5 @@
-import {get} from 'lodash';
-
+import {unwrapOr} from '@sigil/src/common/errors/result';
+import {queryJSONPath} from '@sigil/renderer/core/utils/queryJSONPath';
 import {
   Table,
   TableBody,
@@ -49,7 +49,7 @@ export const TableView = ({data, keyFields}: TableViewProps) => {
           {displayData.map((item, idx) => (
             <TableRow key={idx}>
               {keyFields.map((field) => {
-                const value = get(item, field.path);
+                const value = unwrapOr(queryJSONPath(item, field.path), undefined);
                 return (
                   <TableCell key={field.path}>
                     {value !== undefined && value !== null ? String(value) : '-'}
