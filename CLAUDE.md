@@ -4,21 +4,15 @@ Guidance for Claude Code when working with this repository. Ordered by decision 
 
 ## Core Patterns
 
-### State Management
-
-All async request/response states use `QueryState` from `lib/queryState.ts`:
-
-```typescript
-import {QueryState} from '@sigil/lib/queryState';
-
-const [state, setState] = useState<QueryState>('idle');
-```
-
-Valid states: `'idle'` | `'loading'` | `'success'` | `'errored'` | `'reloading'`
-
 ### Error Handling
 
-Use `Result<T, E>` from `lib/errors/result.ts` for operations that may fail. Never throw exceptions for expected errors.
+MANDATORY: Consult ERROR_HANDLING.md before writing any error handling code.
+
+Use `Result<T, E>` from `lib/errors/result.ts` for ALL expected errors.
+
+Decision rule:
+- Expected errors (validation, not found, parsing) → Return `Result<T, E>`
+- Programming errors (null deref, type mismatch) → Throw exception
 
 ```typescript
 import type {Result} from '@sigil/lib/errors/result';
@@ -35,7 +29,19 @@ const parse = (input: string): Result<Data, string> => {
 };
 ```
 
-Utilities: `ok()`, `err()`, `mapResult()`, `mapError()`, `chain()`, `unwrapOr()`, `unwrapOrElse()`, `all()`, `isOk()`, `isErr()`
+See ERROR_HANDLING.md for complete decision flowchart, utility functions (mapResult, chain, all), and type patterns.
+
+### State Management
+
+All async request/response states use `QueryState` from `lib/queryState.ts`:
+
+```typescript
+import {QueryState} from '@sigil/lib/queryState';
+
+const [state, setState] = useState<QueryState>('idle');
+```
+
+Valid states: `'idle'` | `'loading'` | `'success'` | `'errored'` | `'reloading'`
 
 ### Code Style
 
