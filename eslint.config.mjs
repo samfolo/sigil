@@ -203,7 +203,7 @@ const eslintConfig = [
           "components/!(ui)/**/*.{tsx,jsx}": "PASCAL_CASE",
 
           // UI components: kebab-case (shadcn/ui convention)
-          "components/ui/*.{tsx,jsx}": "KEBAB_CASE",
+          "src/ui/primitives/*.{tsx,jsx}": "KEBAB_CASE",
 
           // Test files: PascalCase with .spec suffix (tsx only)
           "**/*.spec.tsx": "PASCAL_CASE",

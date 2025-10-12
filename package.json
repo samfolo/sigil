@@ -10,10 +10,10 @@
     "test": "npm run spec:all && vitest",
     "test:ui": "npm run spec:all && vitest --ui",
     "test:coverage": "npm run spec:all && vitest --coverage",
-    "spec:bundle": "tsx scripts/spec/bundle.ts",
-    "spec:validate": "tsx scripts/spec/validate.ts",
-    "spec:types": "tsx scripts/spec/generateTypes.ts",
-    "spec:codegen": "tsx scripts/spec/codegen.ts",
+    "spec:bundle": "tsx spec/tooling/bundle",
+    "spec:validate": "tsx spec/tooling/validate.ts",
+    "spec:types": "tsx spec/tooling/generateTypes.ts",
+    "spec:codegen": "tsx spec/tooling/codegen",
     "spec:all": "npm run spec:validate && npm run spec:bundle && npm run spec:types && npm run spec:codegen"
   },
   "dependencies": {
