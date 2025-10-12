@@ -6,9 +6,10 @@
  * Demonstrates rendering the simple-table.json example with sample data
  */
 
-import {ComponentSpecSchema} from '@sigil/lib/generated/schemas';
 import {render} from '@sigil/renderer/react';
 import simpleTableSpecJson from '@sigil/spec/schema/examples/simple-table.json';
+import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas';
+
 
 const simpleTableSpec = ComponentSpecSchema.parse(simpleTableSpecJson);
 

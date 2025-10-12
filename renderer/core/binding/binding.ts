@@ -12,7 +12,7 @@
 
 import get from 'lodash/get';
 
-import type {DataTableColumn, FieldMetadata} from '@sigil/lib/generated/types/specification';
+import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {CellValue, Column, Row} from '../types';
 import {stringifyCellValue} from '../utils/stringifyCellValue';

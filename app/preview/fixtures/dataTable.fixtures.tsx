@@ -5,7 +5,7 @@
  * Each fixture provides a complete spec + data combination for preview.
  */
 
-import type {ComponentSpec} from '@sigil/lib/generated/types/specification';
+import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 export interface DataTableFixture {
 	id: string;

@@ -21,7 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const specDir = resolve(__dirname, '..');
 const projectRoot = resolve(specDir, '..');
-const outputDir = resolve(projectRoot, 'lib/generated/types');
+const outputDir = resolve(projectRoot, 'src/lib/generated/types');
 
 /**
  * Ensures the output directory exists
@@ -90,7 +90,7 @@ export * from './specification';
 
 		console.log('\n🎉 TypeScript interface generation complete!');
 		console.log('\n📝 Next steps:');
-		console.log('   1. Import types: import type {ComponentSpec } from "@sigil/lib/generated/types"');
+		console.log('   1. Import types: import type {ComponentSpec } from "@sigil/src/lib/generated/types"');
 		console.log('   2. Use for type annotations and IntelliSense');
 	} catch (error) {
 		console.error('\n× Error generating TypeScript interfaces:', error);

@@ -2,8 +2,8 @@
  * Layout utilities for traversing and extracting layout nodes
  */
 
-import type {LayoutChild, LayoutNode} from '@sigil/lib/generated/types/specification';
 import {err, ok, type Result} from '@sigil/src/common/errors/result';
+import type {LayoutChild, LayoutNode} from '@sigil/src/lib/generated/types/specification';
 
 /**
  * Extracts the first child from a layout node

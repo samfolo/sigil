@@ -5,7 +5,7 @@
  * the full rendering pipeline from IR to React elements.
  */
 
-import type {ComponentSpec} from '@sigil/lib/generated/types/specification';
+import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 /**
  * Simple valid spec with basic user table
