@@ -10,7 +10,7 @@ import {Separator} from '@sigil/components/ui/separator';
 import {TableView} from '@sigil/components/Visualisations/TableView';
 import {TreeView} from '@sigil/components/Visualisations/TreeView';
 import type {Analysis} from '@sigil/lib/analysisSchema';
-import type {DetectionResult} from '@sigil/lib/formatDetector';
+import type {DetectionResult} from '@sigil/src/data/formatDetector';
 import {isSuccess, isLoading, isError} from '@sigil/lib/queryState';
 import type {QueryState} from '@sigil/lib/queryState';
 

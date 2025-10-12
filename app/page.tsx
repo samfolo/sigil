@@ -5,7 +5,7 @@ import {useState} from 'react';
 import {DataCanvas} from '@sigil/components/DataCanvas';
 import {DataInput} from '@sigil/components/DataInput';
 import type {Analysis} from '@sigil/lib/analysisSchema';
-import type {DetectionResult} from '@sigil/lib/formatDetector';
+import type {DetectionResult} from '@sigil/src/data/formatDetector';
 import type {QueryState} from '@sigil/lib/queryState';
 
 const Home = () => {

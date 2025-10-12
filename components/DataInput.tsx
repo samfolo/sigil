@@ -7,8 +7,8 @@ import {Button} from '@sigil/components/ui/button';
 import {Separator} from '@sigil/components/ui/separator';
 import {Textarea} from '@sigil/components/ui/textarea';
 import type {Analysis} from '@sigil/lib/analysisSchema';
-import {detectFormat} from '@sigil/lib/formatDetector';
-import type {DetectionResult} from '@sigil/lib/formatDetector';
+import {detectFormat} from '@sigil/src/data/formatDetector';
+import type {DetectionResult} from '@sigil/src/data/formatDetector';
 import {isLoading} from '@sigil/lib/queryState';
 import type {QueryState} from '@sigil/lib/queryState';
 
