@@ -10,8 +10,8 @@ import {
   mergeDefinitions,
   hasDefinition,
   getDefinition,
-} from '../lib/schemaUtils';
-import type {JsonSchema} from '../lib/types';
+} from './schemaUtils';
+import type {JsonSchema} from '../types';
 
 describe('schemaUtils', () => {
   describe('resolveRefs', () => {

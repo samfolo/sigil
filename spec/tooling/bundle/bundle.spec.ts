@@ -2,9 +2,9 @@ import {resolve} from 'path';
 
 import {describe, it, expect} from 'vitest';
 
-import {bundleSchemas} from '../bundle';
+import {bundleSchemas} from './bundle';
 
-const FIXTURES_DIR = resolve(__dirname, 'fixtures');
+const FIXTURES_DIR = resolve(__dirname, '../__tests__/fixtures');
 
 describe('bundleSchemas', () => {
   it('should bundle schema fragments successfully', () => {

@@ -7,9 +7,9 @@ import {
   loadSchema,
   loadConfig,
   fileExists,
-} from '../lib/utils/fileSystem';
+} from './fileSystem';
 
-const FIXTURES_DIR = resolve(__dirname, 'fixtures');
+const FIXTURES_DIR = resolve(__dirname, '../../__tests__/fixtures');
 
 describe('fileSystem', () => {
   describe('loadJson', () => {

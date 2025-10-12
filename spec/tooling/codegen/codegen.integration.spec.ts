@@ -8,12 +8,12 @@ import {resolve} from 'path';
 
 import {describe, it, expect} from 'vitest';
 
-import {generateZodSchemas, assembleGeneratedFile} from '../lib/codegenUtils';
+import {generateZodSchemas, assembleGeneratedFile} from './utils';
 import type {JsonSchema, Config} from '../lib/types';
 
 describe('codegen integration', () => {
 	// Load the actual bundled schema and config
-	const specDir = resolve(__dirname, '../../../spec');
+	const specDir = resolve(__dirname, '../..');
 	const bundledSchemaPath = resolve(specDir, 'schema/specification.schema.json');
 	const configPath = resolve(specDir, 'config.json');
 

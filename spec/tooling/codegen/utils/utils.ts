@@ -4,14 +4,14 @@
 
 import {isErr} from '../../../../lib/errors';
 
-import {buildDependencyGraph, topologicalSort} from '../dependencyAnalyser';
+import {buildDependencyGraph, topologicalSort} from '../../lib/dependencyAnalyser';
 import {
 	generateDiscriminatedUnion,
 	getDiscriminatedUnions,
 	validateDiscriminatedUnionVariants,
-} from '../discriminatedUnions';
-import {mapJsonSchemaTypeToZod, toSchemaName} from '../typeMapper';
-import type {JsonSchema, Config, DiscriminatedUnion} from '../types';
+} from '../../lib/discriminatedUnions';
+import {mapJsonSchemaTypeToZod, toSchemaName} from '../../lib/typeMapper';
+import type {JsonSchema, Config, DiscriminatedUnion} from '../../lib/types';
 
 
 export interface CodegenOptions {
