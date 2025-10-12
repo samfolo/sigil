@@ -2,8 +2,8 @@
 
 import {useState} from 'react';
 
-import {DataCanvas} from '@sigil/components/DataCanvas';
-import {DataInput} from '@sigil/components/DataInput';
+import {DataCanvas} from '@sigil/src/ui/components/DataCanvas';
+import {DataInput} from '@sigil/src/ui/components/DataInput';
 import type {Analysis} from '@sigil/lib/analysisSchema';
 import type {DetectionResult} from '@sigil/src/data/formatDetector';
 import type {QueryState} from '@sigil/lib/queryState';

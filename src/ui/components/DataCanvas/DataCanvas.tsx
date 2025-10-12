@@ -2,13 +2,13 @@ import {Loader2, ChevronDown} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {useState} from 'react';
 
-import {ChatInterface} from '@sigil/components/ChatInterface';
+import {ChatInterface} from '@sigil/src/ui/components/ChatInterface';
 import {Button} from '@sigil/components/ui/button';
 import {Card} from '@sigil/components/ui/card';
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@sigil/components/ui/collapsible';
 import {Separator} from '@sigil/components/ui/separator';
-import {TableView} from '@sigil/components/Visualisations/TableView';
-import {TreeView} from '@sigil/components/Visualisations/TreeView';
+import {TableView} from '@sigil/src/ui/components/visualisations/TableView';
+import {TreeView} from '@sigil/src/ui/components/visualisations/TreeView';
 import type {Analysis} from '@sigil/lib/analysisSchema';
 import type {DetectionResult} from '@sigil/src/data/formatDetector';
 import {isSuccess, isLoading, isError} from '@sigil/lib/queryState';
@@ -16,7 +16,7 @@ import type {QueryState} from '@sigil/lib/queryState';
 
 
 const MapView = dynamic(
-  () => import('@sigil/components/Visualisations/MapView').then(mod => ({default: mod.MapView})),
+  () => import('@sigil/src/ui/components/visualisations/MapView').then(mod => ({default: mod.MapView})),
   {ssr: false}
 );
 
