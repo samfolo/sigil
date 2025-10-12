@@ -11,7 +11,7 @@ import type {ComponentSpec} from '@sigil/lib/generated/types/specification';
 
 import {buildRenderTree} from '@sigil/renderer/core';
 
-import {DataTable} from '../components/DataTable';
+import {DataTable} from '../components';
 
 /**
  * Renders a ComponentSpec with data as React elements

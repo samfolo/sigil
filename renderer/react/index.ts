@@ -3,4 +3,4 @@
  */
 
 export {render} from './render';
-export {DataTable} from './components/DataTable';
+export {DataTable} from './components';
