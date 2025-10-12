@@ -1,5 +1,7 @@
 import {describe, it, expect} from 'vitest';
 
+import type {JsonSchema} from '../types';
+
 import {
   resolveRefs,
   collectRefs,
@@ -11,7 +13,6 @@ import {
   hasDefinition,
   getDefinition,
 } from './schemaUtils';
-import type {JsonSchema} from '../types';
 
 describe('schemaUtils', () => {
   describe('resolveRefs', () => {

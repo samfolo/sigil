@@ -2,17 +2,17 @@ import {Loader2, ChevronDown} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {useState} from 'react';
 
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import {isError, isLoading, isSuccess} from '@sigil/src/common/types/queryState';
+import type {QueryState} from '@sigil/src/common/types/queryState';
+import type {DetectionResult} from '@sigil/src/data/formatDetector';
 import {ChatInterface} from '@sigil/src/ui/components/ChatInterface';
+import {TableView} from '@sigil/src/ui/components/visualisations/TableView';
+import {TreeView} from '@sigil/src/ui/components/visualisations/TreeView';
 import {Button} from '@sigil/src/ui/primitives/button';
 import {Card} from '@sigil/src/ui/primitives/card';
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@sigil/src/ui/primitives/collapsible';
 import {Separator} from '@sigil/src/ui/primitives/separator';
-import {TableView} from '@sigil/src/ui/components/visualisations/TableView';
-import {TreeView} from '@sigil/src/ui/components/visualisations/TreeView';
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import type {DetectionResult} from '@sigil/src/data/formatDetector';
-import {isSuccess, isLoading, isError} from '@sigil/lib/queryState';
-import type {QueryState} from '@sigil/lib/queryState';
 
 
 const MapView = dynamic(

@@ -4,10 +4,11 @@
 
 import {resolve} from 'path';
 
-import {loadSchema, fileExists} from './fileSystem';
 import type {Logger} from '../logger';
 import {collectRefs, extractDefinitionName, isLocalRef, isCrossFileRef, parseCrossFileRef, hasDefinition} from '../schemaUtils';
 import type {Config, JsonSchema} from '../types';
+
+import {loadSchema, fileExists} from './fileSystem';
 
 /**
  * Validate that all fragments exist and are valid JSON

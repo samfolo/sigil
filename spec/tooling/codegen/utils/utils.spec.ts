@@ -4,10 +4,11 @@
 
 import {describe, it, expect} from 'vitest';
 
-import {generateZodSchemas, assembleGeneratedFile, generateIndexFile} from './utils';
+import * as fixtures from '../../lib/fixtures';
 import type {JsonSchema, Config} from '../../lib/types';
 
-import * as fixtures from '../../lib/fixtures';
+import {generateZodSchemas, assembleGeneratedFile, generateIndexFile} from './utils';
+
 
 
 describe('codegenUtils', () => {

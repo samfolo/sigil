@@ -12,9 +12,9 @@ import {
 	getDiscriminatedUnions,
 	validateDiscriminatedUnionVariants,
 } from '../discriminatedUnions';
+import * as fixtures from '../fixtures';
 import type {Config, DiscriminatedUnion} from '../types';
 
-import * as fixtures from '../fixtures';
 
 
 describe('discriminatedUnions', () => {

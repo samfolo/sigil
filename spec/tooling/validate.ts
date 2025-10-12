@@ -13,8 +13,8 @@
 import {resolve, dirname} from 'path';
 import {fileURLToPath} from 'url';
 
-import {loadConfig} from './lib/utils/fileSystem';
 import {createLogger} from './lib/logger';
+import {loadConfig} from './lib/utils/fileSystem';
 import {validateFragmentsExist, validateReferences, validateDiscriminatedUnions} from './lib/utils/validation';
 
 // Get the spec directory (parent of tooling/)

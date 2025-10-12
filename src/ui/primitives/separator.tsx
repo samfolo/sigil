@@ -3,7 +3,7 @@
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 import * as React from "react"
 
-import {cn} from "@sigil/lib/utils"
+import {cn} from "@sigil/src/common/utils/cn"
 
 const Separator = ({
   className,

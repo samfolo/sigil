@@ -8,7 +8,6 @@
 import type {ReactElement} from 'react';
 
 import type {ComponentSpec} from '@sigil/lib/generated/types/specification';
-
 import {buildRenderTree} from '@sigil/renderer/core';
 
 import {DataTable} from '../components';

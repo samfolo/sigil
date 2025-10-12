@@ -6,9 +6,9 @@
 
 import {resolve} from 'path';
 
-import {listFiles, loadSchema, writeJson} from '../lib/utils/fileSystem';
 import {mergeDefinitions} from '../lib/schemaUtils';
 import type {JsonSchema} from '../lib/types';
+import {listFiles, loadSchema, writeJson} from '../lib/utils/fileSystem';
 
 /**
  * Bundle all schema fragments into a single schema

@@ -1,9 +1,9 @@
-import {NextResponse} from 'next/server';
 import type {NextRequest} from 'next/server';
+import {NextResponse} from 'next/server';
 
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import type {Message} from '@sigil/lib/chatTypes';
 import {processChat} from '@sigil/src/agent/chat';
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import type {Message} from '@sigil/src/common/types/chat';
 
 interface ChatRequest {
 	messages: Message[];

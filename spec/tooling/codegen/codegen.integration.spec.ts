@@ -8,8 +8,9 @@ import {resolve} from 'path';
 
 import {describe, it, expect} from 'vitest';
 
-import {generateZodSchemas, assembleGeneratedFile} from './utils';
 import type {JsonSchema, Config} from '../lib/types';
+
+import {generateZodSchemas, assembleGeneratedFile} from './utils';
 
 describe('codegen integration', () => {
 	// Load the actual bundled schema and config

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import {cn} from "@sigil/lib/utils"
+import {cn} from "@sigil/src/common/utils/cn"
 
 const Table = ({className, ...props}: React.ComponentProps<"table">) => {
   return (

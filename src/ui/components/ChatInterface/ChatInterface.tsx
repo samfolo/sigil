@@ -3,13 +3,13 @@
 import {Loader2, Send} from 'lucide-react';
 import {useState, useRef, useEffect} from 'react';
 
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import type {Message, ToolCall} from '@sigil/src/common/types/chat';
+import {isLoading} from '@sigil/src/common/types/queryState';
+import type {QueryState} from '@sigil/src/common/types/queryState';
 import {Button} from '@sigil/src/ui/primitives/button';
 import {Card} from '@sigil/src/ui/primitives/card';
 import {ScrollArea} from '@sigil/src/ui/primitives/scroll-area';
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import type {Message, ToolCall} from '@sigil/lib/chatTypes';
-import {isLoading} from '@sigil/lib/queryState';
-import type {QueryState} from '@sigil/lib/queryState';
 
 interface ChatInterfaceProps {
   data: unknown;

@@ -33,15 +33,23 @@ See @ERROR_HANDLING.md for complete decision flowchart, utility functions (mapRe
 
 ### State Management
 
-All async request/response states use `QueryState` from `lib/queryState.ts`:
+All async request/response states use `QueryState` from `src/common/types/queryState.ts`:
 
 ```typescript
-import {QueryState} from '@sigil/lib/queryState';
+import type {QueryState} from '@sigil/src/common/types/queryState';
 
-const [state, setState] = useState<QueryState>('idle');
+const [state, setState] = useState<QueryState<Data, Error>>({status: 'idle'});
 ```
 
-Valid states: `'idle'` | `'loading'` | `'success'` | `'errored'` | `'reloading'`
+Valid states: `'idle'` | `'loading'` | `'success'` | `'error'`
+
+Individual state interfaces are available for explicit typing:
+```typescript
+import type {IdleQueryState, LoadingQueryState, SuccessQueryState, ErrorQueryState} from '@sigil/src/common/types/queryState';
+
+const successState: SuccessQueryState<Data> = {status: 'success', data: myData};
+const errorState: ErrorQueryState<Error> = {status: 'error', error: myError};
+```
 
 ### Code Style
 
@@ -149,9 +157,9 @@ Example:
 import {useState} from 'react';
 import {z} from 'zod';
 
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import {analysisSchema} from '@sigil/lib/analysisSchema';
-import {formatData} from '@sigil/lib/formatters';
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import {analysisSchema} from '@sigil/src/common/types/analysisSchema';
+import {formatData} from '@sigil/src/data/formatters';
 
 import {helperFunc} from '../../../utils';
 

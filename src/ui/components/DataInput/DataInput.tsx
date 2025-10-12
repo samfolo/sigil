@@ -3,14 +3,14 @@
 import {Loader2} from 'lucide-react';
 import {useState} from 'react';
 
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import {isLoading} from '@sigil/src/common/types/queryState';
+import type {QueryState} from '@sigil/src/common/types/queryState';
+import type {DetectionResult} from '@sigil/src/data/formatDetector';
+import {detectFormat} from '@sigil/src/data/formatDetector';
 import {Button} from '@sigil/src/ui/primitives/button';
 import {Separator} from '@sigil/src/ui/primitives/separator';
 import {Textarea} from '@sigil/src/ui/primitives/textarea';
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import {detectFormat} from '@sigil/src/data/formatDetector';
-import type {DetectionResult} from '@sigil/src/data/formatDetector';
-import {isLoading} from '@sigil/lib/queryState';
-import type {QueryState} from '@sigil/lib/queryState';
 
 interface DataInputProps {
   onAnalyse: (result: DetectionResult, analysisState: QueryState<Analysis, string>, sessionId: string | null) => void;

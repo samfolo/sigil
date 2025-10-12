@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import {cn} from "@sigil/lib/utils"
+import {cn} from "@sigil/src/common/utils/cn"
 
 const Card = ({className, ...props}: React.ComponentProps<"div">) => {
   return (

@@ -2,13 +2,13 @@ import Anthropic from '@anthropic-ai/sdk';
 import type {Tool, ToolUnion} from '@anthropic-ai/sdk/resources';
 import {z} from 'zod';
 
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import {analysisSchema} from '@sigil/lib/analysisSchema';
-import {generateEmbedding} from '@sigil/src/data/embeddings';
-import {supabase} from '@sigil/src/data/supabase';
 import {buildAnalysisPrompt} from '@sigil/src/agent/prompts';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import {analysisSchema} from '@sigil/src/common/types/analysisSchema';
+import {generateEmbedding} from '@sigil/src/data/embeddings';
+import {supabase} from '@sigil/src/data/supabase';
 
 type AnalysisError =
 	| 'missing_api_key'

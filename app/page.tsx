@@ -2,11 +2,11 @@
 
 import {useState} from 'react';
 
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import type {QueryState} from '@sigil/src/common/types/queryState';
+import type {DetectionResult} from '@sigil/src/data/formatDetector';
 import {DataCanvas} from '@sigil/src/ui/components/DataCanvas';
 import {DataInput} from '@sigil/src/ui/components/DataInput';
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import type {DetectionResult} from '@sigil/src/data/formatDetector';
-import type {QueryState} from '@sigil/lib/queryState';
 
 const Home = () => {
   const [result, setResult] = useState<DetectionResult | null>(null);

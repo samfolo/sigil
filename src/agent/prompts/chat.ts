@@ -1,4 +1,4 @@
-import type {Analysis} from '@sigil/lib/analysisSchema';
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
 
 interface ChatPromptParams {
 	dataType: string;

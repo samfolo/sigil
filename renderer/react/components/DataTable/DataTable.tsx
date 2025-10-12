@@ -8,10 +8,10 @@
 import type {ReactElement} from 'react';
 import {memo, useId} from 'react';
 
-import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from '@sigil/src/ui/primitives/table';
-import {cn} from '@sigil/lib/utils';
-
 import type {Column, TableProps} from '@sigil/renderer/core';
+import {cn} from '@sigil/src/common/utils/cn';
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from '@sigil/src/ui/primitives/table';
+
 
 /**
  * Maps column alignment to Tailwind CSS classes

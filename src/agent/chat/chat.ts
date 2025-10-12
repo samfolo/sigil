@@ -1,9 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-import type {Analysis} from '@sigil/lib/analysisSchema';
-import type {Message, ToolCall, ChatResponse} from '@sigil/lib/chatTypes';
 import {buildChatSystemPrompt} from '@sigil/src/agent/prompts';
 import {aggregateData, filterData, getUniqueValues, sortData} from '@sigil/src/agent/tools';
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import type {ChatResponse, Message, ToolCall} from '@sigil/src/common/types/chat';
 
 const anthropic = new Anthropic({
 	apiKey: process.env.ANTHROPIC_API_KEY,

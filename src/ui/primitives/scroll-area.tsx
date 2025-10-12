@@ -3,7 +3,7 @@
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 import * as React from "react"
 
-import {cn} from "@sigil/lib/utils"
+import {cn} from "@sigil/src/common/utils/cn"
 
 const ScrollArea = ({
   className,

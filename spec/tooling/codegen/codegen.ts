@@ -8,8 +8,9 @@
 import {mkdirSync, writeFileSync, existsSync} from 'fs';
 import {resolve} from 'path';
 
-import {generateZodSchemas, assembleGeneratedFile, generateIndexFile} from './utils';
 import {loadSchema, loadConfig} from '../lib/utils/fileSystem';
+
+import {generateZodSchemas, assembleGeneratedFile, generateIndexFile} from './utils';
 
 /**
  * Ensures the output directory exists
