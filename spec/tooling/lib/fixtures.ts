@@ -2,7 +2,7 @@
  * Test fixtures for codegen tests
  */
 
-import type {JsonSchema, Config, DiscriminatedUnion} from '../types';
+import type {JsonSchema, Config, DiscriminatedUnion} from './types';
 
 /**
  * Simple primitive schemas

@@ -106,7 +106,7 @@ const formatDate = (dateTime: DateTime, format?: string): string => {
 	}
 
 	// Try common preset mappings from spec
-	const presetMap: Record<string, ReturnType<typeof DateTime.DATETIME_SHORT>> = {
+	const presetMap: Record<string, Intl.DateTimeFormatOptions> = {
 		iso8601: DateTime.DATETIME_SHORT,
 		DATE_SHORT: DateTime.DATE_SHORT,
 		DATE_MED: DateTime.DATE_MED,
