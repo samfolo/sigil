@@ -6,9 +6,9 @@ Guidance for Claude Code when working with this repository. Ordered by decision 
 
 ### Error Handling
 
-MANDATORY: Consult ERROR_HANDLING.md before writing any error handling code.
+MANDATORY: Consult @ERROR_HANDLING.md before writing any error handling code.
 
-Use `Result<T, E>` from `lib/errors/result.ts` for ALL expected errors.
+Use `Result<T, E>` from @lib/errors/result.ts for ALL expected errors.
 
 Decision rule:
 - Expected errors (validation, not found, parsing) → Return `Result<T, E>`
@@ -29,7 +29,7 @@ const parse = (input: string): Result<Data, string> => {
 };
 ```
 
-See ERROR_HANDLING.md for complete decision flowchart, utility functions (mapResult, chain, all), and type patterns.
+See @ERROR_HANDLING.md for complete decision flowchart, utility functions (mapResult, chain, all), and type patterns.
 
 ### State Management
 
