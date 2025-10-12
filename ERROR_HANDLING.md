@@ -66,7 +66,7 @@ if (result.success) {
 }
 ```
 
-## Async Operations
+## Try-Catch Wrapping
 
 No Promise utilities exist. Wrap async operations manually:
 
@@ -209,7 +209,7 @@ if (isOk(result)) {
 
 ## Advanced Utilities
 
-Rarely needed utilities available in `@sigil/lib/errors/result`:
+Rarely needed utilities available in @sigil/lib/errors/result:
 
 - `chain<T, U, E>(result, fn)` - Chain operations without nested checks (prefer early returns)
 - `mapResult<T, U, E>(result, fn)` - Transform success value
