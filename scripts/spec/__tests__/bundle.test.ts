@@ -27,7 +27,7 @@ describe('bundleSchemas', () => {
     const typeWithRef = definitions.TypeWithRef as {
       type: string;
       properties: {
-        field: {$ref: string };
+        field: {$ref: string};
       };
     };
 

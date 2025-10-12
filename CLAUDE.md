@@ -96,7 +96,7 @@ arrow_down: ↓
 
 Never use emoji variants (✅, ❌) or alternative unicode characters (✗, ✕, ☑, ✔).
 
-## File Organization
+## File Organisation
 
 ### Naming Conventions
 

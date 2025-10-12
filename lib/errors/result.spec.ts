@@ -55,7 +55,7 @@ describe('Result', () => {
 		});
 
 		it('should work with custom error types', () => {
-			interface CustomError {code: number; message: string }
+			interface CustomError {code: number; message: string}
 			const result: Result<never, CustomError> = err({code: 404, message: 'Not found'});
 			expect(result.success).toBe(false);
 			if (!result.success) {
