@@ -39,8 +39,8 @@ Result<User, Error>
 ## Basic Usage
 
 ```typescript
-import type {Result} from '@sigil/lib/errors/result';
-import {ok, err} from '@sigil/lib/errors/result';
+import type {Result} from '@sigil/src/common/errors/result';
+import {ok, err} from '@sigil/src/common/errors/result';
 
 const divide = (a: number, b: number): Result<number, string> => {
   if (b === 0) {
@@ -90,7 +90,7 @@ const fetchUser = async (id: string): Promise<Result<User, string>> => {
 ### Type Guards
 
 ```typescript
-import {isOk, isErr} from '@sigil/lib/errors/result';
+import {isOk, isErr} from '@sigil/src/common/errors/result';
 
 if (isOk(result)) {
   console.log(result.data);  // TypeScript narrows to Ok<T>
@@ -106,7 +106,7 @@ Use type guards instead of `result.success` for better type narrowing.
 ### Combining Multiple Results
 
 ```typescript
-import {all} from '@sigil/lib/errors/result';
+import {all} from '@sigil/src/common/errors/result';
 
 const results = [parseNumber('1'), parseNumber('2'), parseNumber('3')];
 const combined = all(results);
@@ -209,7 +209,7 @@ if (isOk(result)) {
 
 ## Advanced Utilities
 
-Rarely needed utilities available in @sigil/lib/errors/result:
+Rarely needed utilities available in @sigil/src/common/errors/result:
 
 - `chain<T, U, E>(result, fn)` - Chain operations without nested checks (prefer early returns)
 - `mapResult<T, U, E>(result, fn)` - Transform success value

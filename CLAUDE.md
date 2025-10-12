@@ -8,15 +8,15 @@ Guidance for Claude Code when working with this repository. Ordered by decision 
 
 MANDATORY: Consult @ERROR_HANDLING.md before writing any error handling code.
 
-Use `Result<T, E>` from @lib/errors/result.ts for ALL expected errors.
+Use `Result<T, E>` from @src/common/errors/result.ts for ALL expected errors.
 
 Decision rule:
 - Expected errors (validation, not found, parsing) → Return `Result<T, E>`
 - Programming errors (null deref, type mismatch) → Throw exception
 
 ```typescript
-import type {Result} from '@sigil/lib/errors/result';
-import {ok, err} from '@sigil/lib/errors/result';
+import type {Result} from '@sigil/src/common/errors/result';
+import {ok, err} from '@sigil/src/common/errors/result';
 
 const parse = (input: string): Result<Data, string> => {
   if (!input) {

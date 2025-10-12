@@ -2,7 +2,7 @@
  * Core render tree builder - transforms ComponentSpec into RenderTree
  */
 
-import {err, ok, type Result} from '@sigil/lib/errors/result';
+import {err, ok, type Result} from '@sigil/src/common/errors/result';
 import type {ComponentSpec} from '@sigil/lib/generated/types/specification';
 
 import type {RenderTree} from '../types';

@@ -4,7 +4,7 @@
 
 import {describe, it, expect} from 'vitest';
 
-import {isOk, isErr} from '../../../../lib/errors';
+import {isOk, isErr} from '../../../../src/common/errors';
 
 import {
 	isDiscriminatedUnion,

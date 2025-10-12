@@ -2,7 +2,7 @@
  * Code generation utilities for creating Zod schemas from JSON Schema
  */
 
-import {isErr} from '../../../../lib/errors';
+import {isErr} from '../../../../src/common/errors';
 
 import {buildDependencyGraph, topologicalSort} from '../../lib/dependencyAnalyser';
 import {
