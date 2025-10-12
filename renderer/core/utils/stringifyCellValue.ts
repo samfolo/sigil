@@ -7,7 +7,7 @@
 
 import {DateTime} from 'luxon';
 
-import {MAX_DISPLAY_LENGTH} from './constants';
+import {MAX_DISPLAY_LENGTH} from '../constants';
 
 /**
  * Converts a raw cell value to a display string

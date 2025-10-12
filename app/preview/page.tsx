@@ -11,7 +11,7 @@
 
 import {useState} from 'react';
 
-import {render} from '@sigil/lib/renderer';
+import {render} from '@sigil/renderer';
 
 import {PreviewLayout} from './components/PreviewLayout';
 import {dataTableFixtures} from './fixtures/dataTable.fixtures';

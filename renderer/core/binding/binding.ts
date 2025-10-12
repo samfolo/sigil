@@ -14,8 +14,8 @@ import get from 'lodash/get';
 
 import type {DataTableColumn, FieldMetadata} from '@sigil/lib/generated/types/specification';
 
-import {stringifyCellValue} from './stringifyCellValue';
-import type {CellValue, Column, Row} from './types';
+import type {CellValue, Column, Row} from '../types';
+import {stringifyCellValue} from '../utils/stringifyCellValue';
 
 /**
  * Extracts column definitions from DataTableColumn configs

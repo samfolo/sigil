@@ -5,9 +5,9 @@
 import {err, ok, type Result} from '@sigil/lib/errors/result';
 import type {ComponentSpec} from '@sigil/lib/generated/types/specification';
 
-import {bindData, enrichColumns, extractColumns} from './binding';
-import {extractFirstLayoutChild} from './layoutUtils';
-import type {RenderTree} from './types';
+import type {RenderTree} from '../types';
+import {bindData, enrichColumns, extractColumns} from '../binding';
+import {extractFirstLayoutChild} from '../utils/layout';
 
 /**
  * Builds a RenderTree from ComponentSpec and raw data

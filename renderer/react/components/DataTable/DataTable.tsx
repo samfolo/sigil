@@ -11,7 +11,7 @@ import {memo, useId} from 'react';
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from '@sigil/components/ui/table';
 import {cn} from '@sigil/lib/utils';
 
-import type {Column, TableProps} from '../../../../core';
+import type {Column, TableProps} from '@sigil/renderer/core';
 
 /**
  * Maps column alignment to Tailwind CSS classes

@@ -5,7 +5,7 @@
  * rendering cases, edge cases, and accessibility features.
  */
 
-import type {TableProps} from '../../../../core/types';
+import type {TableProps} from '@sigil/renderer/core';
 
 /**
  * Basic valid table with three rows and mixed alignments

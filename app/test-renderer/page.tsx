@@ -7,7 +7,7 @@
  */
 
 import {ComponentSpecSchema} from '@sigil/lib/generated/schemas';
-import {render} from '@sigil/lib/renderer';
+import {render} from '@sigil/renderer';
 import simpleTableSpecJson from '@sigil/spec/examples/simple-table.json';
 
 const simpleTableSpec = ComponentSpecSchema.parse(simpleTableSpecJson);

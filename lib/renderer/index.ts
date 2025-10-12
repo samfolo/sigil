@@ -6,8 +6,8 @@
  */
 
 // React adapter (main entry point)
-export {render} from './frontends/react';
+export {render} from '@sigil/renderer/react';
 
 // Core utilities (for testing and advanced usage)
-export {buildRenderTree, bindData, enrichColumns, extractColumns} from './core';
-export type {CellValue, Column, RenderNode, RenderTree, Row, TableProps} from './core';
+export {buildRenderTree, bindData, enrichColumns, extractColumns} from '@sigil/renderer/core';
+export type {CellValue, Column, RenderNode, RenderTree, Row, TableProps} from '@sigil/renderer/core';
