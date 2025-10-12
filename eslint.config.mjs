@@ -196,45 +196,37 @@ const eslintConfig = [
       "check-file/filename-naming-convention": [
         "error",
         {
-          // Component files at root of components/: PascalCase
-          "components/*.{tsx,jsx}": "PASCAL_CASE",
-
-          // Component files in subdirectories (except ui/): PascalCase
-          "components/!(ui)/**/*.{tsx,jsx}": "PASCAL_CASE",
-
-          // UI components: kebab-case (shadcn/ui convention)
-          "src/ui/primitives/*.{tsx,jsx}": "KEBAB_CASE",
-
-          // Test files: PascalCase with .spec suffix (tsx only)
-          "**/*.spec.tsx": "PASCAL_CASE",
+          // All TypeScript files default to camelCase
+          "**/*.ts": "CAMEL_CASE",
 
           // Fixture files: camelCase
-          "**/*.fixtures.{ts,tsx}": "CAMEL_CASE",
+          "**/*.fixtures.tsx": "CAMEL_CASE",
 
-          // Utility and type files: camelCase
-          "**/utils.ts": "CAMEL_CASE",
-          "**/types.ts": "CAMEL_CASE",
+          // Component tests: PascalCase
+          "**/*.spec.tsx": "PASCAL_CASE",
 
-          // Other lib files: camelCase
-          "lib/**/*.ts": "CAMEL_CASE",
+          // React components in specific directories: PascalCase
+          "src/ui/components/**/*.tsx": "PASCAL_CASE",
+          "renderer/react/components/**/*.tsx": "PASCAL_CASE",
+          "app/**/components/**/*.tsx": "PASCAL_CASE",
 
-          // Common directories: camelCase
-          "**/common/**/*.{ts,tsx}": "CAMEL_CASE",
+          // shadcn/ui primitives: kebab-case
+          "src/ui/primitives/**/*.tsx": "KEBAB_CASE",
+
+          // Render utilities: camelCase (functions, not components)
+          "renderer/**/render/**/*.tsx": "CAMEL_CASE",
+
+          // Next.js app directory special files: lowercase
+          "app/**/page.tsx": "FLAT_CASE",
+          "app/**/layout.tsx": "FLAT_CASE",
+          "app/**/loading.tsx": "FLAT_CASE",
+          "app/**/error.tsx": "FLAT_CASE",
+          "app/**/not-found.tsx": "FLAT_CASE",
+          "app/**/template.tsx": "FLAT_CASE",
         },
         {
           // Ignore Next.js special files - they must stay lowercase
           ignoreMiddleExtensions: true,
-        },
-      ],
-
-      "check-file/folder-naming-convention": [
-        "error",
-        {
-          // Component folders: PascalCase
-          "components/!(ui)*/": "PASCAL_CASE",
-
-          // Allow 'common' folders (lowercase/camelCase)
-          "**/common/": "CAMEL_CASE",
         },
       ],
     },
