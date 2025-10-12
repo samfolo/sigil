@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
-import {queryJSONPath} from './queryJSONPath';
+import {queryJSONPath, queryMultipleValues, querySingleValue} from './queryJSONPath';
 
 describe('queryJSONPath', () => {
 	describe('simple paths', () => {
@@ -276,6 +276,248 @@ describe('queryJSONPath', () => {
 			if (isOk(result)) {
 				expect(result.data).toBeNull();
 			}
+		});
+	});
+
+	describe('querySingleValue', () => {
+		describe('valid single value queries', () => {
+			it('should return single value for simple path', () => {
+				const data = {name: 'Alice', age: 30};
+				const result = querySingleValue(data, '$.name');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toBe('Alice');
+				}
+			});
+
+			it('should return single value for nested path', () => {
+				const data = {user: {profile: {email: 'alice@example.com'}}};
+				const result = querySingleValue(data, '$.user.profile.email');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toBe('alice@example.com');
+				}
+			});
+
+			it('should return single value for array indexing', () => {
+				const data = {items: ['apple', 'banana', 'cherry']};
+				const result = querySingleValue(data, '$.items[0]');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toBe('apple');
+				}
+			});
+
+			it('should return undefined for missing field', () => {
+				const data = {name: 'Alice'};
+				const result = querySingleValue(data, '$.missing');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toBeUndefined();
+				}
+			});
+
+			it('should return null for null value', () => {
+				const data = {value: null};
+				const result = querySingleValue(data, '$.value');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toBeNull();
+				}
+			});
+		});
+
+		describe('array results should error', () => {
+			it('should error for wildcard query (returns array)', () => {
+				const data = {
+					store: {
+						book: [
+							{title: 'Book A', price: 10},
+							{title: 'Book B', price: 20},
+						],
+					},
+				};
+				const result = querySingleValue(data, '$.store.book[*].title');
+				expect(isErr(result)).toBe(true);
+				if (isErr(result)) {
+					expect(result.error).toBe('expected_single_value');
+				}
+			});
+
+			it('should error for filter query (returns array)', () => {
+				const data = {
+					products: [
+						{name: 'Laptop', price: 1000},
+						{name: 'Mouse', price: 25},
+						{name: 'Keyboard', price: 75},
+					],
+				};
+				const result = querySingleValue(data, '$.products[?(@.price < 100)]');
+				expect(isErr(result)).toBe(true);
+				if (isErr(result)) {
+					expect(result.error).toBe('expected_single_value');
+				}
+			});
+
+			it('should error for recursive descent (returns array)', () => {
+				const data = {
+					level1: {
+						title: 'Level 1',
+						level2: {
+							title: 'Level 2',
+						},
+					},
+					other: {
+						title: 'Other',
+					},
+				};
+				const result = querySingleValue(data, '$..title');
+				expect(isErr(result)).toBe(true);
+				if (isErr(result)) {
+					expect(result.error).toBe('expected_single_value');
+				}
+			});
+		});
+
+		describe('error handling', () => {
+			it('should error for invalid accessor (no $ prefix)', () => {
+				const data = {name: 'Alice'};
+				const result = querySingleValue(data, 'name');
+				expect(isErr(result)).toBe(true);
+				if (isErr(result)) {
+					expect(result.error).toBe('invalid_accessor');
+				}
+			});
+		});
+	});
+
+	describe('queryMultipleValues', () => {
+		describe('array results', () => {
+			it('should return array for wildcard query', () => {
+				const data = {
+					store: {
+						book: [
+							{title: 'Book A', price: 10},
+							{title: 'Book B', price: 20},
+							{title: 'Book C', price: 15},
+						],
+					},
+				};
+				const result = queryMultipleValues(data, '$.store.book[*].title');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual(['Book A', 'Book B', 'Book C']);
+				}
+			});
+
+			it('should return array for filter query', () => {
+				const data = {
+					products: [
+						{name: 'Laptop', price: 1000},
+						{name: 'Mouse', price: 25},
+						{name: 'Keyboard', price: 75},
+					],
+				};
+				const result = queryMultipleValues(data, '$.products[?(@.price < 100)]');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toHaveLength(2);
+					expect(result.data).toEqual([
+						{name: 'Mouse', price: 25},
+						{name: 'Keyboard', price: 75},
+					]);
+				}
+			});
+
+			it('should return array for recursive descent', () => {
+				const data = {
+					level1: {
+						title: 'Level 1',
+						level2: {
+							title: 'Level 2',
+						},
+					},
+					other: {
+						title: 'Other',
+					},
+				};
+				const result = queryMultipleValues(data, '$..title');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual(['Level 1', 'Level 2', 'Other']);
+				}
+			});
+		});
+
+		describe('single values (lenient wrapping)', () => {
+			it('should wrap single value in array', () => {
+				const data = {name: 'Alice'};
+				const result = queryMultipleValues(data, '$.name');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual(['Alice']);
+				}
+			});
+
+			it('should wrap nested single value in array', () => {
+				const data = {user: {profile: {email: 'alice@example.com'}}};
+				const result = queryMultipleValues(data, '$.user.profile.email');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual(['alice@example.com']);
+				}
+			});
+
+			it('should wrap array-indexed single value in array', () => {
+				const data = {items: ['apple', 'banana', 'cherry']};
+				const result = queryMultipleValues(data, '$.items[0]');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual(['apple']);
+				}
+			});
+		});
+
+		describe('missing values', () => {
+			it('should return empty array for missing field', () => {
+				const data = {name: 'Alice'};
+				const result = queryMultipleValues(data, '$.missing');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual([]);
+				}
+			});
+
+			it('should return empty array for undefined', () => {
+				const data = {value: undefined};
+				const result = queryMultipleValues(data, '$.value');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual([]);
+				}
+			});
+		});
+
+		describe('null handling', () => {
+			it('should wrap null value in array', () => {
+				const data = {value: null};
+				const result = queryMultipleValues(data, '$.value');
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toEqual([null]);
+				}
+			});
+		});
+
+		describe('error handling', () => {
+			it('should error for invalid accessor (no $ prefix)', () => {
+				const data = {name: 'Alice'};
+				const result = queryMultipleValues(data, 'name');
+				expect(isErr(result)).toBe(true);
+				if (isErr(result)) {
+					expect(result.error).toBe('invalid_accessor');
+				}
+			});
 		});
 	});
 });

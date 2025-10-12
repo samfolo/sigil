@@ -2,12 +2,12 @@ import {sortBy} from 'lodash';
 
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import {queryJSONPath} from '@sigil/renderer/core/utils/queryJSONPath';
+import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 
 import {extractArray, wrapArray} from '../helpers';
 
 type SortDirection = 'asc' | 'desc';
-type SortError = 'invalid_accessor' | 'extraction_failed';
+type SortError = 'invalid_accessor' | 'extraction_failed' | 'expected_single_value';
 
 /**
  * Sort data by field in ascending or descending order
@@ -30,18 +30,19 @@ export const sortData = (
 		return err('extraction_failed');
 	}
 
-	// Validate accessor by checking first item (fail fast on invalid accessor)
+	// Validate accessor by checking first item (fail fast on invalid accessor or array result)
 	if (arrayData.length > 0) {
-		const testResult = queryJSONPath(arrayData.at(0), field);
+		const testResult = querySingleValue(arrayData.at(0), field);
 		if (isErr(testResult)) {
-			return err('invalid_accessor');
+			// Propagate the specific error (invalid_accessor or expected_single_value)
+			return err(testResult.error as SortError);
 		}
 	}
 
 	// Sort by field using JSONPath accessor
 	const sorted = sortBy(arrayData, (item) => {
-		// At this point, accessor is valid (checked above), so only missing fields return undefined
-		return unwrapOr(queryJSONPath(item, field), undefined);
+		// At this point, accessor is valid and returns single value, so only missing fields return undefined
+		return unwrapOr(querySingleValue(item, field), undefined);
 	});
 
 	const sortedArray = direction === 'desc' ? sorted.reverse() : sorted;

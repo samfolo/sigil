@@ -19,9 +19,9 @@
 import {JSONPath} from 'jsonpath-plus';
 
 import type {Result} from '@sigil/src/common/errors/result';
-import {err, ok} from '@sigil/src/common/errors/result';
+import {err, isErr, ok} from '@sigil/src/common/errors/result';
 
-type QueryError = 'invalid_accessor' | 'query_error';
+type QueryError = 'invalid_accessor' | 'query_error' | 'expected_single_value' | 'expected_array_value';
 
 /**
  * Query data using a JSONPath expression
@@ -77,4 +77,81 @@ export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, 
 		// Query syntax errors or other JSONPath failures
 		return err('query_error');
 	}
+};
+
+/**
+ * Query data using JSONPath and ensure result is a single value (not an array)
+ *
+ * Use this when you expect a single value per accessor. This will fail if the accessor
+ * returns an array (e.g., from wildcards like `$.items[*]`, filters like `$..book[?(@.price < 10)]`,
+ * or recursive descent like `$..author`).
+ *
+ * @param data - The data object to query
+ * @param accessor - JSONPath expression (must start with `$`)
+ * @returns Result containing single value, or error if result is an array
+ *
+ * @example
+ * ```typescript
+ * // ✓ Valid - returns single value
+ * querySingleValue({user: {name: 'Alice'}}, '$.user.name');  // → ok('Alice')
+ * querySingleValue({items: [1,2,3]}, '$.items[0]');          // → ok(1)
+ *
+ * // × Invalid - returns array
+ * querySingleValue({items: [1,2,3]}, '$.items[*]');          // → err('expected_single_value')
+ * querySingleValue({books: [...]}, '$..title');              // → err('expected_single_value')
+ * ```
+ */
+export const querySingleValue = (data: unknown, accessor: string): Result<unknown, QueryError> => {
+	const result = queryJSONPath(data, accessor);
+	if (isErr(result)) {
+		return result;
+	}
+
+	// Fail if result is an array (from wildcards/filters/recursive-descent)
+	if (Array.isArray(result.data)) {
+		return err('expected_single_value');
+	}
+
+	return result;
+};
+
+/**
+ * Query data using JSONPath and ensure result is an array
+ *
+ * Use this when you expect multiple values from an accessor. This gracefully handles
+ * single values by wrapping them in an array, and treats undefined as empty array.
+ *
+ * @param data - The data object to query
+ * @param accessor - JSONPath expression (must start with `$`)
+ * @returns Result containing array of values
+ *
+ * @example
+ * ```typescript
+ * // Wildcards return arrays
+ * queryMultipleValues({items: [1,2,3]}, '$.items[*]');       // → ok([1, 2, 3])
+ *
+ * // Filters return arrays
+ * queryMultipleValues({books: [...]}, '$..book[?(@.price < 10)]');  // → ok([...])
+ *
+ * // Single values wrapped (lenient)
+ * queryMultipleValues({name: 'Alice'}, '$.name');            // → ok(['Alice'])
+ *
+ * // Missing values return empty array
+ * queryMultipleValues({}, '$.missing');                      // → ok([])
+ * ```
+ */
+export const queryMultipleValues = (
+	data: unknown,
+	accessor: string
+): Result<unknown[], QueryError> => {
+	const result = queryJSONPath(data, accessor);
+	if (isErr(result)) {
+		return result;
+	}
+
+	// Ensure array result - gracefully handle missing values as empty array
+	const arrayResult =
+		result.data === undefined ? [] : Array.isArray(result.data) ? result.data : [result.data];
+
+	return ok(arrayResult);
 };

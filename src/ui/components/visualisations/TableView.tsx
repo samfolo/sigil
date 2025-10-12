@@ -1,5 +1,5 @@
-import {unwrapOr} from '@sigil/src/common/errors/result';
-import {queryJSONPath} from '@sigil/renderer/core/utils/queryJSONPath';
+import {isErr, unwrapOr} from '@sigil/src/common/errors/result';
+import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 import {
   Table,
   TableBody,
@@ -49,7 +49,18 @@ export const TableView = ({data, keyFields}: TableViewProps) => {
           {displayData.map((item, idx) => (
             <TableRow key={idx}>
               {keyFields.map((field) => {
-                const value = unwrapOr(queryJSONPath(item, field.path), undefined);
+                const result = querySingleValue(item, field.path);
+
+                // Handle errors gracefully - show error indicator in cell
+                if (isErr(result)) {
+                  return (
+                    <TableCell key={field.path} className="text-red-500">
+                      {result.error === 'expected_single_value' ? '[Array]' : '[Error]'}
+                    </TableCell>
+                  );
+                }
+
+                const value = result.data;
                 return (
                   <TableCell key={field.path}>
                     {value !== undefined && value !== null ? String(value) : '-'}

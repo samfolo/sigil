@@ -2,12 +2,12 @@ import {maxBy, meanBy, minBy, sumBy} from 'lodash';
 
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import {queryJSONPath} from '@sigil/renderer/core/utils/queryJSONPath';
+import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 
 import {extractArray} from '../helpers';
 
 type AggregateOperation = 'sum' | 'average' | 'count' | 'min' | 'max';
-type AggregateError = 'invalid_accessor' | 'extraction_failed' | 'field_required' | 'not_an_array';
+type AggregateError = 'invalid_accessor' | 'extraction_failed' | 'field_required' | 'not_an_array' | 'expected_single_value';
 
 /**
  * Intelligently count items in various data structures
@@ -19,9 +19,10 @@ type AggregateError = 'invalid_accessor' | 'extraction_failed' | 'field_required
 export const countItems = (data: unknown, field: string | null): Result<number, AggregateError> => {
 	// If field is specified, try to count items in that nested path
 	if (field) {
-		const result = queryJSONPath(data, field);
+		const result = querySingleValue(data, field);
 		if (isErr(result)) {
-			return err('invalid_accessor');
+			// Propagate the specific error (invalid_accessor or expected_single_value)
+			return err(result.error as AggregateError);
 		}
 
 		const nestedData = result.data;
@@ -75,25 +76,26 @@ export const aggregateData = (
 		return err('field_required');
 	}
 
-	// Validate accessor by checking first item (fail fast on invalid accessor)
+	// Validate accessor by checking first item (fail fast on invalid accessor or array result)
 	if (arrayData.length > 0) {
-		const testResult = queryJSONPath(arrayData.at(0), field);
+		const testResult = querySingleValue(arrayData.at(0), field);
 		if (isErr(testResult)) {
-			return err('invalid_accessor');
+			// Propagate the specific error (invalid_accessor or expected_single_value)
+			return err(testResult.error as AggregateError);
 		}
 	}
 
 	switch (operation) {
 		case 'sum': {
 			const sum = sumBy(arrayData, (item) => {
-				const value = unwrapOr(queryJSONPath(item, field), undefined);
+				const value = unwrapOr(querySingleValue(item, field), undefined);
 				return Number(value) || 0;
 			});
 			return ok(sum);
 		}
 		case 'average': {
 			const avg = meanBy(arrayData, (item) => {
-				const value = unwrapOr(queryJSONPath(item, field), undefined);
+				const value = unwrapOr(querySingleValue(item, field), undefined);
 				return Number(value) || 0;
 			});
 			return ok(avg);
@@ -101,39 +103,39 @@ export const aggregateData = (
 		case 'min': {
 			// Filter out null/undefined values before finding min
 			const validItems = arrayData.filter((item) => {
-				const value = unwrapOr(queryJSONPath(item, field), undefined);
+				const value = unwrapOr(querySingleValue(item, field), undefined);
 				return value !== null && value !== undefined && value !== '';
 			});
 			if (validItems.length === 0) {
 				return ok(0);
 			}
 			const minItem = minBy(validItems, (item) => {
-				const value = unwrapOr(queryJSONPath(item, field), undefined);
+				const value = unwrapOr(querySingleValue(item, field), undefined);
 				return Number(value);
 			});
 			if (!minItem) {
 				return ok(0);
 			}
-			const value = unwrapOr(queryJSONPath(minItem, field), 0);
+			const value = unwrapOr(querySingleValue(minItem, field), 0);
 			return ok(Number(value));
 		}
 		case 'max': {
 			// Filter out null/undefined values before finding max
 			const validItems = arrayData.filter((item) => {
-				const value = unwrapOr(queryJSONPath(item, field), undefined);
+				const value = unwrapOr(querySingleValue(item, field), undefined);
 				return value !== null && value !== undefined && value !== '';
 			});
 			if (validItems.length === 0) {
 				return ok(0);
 			}
 			const maxItem = maxBy(validItems, (item) => {
-				const value = unwrapOr(queryJSONPath(item, field), undefined);
+				const value = unwrapOr(querySingleValue(item, field), undefined);
 				return Number(value);
 			});
 			if (!maxItem) {
 				return ok(0);
 			}
-			const value = unwrapOr(queryJSONPath(maxItem, field), 0);
+			const value = unwrapOr(querySingleValue(maxItem, field), 0);
 			return ok(Number(value));
 		}
 		default:

@@ -2,11 +2,11 @@ import {uniq} from 'lodash';
 
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import {queryJSONPath} from '@sigil/renderer/core/utils/queryJSONPath';
+import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 
 import {extractArray} from '../helpers';
 
-type UniqueValuesError = 'invalid_accessor' | 'extraction_failed';
+type UniqueValuesError = 'invalid_accessor' | 'extraction_failed' | 'expected_single_value';
 
 /**
  * Get unique values from a specific field
@@ -27,15 +27,16 @@ export const getUniqueValues = (
 		return err('extraction_failed');
 	}
 
-	// Validate accessor by checking first item (fail fast on invalid accessor)
+	// Validate accessor by checking first item (fail fast on invalid accessor or array result)
 	if (arrayData.length > 0) {
-		const testResult = queryJSONPath(arrayData.at(0), field);
+		const testResult = querySingleValue(arrayData.at(0), field);
 		if (isErr(testResult)) {
-			return err('invalid_accessor');
+			// Propagate the specific error (invalid_accessor or expected_single_value)
+			return err(testResult.error as UniqueValuesError);
 		}
 	}
 
-	const values = arrayData.map((item) => unwrapOr(queryJSONPath(item, field), undefined));
+	const values = arrayData.map((item) => unwrapOr(querySingleValue(item, field), undefined));
 
 	return ok(uniq(values));
 };
