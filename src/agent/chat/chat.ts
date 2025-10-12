@@ -1,13 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
+import type Anthropic from '@anthropic-ai/sdk';
 
+import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {buildChatSystemPrompt} from '@sigil/src/agent/prompts';
 import {aggregateData, filterData, getUniqueValues, sortData} from '@sigil/src/agent/tools';
 import type {Analysis} from '@sigil/src/common/types/analysisSchema';
 import type {ChatResponse, Message, ToolCall} from '@sigil/src/common/types/chat';
-
-const anthropic = new Anthropic({
-	apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 interface ChatRequest {
 	messages: Message[];
@@ -217,6 +214,8 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 
 	// Track all tool calls for visibility
 	const allToolCalls: ToolCall[] = [];
+
+	const anthropic = createAnthropicClient();
 
 	// Make initial API call
 	let response = await anthropic.messages.create({

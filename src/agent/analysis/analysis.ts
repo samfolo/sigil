@@ -1,14 +1,14 @@
-import Anthropic from '@anthropic-ai/sdk';
 import type {Tool, ToolUnion} from '@anthropic-ai/sdk/resources';
 import {z} from 'zod';
 
+import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {buildAnalysisPrompt} from '@sigil/src/agent/prompts';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 import type {Analysis} from '@sigil/src/common/types/analysisSchema';
 import {analysisSchema} from '@sigil/src/common/types/analysisSchema';
 import {generateEmbedding} from '@sigil/src/data/embeddings';
-import {supabase} from '@sigil/src/data/supabase';
+import {getSupabaseClient} from '@sigil/src/data/supabase';
 
 type AnalysisError =
 	| 'missing_api_key'
@@ -58,14 +58,15 @@ export const analyseData = async (
 	format: string,
 	data: unknown
 ): Promise<Result<AnalysisResult, AnalysisError>> => {
-	const apiKey = process.env.ANTHROPIC_API_KEY;
-	if (!apiKey) {
-		return err('missing_api_key');
-	}
-
 	const dataSample = limitDataSample(data, format);
 	const prompt = buildAnalysisPrompt({format, dataSample});
-	const client = new Anthropic({apiKey});
+
+	let client;
+	try {
+		client = createAnthropicClient();
+	} catch {
+		return err('missing_api_key');
+	}
 
 	try {
 		const response = await client.messages.create({
@@ -95,6 +96,7 @@ export const analyseData = async (
 			const embedding = await generateEmbedding(analysis.description);
 			console.log('Generated embedding successfully, length:', embedding.length);
 
+			const supabase = getSupabaseClient();
 			const {data: session, error: insertError} = await supabase
 				.from('sessions')
 				.insert({
