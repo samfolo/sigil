@@ -244,11 +244,11 @@ describe('queryJSONPath', () => {
 	});
 
 	describe('edge cases', () => {
-		it('should handle null data', () => {
+		it('should error for null data', () => {
 			const result = queryJSONPath(null, '$.field');
-			expect(isOk(result)).toBe(true);
-			if (isOk(result)) {
-				expect(result.data).toBeUndefined();
+			expect(isErr(result)).toBe(true);
+			if (isErr(result)) {
+				expect(result.error).toBe('query_error');
 			}
 		});
 
