@@ -12,7 +12,7 @@ import {resolve, dirname} from 'path';
 import {fileURLToPath} from 'url';
 
 import $RefParser from '@apidevtools/json-schema-ref-parser';
-import {compile, type JSONSchema4} from 'json-schema-to-typescript';
+import {compile, type JSONSchema} from 'json-schema-to-typescript';
 
 import {loadSchema} from './lib/utils/fileSystem';
 
@@ -47,7 +47,7 @@ const main = async () => {
 
 		console.log(`\n✨ Resolving $ref references...`);
 		// Dereference all $ref entries to get a fully resolved schema
-		const dereferencedSchema: JSONSchema4 = await $RefParser.dereference(schemaPath);
+		const dereferencedSchema: JSONSchema = await $RefParser.dereference(schemaPath);
 
 		console.log(`✨ Generating TypeScript interfaces for ${Object.keys(bundledSchema.definitions || {}).length} definitions...`);
 

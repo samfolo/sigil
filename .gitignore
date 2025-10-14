@@ -41,5 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 # generated spec files
-/spec/specification.schema.json
+/spec/schema/specification.schema.json
 /src/lib/generated/
