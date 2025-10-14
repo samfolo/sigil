@@ -1,11 +1,11 @@
+import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 
 import {extractArray, wrapArray} from '../helpers';
 
 type FilterOperator = 'equals' | 'contains' | 'greaterThan' | 'lessThan';
-type FilterError = 'invalid_accessor' | 'extraction_failed' | 'expected_single_value';
+type FilterError = 'invalid_accessor' | 'not_array' | 'no_array_property' | 'expected_single_value';
 
 /**
  * Filter an array of data by field value using various operators
@@ -23,12 +23,11 @@ export const filterData = (
 	value: unknown
 ): Result<unknown, FilterError> => {
 	// Extract array from data structure
-	let arrayData: unknown[];
-	try {
-		arrayData = extractArray(data);
-	} catch (error) {
-		return err('extraction_failed');
+	const arrayResult = extractArray(data);
+	if (isErr(arrayResult)) {
+		return err(arrayResult.error);
 	}
+	const arrayData = arrayResult.data;
 
 	// Validate accessor by checking first item (fail fast on invalid accessor or array result)
 	if (arrayData.length > 0) {

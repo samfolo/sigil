@@ -1,9 +1,17 @@
+import type {Result} from '@sigil/src/common/errors/result';
+import {err, ok} from '@sigil/src/common/errors/result';
+
+type ExtractArrayError = 'not_array' | 'no_array_property';
+
 /**
  * Extract an array from various data structures (GeoJSON, nested objects, etc.)
+ *
+ * @param data - Data to extract array from
+ * @returns Result containing extracted array, or error code for LLM error reporting
  */
-export const extractArray = (data: unknown): unknown[] => {
+export const extractArray = (data: unknown): Result<unknown[], ExtractArrayError> => {
 	if (Array.isArray(data)) {
-		return data;
+		return ok(data);
 	}
 
 	if (typeof data === 'object' && data !== null) {
@@ -11,28 +19,28 @@ export const extractArray = (data: unknown): unknown[] => {
 
 		// Handle GeoJSON FeatureCollection
 		if ('type' in dataRecord && dataRecord.type === 'FeatureCollection' && 'features' in dataRecord && Array.isArray(dataRecord.features)) {
-			return dataRecord.features;
+			return ok(dataRecord.features);
 		}
 
 		// Handle GeoJSON GeometryCollection
 		if ('type' in dataRecord && dataRecord.type === 'GeometryCollection' && 'geometries' in dataRecord && Array.isArray(dataRecord.geometries)) {
-			return dataRecord.geometries;
+			return ok(dataRecord.geometries);
 		}
 
 		// Handle object with known array properties
 		const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
 		for (const prop of commonArrayProps) {
 			if (prop in dataRecord && Array.isArray(dataRecord[prop])) {
-				return dataRecord[prop] as unknown[];
+				return ok(dataRecord[prop] as unknown[]);
 			}
 		}
+
+		// Object has no recognisable array property
+		return err('no_array_property');
 	}
 
-	throw new Error(
-		`Unable to extract array from data. ` +
-		`Type: ${typeof data === 'object' && data !== null && 'type' in data ? data.type : typeof data}. ` +
-		`Available properties: ${typeof data === 'object' && data !== null ? Object.keys(data).join(', ') : 'none'}`
-	);
+	// Data is not an array and not an object
+	return err('not_array');
 };
 
 /**

@@ -1,12 +1,12 @@
 import {uniq} from 'lodash';
 
+import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 
 import {extractArray} from '../helpers';
 
-type UniqueValuesError = 'invalid_accessor' | 'extraction_failed' | 'expected_single_value';
+type UniqueValuesError = 'invalid_accessor' | 'not_array' | 'no_array_property' | 'expected_single_value';
 
 /**
  * Get unique values from a specific field
@@ -20,12 +20,11 @@ export const getUniqueValues = (
 	field: string
 ): Result<unknown[], UniqueValuesError> => {
 	// Extract array from data structure
-	let arrayData: unknown[];
-	try {
-		arrayData = extractArray(data);
-	} catch (error) {
-		return err('extraction_failed');
+	const arrayResult = extractArray(data);
+	if (isErr(arrayResult)) {
+		return err(arrayResult.error);
 	}
+	const arrayData = arrayResult.data;
 
 	// Validate accessor by checking first item (fail fast on invalid accessor or array result)
 	if (arrayData.length > 0) {

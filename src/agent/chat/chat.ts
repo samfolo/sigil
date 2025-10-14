@@ -3,6 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {buildChatSystemPrompt} from '@sigil/src/agent/prompts';
 import {aggregateData, filterData, getUniqueValues, sortData} from '@sigil/src/agent/tools';
+import {isErr} from '@sigil/src/common/errors/result';
 import type {Analysis} from '@sigil/src/common/types/analysisSchema';
 import type {ChatResponse, Message, ToolCall} from '@sigil/src/common/types/chat';
 
@@ -45,63 +46,70 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 	// Define tools with actual implementations
 	const toolImplementations: Record<string, ToolFunction> = {
 		filter_data: ({field, operator, value}) => {
-			try {
-				// Always filter from original data to avoid chaining issues
-				const filtered = filterData(
-					originalData,
-					field as string,
-					operator as 'equals' | 'contains' | 'greaterThan' | 'lessThan',
-					value
-				);
-				const matchCount = extractArrayForCount(filtered).length;
-				const totalCount = extractArrayForCount(originalData).length;
+			// Always filter from original data to avoid chaining issues
+			const result = filterData(
+				originalData,
+				field as string,
+				operator as 'equals' | 'contains' | 'greaterThan' | 'lessThan',
+				value
+			);
 
-				// Update currentData for final response
-				currentData = filtered;
-
-				return `Filter: ${field} ${operator} ${value} → Found ${matchCount} matching items out of ${totalCount} total. Dataset will be updated to show only matching items.`;
-			} catch (error) {
-				return `Error filtering data: ${error instanceof Error ? error.message : String(error)}`;
+			if (isErr(result)) {
+				return `Error filtering data: ${result.error}`;
 			}
+
+			const filtered = result.data;
+			const matchCount = extractArrayForCount(filtered).length;
+			const totalCount = extractArrayForCount(originalData).length;
+
+			// Update currentData for final response
+			currentData = filtered;
+
+			return `Filter: ${field} ${operator} ${value} → Found ${matchCount} matching items out of ${totalCount} total. Dataset will be updated to show only matching items.`;
 		},
 		aggregate_data: ({field, operation}) => {
-			try {
-				// Always use original data for analysis
-				const result = aggregateData(
-					originalData,
-					(field as string | undefined) || null,
-					operation as 'sum' | 'average' | 'count' | 'min' | 'max'
-				);
-				if (operation === 'count') {
-					return field
-						? `The count of items in "${field}" is ${result}`
-						: `The total count is ${result} items in the dataset`;
-				}
-				return `The ${operation} of ${field} is ${result}`;
-			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error);
-				return `Error performing ${operation}: ${errorMsg}`;
+			// Always use original data for analysis
+			const result = aggregateData(
+				originalData,
+				(field as string | undefined) || null,
+				operation as 'sum' | 'average' | 'count' | 'min' | 'max'
+			);
+
+			if (isErr(result)) {
+				return `Error performing ${operation}: ${result.error}`;
 			}
+
+			const value = result.data;
+			if (operation === 'count') {
+				return field
+					? `The count of items in "${field}" is ${value}`
+					: `The total count is ${value} items in the dataset`;
+			}
+			return `The ${operation} of ${field} is ${value}`;
 		},
 		get_unique_values: ({field}) => {
-			try {
-				// Always use original data for analysis
-				const values = getUniqueValues(originalData, field as string);
-				// Use JSON.stringify to show undefined, null, empty strings clearly
-				const valueStrings = values.slice(0, 20).map(v => JSON.stringify(v));
-				return `Found ${values.length} unique value${values.length === 1 ? '' : 's'} for ${field}: ${valueStrings.join(', ')}${values.length > 20 ? '...' : ''}`;
-			} catch (error) {
-				return `Error getting unique values: ${error instanceof Error ? error.message : String(error)}`;
+			// Always use original data for analysis
+			const result = getUniqueValues(originalData, field as string);
+
+			if (isErr(result)) {
+				return `Error getting unique values: ${result.error}`;
 			}
+
+			const values = result.data;
+			// Use JSON.stringify to show undefined, null, empty strings clearly
+			const valueStrings = values.slice(0, 20).map(v => JSON.stringify(v));
+			return `Found ${values.length} unique value${values.length === 1 ? '' : 's'} for ${field}: ${valueStrings.join(', ')}${values.length > 20 ? '...' : ''}`;
 		},
 		sort_data: ({field, direction}) => {
-			try {
-				// Sort from original data and update currentData for final response
-				currentData = sortData(originalData, field as string, direction as 'asc' | 'desc');
-				return `Successfully sorted data by ${field} in ${direction}ending order.`;
-			} catch (error) {
-				return `Error sorting data: ${error instanceof Error ? error.message : String(error)}`;
+			// Sort from original data and update currentData for final response
+			const result = sortData(originalData, field as string, direction as 'asc' | 'desc');
+
+			if (isErr(result)) {
+				return `Error sorting data: ${result.error}`;
 			}
+
+			currentData = result.data;
+			return `Successfully sorted data by ${field} in ${direction}ending order.`;
 		},
 	};
 

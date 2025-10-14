@@ -64,6 +64,11 @@ export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, 
 		return err('invalid_accessor');
 	}
 
+	// Validate data is non-null object
+	if (typeof data !== 'object' || data === null) {
+		return err('query_error');
+	}
+
 	try {
 		const results = JSONPath({
 			path: accessor,
@@ -73,7 +78,7 @@ export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, 
 
 		// JSONPath returns undefined for missing paths when wrap: false
 		return ok(results);
-	} catch (error) {
+	} catch {
 		// Query syntax errors or other JSONPath failures
 		return err('query_error');
 	}

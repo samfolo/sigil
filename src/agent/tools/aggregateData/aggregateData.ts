@@ -1,13 +1,13 @@
 import {maxBy, meanBy, minBy, sumBy} from 'lodash';
 
+import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 
 import {extractArray} from '../helpers';
 
 type AggregateOperation = 'sum' | 'average' | 'count' | 'min' | 'max';
-type AggregateError = 'invalid_accessor' | 'extraction_failed' | 'field_required' | 'not_an_array' | 'expected_single_value';
+type AggregateError = 'invalid_accessor' | 'not_array' | 'no_array_property' | 'field_required' | 'not_an_array' | 'expected_single_value';
 
 /**
  * Intelligently count items in various data structures
@@ -38,12 +38,11 @@ export const countItems = (data: unknown, field: string | null): Result<number, 
 	}
 
 	// Use extractArray for all other cases
-	try {
-		const arrayData = extractArray(data);
-		return ok(arrayData.length);
-	} catch (error) {
-		return err('extraction_failed');
+	const arrayResult = extractArray(data);
+	if (isErr(arrayResult)) {
+		return err(arrayResult.error);
 	}
+	return ok(arrayResult.data.length);
 };
 
 /**
@@ -65,12 +64,11 @@ export const aggregateData = (
 	}
 
 	// For other operations, we need an array
-	let arrayData: unknown[];
-	try {
-		arrayData = extractArray(data);
-	} catch (error) {
-		return err('extraction_failed');
+	const arrayResult = extractArray(data);
+	if (isErr(arrayResult)) {
+		return err(arrayResult.error);
 	}
+	const arrayData = arrayResult.data;
 
 	if (!field) {
 		return err('field_required');
@@ -139,6 +137,7 @@ export const aggregateData = (
 			return ok(Number(value));
 		}
 		default:
-			return err('extraction_failed');
+			// This should never happen as all operations are handled above
+			return err('field_required');
 	}
 };

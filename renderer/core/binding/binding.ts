@@ -10,8 +10,8 @@
  * Uses jsonpath-plus for full JSONPath specification support.
  */
 
-import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 import {unwrapOr} from '@sigil/src/common/errors/result';
+import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {CellValue, Column, Row} from '../types';
 import {queryJSONPath} from '../utils/queryJSONPath';

@@ -1,5 +1,5 @@
-import {isErr, unwrapOr} from '@sigil/src/common/errors/result';
 import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
+import {isErr} from '@sigil/src/common/errors/result';
 import {
   Table,
   TableBody,

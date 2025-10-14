@@ -58,7 +58,11 @@ export const ChatInterface = ({data, analysis, onDataUpdate, sessionId}: ChatInt
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        setChatState({
+          status: 'error',
+          error: 'Failed to get response from server',
+        });
+        return;
       }
 
       const {message, modifiedData, toolCalls} = await response.json();
