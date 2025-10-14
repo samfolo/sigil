@@ -175,7 +175,7 @@ const generateDiscriminatedUnionSchema = (
 	// For recursive discriminated unions, use z.lazy() with any type hint to avoid circular reference errors
 	if (isRecursive) {
 		const unionCode = generateDiscriminatedUnion(union);
-		return `${description}export const ${schemaName}: any = z.lazy(() => ${unionCode});`;
+		return `${description}// eslint-disable-next-line @typescript-eslint/no-explicit-any\nexport const ${schemaName}: any = z.lazy(() => ${unionCode});`;
 	}
 
 	// Generate discriminated union - simple, no special recursive handling
@@ -199,7 +199,7 @@ const generateRegularSchema = (
 	// For recursive schemas, use z.lazy() with any type hint to avoid circular reference errors
 	if (isRecursive) {
 		const zodCode = mapJsonSchemaTypeToZod(schema, name);
-		return `${description}export const ${schemaName}: any = z.lazy(() => ${zodCode});`;
+		return `${description}// eslint-disable-next-line @typescript-eslint/no-explicit-any\nexport const ${schemaName}: any = z.lazy(() => ${zodCode});`;
 	}
 
 	// Map the schema to Zod code - simple, no special recursive handling

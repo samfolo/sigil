@@ -199,12 +199,6 @@ const eslintConfig = [
           // All TypeScript files default to camelCase
           "**/*.ts": "CAMEL_CASE",
 
-          // Fixture files: camelCase
-          "**/*.fixtures.tsx": "CAMEL_CASE",
-
-          // Component tests: PascalCase
-          "**/*.spec.tsx": "PASCAL_CASE",
-
           // React components in specific directories: PascalCase
           "src/ui/components/**/*.tsx": "PASCAL_CASE",
           "renderer/react/components/**/*.tsx": "PASCAL_CASE",
@@ -229,6 +223,16 @@ const eslintConfig = [
           ignoreMiddleExtensions: true,
         },
       ],
+
+      // Disable filename checks for fixture and spec files
+      // These files should match their source file's casing (per CLAUDE.md)
+      "check-file/filename-blocklist": "off",
+    },
+  },
+  {
+    files: ["**/*.spec.ts", "**/*.spec.tsx", "**/*.fixtures.ts", "**/*.fixtures.tsx"],
+    rules: {
+      "check-file/filename-naming-convention": "off",
     },
   },
 ];

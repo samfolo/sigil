@@ -31,7 +31,7 @@ export const extractArray = (data: unknown): Result<unknown[], ExtractArrayError
 		const commonArrayProps = ['features', 'items', 'data', 'results', 'records', 'rows'];
 		for (const prop of commonArrayProps) {
 			if (prop in dataRecord && Array.isArray(dataRecord[prop])) {
-				return ok(dataRecord[prop] as unknown[]);
+				return ok(dataRecord[prop]);
 			}
 		}
 

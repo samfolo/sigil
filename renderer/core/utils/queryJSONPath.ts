@@ -155,8 +155,14 @@ export const queryMultipleValues = (
 	}
 
 	// Ensure array result - gracefully handle missing values as empty array
-	const arrayResult =
-		result.data === undefined ? [] : Array.isArray(result.data) ? result.data : [result.data];
+	let arrayResult: unknown[];
+	if (result.data === undefined) {
+		arrayResult = [];
+	} else if (Array.isArray(result.data)) {
+		arrayResult = result.data;
+	} else {
+		arrayResult = [result.data];
+	}
 
 	return ok(arrayResult);
 };

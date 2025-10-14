@@ -5,7 +5,7 @@
  * the full rendering pipeline from IR to React elements.
  */
 
-import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
+import type {ComponentConfig, ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 /**
  * Simple valid spec with basic user table
@@ -183,7 +183,7 @@ export const TYPE_MISMATCH_SPEC: ComponentSpec = {
 					// Config says hierarchy but node says data-table
 					type: 'hierarchy',
 					affordances: [],
-				} as any, // Type cast to bypass TypeScript checks for test
+				} as unknown as ComponentConfig, // Type cast to bypass TypeScript checks for test
 			},
 		},
 		accessor_bindings: {},

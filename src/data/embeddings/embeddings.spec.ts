@@ -24,6 +24,7 @@ describe('generateEmbedding', () => {
 	it('should generate embeddings for given text', async () => {
 		const mockEmbedding = [0.1, 0.2, 0.3, 0.4, 0.5];
 		const OpenAI = await import('openai');
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const mockCreate = (OpenAI as any).__mockCreate;
 
 		mockCreate.mockResolvedValue({
@@ -42,6 +43,7 @@ describe('generateEmbedding', () => {
 	it('should handle different text inputs', async () => {
 		const mockEmbedding = [0.5, 0.6, 0.7];
 		const OpenAI = await import('openai');
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const mockCreate = (OpenAI as any).__mockCreate;
 
 		mockCreate.mockResolvedValue({
@@ -61,6 +63,7 @@ describe('generateEmbedding', () => {
 		const firstEmbedding = [0.1, 0.2, 0.3];
 		const secondEmbedding = [0.4, 0.5, 0.6];
 		const OpenAI = await import('openai');
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const mockCreate = (OpenAI as any).__mockCreate;
 
 		mockCreate.mockResolvedValue({

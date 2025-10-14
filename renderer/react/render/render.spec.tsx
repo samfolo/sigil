@@ -9,6 +9,8 @@
 import {render as renderComponent, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
+import type {ComponentType} from '@sigil/src/lib/generated/types/specification';
+
 import {render} from './render';
 import {
 	EMPTY_DATA,
@@ -140,7 +142,7 @@ describe('render', () => {
 						'users-table': {
 							...SIMPLE_USER_SPEC.root.nodes['users-table'],
 							// Force an unknown type through type assertion
-							type: 'unknown-type' as any,
+							type: 'unknown-type' as unknown as ComponentType,
 						},
 					},
 				},
