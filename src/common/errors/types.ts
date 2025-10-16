@@ -1,3 +1,5 @@
+import {ERROR_CODES} from './codes';
+
 /**
  * Error type definitions for the rich error system
  *
@@ -7,23 +9,9 @@
  */
 
 /**
- * Standard error codes for common failure scenarios
- *
- * Add new error codes as they are discovered during development.
- * Each code should represent a distinct, actionable error condition.
+ * Type-safe error code extracted from ERROR_CODES constant
  */
-export const ErrorCode = {
-	MISSING_COMPONENT: 'MISSING_COMPONENT',
-	TYPE_MISMATCH: 'TYPE_MISMATCH',
-	ACCESSOR_NOT_BOUND: 'ACCESSOR_NOT_BOUND',
-	JSONPATH_QUERY_FAILED: 'JSONPATH_QUERY_FAILED',
-	INVALID_JSONPATH: 'INVALID_JSONPATH',
-} as const;
-
-/**
- * Type-safe error code extracted from ErrorCode constant
- */
-export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 /**
  * Error severity levels
