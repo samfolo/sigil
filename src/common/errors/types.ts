@@ -30,44 +30,207 @@ export type Severity = 'error' | 'warning';
 export type ErrorCategory = 'spec' | 'data';
 
 /**
- * Structured error information for spec validation and execution
- *
- * Provides rich context for debugging, including JSONPath location,
- * structured data for LLM analysis, and optional fix suggestions.
+ * Base properties shared by all error types
  */
-export interface SpecError {
-	/**
-	 * Unique error code identifying the type of error
-	 */
-	code: ErrorCode;
-
-	/**
-	 * Severity level of the error
-	 */
+interface BaseSpecError {
 	severity: Severity;
-
-	/**
-	 * Category of error for classification
-	 */
 	category: ErrorCategory;
-
-	/**
-	 * JSONPath to the location in the spec where the error occurred
-	 */
 	path: string;
-
-	/**
-	 * Structured contextual data for LLM analysis
-	 *
-	 * Contains relevant information about the error such as:
-	 * - Expected vs actual values
-	 * - Component or field names
-	 * - Related data that caused the error
-	 */
-	context: Record<string, unknown>;
-
-	/**
-	 * Optional human-readable suggestion for fixing the error
-	 */
 	suggestion?: string;
 }
+
+/**
+ * Context for MISSING_COMPONENT error
+ */
+export interface MissingComponentContext {
+	componentId?: string;
+	availableComponents?: string[];
+}
+
+/**
+ * Context for MISSING_ARRAY_PROPERTY error
+ */
+export interface MissingArrayPropertyContext {
+	attemptedProperties?: string[];
+	objectKeys?: string[];
+}
+
+/**
+ * Context for UNKNOWN_LAYOUT_TYPE error
+ */
+export interface UnknownLayoutTypeContext {
+	layoutType?: string;
+	validTypes?: string[];
+}
+
+/**
+ * Context for UNKNOWN_LAYOUT_CHILD_TYPE error
+ */
+export interface UnknownLayoutChildTypeContext {
+	childType?: string;
+	validTypes?: string[];
+}
+
+/**
+ * Context for INVALID_ACCESSOR error
+ */
+export interface InvalidAccessorContext {
+	accessor?: string;
+	reason?: string;
+}
+
+/**
+ * Context for EXPECTED_SINGLE_VALUE error
+ */
+export interface ExpectedSingleValueContext {
+	accessor?: string;
+	resultCount?: number;
+}
+
+/**
+ * Context for FIELD_REQUIRED error
+ */
+export interface FieldRequiredContext {
+	operation?: string;
+	availableFields?: string[];
+}
+
+/**
+ * Context for EMPTY_LAYOUT error
+ */
+export interface EmptyLayoutContext {
+	layoutType?: string;
+}
+
+/**
+ * Context for NOT_ARRAY error
+ */
+export interface NotArrayContext {
+	actualType?: string;
+	value?: unknown;
+}
+
+/**
+ * Context for QUERY_ERROR error
+ */
+export interface QueryErrorContext {
+	jsonPath?: string;
+	reason?: string;
+	dataType?: string;
+}
+
+/**
+ * Context for TYPE_MISMATCH error
+ */
+export interface TypeMismatchContext {
+	expected?: string;
+	actual?: string;
+	nodeId?: string;
+}
+
+/**
+ * MISSING_COMPONENT error
+ */
+export interface MissingComponentError extends BaseSpecError {
+	code: typeof ERROR_CODES.MISSING_COMPONENT;
+	context: MissingComponentContext;
+}
+
+/**
+ * MISSING_ARRAY_PROPERTY error
+ */
+export interface MissingArrayPropertyError extends BaseSpecError {
+	code: typeof ERROR_CODES.MISSING_ARRAY_PROPERTY;
+	context: MissingArrayPropertyContext;
+}
+
+/**
+ * UNKNOWN_LAYOUT_TYPE error
+ */
+export interface UnknownLayoutTypeError extends BaseSpecError {
+	code: typeof ERROR_CODES.UNKNOWN_LAYOUT_TYPE;
+	context: UnknownLayoutTypeContext;
+}
+
+/**
+ * UNKNOWN_LAYOUT_CHILD_TYPE error
+ */
+export interface UnknownLayoutChildTypeError extends BaseSpecError {
+	code: typeof ERROR_CODES.UNKNOWN_LAYOUT_CHILD_TYPE;
+	context: UnknownLayoutChildTypeContext;
+}
+
+/**
+ * INVALID_ACCESSOR error
+ */
+export interface InvalidAccessorError extends BaseSpecError {
+	code: typeof ERROR_CODES.INVALID_ACCESSOR;
+	context: InvalidAccessorContext;
+}
+
+/**
+ * EXPECTED_SINGLE_VALUE error
+ */
+export interface ExpectedSingleValueError extends BaseSpecError {
+	code: typeof ERROR_CODES.EXPECTED_SINGLE_VALUE;
+	context: ExpectedSingleValueContext;
+}
+
+/**
+ * FIELD_REQUIRED error
+ */
+export interface FieldRequiredError extends BaseSpecError {
+	code: typeof ERROR_CODES.FIELD_REQUIRED;
+	context: FieldRequiredContext;
+}
+
+/**
+ * EMPTY_LAYOUT error
+ */
+export interface EmptyLayoutError extends BaseSpecError {
+	code: typeof ERROR_CODES.EMPTY_LAYOUT;
+	context: EmptyLayoutContext;
+}
+
+/**
+ * NOT_ARRAY error
+ */
+export interface NotArrayError extends BaseSpecError {
+	code: typeof ERROR_CODES.NOT_ARRAY;
+	context: NotArrayContext;
+}
+
+/**
+ * QUERY_ERROR error
+ */
+export interface QueryErrorError extends BaseSpecError {
+	code: typeof ERROR_CODES.QUERY_ERROR;
+	context: QueryErrorContext;
+}
+
+/**
+ * TYPE_MISMATCH error
+ */
+export interface TypeMismatchError extends BaseSpecError {
+	code: typeof ERROR_CODES.TYPE_MISMATCH;
+	context: TypeMismatchContext;
+}
+
+/**
+ * Structured error information for spec validation and execution
+ *
+ * Discriminated union type that provides type-safe access to error-specific
+ * context based on the error code.
+ */
+export type SpecError =
+	| MissingComponentError
+	| MissingArrayPropertyError
+	| UnknownLayoutTypeError
+	| UnknownLayoutChildTypeError
+	| InvalidAccessorError
+	| ExpectedSingleValueError
+	| FieldRequiredError
+	| EmptyLayoutError
+	| NotArrayError
+	| QueryErrorError
+	| TypeMismatchError;
