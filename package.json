@@ -28,6 +28,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fast-xml-parser": "^5.2.5",
+    "fastest-levenshtein": "^1.0.16",
     "js-yaml": "^4.1.0",
     "jsonpath-plus": "^10.3.0",
     "leaflet": "^1.9.4",
