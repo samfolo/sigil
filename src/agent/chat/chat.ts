@@ -3,6 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {buildChatSystemPrompt} from '@sigil/src/agent/prompts';
 import {aggregateData, filterData, getUniqueValues, sortData} from '@sigil/src/agent/tools';
+import {formatErrorsForModel, isSpecErrorArray} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import type {Analysis} from '@sigil/src/common/types/analysisSchema';
 import type {ChatResponse, Message, ToolCall} from '@sigil/src/common/types/chat';
@@ -55,7 +56,13 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 			);
 
 			if (isErr(result)) {
-				return `Error filtering data: ${result.error}`;
+				// Check if structured errors
+				if (isSpecErrorArray(result.error)) {
+					// Format for LLM consumption
+					return `Error: ${formatErrorsForModel(result.error)}`;
+				}
+				// Feature limitation or unexpected error - return as-is
+				return `Error: ${result.error}`;
 			}
 
 			const filtered = result.data;
@@ -76,7 +83,13 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 			);
 
 			if (isErr(result)) {
-				return `Error performing ${operation}: ${result.error}`;
+				// Check if structured errors
+				if (isSpecErrorArray(result.error)) {
+					// Format for LLM consumption
+					return `Error: ${formatErrorsForModel(result.error)}`;
+				}
+				// Feature limitation or unexpected error - return as-is
+				return `Error: ${result.error}`;
 			}
 
 			const value = result.data;
@@ -92,7 +105,13 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 			const result = getUniqueValues(originalData, field as string);
 
 			if (isErr(result)) {
-				return `Error getting unique values: ${result.error}`;
+				// Check if structured errors
+				if (isSpecErrorArray(result.error)) {
+					// Format for LLM consumption
+					return `Error: ${formatErrorsForModel(result.error)}`;
+				}
+				// Feature limitation or unexpected error - return as-is
+				return `Error: ${result.error}`;
 			}
 
 			const values = result.data;
@@ -105,7 +124,13 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 			const result = sortData(originalData, field as string, direction as 'asc' | 'desc');
 
 			if (isErr(result)) {
-				return `Error sorting data: ${result.error}`;
+				// Check if structured errors
+				if (isSpecErrorArray(result.error)) {
+					// Format for LLM consumption
+					return `Error: ${formatErrorsForModel(result.error)}`;
+				}
+				// Feature limitation or unexpected error - return as-is
+				return `Error: ${result.error}`;
 			}
 
 			currentData = result.data;
