@@ -4,12 +4,12 @@
 
 import {distance} from 'fastest-levenshtein';
 
-import {ERROR_CODES, err, ok, type Result, type SpecError} from '@sigil/src/common/errors';
+import {ERROR_CODES, err, isErr, ok, type Result, type SpecError} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {bindData, enrichColumns, extractColumns} from '../binding';
 import {VALID_LAYOUT_CHILD_TYPES} from '../constants/constants';
-import type {RenderTree} from '../types';
+import type {RenderTree, Row} from '../types';
 import {extractFirstLayoutChild} from '../utils/layout';
 
 /**
@@ -101,22 +101,33 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 					// Enrich columns with metadata
 					const enrichedColumns = enrichColumns(columns, accessorBindings);
 
-					// Bind data to rows
-					const bindResult = bindData(data, enrichedColumns, accessorBindings, ['$']);
+					// Bind data to rows with path context
+					const bindResult = bindData(data, enrichedColumns, accessorBindings, ['']);
 
-					if (!bindResult.success) {
-						// Data binding failed - return accumulated errors
-						return err(bindResult.error);
+					// Handle binding errors
+					let rows: Row[];
+					if (isErr(bindResult)) {
+						// Accumulate binding errors
+						errors.push(...bindResult.error);
+						// Use empty array for partial rendering
+						rows = [];
+					} else {
+						rows = bindResult.data;
 					}
 
-					// Build RenderTree
+					// Check if any errors accumulated (spec errors + binding errors)
+					if (errors.length > 0) {
+						return err(errors);
+					}
+
+					// Build RenderTree with successful rows
 					return ok({
 						type: 'data-table',
 						props: {
 							title: config.title,
 							description: config.description,
 							columns: enrichedColumns,
-							data: bindResult.data,
+							data: rows,
 						},
 					});
 				}
