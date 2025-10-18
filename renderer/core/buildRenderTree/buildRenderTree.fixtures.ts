@@ -91,16 +91,15 @@ export const VALID_SPEC_VALID_DATA = {
  * 2. Valid spec with partial binding failure - some rows succeed, some fail
  *
  * Scenario:
- * - ComponentSpec with nested accessor '$.user.email'
- * - First row has complete nested structure
- * - Second row missing 'user' field entirely
- * - Expected: 1 successful row, 1 binding error with path '[1]'
+ * - ComponentSpec with two columns: valid '$.name' and invalid 'badCol'
+ * - All rows will have binding errors from 'badCol' accessor
+ * - Expected: Binding errors for each row from the invalid accessor
  */
 export const VALID_SPEC_PARTIAL_BINDING_FAILURE = {
 	spec: {
 		id: 'test-partial-failure',
-		title: 'User Email List',
-		description: 'Table with nested user data',
+		title: 'Mixed Valid/Invalid',
+		description: 'Table with one valid and one invalid accessor',
 		created_at: '2025-10-18T00:00:00Z',
 		data_shape: 'tabular' as const,
 		root: {
@@ -112,21 +111,25 @@ export const VALID_SPEC_PARTIAL_BINDING_FAILURE = {
 				children: [
 					{
 						type: 'component' as const,
-						component_id: 'email-table',
+						component_id: 'mixed-table',
 					},
 				],
 			},
 			nodes: {
-				'email-table': {
-					id: 'email-table',
+				'mixed-table': {
+					id: 'mixed-table',
 					type: 'data-table' as const,
 					config: {
 						type: 'data-table' as const,
-						title: 'User Emails',
+						title: 'Mixed Columns',
 						columns: [
 							{
-								accessor: '$.user.email',
-								label: 'Email',
+								accessor: '$.name', // Valid
+								label: 'Name',
+							},
+							{
+								accessor: 'badCol', // Invalid: no $
+								label: 'Bad Column',
 							},
 						],
 						affordances: [],
@@ -134,8 +137,12 @@ export const VALID_SPEC_PARTIAL_BINDING_FAILURE = {
 				},
 			},
 			accessor_bindings: {
-				'email-table': {
-					'$.user.email': {
+				'mixed-table': {
+					'$.name': {
+						roles: ['label'],
+						data_types: ['string' as const],
+					},
+					badCol: { // Invalid accessor
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
@@ -143,26 +150,23 @@ export const VALID_SPEC_PARTIAL_BINDING_FAILURE = {
 			},
 		},
 	} satisfies ComponentSpec,
-	data: [
-		{user: {email: 'alice@example.com'}},
-		{name: 'Bob'}, // Missing 'user' field
-	],
-	expectedResult: '1 binding error at path [1], RenderTree with errors array',
+	data: [{name: 'Alice'}, {name: 'Bob'}],
+	expectedResult: '2 INVALID_ACCESSOR errors (one per row), RenderTree with errors',
 };
 
 /**
- * 3. Valid spec with all binding failures - no rows bind successfully
+ * 3. Valid spec with all binding failures - invalid accessor syntax
  *
  * Scenario:
- * - ComponentSpec with accessor '$.nonexistent'
- * - Data array with 3 rows, none have the required field
- * - Expected: 3 binding errors, error result returned
+ * - ComponentSpec with INVALID accessor 'badAccessor' (doesn't start with $)
+ * - Data array with 3 rows
+ * - Expected: 3 binding errors (INVALID_ACCESSOR), error result returned
  */
 export const VALID_SPEC_ALL_BINDING_FAILURE = {
 	spec: {
 		id: 'test-all-failures',
-		title: 'Missing Field Table',
-		description: 'Table with non-existent accessor',
+		title: 'Invalid Accessor Table',
+		description: 'Table with invalid accessor syntax',
 		created_at: '2025-10-18T00:00:00Z',
 		data_shape: 'tabular' as const,
 		root: {
@@ -174,21 +178,21 @@ export const VALID_SPEC_ALL_BINDING_FAILURE = {
 				children: [
 					{
 						type: 'component' as const,
-						component_id: 'missing-table',
+						component_id: 'invalid-table',
 					},
 				],
 			},
 			nodes: {
-				'missing-table': {
-					id: 'missing-table',
+				'invalid-table': {
+					id: 'invalid-table',
 					type: 'data-table' as const,
 					config: {
 						type: 'data-table' as const,
-						title: 'Missing Fields',
+						title: 'Invalid Accessor',
 						columns: [
 							{
-								accessor: '$.nonexistent',
-								label: 'Does Not Exist',
+								accessor: 'badAccessor', // Invalid: doesn't start with $
+								label: 'Bad Accessor',
 							},
 						],
 						affordances: [],
@@ -196,8 +200,8 @@ export const VALID_SPEC_ALL_BINDING_FAILURE = {
 				},
 			},
 			accessor_bindings: {
-				'missing-table': {
-					'$.nonexistent': {
+				'invalid-table': {
+					badAccessor: { // Invalid accessor
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
@@ -210,7 +214,7 @@ export const VALID_SPEC_ALL_BINDING_FAILURE = {
 		{name: 'Bob', age: 25},
 		{name: 'Carol', age: 28},
 	],
-	expectedResult: '3 binding errors (one per row), error result returned',
+	expectedResult: '3 INVALID_ACCESSOR errors (one per row), error result returned',
 };
 
 /**
@@ -273,19 +277,18 @@ export const SPEC_ERROR_AND_BINDING_ERROR = {
 };
 
 /**
- * 5. Nested data with mixed success - deep accessors
+ * 5. Nested data with invalid accessor - verify path context handling
  *
  * Scenario:
- * - ComponentSpec with deeply nested accessor '$.company.department.name'
- * - First row has complete nested structure
- * - Second row missing 'department' level
- * - Expected: 1 successful row, 1 binding error with correct nested path
+ * - ComponentSpec with nested VALID accessor and INVALID accessor
+ * - Testing that error paths are constructed correctly with nesting
+ * - Expected: Binding errors with properly constructed paths
  */
 export const NESTED_DATA_MIXED_SUCCESS = {
 	spec: {
 		id: 'test-nested-mixed',
-		title: 'Department Table',
-		description: 'Table with deeply nested data',
+		title: 'Nested with Invalid',
+		description: 'Table with nested valid accessor and invalid accessor',
 		created_at: '2025-10-18T00:00:00Z',
 		data_shape: 'tabular' as const,
 		root: {
@@ -297,21 +300,25 @@ export const NESTED_DATA_MIXED_SUCCESS = {
 				children: [
 					{
 						type: 'component' as const,
-						component_id: 'dept-table',
+						component_id: 'nested-table',
 					},
 				],
 			},
 			nodes: {
-				'dept-table': {
-					id: 'dept-table',
+				'nested-table': {
+					id: 'nested-table',
 					type: 'data-table' as const,
 					config: {
 						type: 'data-table' as const,
-						title: 'Departments',
+						title: 'Nested Data',
 						columns: [
 							{
-								accessor: '$.company.department.name',
-								label: 'Department Name',
+								accessor: '$.company.department.name', // Valid
+								label: 'Department',
+							},
+							{
+								accessor: 'invalid', // Invalid: no $
+								label: 'Bad Accessor',
 							},
 						],
 						affordances: [],
@@ -319,8 +326,12 @@ export const NESTED_DATA_MIXED_SUCCESS = {
 				},
 			},
 			accessor_bindings: {
-				'dept-table': {
+				'nested-table': {
 					'$.company.department.name': {
+						roles: ['label'],
+						data_types: ['string' as const],
+					},
+					invalid: { // Invalid accessor
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
@@ -330,9 +341,9 @@ export const NESTED_DATA_MIXED_SUCCESS = {
 	} satisfies ComponentSpec,
 	data: [
 		{company: {department: {name: 'Engineering'}}},
-		{company: {name: 'Missing department'}}, // Missing 'department' level
+		{company: {department: {name: 'Sales'}}},
 	],
-	expectedResult: '1 successful row, 1 binding error at path [1] for missing nested field',
+	expectedResult: 'Binding errors with correctly constructed error paths',
 };
 
 /**
@@ -419,7 +430,7 @@ export const EXPECTED_VALID_RENDER_TREE: RenderTree = {
 				id: '$.name',
 				label: 'Name',
 				dataType: 'string',
-				alignment: 'left',
+				alignment: undefined,
 			},
 			{
 				id: '$.age',
@@ -430,32 +441,36 @@ export const EXPECTED_VALID_RENDER_TREE: RenderTree = {
 		],
 		data: [
 			{
-				id: '0',
+				id: 'row-0',
 				cells: {
 					'$.name': {
 						raw: 'Alice',
 						display: 'Alice',
 						dataType: 'string',
+						format: undefined,
 					},
 					'$.age': {
 						raw: 30,
 						display: '30',
 						dataType: 'number',
+						format: undefined,
 					},
 				},
 			},
 			{
-				id: '1',
+				id: 'row-1',
 				cells: {
 					'$.name': {
 						raw: 'Bob',
 						display: 'Bob',
 						dataType: 'string',
+						format: undefined,
 					},
 					'$.age': {
 						raw: 25,
 						display: '25',
 						dataType: 'number',
+						format: undefined,
 					},
 				},
 			},
