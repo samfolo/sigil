@@ -2,9 +2,8 @@
  * Core render tree builder - transforms ComponentSpec into RenderTree
  */
 
-import {distance} from 'fastest-levenshtein';
-
 import {ERROR_CODES, err, isErr, ok, type Result, type SpecError} from '@sigil/src/common/errors';
+import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors/format/utils';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {bindData, enrichColumns, extractColumns} from '../binding';
@@ -56,16 +55,14 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 
 			if (!componentNode) {
 				const availableComponents = Object.keys(spec.root.nodes);
-				const closest = availableComponents.find(
-					c => distance(componentId.toLowerCase(), c.toLowerCase()) <= 2
-				);
+				const suggestion = generateFieldNameSimilaritySuggestion(componentId, availableComponents);
 				errors.push({
 					code: ERROR_CODES.MISSING_COMPONENT,
 					severity: 'error',
 					category: 'spec',
 					path: `$.root.layout.children[0].component_id`,
 					context: {componentId, availableComponents},
-					suggestion: closest ? `Did you mean '${closest}'?` : undefined
+					suggestion
 				});
 				// Cannot proceed without component - return accumulated errors
 				return err(errors);
@@ -146,16 +143,14 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 			// Exhaustiveness check
 			const _exhaustive: never = layoutChild;
 			const childType = (_exhaustive as {type: string}).type;
-			const closest = VALID_LAYOUT_CHILD_TYPES.find(
-				t => distance(childType.toLowerCase(), t.toLowerCase()) <= 2
-			);
+			const suggestion = generateFieldNameSimilaritySuggestion(childType, [...VALID_LAYOUT_CHILD_TYPES]);
 			errors.push({
 				code: ERROR_CODES.UNKNOWN_LAYOUT_CHILD_TYPE,
 				severity: 'error',
 				category: 'spec',
 				path: '$.root.layout.children[0]',
 				context: {childType, validTypes: [...VALID_LAYOUT_CHILD_TYPES]},
-				suggestion: closest ? `Did you mean '${closest}'?` : undefined
+				suggestion
 			});
 			return err(errors);
 		}

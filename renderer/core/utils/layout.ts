@@ -2,12 +2,11 @@
  * Layout utilities for traversing and extracting layout nodes
  */
 
-import {distance} from 'fastest-levenshtein';
-
 import {ERROR_CODES, err, ok, type Result, type SpecError} from '@sigil/src/common/errors';
+import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors/format/utils';
 import type {LayoutChild, LayoutNode} from '@sigil/src/lib/generated/types/specification';
 
-import {DEFAULT_LEVENSHTEIN_DISTANCE, VALID_LAYOUT_TYPES} from '../constants/constants';
+import {VALID_LAYOUT_TYPES} from '../constants/constants';
 
 /**
  * Extracts the first child from a layout node
@@ -52,16 +51,14 @@ export const extractFirstLayoutChild = (layout: LayoutNode): Result<LayoutChild,
 		default: {
 			const _exhaustive: never = layout;
 			const layoutType = (_exhaustive as {type: string}).type;
-			const closest = VALID_LAYOUT_TYPES.find(
-				t => distance(layoutType.toLowerCase(), t.toLowerCase()) <= DEFAULT_LEVENSHTEIN_DISTANCE
-			);
+			const suggestion = generateFieldNameSimilaritySuggestion(layoutType, [...VALID_LAYOUT_TYPES]);
 			return err([{
 				code: ERROR_CODES.UNKNOWN_LAYOUT_TYPE,
 				severity: 'error',
 				category: 'spec',
 				path: '$.root.layout',
 				context: {layoutType, validTypes: [...VALID_LAYOUT_TYPES]},
-				suggestion: closest ? `Did you mean '${closest}'?` : undefined
+				suggestion
 			}]);
 		}
 	}

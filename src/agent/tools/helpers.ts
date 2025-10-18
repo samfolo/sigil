@@ -1,7 +1,8 @@
+import {ERROR_CODES} from '@sigil/src/common/errors/codes';
+import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors/format/utils';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
-
-type ExtractArrayError = 'not_array' | 'no_array_property';
+import type {SpecError} from '@sigil/src/common/errors/types';
 
 /**
  * Extract an array from various data structures (GeoJSON, nested objects, etc.)
@@ -9,7 +10,7 @@ type ExtractArrayError = 'not_array' | 'no_array_property';
  * @param data - Data to extract array from
  * @returns Result containing extracted array, or error code for LLM error reporting
  */
-export const extractArray = (data: unknown): Result<unknown[], ExtractArrayError> => {
+export const extractArray = (data: unknown): Result<unknown[], SpecError[]> => {
 	if (Array.isArray(data)) {
 		return ok(data);
 	}
@@ -36,11 +37,40 @@ export const extractArray = (data: unknown): Result<unknown[], ExtractArrayError
 		}
 
 		// Object has no recognisable array property
-		return err('no_array_property');
+		const objectKeys = Object.keys(dataRecord);
+		let suggestion: string | undefined;
+		if (objectKeys.length > 0) {
+			for (const prop of commonArrayProps) {
+				suggestion = generateFieldNameSimilaritySuggestion(prop, objectKeys);
+				if (suggestion) {
+					break;
+				}
+			}
+		}
+
+		return err([{
+			code: ERROR_CODES.MISSING_ARRAY_PROPERTY,
+			severity: 'error',
+			category: 'data',
+			path: '',
+			context: {
+				attemptedProperties: commonArrayProps,
+				objectKeys
+			},
+			suggestion
+		}]);
 	}
 
 	// Data is not an array and not an object
-	return err('not_array');
+	return err([{
+		code: ERROR_CODES.NOT_ARRAY,
+		severity: 'error',
+		category: 'data',
+		path: '',
+		context: {
+			actualType: typeof data
+		}
+	}]);
 };
 
 /**
