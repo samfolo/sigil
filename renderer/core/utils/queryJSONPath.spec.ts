@@ -227,13 +227,22 @@ describe('queryJSONPath', () => {
 		const data = {name: 'Alice'};
 
 		it('should return error for accessor without $ prefix', () => {
-			const result = queryJSONPath(data, 'name');
+			const accessor = 'name';
+			const result = queryJSONPath(data, accessor);
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
+				expect(Array.isArray(result.error)).toBe(true);
 				expect(result.error).toHaveLength(1);
-				expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+				expect(result.error.at(0)?.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
 				expect(result.error.at(0)?.severity).toBe('error');
 				expect(result.error.at(0)?.category).toBe('data');
+				expect(result.error.at(0)?.path).toBe(accessor);
+				expect(result.error.at(0)?.context).toEqual({
+					accessor,
+					reason: 'JSONPath must start with $',
+				});
+				expect(result.error.at(0)?.suggestion).toContain('prepend');
+				expect(result.error.at(0)?.suggestion).toContain('$');
 			}
 		});
 
@@ -249,13 +258,19 @@ describe('queryJSONPath', () => {
 
 	describe('edge cases', () => {
 		it('should error for null data', () => {
-			const result = queryJSONPath(null, '$.field');
+			const accessor = '$.field';
+			const result = queryJSONPath(null, accessor);
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
+				expect(Array.isArray(result.error)).toBe(true);
 				expect(result.error).toHaveLength(1);
-				expect(result.error.at(0)?.code).toBe('QUERY_ERROR');
+				expect(result.error.at(0)?.code).toBe(ERROR_CODES.QUERY_ERROR);
 				expect(result.error.at(0)?.severity).toBe('error');
 				expect(result.error.at(0)?.category).toBe('data');
+				expect(result.error.at(0)?.path).toBe('$');
+				expect(result.error.at(0)?.context).toHaveProperty('jsonPath', accessor);
+				expect(result.error.at(0)?.context).toHaveProperty('reason');
+				expect(result.error.at(0)?.context).toHaveProperty('dataType', 'object');
 			}
 		});
 
@@ -344,21 +359,23 @@ describe('queryJSONPath', () => {
 						],
 					},
 				};
-				const result = querySingleValue(data, '$.store.book[*].title');
+				const accessor = '$.store.book[*].title';
+				const result = querySingleValue(data, accessor);
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
+					expect(Array.isArray(result.error)).toBe(true);
 					expect(result.error).toHaveLength(1);
 					expect(result.error.at(0)?.code).toBe(ERROR_CODES.EXPECTED_SINGLE_VALUE);
 					expect(result.error.at(0)?.severity).toBe('error');
 					expect(result.error.at(0)?.category).toBe('data');
-					expect(result.error.at(0)?.path).toBe('$.store.book[*].title');
+					expect(result.error.at(0)?.path).toBe(accessor);
 					expect(result.error.at(0)?.context).toEqual({
-						accessor: '$.store.book[*].title',
+						accessor,
 						resultCount: 2,
 					});
-					expect(result.error.at(0)?.suggestion).toBe(
-						'Remove the wildcard [*] or specify an index like [0]'
-					);
+					expect(result.error.at(0)?.suggestion).toContain('wildcard');
+					expect(result.error.at(0)?.suggestion).toContain('[*]');
+					expect(result.error.at(0)?.suggestion).toContain('[0]');
 				}
 			});
 
@@ -374,6 +391,7 @@ describe('queryJSONPath', () => {
 				const result = querySingleValue(data, accessor);
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
+					expect(Array.isArray(result.error)).toBe(true);
 					expect(result.error).toHaveLength(1);
 					expect(result.error.at(0)?.code).toBe(ERROR_CODES.EXPECTED_SINGLE_VALUE);
 					expect(result.error.at(0)?.severity).toBe('error');
@@ -384,9 +402,8 @@ describe('queryJSONPath', () => {
 						resultCount: 2,
 					});
 					// Filter queries don't contain [*] or .., so use default suggestion
-					expect(result.error.at(0)?.suggestion).toBe(
-						`Access a specific index: ${accessor}[0]`
-					);
+					expect(result.error.at(0)?.suggestion).toContain('specific index');
+					expect(result.error.at(0)?.suggestion).toContain('[0]');
 				}
 			});
 
@@ -402,21 +419,23 @@ describe('queryJSONPath', () => {
 						title: 'Other',
 					},
 				};
-				const result = querySingleValue(data, '$..title');
+				const accessor = '$..title';
+				const result = querySingleValue(data, accessor);
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
+					expect(Array.isArray(result.error)).toBe(true);
 					expect(result.error).toHaveLength(1);
 					expect(result.error.at(0)?.code).toBe(ERROR_CODES.EXPECTED_SINGLE_VALUE);
 					expect(result.error.at(0)?.severity).toBe('error');
 					expect(result.error.at(0)?.category).toBe('data');
-					expect(result.error.at(0)?.path).toBe('$..title');
+					expect(result.error.at(0)?.path).toBe(accessor);
 					expect(result.error.at(0)?.context).toEqual({
-						accessor: '$..title',
+						accessor,
 						resultCount: 3,
 					});
-					expect(result.error.at(0)?.suggestion).toBe(
-						'Make the recursive descent (..) more specific to target a single value'
-					);
+					expect(result.error.at(0)?.suggestion).toContain('recursive descent');
+					expect(result.error.at(0)?.suggestion).toContain('..');
+					expect(result.error.at(0)?.suggestion).toContain('specific');
 				}
 			});
 		});
@@ -424,11 +443,13 @@ describe('queryJSONPath', () => {
 		describe('error handling', () => {
 			it('should error for invalid accessor (no $ prefix)', () => {
 				const data = {name: 'Alice'};
-				const result = querySingleValue(data, 'name');
+				const accessor = 'name';
+				const result = querySingleValue(data, accessor);
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
+					expect(Array.isArray(result.error)).toBe(true);
 					expect(result.error).toHaveLength(1);
-					expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+					expect(result.error.at(0)?.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
 					expect(result.error.at(0)?.severity).toBe('error');
 					expect(result.error.at(0)?.category).toBe('data');
 				}
@@ -557,11 +578,13 @@ describe('queryJSONPath', () => {
 		describe('error handling', () => {
 			it('should error for invalid accessor (no $ prefix)', () => {
 				const data = {name: 'Alice'};
-				const result = queryMultipleValues(data, 'name');
+				const accessor = 'name';
+				const result = queryMultipleValues(data, accessor);
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
+					expect(Array.isArray(result.error)).toBe(true);
 					expect(result.error).toHaveLength(1);
-					expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+					expect(result.error.at(0)?.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
 					expect(result.error.at(0)?.severity).toBe('error');
 					expect(result.error.at(0)?.category).toBe('data');
 				}
