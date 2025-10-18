@@ -229,7 +229,10 @@ describe('queryJSONPath', () => {
 			const result = queryJSONPath(data, 'name');
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
-				expect(result.error).toBe('invalid_accessor');
+				expect(result.error).toHaveLength(1);
+				expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+				expect(result.error.at(0)?.severity).toBe('error');
+				expect(result.error.at(0)?.category).toBe('data');
 			}
 		});
 
@@ -248,7 +251,10 @@ describe('queryJSONPath', () => {
 			const result = queryJSONPath(null, '$.field');
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
-				expect(result.error).toBe('query_error');
+				expect(result.error).toHaveLength(1);
+				expect(result.error.at(0)?.code).toBe('QUERY_ERROR');
+				expect(result.error.at(0)?.severity).toBe('error');
+				expect(result.error.at(0)?.category).toBe('data');
 			}
 		});
 
@@ -385,7 +391,10 @@ describe('queryJSONPath', () => {
 				const result = querySingleValue(data, 'name');
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
-					expect(result.error).toBe('invalid_accessor');
+					expect(result.error).toHaveLength(1);
+					expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+					expect(result.error.at(0)?.severity).toBe('error');
+					expect(result.error.at(0)?.category).toBe('data');
 				}
 			});
 		});
@@ -515,7 +524,10 @@ describe('queryJSONPath', () => {
 				const result = queryMultipleValues(data, 'name');
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
-					expect(result.error).toBe('invalid_accessor');
+					expect(result.error).toHaveLength(1);
+					expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+					expect(result.error.at(0)?.severity).toBe('error');
+					expect(result.error.at(0)?.category).toBe('data');
 				}
 			});
 		});
