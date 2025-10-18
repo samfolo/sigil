@@ -218,3 +218,110 @@ Rarely needed utilities available in @sigil/src/common/errors/result:
 - `unwrapOrElse<T, E>(result, fn)` - Extract value or compute from error
 
 Use type narrowing with `isOk`/`isErr` instead of these utilities in most cases.
+
+## Structured Spec Errors
+
+For renderer and tool errors that need LLM-actionable feedback, use `SpecError` with `Result<T, SpecError[]>`.
+
+### When to Use
+
+Use SpecError for:
+- Renderer errors (layout validation, component lookup, data binding)
+- Tool execution errors (aggregation, query failures)
+
+Use plain strings for:
+- Feature limitations (unsupported components)
+- Programming errors (throw exceptions)
+
+### Error Categories
+
+- `spec`: Model generated malformed structure (missing IDs, invalid types, bad JSONPath)
+- `data`: Model's assumptions don't match data (failed queries, nulls, type mismatches)
+
+### Construction
+
+Construct inline at error sites. No helpers.
+
+```typescript
+import {ERROR_CODES, type SpecError} from '@sigil/src/common/errors';
+
+const error: SpecError = {
+  code: ERROR_CODES.MISSING_COMPONENT,
+  severity: 'error',
+  category: 'spec',
+  path: '$.layout.children[0]',
+  context: {componentId: 'UserCard', availableComponents: ['DataTable']},
+  suggestion: 'Did you mean "DataTable"?',
+};
+
+return err([error]);
+```
+
+### Error Accumulation
+
+Collect errors, continue processing where possible:
+
+```typescript
+const errors: SpecError[] = [];
+
+for (const item of items) {
+  const result = processItem(item);
+  if (isErr(result)) {
+    errors.push(...result.error);
+    continue; // Use fallback
+  }
+}
+
+return errors.length > 0 ? err(errors) : ok(data);
+```
+
+Pipeline strategy:
+- Layout validation: fail fast
+- Component lookup: fail fast
+- Data binding: accumulate all errors
+- buildRenderTree: collect spec + binding errors
+
+### Error Codes
+
+See `@sigil/src/common/errors/types.ts` for context type definitions.
+
+Reference: MISSING_COMPONENT, MISSING_ARRAY_PROPERTY, UNKNOWN_LAYOUT_TYPE, UNKNOWN_LAYOUT_CHILD_TYPE
+
+Accessor: INVALID_ACCESSOR, EXPECTED_SINGLE_VALUE
+
+Requirement: FIELD_REQUIRED, EMPTY_LAYOUT
+
+Type: NOT_ARRAY, QUERY_ERROR, TYPE_MISMATCH
+
+### LLM Output
+
+```typescript
+import {formatErrorsForModel} from '@sigil/src/common/errors';
+
+const formatted = formatErrorsForModel(errors);
+// ## Errors (1)
+// - Missing component; was given "UserCard" but available: "DataTable" at $.layout.children[0]
+```
+
+### Boundary Adapter
+
+Throw only at React boundaries and tool handlers:
+
+```typescript
+import {SpecProcessingError} from '@sigil/src/common/errors';
+
+if (isErr(result)) {
+  throw new SpecProcessingError(result.error);
+}
+```
+
+### Levenshtein Suggestions
+
+```typescript
+import {closest, distance} from 'fastest-levenshtein';
+
+const match = closest(input, candidates);
+if (distance(input, match) <= 2) {
+  suggestion = `Did you mean "${match}"?`;
+}
+```
