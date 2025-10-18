@@ -12,8 +12,6 @@
 
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
-import type {Column} from '../types/types';
-
 /**
  * 1. Simple flat data - basic object properties
  */
@@ -446,4 +444,99 @@ export const COMPLEX_VALUE_MAPPINGS = {
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: ['$'],
 	expectedResult: 'Multiple value mappings should be applied correctly, numbers should be formatted',
+};
+
+/**
+ * 10. Single row with single column - minimal test case
+ */
+export const SINGLE_ROW_SINGLE_COLUMN = {
+	data: [{name: 'Single'}],
+	columns: [
+		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+	],
+	accessorBindings: {
+		'$.name': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Single row with single column should bind successfully',
+};
+
+/**
+ * 11. All columns undefined - empty object with missing fields
+ */
+export const ALL_COLUMNS_UNDEFINED = {
+	data: [{}],
+	columns: [
+		{id: '$.missing1', label: 'Missing 1', dataType: 'string', alignment: 'left' as const},
+		{id: '$.missing2', label: 'Missing 2', dataType: 'string', alignment: 'left' as const},
+	],
+	accessorBindings: {
+		'$.missing1': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$.missing2': {
+			data_types: ['string' as const],
+			roles: ['value'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'All columns returning undefined should produce empty display strings',
+};
+
+/**
+ * 12. Invalid accessor - does not start with $
+ */
+export const INVALID_ACCESSOR_NO_DOLLAR_PREFIX = {
+	data: [{name: 'Test'}],
+	columns: [
+		{id: 'name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+	],
+	accessorBindings: {
+		name: {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Accessor without $ prefix should produce INVALID_ACCESSOR error',
+};
+
+/**
+ * 13. Multiple rows with invalid accessor - error accumulation
+ */
+export const MULTIPLE_ROWS_INVALID_ACCESSOR = {
+	data: [{name: 'Test1'}, {name: 'Test2'}, {name: 'Test3'}],
+	columns: [
+		{id: 'invalid', label: 'Invalid', dataType: 'string', alignment: 'left' as const},
+	],
+	accessorBindings: {
+		invalid: {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Should accumulate one error per row for invalid accessor',
+};
+
+/**
+ * 14. Invalid accessor with path context - verify error path construction
+ */
+export const INVALID_ACCESSOR_WITH_PATH_CONTEXT = {
+	data: [{name: 'Test1'}, {name: 'Test2'}],
+	columns: [
+		{id: 'bad', label: 'Bad', dataType: 'string', alignment: 'left' as const},
+	],
+	accessorBindings: {
+		bad: {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Error paths should be $[0] and $[1] for rows 0 and 1',
 };
