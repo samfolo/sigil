@@ -18,3 +18,10 @@ export {
 	isOk,
 	isErr,
 } from './result';
+
+// SpecError system
+export {ERROR_CODES} from './codes';
+export type {ErrorCode, ErrorCategory, Severity, SpecError} from './types';
+export {formatError, formatErrorsForModel} from './format';
+export {SpecProcessingError} from './exception';
+export {isSpecErrorArray} from './predicates';

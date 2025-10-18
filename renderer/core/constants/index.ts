@@ -1,1 +1,1 @@
-export {MAX_DISPLAY_LENGTH} from './constants';
+export {DEFAULT_LEVENSHTEIN_DISTANCE, MAX_DISPLAY_LENGTH, VALID_LAYOUT_TYPES} from './constants';

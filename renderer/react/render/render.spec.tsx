@@ -9,6 +9,7 @@
 import {render as renderComponent, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
+import {ERROR_CODES, SpecProcessingError} from '@sigil/src/common/errors';
 import type {ComponentType} from '@sigil/src/lib/generated/types/specification';
 
 import {render} from './render';
@@ -108,25 +109,26 @@ describe('render', () => {
 		it('should throw when buildRenderTree fails - invalid component_id', () => {
 			expect(() => {
 				render(INVALID_COMPONENT_ID_SPEC, []);
-			}).toThrow(/Failed to build render tree/);
+			}).toThrow(SpecProcessingError);
 		});
 
 		it('should throw when buildRenderTree fails - type mismatch', () => {
 			expect(() => {
 				render(TYPE_MISMATCH_SPEC, []);
-			}).toThrow(/Failed to build render tree/);
+			}).toThrow(SpecProcessingError);
 		});
 
 		it('should provide descriptive error messages', () => {
 			try {
 				render(INVALID_COMPONENT_ID_SPEC, []);
 			} catch (error) {
-				expect(error).toBeInstanceOf(Error);
-				if (error instanceof Error) {
-					// Error should mention the failure
-					expect(error.message).toContain('Failed to build render tree');
-					// Should include the actual error from buildRenderTree
-					expect(error.message).toContain('not found');
+				expect(error).toBeInstanceOf(SpecProcessingError);
+				if (error instanceof SpecProcessingError) {
+					// Should contain formatted error message
+					expect(error.message).toMatch(/missing component/i);
+					// Should have structured errors attached
+					expect(error.errors).toHaveLength(1);
+					expect(error.errors.at(0)?.code).toBe(ERROR_CODES.MISSING_COMPONENT);
 				}
 			}
 		});

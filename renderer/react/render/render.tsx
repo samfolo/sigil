@@ -8,6 +8,7 @@
 import type {ReactElement} from 'react';
 
 import {buildRenderTree} from '@sigil/renderer/core';
+import {SpecProcessingError} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {DataTable} from '../components';
@@ -32,7 +33,14 @@ export const render = (spec: ComponentSpec, data: unknown[]): ReactElement => {
 
 	// Convert Result error to exception for React error boundary handling
 	if (!renderTreeResult.success) {
-		throw new Error(`Failed to build render tree: ${renderTreeResult.error}`);
+		// Handle union type: SpecError[] | string
+		if (Array.isArray(renderTreeResult.error)) {
+			// Structured errors that model can fix - use SpecProcessingError
+			throw new SpecProcessingError(renderTreeResult.error);
+		} else {
+			// Feature limitation - use plain Error
+			throw new Error(`Failed to build render tree: ${renderTreeResult.error}`);
+		}
 	}
 
 	const renderTree = renderTreeResult.data;
