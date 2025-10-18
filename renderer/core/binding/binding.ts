@@ -71,14 +71,19 @@ export const enrichColumns = (
  * @param data - Raw data array (can be flat or nested objects)
  * @param columns - Column definitions with accessors
  * @param accessorBindings - Field metadata containing value_mappings
+ * @param pathContext - JSONPath segments representing location in data structure (e.g., ['$'] or ['$', '[0]', '.users'])
  * @returns Array of processed rows
  */
 export const bindData = (
 	data: unknown[],
 	columns: Column[],
 	accessorBindings: Record<string, FieldMetadata>,
+	pathContext: string[],
 ): Row[] => {
 	return data.map((rowData, index) => {
+		// Construct row-level path context (e.g., ['$', '[0]'])
+		const rowPath = [...pathContext, `[${index}]`];
+
 		// Generate unique row ID from index
 		const rowId = `row-${index}`;
 
