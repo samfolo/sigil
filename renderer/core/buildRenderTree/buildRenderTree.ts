@@ -2,10 +2,13 @@
  * Core render tree builder - transforms ComponentSpec into RenderTree
  */
 
-import {err, ok, type Result} from '@sigil/src/common/errors/result';
+import {distance} from 'fastest-levenshtein';
+
+import {ERROR_CODES, err, ok, type Result, type SpecError} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {bindData, enrichColumns, extractColumns} from '../binding';
+import {VALID_LAYOUT_CHILD_TYPES} from '../constants/constants';
 import type {RenderTree} from '../types';
 import {extractFirstLayoutChild} from '../utils/layout';
 
@@ -22,15 +25,22 @@ import {extractFirstLayoutChild} from '../utils/layout';
  * 7. Bind data to rows
  * 8. Return RenderTree
  *
+ * This function accumulates all structural errors found in the spec rather than
+ * failing fast. It returns all issues discovered during processing, though some
+ * errors may be dependent (e.g., missing component prevents data binding).
+ *
  * @param spec - ComponentSpec from Sigil IR
  * @param data - Raw data array
- * @returns Result containing RenderTree or error message
+ * @returns Result containing RenderTree or array of structured errors
  */
-export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<RenderTree, string> => {
+export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<RenderTree, SpecError[] | string> => {
+	const errors: SpecError[] = [];
+
 	// Extract first child from layout
 	const layoutChildResult = extractFirstLayoutChild(spec.root.layout);
 
 	if (!layoutChildResult.success) {
+		// Layout extraction failed - cannot proceed with dependent steps
 		return layoutChildResult;
 	}
 
@@ -45,7 +55,20 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 			const componentNode = spec.root.nodes[componentId];
 
 			if (!componentNode) {
-				return err(`Component "${componentId}" not found in nodes registry`);
+				const availableComponents = Object.keys(spec.root.nodes);
+				const closest = availableComponents.find(
+					c => distance(componentId.toLowerCase(), c.toLowerCase()) <= 2
+				);
+				errors.push({
+					code: ERROR_CODES.MISSING_COMPONENT,
+					severity: 'error',
+					category: 'spec',
+					path: `$.root.layout.children[0].component_id`,
+					context: {componentId, availableComponents},
+					suggestion: closest ? `Did you mean '${closest}'?` : undefined
+				});
+				// Cannot proceed without component - return accumulated errors
+				return err(errors);
 			}
 
 			// Use switch for type narrowing on component type
@@ -53,7 +76,19 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 				case 'data-table': {
 					// TypeScript narrows componentNode but we need to assert config type
 					if (componentNode.config.type !== 'data-table') {
-						return err('Component type and config type mismatch');
+						errors.push({
+							code: ERROR_CODES.TYPE_MISMATCH,
+							severity: 'error',
+							category: 'spec',
+							path: `$.root.nodes['${componentId}']`,
+							context: {
+								expected: componentNode.type,
+								actual: componentNode.config.type,
+								nodeId: componentId
+							}
+						});
+						// Cannot proceed with mismatched types - return accumulated errors
+						return err(errors);
 					}
 					const config = componentNode.config;
 
@@ -94,7 +129,19 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 		default: {
 			// Exhaustiveness check
 			const _exhaustive: never = layoutChild;
-			return err(`Unknown layout child type: ${(_exhaustive as {type: string}).type}`);
+			const childType = (_exhaustive as {type: string}).type;
+			const closest = VALID_LAYOUT_CHILD_TYPES.find(
+				t => distance(childType.toLowerCase(), t.toLowerCase()) <= 2
+			);
+			errors.push({
+				code: ERROR_CODES.UNKNOWN_LAYOUT_CHILD_TYPE,
+				severity: 'error',
+				category: 'spec',
+				path: '$.root.layout.children[0]',
+				context: {childType, validTypes: [...VALID_LAYOUT_CHILD_TYPES]},
+				suggestion: closest ? `Did you mean '${closest}'?` : undefined
+			});
+			return err(errors);
 		}
 	}
 };

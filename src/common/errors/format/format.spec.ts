@@ -4,8 +4,8 @@
 
 import {describe, expect, it} from 'vitest';
 
-import type {SpecError} from '@sigil/src/common/errors/types';
 import {ERROR_CODES} from '@sigil/src/common/errors/codes';
+import type {SpecError} from '@sigil/src/common/errors/types';
 
 import {formatError, formatErrorsForModel} from './format';
 

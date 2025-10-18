@@ -21,6 +21,7 @@ export {
 
 // SpecError system
 export {ERROR_CODES} from './codes';
-export type {ErrorCode} from './codes';
-export {formatErrorsForModel} from './format';
-export type {ErrorCategory, Severity, SpecError} from './types';
+export type {ErrorCode, ErrorCategory, Severity, SpecError} from './types';
+export {formatError, formatErrorsForModel} from './format';
+export {SpecProcessingError} from './exception';
+export {isSpecErrorArray} from './predicates';

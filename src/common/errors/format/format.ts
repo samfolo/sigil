@@ -7,6 +7,7 @@
 
 import {groupBy} from 'lodash';
 
+import {ERROR_CODES} from '@sigil/src/common/errors/codes';
 import type {
 	EmptyLayoutContext,
 	ExpectedSingleValueContext,
@@ -21,7 +22,6 @@ import type {
 	UnknownLayoutChildTypeContext,
 	UnknownLayoutTypeContext,
 } from '@sigil/src/common/errors/types';
-import {ERROR_CODES} from '@sigil/src/common/errors/codes';
 
 /**
  * Formats an array of strings as a quoted list

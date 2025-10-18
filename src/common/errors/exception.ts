@@ -25,6 +25,7 @@
  * ```
  */
 
+import {formatError, formatErrorsForModel} from './format';
 import type {SpecError} from './types';
 
 /**
@@ -40,7 +41,13 @@ export class SpecProcessingError extends Error {
 	public readonly errors: SpecError[];
 
 	constructor(errors: SpecError[], message?: string) {
-		super(message ?? `Spec processing failed with ${errors.length} error(s)`);
+		// Auto-format errors if no custom message provided
+		const defaultMessage =
+			errors.length === 1
+				? formatError(errors[0])
+				: `Failed to build render tree:\n\n${formatErrorsForModel(errors)}`;
+
+		super(message ?? defaultMessage);
 		this.name = 'SpecProcessingError';
 		this.errors = errors;
 	}

@@ -1,4 +1,4 @@
-import {ERROR_CODES} from './codes';
+import type {ERROR_CODES} from './codes';
 
 /**
  * Error type definitions for the rich error system
