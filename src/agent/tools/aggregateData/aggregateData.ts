@@ -1,6 +1,7 @@
 import {maxBy, meanBy, minBy, sumBy} from 'lodash';
 
 import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
+import {ERROR_CODES} from '@sigil/src/common/errors/codes';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
 import type {SpecError} from '@sigil/src/common/errors/types';
@@ -8,7 +9,6 @@ import type {SpecError} from '@sigil/src/common/errors/types';
 import {extractArray} from '../helpers';
 
 type AggregateOperation = 'sum' | 'average' | 'count' | 'min' | 'max';
-type AggregateError = 'not_array' | 'no_array_property' | 'field_required' | 'not_an_array' | SpecError[];
 
 /**
  * Intelligently count items in various data structures
@@ -17,7 +17,7 @@ type AggregateError = 'not_array' | 'no_array_property' | 'field_required' | 'no
  * @param field - Optional JSONPath accessor to nested array (must start with `$`)
  * @returns Result containing count, or error
  */
-export const countItems = (data: unknown, field: string | null): Result<number, AggregateError> => {
+export const countItems = (data: unknown, field: string | null): Result<number, SpecError[]> => {
 	// If field is specified, try to count items in that nested path
 	if (field) {
 		const result = querySingleValue(data, field);
@@ -30,7 +30,18 @@ export const countItems = (data: unknown, field: string | null): Result<number, 
 		if (Array.isArray(nestedData)) {
 			return ok(nestedData.length);
 		}
-		return err('not_an_array');
+		return err([
+			{
+				code: ERROR_CODES.NOT_ARRAY,
+				severity: 'error',
+				category: 'data',
+				path: field || '',
+				context: {
+					actualType: typeof nestedData,
+					value: nestedData,
+				},
+			},
+		]);
 	}
 
 	// Handle single GeoJSON Feature specially
@@ -58,7 +69,7 @@ export const aggregateData = (
 	data: unknown,
 	field: string | null,
 	operation: AggregateOperation
-): Result<number, AggregateError> => {
+): Result<number, SpecError[]> => {
 	// Special handling for count operation
 	if (operation === 'count') {
 		return countItems(data, field);
@@ -72,7 +83,33 @@ export const aggregateData = (
 	const arrayData = arrayResult.data;
 
 	if (!field) {
-		return err('field_required');
+		const context: {operation: AggregateOperation; availableFields?: string[]} = {
+			operation,
+		};
+
+		// If we have data, extract available numeric fields
+		if (arrayData.length > 0) {
+			const firstItem = arrayData.at(0);
+			if (typeof firstItem === 'object' && firstItem !== null) {
+				const numericFields = Object.keys(firstItem).filter((key) => {
+					const value = (firstItem as Record<string, unknown>)[key];
+					return typeof value === 'number';
+				});
+				if (numericFields.length > 0) {
+					context.availableFields = numericFields;
+				}
+			}
+		}
+
+		return err([
+			{
+				code: ERROR_CODES.FIELD_REQUIRED,
+				severity: 'error',
+				category: 'data',
+				path: '',
+				context,
+			},
+		]);
 	}
 
 	// Validate accessor by checking first item (fail fast on invalid accessor or array result)
@@ -139,6 +176,16 @@ export const aggregateData = (
 		}
 		default:
 			// This should never happen as all operations are handled above
-			return err('field_required');
+			return err([
+				{
+					code: ERROR_CODES.FIELD_REQUIRED,
+					severity: 'error',
+					category: 'data',
+					path: '',
+					context: {
+						operation,
+					},
+				},
+			]);
 	}
 };

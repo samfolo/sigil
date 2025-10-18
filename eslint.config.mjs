@@ -124,6 +124,9 @@ const eslintConfig = [
       // No spaces inside curly braces for destructuring and imports
       "object-curly-spacing": ["error", "never"],
 
+      // Enforce object shorthand syntax
+      "object-shorthand": ["error", "always"],
+
       // TypeScript-specific rules
       "@typescript-eslint/method-signature-style": ["error", "property"],
       "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
