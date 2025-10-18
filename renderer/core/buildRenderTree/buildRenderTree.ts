@@ -102,7 +102,12 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 					const enrichedColumns = enrichColumns(columns, accessorBindings);
 
 					// Bind data to rows
-					const rows = bindData(data, enrichedColumns, accessorBindings);
+					const bindResult = bindData(data, enrichedColumns, accessorBindings, ['$']);
+
+					if (!bindResult.success) {
+						// Data binding failed - return accumulated errors
+						return err(bindResult.error);
+					}
 
 					// Build RenderTree
 					return ok({
@@ -111,7 +116,7 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 							title: config.title,
 							description: config.description,
 							columns: enrichedColumns,
-							data: rows,
+							data: bindResult.data,
 						},
 					});
 				}
