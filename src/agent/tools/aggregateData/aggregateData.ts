@@ -3,11 +3,12 @@ import {maxBy, meanBy, minBy, sumBy} from 'lodash';
 import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
+import type {SpecError} from '@sigil/src/common/errors/types';
 
 import {extractArray} from '../helpers';
 
 type AggregateOperation = 'sum' | 'average' | 'count' | 'min' | 'max';
-type AggregateError = 'invalid_accessor' | 'not_array' | 'no_array_property' | 'field_required' | 'not_an_array' | 'expected_single_value';
+type AggregateError = 'not_array' | 'no_array_property' | 'field_required' | 'not_an_array' | SpecError[];
 
 /**
  * Intelligently count items in various data structures
@@ -21,8 +22,8 @@ export const countItems = (data: unknown, field: string | null): Result<number, 
 	if (field) {
 		const result = querySingleValue(data, field);
 		if (isErr(result)) {
-			// Propagate the specific error (invalid_accessor or expected_single_value)
-			return err(result.error as AggregateError);
+			// Propagate the SpecError array from querySingleValue
+			return err(result.error);
 		}
 
 		const nestedData = result.data;
@@ -78,8 +79,8 @@ export const aggregateData = (
 	if (arrayData.length > 0) {
 		const testResult = querySingleValue(arrayData.at(0), field);
 		if (isErr(testResult)) {
-			// Propagate the specific error (invalid_accessor or expected_single_value)
-			return err(testResult.error as AggregateError);
+			// Propagate the SpecError array from querySingleValue
+			return err(testResult.error);
 		}
 	}
 

@@ -150,7 +150,30 @@ export const querySingleValue = (data: unknown, accessor: string): Result<unknow
 
 	// Fail if result is an array (from wildcards/filters/recursive-descent)
 	if (Array.isArray(result.data)) {
-		return err('expected_single_value');
+		const resultCount = result.data.length;
+		let suggestion: string;
+
+		if (accessor.includes('[*]')) {
+			suggestion = 'Remove the wildcard [*] or specify an index like [0]';
+		} else if (accessor.includes('..')) {
+			suggestion = 'Make the recursive descent (..) more specific to target a single value';
+		} else {
+			suggestion = `Access a specific index: ${accessor}[0]`;
+		}
+
+		return err([
+			{
+				code: ERROR_CODES.EXPECTED_SINGLE_VALUE,
+				severity: 'error',
+				category: 'data',
+				path: accessor,
+				context: {
+					accessor,
+					resultCount,
+				},
+				suggestion,
+			},
+		]);
 	}
 
 	return result;

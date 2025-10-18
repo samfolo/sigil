@@ -1,4 +1,5 @@
 import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
+import {ERROR_CODES} from '@sigil/src/common/errors/codes';
 import {isErr} from '@sigil/src/common/errors/result';
 import {
   Table,
@@ -53,9 +54,10 @@ export const TableView = ({data, keyFields}: TableViewProps) => {
 
                 // Handle errors gracefully - show error indicator in cell
                 if (isErr(result)) {
+                  const isArrayError = result.error.at(0)?.code === ERROR_CODES.EXPECTED_SINGLE_VALUE;
                   return (
                     <TableCell key={field.path} className="text-red-500">
-                      {result.error === 'expected_single_value' ? '[Array]' : '[Error]'}
+                      {isArrayError ? '[Array]' : '[Error]'}
                     </TableCell>
                   );
                 }

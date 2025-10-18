@@ -3,10 +3,11 @@ import {uniq} from 'lodash';
 import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
+import type {SpecError} from '@sigil/src/common/errors/types';
 
 import {extractArray} from '../helpers';
 
-type UniqueValuesError = 'invalid_accessor' | 'not_array' | 'no_array_property' | 'expected_single_value';
+type UniqueValuesError = 'not_array' | 'no_array_property' | SpecError[];
 
 /**
  * Get unique values from a specific field
@@ -30,8 +31,8 @@ export const getUniqueValues = (
 	if (arrayData.length > 0) {
 		const testResult = querySingleValue(arrayData.at(0), field);
 		if (isErr(testResult)) {
-			// Propagate the specific error (invalid_accessor or expected_single_value)
-			return err(testResult.error as UniqueValuesError);
+			// Propagate the SpecError array from querySingleValue
+			return err(testResult.error);
 		}
 	}
 
