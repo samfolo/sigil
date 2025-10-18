@@ -18,10 +18,10 @@
 
 import {JSONPath} from 'jsonpath-plus';
 
+import {ERROR_CODES} from '@sigil/src/common/errors/codes';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok} from '@sigil/src/common/errors/result';
-
-type QueryError = 'invalid_accessor' | 'query_error' | 'expected_single_value' | 'expected_array_value';
+import type {SpecError} from '@sigil/src/common/errors/types';
 
 /**
  * Query data using a JSONPath expression
@@ -58,15 +58,39 @@ type QueryError = 'invalid_accessor' | 'query_error' | 'expected_single_value' |
  * queryJsonPath(data, '$..title');                         // → ok(['Book A', 'Book B'])
  * ```
  */
-export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, QueryError> => {
+export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, SpecError[]> => {
 	// Validate accessor format
 	if (!accessor.startsWith('$')) {
-		return err('invalid_accessor');
+		return err([
+			{
+				code: ERROR_CODES.INVALID_ACCESSOR,
+				severity: 'error',
+				category: 'data',
+				path: accessor,
+				context: {
+					accessor,
+					reason: 'JSONPath must start with $',
+				},
+				suggestion: `Try prepending $ to your accessor: $${accessor}`,
+			},
+		]);
 	}
 
 	// Validate data is non-null object
 	if (typeof data !== 'object' || data === null) {
-		return err('query_error');
+		return err([
+			{
+				code: ERROR_CODES.QUERY_ERROR,
+				severity: 'error',
+				category: 'data',
+				path: '$',
+				context: {
+					jsonPath: accessor,
+					reason: 'Cannot query non-object data',
+					dataType: typeof data,
+				},
+			},
+		]);
 	}
 
 	try {
@@ -78,9 +102,21 @@ export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, 
 
 		// JSONPath returns undefined for missing paths when wrap: false
 		return ok(results);
-	} catch {
+	} catch (error) {
 		// Query syntax errors or other JSONPath failures
-		return err('query_error');
+		const reason = error instanceof Error ? error.message : 'JSONPath query failed';
+		return err([
+			{
+				code: ERROR_CODES.QUERY_ERROR,
+				severity: 'error',
+				category: 'data',
+				path: accessor,
+				context: {
+					jsonPath: accessor,
+					reason,
+				},
+			},
+		]);
 	}
 };
 
@@ -106,7 +142,7 @@ export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, 
  * querySingleValue({books: [...]}, '$..title');              // → err('expected_single_value')
  * ```
  */
-export const querySingleValue = (data: unknown, accessor: string): Result<unknown, QueryError> => {
+export const querySingleValue = (data: unknown, accessor: string): Result<unknown, SpecError[]> => {
 	const result = queryJSONPath(data, accessor);
 	if (isErr(result)) {
 		return result;
@@ -114,7 +150,30 @@ export const querySingleValue = (data: unknown, accessor: string): Result<unknow
 
 	// Fail if result is an array (from wildcards/filters/recursive-descent)
 	if (Array.isArray(result.data)) {
-		return err('expected_single_value');
+		const resultCount = result.data.length;
+		let suggestion: string;
+
+		if (accessor.includes('[*]')) {
+			suggestion = 'Remove the wildcard [*] or specify an index like [0]';
+		} else if (accessor.includes('..')) {
+			suggestion = 'Make the recursive descent (..) more specific to target a single value';
+		} else {
+			suggestion = `Access a specific index: ${accessor}[0]`;
+		}
+
+		return err([
+			{
+				code: ERROR_CODES.EXPECTED_SINGLE_VALUE,
+				severity: 'error',
+				category: 'data',
+				path: accessor,
+				context: {
+					accessor,
+					resultCount,
+				},
+				suggestion,
+			},
+		]);
 	}
 
 	return result;
@@ -148,7 +207,7 @@ export const querySingleValue = (data: unknown, accessor: string): Result<unknow
 export const queryMultipleValues = (
 	data: unknown,
 	accessor: string
-): Result<unknown[], QueryError> => {
+): Result<unknown[], SpecError[]> => {
 	const result = queryJSONPath(data, accessor);
 	if (isErr(result)) {
 		return result;

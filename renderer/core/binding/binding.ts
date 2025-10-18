@@ -10,7 +10,9 @@
  * Uses jsonpath-plus for full JSONPath specification support.
  */
 
-import {unwrapOr} from '@sigil/src/common/errors/result';
+import type {Result} from '@sigil/src/common/errors/result';
+import {err, isErr, ok} from '@sigil/src/common/errors/result';
+import type {SpecError} from '@sigil/src/common/errors/types';
 import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {CellValue, Column, Row} from '../types';
@@ -68,17 +70,33 @@ export const enrichColumns = (
  * Handles nested data structures using jsonpath-plus for full JSONPath support.
  * Supports complete JSONPath specification: wildcards, filters, recursive descent.
  *
+ * Error handling:
+ * - Accumulates all errors across rows and columns
+ * - Enriches error paths with row context (e.g., '$[0].user.name')
+ * - Uses fallback values (raw: null, display: '') when queries fail
+ * - Returns all errors at end if any occurred
+ *
  * @param data - Raw data array (can be flat or nested objects)
  * @param columns - Column definitions with accessors
  * @param accessorBindings - Field metadata containing value_mappings
- * @returns Array of processed rows
+ * @param pathContext - JSONPath segments representing location in data structure (e.g., ['$'] or ['$', '[0]', '.users'])
+ * @returns Result containing array of processed rows, or accumulated errors
  */
 export const bindData = (
 	data: unknown[],
 	columns: Column[],
 	accessorBindings: Record<string, FieldMetadata>,
-): Row[] => {
-	return data.map((rowData, index) => {
+	pathContext: string[],
+): Result<Row[], SpecError[]> => {
+	const errors: SpecError[] = [];
+	const rows: Row[] = [];
+
+	for (let index = 0; index < data.length; index++) {
+		const rowData = data[index];
+
+		// Construct row-level path context (e.g., ['$', '[0]'])
+		const rowPath = [...pathContext, `[${index}]`];
+
 		// Generate unique row ID from index
 		const rowId = `row-${index}`;
 
@@ -86,8 +104,52 @@ export const bindData = (
 		const cells: Record<string, CellValue> = {};
 
 		for (const column of columns) {
-			const rawValue = unwrapOr(queryJSONPath(rowData, column.id), undefined);
+			const result = queryJSONPath(rowData, column.id);
 			const metadata = accessorBindings[column.id];
+
+			if (isErr(result)) {
+				// Enrich errors with full path context
+				const enrichedErrors = result.error.map((error) => {
+					// For INVALID_ACCESSOR errors, the path doesn't start with '$'
+					// so we just use the row path without appending the accessor
+					if (!error.path.startsWith('$')) {
+						return {
+							...error,
+							path: rowPath.join(''),
+						};
+					}
+
+					// Strip '$' or '$.' prefix from accessor to avoid double-root
+					let accessorPath: string;
+					if (error.path.startsWith('$.')) {
+						accessorPath = error.path.slice(1); // '$.user.name' → '.user.name'
+					} else if (error.path === '$') {
+						accessorPath = ''; // Root accessor becomes empty
+					} else {
+						accessorPath = error.path.slice(1); // '$[0]' → '[0]'
+					}
+
+					return {
+						...error,
+						path: rowPath.join('') + accessorPath, // '$[5].user.name'
+					};
+				});
+
+				errors.push(...enrichedErrors);
+
+				// Use fallback values
+				cells[column.id] = {
+					raw: null,
+					display: stringifyCellValue(null, metadata?.format, metadata?.data_types.at(0)),
+					format: metadata?.format,
+					dataType: metadata?.data_types.at(0),
+				};
+
+				continue; // Skip to next column
+			}
+
+			// Success case - use result.data as rawValue
+			const rawValue = result.data;
 
 			cells[column.id] = {
 				raw: rawValue,
@@ -97,11 +159,18 @@ export const bindData = (
 			};
 		}
 
-		return {
+		rows.push({
 			id: rowId,
 			cells,
-		};
-	});
+		});
+	}
+
+	// Return accumulated errors if any occurred
+	if (errors.length > 0) {
+		return err(errors);
+	}
+
+	return ok(rows);
 };
 
 /**

@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 
+import {ERROR_CODES} from '@sigil/src/common/errors/codes';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
 import {queryJSONPath, queryMultipleValues, querySingleValue} from './queryJSONPath';
@@ -229,7 +230,10 @@ describe('queryJSONPath', () => {
 			const result = queryJSONPath(data, 'name');
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
-				expect(result.error).toBe('invalid_accessor');
+				expect(result.error).toHaveLength(1);
+				expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+				expect(result.error.at(0)?.severity).toBe('error');
+				expect(result.error.at(0)?.category).toBe('data');
 			}
 		});
 
@@ -248,7 +252,10 @@ describe('queryJSONPath', () => {
 			const result = queryJSONPath(null, '$.field');
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
-				expect(result.error).toBe('query_error');
+				expect(result.error).toHaveLength(1);
+				expect(result.error.at(0)?.code).toBe('QUERY_ERROR');
+				expect(result.error.at(0)?.severity).toBe('error');
+				expect(result.error.at(0)?.category).toBe('data');
 			}
 		});
 
@@ -340,7 +347,18 @@ describe('queryJSONPath', () => {
 				const result = querySingleValue(data, '$.store.book[*].title');
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
-					expect(result.error).toBe('expected_single_value');
+					expect(result.error).toHaveLength(1);
+					expect(result.error.at(0)?.code).toBe(ERROR_CODES.EXPECTED_SINGLE_VALUE);
+					expect(result.error.at(0)?.severity).toBe('error');
+					expect(result.error.at(0)?.category).toBe('data');
+					expect(result.error.at(0)?.path).toBe('$.store.book[*].title');
+					expect(result.error.at(0)?.context).toEqual({
+						accessor: '$.store.book[*].title',
+						resultCount: 2,
+					});
+					expect(result.error.at(0)?.suggestion).toBe(
+						'Remove the wildcard [*] or specify an index like [0]'
+					);
 				}
 			});
 
@@ -352,10 +370,23 @@ describe('queryJSONPath', () => {
 						{name: 'Keyboard', price: 75},
 					],
 				};
-				const result = querySingleValue(data, '$.products[?(@.price < 100)]');
+				const accessor = '$.products[?(@.price < 100)]';
+				const result = querySingleValue(data, accessor);
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
-					expect(result.error).toBe('expected_single_value');
+					expect(result.error).toHaveLength(1);
+					expect(result.error.at(0)?.code).toBe(ERROR_CODES.EXPECTED_SINGLE_VALUE);
+					expect(result.error.at(0)?.severity).toBe('error');
+					expect(result.error.at(0)?.category).toBe('data');
+					expect(result.error.at(0)?.path).toBe(accessor);
+					expect(result.error.at(0)?.context).toEqual({
+						accessor,
+						resultCount: 2,
+					});
+					// Filter queries don't contain [*] or .., so use default suggestion
+					expect(result.error.at(0)?.suggestion).toBe(
+						`Access a specific index: ${accessor}[0]`
+					);
 				}
 			});
 
@@ -374,7 +405,18 @@ describe('queryJSONPath', () => {
 				const result = querySingleValue(data, '$..title');
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
-					expect(result.error).toBe('expected_single_value');
+					expect(result.error).toHaveLength(1);
+					expect(result.error.at(0)?.code).toBe(ERROR_CODES.EXPECTED_SINGLE_VALUE);
+					expect(result.error.at(0)?.severity).toBe('error');
+					expect(result.error.at(0)?.category).toBe('data');
+					expect(result.error.at(0)?.path).toBe('$..title');
+					expect(result.error.at(0)?.context).toEqual({
+						accessor: '$..title',
+						resultCount: 3,
+					});
+					expect(result.error.at(0)?.suggestion).toBe(
+						'Make the recursive descent (..) more specific to target a single value'
+					);
 				}
 			});
 		});
@@ -385,7 +427,10 @@ describe('queryJSONPath', () => {
 				const result = querySingleValue(data, 'name');
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
-					expect(result.error).toBe('invalid_accessor');
+					expect(result.error).toHaveLength(1);
+					expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+					expect(result.error.at(0)?.severity).toBe('error');
+					expect(result.error.at(0)?.category).toBe('data');
 				}
 			});
 		});
@@ -515,7 +560,10 @@ describe('queryJSONPath', () => {
 				const result = queryMultipleValues(data, 'name');
 				expect(isErr(result)).toBe(true);
 				if (isErr(result)) {
-					expect(result.error).toBe('invalid_accessor');
+					expect(result.error).toHaveLength(1);
+					expect(result.error.at(0)?.code).toBe('INVALID_ACCESSOR');
+					expect(result.error.at(0)?.severity).toBe('error');
+					expect(result.error.at(0)?.category).toBe('data');
 				}
 			});
 		});
