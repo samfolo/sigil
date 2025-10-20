@@ -81,6 +81,17 @@ export const BASIC_TABLE: TableProps = {...};
 
 Exceptions: React APIs (Context, memo, forwardRef), functions (camelCase), classes (PascalCase)
 
+No Hungarian notation prefixes:
+```typescript
+// Good
+type ErrorCode = string;
+interface UserData {...}
+
+// Bad - avoid T/I prefixes
+type TErrorCode = string;
+interface IUserData {...}
+```
+
 ### Modern Syntax
 
 - Array indexing: `.at(0)` instead of `[0]`, `.at(-1)` for last element
