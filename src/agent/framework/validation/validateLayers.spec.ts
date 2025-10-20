@@ -2,11 +2,13 @@
  * Tests for validateLayers function
  */
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {ZodError} from 'zod';
 
+import type {ValidationFailedContext} from '@sigil/src/common/errors';
 import {err, isErr, isOk} from '@sigil/src/common/errors';
 
+import type {ValidationLayerCallbacks} from './types';
 import {validateLayers} from './validateLayers';
 import {
 	INVALID_OUTPUT_MISSING_FIELD,
@@ -340,6 +342,338 @@ describe('validateLayers', () => {
 			) {
 				expect(result.error.code).toBe('CUSTOM_ERROR');
 				expect(result.error.message).toBe('Custom object error');
+			}
+		});
+	});
+
+	describe('Validation Layer Callbacks', () => {
+		it('should call onLayerStart for Zod validation', async () => {
+			const onLayerStart = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerStart,
+			};
+
+			await validateLayers(VALID_OUTPUT, ValidOutputSchema, [], callbacks);
+
+			expect(onLayerStart).toHaveBeenCalledWith({
+				name: 'Zod',
+				type: 'zod',
+			});
+		});
+
+		it('should call onLayerComplete with success for passing Zod validation', async () => {
+			const onLayerComplete = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerComplete,
+			};
+
+			await validateLayers(VALID_OUTPUT, ValidOutputSchema, [], callbacks);
+
+			expect(onLayerComplete).toHaveBeenCalledWith({
+				name: 'Zod',
+				type: 'zod',
+				success: true,
+			});
+		});
+
+		it('should call onLayerComplete with error for failing Zod validation', async () => {
+			const onLayerComplete = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerComplete,
+			};
+
+			await validateLayers(
+				INVALID_OUTPUT_WRONG_TYPE,
+				ValidOutputSchema,
+				[],
+				callbacks
+			);
+
+			expect(onLayerComplete).toHaveBeenCalledOnce();
+
+			const call = onLayerComplete.mock.calls.at(0)?.at(0);
+
+			if (call && !call.success) {
+				expect(call.name).toBe('Zod');
+				expect(call.type).toBe('zod');
+				expect(call.error).toBeInstanceOf(ZodError);
+			} else {
+				throw new Error('Expected failure result');
+			}
+		});
+
+		it('should call onLayerStart and onLayerComplete for each custom validator', async () => {
+			const onLayerStart = vi.fn();
+			const onLayerComplete = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerStart,
+				onLayerComplete,
+			};
+
+			const validator1 = createPassingValidator('first-validator');
+			const validator2 = createPassingValidator('second-validator');
+
+			await validateLayers(
+				VALID_OUTPUT,
+				ValidOutputSchema,
+				[validator1, validator2],
+				callbacks
+			);
+
+			// Called for Zod + 2 custom validators
+			expect(onLayerStart).toHaveBeenCalledTimes(3);
+			expect(onLayerComplete).toHaveBeenCalledTimes(3);
+
+			// Check custom validator calls
+			expect(onLayerStart).toHaveBeenCalledWith({
+				name: 'first-validator',
+				type: 'custom',
+			});
+			expect(onLayerStart).toHaveBeenCalledWith({
+				name: 'second-validator',
+				type: 'custom',
+			});
+		});
+
+		it('should call onLayerComplete with success for passing custom validators', async () => {
+			const onLayerComplete = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerComplete,
+			};
+
+			const validator = createPassingValidator('test-validator');
+
+			await validateLayers(
+				VALID_OUTPUT,
+				ValidOutputSchema,
+				[validator],
+				callbacks
+			);
+
+			const customValidatorCall = onLayerComplete.mock.calls.at(1)?.at(0);
+
+			if (customValidatorCall && customValidatorCall.success) {
+				expect(customValidatorCall.name).toBe('test-validator');
+				expect(customValidatorCall.type).toBe('custom');
+			} else {
+				throw new Error('Expected success result');
+			}
+		});
+
+		it('should call onLayerComplete with error for failing custom validators', async () => {
+			const onLayerComplete = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerComplete,
+			};
+
+			const validator = createFailingValidator('test-validator', 'Test error');
+
+			await validateLayers(
+				VALID_OUTPUT,
+				ValidOutputSchema,
+				[validator],
+				callbacks
+			);
+
+			const customValidatorCall = onLayerComplete.mock.calls.at(1)?.at(0);
+
+			if (customValidatorCall && !customValidatorCall.success) {
+				expect(customValidatorCall.name).toBe('test-validator');
+				expect(customValidatorCall.type).toBe('custom');
+				expect(customValidatorCall.error).toBeInstanceOf(Error);
+			} else {
+				throw new Error('Expected failure result');
+			}
+		});
+
+		it('should stop calling callbacks after first failure', async () => {
+			const onLayerStart = vi.fn();
+			const onLayerComplete = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerStart,
+				onLayerComplete,
+			};
+
+			const validator1 = createPassingValidator('first');
+			const validator2 = createFailingValidator('second', 'Failed');
+			const validator3 = createPassingValidator('third');
+
+			await validateLayers(
+				VALID_OUTPUT,
+				ValidOutputSchema,
+				[validator1, validator2, validator3],
+				callbacks
+			);
+
+			// Zod + first + second (third should not be called)
+			expect(onLayerStart).toHaveBeenCalledTimes(3);
+			expect(onLayerComplete).toHaveBeenCalledTimes(3);
+
+			// Verify third was not called
+			expect(onLayerStart).not.toHaveBeenCalledWith({
+				name: 'third',
+				type: 'custom',
+			});
+		});
+	});
+
+	describe('Mutation Detection', () => {
+		const isValidationFailedContext = (
+			value: unknown
+		): value is ValidationFailedContext => {
+			return (
+				typeof value === 'object' &&
+				value !== null &&
+				'validatorName' in value &&
+				'reason' in value
+			);
+		};
+
+		it('should prevent validators from mutating output properties', async () => {
+			const mutatingValidator = createConditionalValidator('mutating', (output) => {
+				// Intentionally bypass TypeScript to test runtime mutation detection
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(output as any).result = 'mutated';
+				return true;
+			});
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				mutatingValidator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && isValidationFailedContext(result.error)) {
+				expect(result.error.validatorName).toBe('mutating');
+				expect(result.error.reason).toContain('mutate input');
+			} else {
+				throw new Error('Expected ValidationFailedContext error');
+			}
+		});
+
+		it('should prevent validators from adding new properties', async () => {
+			const mutatingValidator = createConditionalValidator('mutating', (output) => {
+				// Intentionally bypass TypeScript to test runtime mutation detection
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(output as any).newProp = 'added';
+				return true;
+			});
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				mutatingValidator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && isValidationFailedContext(result.error)) {
+				expect(result.error.validatorName).toBe('mutating');
+			} else {
+				throw new Error('Expected ValidationFailedContext error');
+			}
+		});
+
+		it('should prevent validators from mutating nested objects', async () => {
+			const nestedOutput = {result: 'success', value: 42, nested: {value: 42}};
+			const nestedSchema = ValidOutputSchema.extend({
+				nested: ValidOutputSchema.pick({value: true}),
+			});
+
+			const mutatingValidator = createConditionalValidator('mutating', (output) => {
+				// Intentionally bypass TypeScript to test runtime mutation detection
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(output as any).nested.value = 100;
+				return true;
+			});
+
+			const result = await validateLayers(nestedOutput, nestedSchema, [
+				mutatingValidator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && isValidationFailedContext(result.error)) {
+				expect(result.error.validatorName).toBe('mutating');
+			} else {
+				throw new Error(
+					`Expected ValidationFailedContext error, got: ${JSON.stringify(result)}`
+				);
+			}
+		});
+
+		it('should prevent validators from mutating arrays', async () => {
+			const arrayOutput = {result: 'success', value: 42, items: [1, 2, 3]};
+			const arraySchema = ValidOutputSchema.extend({
+				items: ValidOutputSchema.shape.value.array(),
+			});
+
+			const mutatingValidator = createConditionalValidator('mutating', (output) => {
+				// Intentionally bypass TypeScript to test runtime mutation detection
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(output as any).items.push(4);
+				return true;
+			});
+
+			const result = await validateLayers(arrayOutput, arraySchema, [
+				mutatingValidator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && isValidationFailedContext(result.error)) {
+				expect(result.error.validatorName).toBe('mutating');
+			} else {
+				throw new Error('Expected ValidationFailedContext error');
+			}
+		});
+
+		it('should allow validators to read properties', async () => {
+			const readingValidator = createConditionalValidator('reading', (output) => {
+				const _value = output.result;
+				const _number = output.value;
+				return true;
+			});
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				readingValidator,
+			]);
+
+			expect(isOk(result)).toBe(true);
+		});
+
+		it('should call onLayerComplete with mutation error details', async () => {
+			const onLayerComplete = vi.fn();
+			const callbacks: ValidationLayerCallbacks = {
+				onLayerComplete,
+			};
+
+			const mutatingValidator = createConditionalValidator('mutating', (output) => {
+				// Intentionally bypass TypeScript to test runtime mutation detection
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(output as any).result = 'mutated';
+				return true;
+			});
+
+			await validateLayers(
+				VALID_OUTPUT,
+				ValidOutputSchema,
+				[mutatingValidator],
+				callbacks
+			);
+
+			const customValidatorCall = onLayerComplete.mock.calls.at(1)?.at(0);
+
+			if (customValidatorCall && !customValidatorCall.success) {
+				expect(customValidatorCall.name).toBe('mutating');
+				expect(customValidatorCall.type).toBe('custom');
+
+				if (isValidationFailedContext(customValidatorCall.error)) {
+					expect(customValidatorCall.error.validatorName).toBe('mutating');
+					expect(customValidatorCall.error.reason).toContain('mutate input');
+				} else {
+					throw new Error('Expected ValidationFailedContext error');
+				}
+			} else {
+				throw new Error('Expected failure result');
 			}
 		});
 	});
