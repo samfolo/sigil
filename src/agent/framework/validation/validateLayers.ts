@@ -1,7 +1,7 @@
 import type {z} from 'zod';
 
 import type {Result} from '@sigil/src/common/errors';
-import {isErr} from '@sigil/src/common/errors';
+import {err, isErr} from '@sigil/src/common/errors';
 
 import type {ValidationLayer} from './types';
 import {validateWithZod} from './validators';
@@ -61,10 +61,14 @@ export const validateLayers = async <Output>(
 
 	// Layer 3+: Custom validators (sequential, fail-fast)
 	for (const validator of customValidators) {
-		const validationResult = await validator.validate(validatedOutput);
+		try {
+			const validationResult = await validator.validate(validatedOutput);
 
-		if (isErr(validationResult)) {
-			return validationResult;
+			if (isErr(validationResult)) {
+				return validationResult;
+			}
+		} catch (error) {
+			return err(error);
 		}
 	}
 

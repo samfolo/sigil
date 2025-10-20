@@ -6,9 +6,10 @@
  * handling.
  */
 
+import type {z} from 'zod';
+
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
-import type {z} from 'zod';
 
 import type {ValidationLayer} from './types';
 

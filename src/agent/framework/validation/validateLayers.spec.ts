@@ -1,0 +1,346 @@
+/**
+ * Tests for validateLayers function
+ */
+
+import {describe, expect, it} from 'vitest';
+import {ZodError} from 'zod';
+
+import {err, isErr, isOk} from '@sigil/src/common/errors';
+
+import {validateLayers} from './validateLayers';
+import {
+	INVALID_OUTPUT_MISSING_FIELD,
+	INVALID_OUTPUT_WRONG_TYPE,
+	VALID_OUTPUT,
+	ValidOutputSchema,
+	createConditionalValidator,
+	createFailingValidator,
+	createPassingValidator,
+} from './validateLayers.fixtures';
+
+describe('validateLayers', () => {
+	describe('Zod Validation (Layer 1)', () => {
+		it('should return success Result for valid output', async () => {
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, []);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data).toEqual(VALID_OUTPUT);
+			}
+		});
+
+		it('should return error Result for output with wrong types', async () => {
+			const result = await validateLayers(
+				INVALID_OUTPUT_WRONG_TYPE,
+				ValidOutputSchema,
+				[]
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error).toBeInstanceOf(ZodError);
+			}
+		});
+
+		it('should return error Result for output with missing fields', async () => {
+			const result = await validateLayers(
+				INVALID_OUTPUT_MISSING_FIELD,
+				ValidOutputSchema,
+				[]
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error).toBeInstanceOf(ZodError);
+			}
+		});
+
+		it('should preserve validated output in success case', async () => {
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, []);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data.result).toBe('success');
+				expect(result.data.value).toBe(42);
+			}
+		});
+
+		it('should include ZodError details in failure case', async () => {
+			const result = await validateLayers(
+				INVALID_OUTPUT_WRONG_TYPE,
+				ValidOutputSchema,
+				[]
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && result.error instanceof ZodError) {
+				expect(result.error.issues).toBeDefined();
+				expect(result.error.issues.length).toBeGreaterThan(0);
+			}
+		});
+	});
+
+	describe('Custom Validators (Layers 2+)', () => {
+		it('should run custom validator after successful Zod validation', async () => {
+			const passingValidator = createPassingValidator('test-validator');
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				passingValidator,
+			]);
+
+			expect(isOk(result)).toBe(true);
+		});
+
+		it('should return success when custom validator passes', async () => {
+			const conditionalValidator = createConditionalValidator(
+				'value-check',
+				(output) => output.value === 42
+			);
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				conditionalValidator,
+			]);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data).toEqual(VALID_OUTPUT);
+			}
+		});
+
+		it('should return error when custom validator fails', async () => {
+			const failingValidator = createFailingValidator(
+				'strict-validator',
+				'Custom validation failed'
+			);
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				failingValidator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && result.error instanceof Error) {
+				expect(result.error.message).toBe('Custom validation failed');
+			}
+		});
+
+		it('should NOT run custom validator if Zod validation fails (fail fast)', async () => {
+			let customValidatorRan = false;
+
+			const trackingValidator = createConditionalValidator('tracking', () => {
+				customValidatorRan = true;
+				return true;
+			});
+
+			const result = await validateLayers(
+				INVALID_OUTPUT_WRONG_TYPE,
+				ValidOutputSchema,
+				[trackingValidator]
+			);
+
+			expect(isErr(result)).toBe(true);
+			expect(customValidatorRan).toBe(false);
+		});
+	});
+
+	describe('Sequential Validation', () => {
+		it('should run all validators in order when all pass', async () => {
+			const executionOrder: string[] = [];
+
+			const validator1 = createConditionalValidator('first', (output) => {
+				executionOrder.push('first');
+				return output.value > 0;
+			});
+
+			const validator2 = createConditionalValidator('second', (output) => {
+				executionOrder.push('second');
+				return output.result.length > 0;
+			});
+
+			const validator3 = createConditionalValidator('third', (output) => {
+				executionOrder.push('third');
+				return output.value < 100;
+			});
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				validator1,
+				validator2,
+				validator3,
+			]);
+
+			expect(isOk(result)).toBe(true);
+			expect(executionOrder).toEqual(['first', 'second', 'third']);
+		});
+
+		it('should stop at first failing validator (fail fast)', async () => {
+			const executionOrder: string[] = [];
+
+			const validator1 = createConditionalValidator('first', (output) => {
+				executionOrder.push('first');
+				return output.value > 0;
+			});
+
+			const validator2 = createConditionalValidator('second', () => {
+				executionOrder.push('second');
+				return false; // This will fail
+			});
+
+			const validator3 = createConditionalValidator('third', (output) => {
+				executionOrder.push('third');
+				return output.value < 100;
+			});
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				validator1,
+				validator2,
+				validator3,
+			]);
+
+			expect(isErr(result)).toBe(true);
+			expect(executionOrder).toEqual(['first', 'second']); // third should not run
+		});
+
+		it('should not run remaining validators after failure', async () => {
+			let validator3Ran = false;
+
+			const validator1 = createPassingValidator('first');
+			const validator2 = createFailingValidator('second', 'Second failed');
+			const validator3 = createConditionalValidator('third', () => {
+				validator3Ran = true;
+				return true;
+			});
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				validator1,
+				validator2,
+				validator3,
+			]);
+
+			expect(isErr(result)).toBe(true);
+			expect(validator3Ran).toBe(false);
+		});
+
+		it('should track which layer failed', async () => {
+			const validator1 = createPassingValidator('first');
+			const validator2 = createFailingValidator('second', 'Second layer failed');
+			const validator3 = createPassingValidator('third');
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				validator1,
+				validator2,
+				validator3,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && result.error instanceof Error) {
+				expect(result.error.message).toBe('Second layer failed');
+			}
+		});
+	});
+
+	describe('Empty Custom Validators', () => {
+		it('should succeed with empty custom validators array', async () => {
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, []);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data).toEqual(VALID_OUTPUT);
+			}
+		});
+
+		it('should only run Zod validation when no custom validators provided', async () => {
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, []);
+
+			expect(isOk(result)).toBe(true);
+		});
+	});
+
+	describe('Error Types', () => {
+		it('should return ZodError for schema failures', async () => {
+			const result = await validateLayers(
+				INVALID_OUTPUT_WRONG_TYPE,
+				ValidOutputSchema,
+				[]
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error).toBeInstanceOf(ZodError);
+			}
+		});
+
+		it('should return Error for custom validator failures', async () => {
+			const failingValidator = createFailingValidator(
+				'test',
+				'Custom error message'
+			);
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				failingValidator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result) && result.error instanceof Error) {
+				expect(result.error.message).toBe('Custom error message');
+			}
+		});
+
+		it('should preserve original error type from validators', async () => {
+			const customErrorValidator = createConditionalValidator('custom', () => {
+				throw new TypeError('Type error occurred');
+			});
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				customErrorValidator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error).toBeInstanceOf(TypeError);
+			}
+		});
+
+		it('should work with different error types (Error, custom objects, etc.)', async () => {
+			const customObjectErrorValidator: typeof createConditionalValidator = (
+				name
+			) => {
+				return {
+					name,
+					validate: async () => {
+						return err({code: 'CUSTOM_ERROR', message: 'Custom object error'});
+					},
+				};
+			};
+
+			const validator = customObjectErrorValidator('custom-object');
+
+			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
+				validator,
+			]);
+
+			expect(isErr(result)).toBe(true);
+
+			if (
+				isErr(result) &&
+				typeof result.error === 'object' &&
+				result.error !== null &&
+				'code' in result.error &&
+				'message' in result.error
+			) {
+				expect(result.error.code).toBe('CUSTOM_ERROR');
+				expect(result.error.message).toBe('Custom object error');
+			}
+		});
+	});
+});
