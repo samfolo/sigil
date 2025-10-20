@@ -1,5 +1,7 @@
-import type {AgentExecutionState} from '@sigil/src/agent/framework/state';
-import type {AgentError} from '@sigil/src/common/errors';
+import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
+import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentError, Result} from '@sigil/src/common/errors';
+import {err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 /**
  * Token usage statistics for an agent execution
@@ -136,3 +138,73 @@ export interface ExecuteSuccess<Output> {
 	 */
 	metadata?: ExecuteMetadata;
 }
+
+/**
+ * Executes an agent with retry logic and multi-layer validation
+ *
+ * This function orchestrates the complete agent execution flow:
+ * 1. Iterates up to maxAttempts times
+ * 2. On each attempt:
+ *    - Generates system and user prompts from the agent's prompt functions
+ *    - Calls the LLM with the generated prompts
+ *    - Validates the response through multiple validation layers:
+ *      - Zod schema validation (outputSchema)
+ *      - Custom validators (if configured)
+ * 3. On validation failure:
+ *    - Formats errors into LLM-actionable feedback
+ *    - Retries with error context in the next attempt
+ * 4. On validation success:
+ *    - Returns ExecuteSuccess with validated output and metadata
+ * 5. On max attempts exceeded:
+ *    - Returns AgentError[] with MAX_ATTEMPTS_EXCEEDED code
+ *
+ * Uses the Result pattern for type-safe error handling. Check success with
+ * isOk/isErr type guards from @sigil/src/common/errors/result.
+ *
+ * @template Input - The type of input data the agent accepts
+ * @template Output - The type of validated output the agent produces
+ *
+ * @param agent - Agent definition created by defineAgent()
+ * @param options - Execution configuration including input data and optional overrides
+ * @returns Promise resolving to Result containing either ExecuteSuccess or AgentError[]
+ *
+ * @example
+ * ```typescript
+ * import {isOk, isErr} from '@sigil/src/common/errors';
+ * import {executeAgent} from '@sigil/src/agent/framework/executeAgent';
+ * import {myAgent} from './agents/myAgent';
+ *
+ * const result = await executeAgent(myAgent, {
+ *   input: {data: 'example'},
+ *   maxAttempts: 5,
+ *   callbacks: {
+ *     onAttemptStart: (state) => console.log(`Attempt ${state.attempt}`),
+ *     onSuccess: (output) => console.log('Success!', output),
+ *   },
+ * });
+ *
+ * if (isOk(result)) {
+ *   console.log('Output:', result.data.output);
+ *   console.log('Attempts:', result.data.attempts);
+ *   console.log('Cost:', result.data.metadata?.cost);
+ * } else {
+ *   console.error('Execution failed:', result.error);
+ * }
+ * ```
+ */
+export const executeAgent = async <Input, Output>(
+	_agent: AgentDefinition<Input, Output>,
+	_options: ExecuteOptions<Input, Output>
+): Promise<Result<ExecuteSuccess<Output>, AgentError[]>> => {
+	// Stub implementation - to be replaced with actual execution logic
+	const placeholderError: AgentError = {
+		code: AGENT_ERROR_CODES.VALIDATION_FAILED,
+		severity: 'error',
+		category: 'validation',
+		context: {
+			message: 'Not yet implemented',
+		},
+	};
+
+	return err([placeholderError]);
+};

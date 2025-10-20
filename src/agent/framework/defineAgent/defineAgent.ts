@@ -1,6 +1,6 @@
 import type {z} from 'zod';
 
-import type {AgentExecutionState} from '@sigil/src/agent/framework/state';
+import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {Result, SpecError, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
 
