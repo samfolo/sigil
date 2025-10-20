@@ -1,6 +1,5 @@
+import type {AgentExecutionState} from '@sigil/src/agent/framework/state';
 import type {AgentError} from '@sigil/src/common/errors';
-
-import type {AgentExecutionState} from '@sigil/src/agent/framework/defineAgent/defineAgent';
 
 /**
  * Token usage statistics for an agent execution

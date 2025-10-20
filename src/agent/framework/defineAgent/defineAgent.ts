@@ -1,5 +1,6 @@
 import type {z} from 'zod';
 
+import type {AgentExecutionState} from '@sigil/src/agent/framework/state';
 import type {Result, SpecError, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
 
@@ -26,21 +27,6 @@ export interface ModelConfig {
 	 * Maximum tokens in the response
 	 */
 	maxTokens: number;
-}
-
-/**
- * State provided to prompt functions during agent execution
- */
-export interface AgentExecutionState {
-	/**
-	 * Current attempt number (1-indexed)
-	 */
-	attempt: number;
-
-	/**
-	 * Maximum number of attempts allowed from validation config
-	 */
-	maxAttempts: number;
 }
 
 /**
