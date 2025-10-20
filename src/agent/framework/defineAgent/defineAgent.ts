@@ -28,31 +28,52 @@ export interface ModelConfig {
 }
 
 /**
- * Function that generates the system prompt for the agent
- *
- * @param input - The input data to base the prompt on
- * @returns Promise resolving to the system prompt string
+ * State provided to prompt functions during agent execution
  */
-export type SystemPromptFunction<Input> = (input: Input) => Promise<string>;
+export interface AgentExecutionState {
+	/**
+	 * Current attempt number (1-indexed)
+	 */
+	attempt: number;
+
+	/**
+	 * Maximum number of attempts allowed from validation config
+	 */
+	maxAttempts: number;
+}
 
 /**
- * Function that generates the user prompt for the agent
+ * Generic prompt function that generates prompts based on input data and execution state
  *
- * @param input - The input data to base the prompt on
- * @returns Promise resolving to the user prompt string
- */
-export type UserPromptFunction<Input> = (input: Input) => Promise<string>;
-
-/**
- * Function that generates an error iteration prompt when validation fails
+ * The generic type parameter determines what data the function receives:
+ * - `PromptFunction<Input>` - receives the agent input (used for system/user prompts)
+ * - `PromptFunction<SpecError[]>` - receives validation errors (used for error prompts)
+ * - `PromptFunction<{input: Input, errors: SpecError[]}>` - receives both (for advanced error handling)
  *
- * @param errors - Array of validation errors from previous attempt
- * @param attempt - The current attempt number (1-indexed)
- * @returns Promise resolving to the error prompt string
+ * @template T - The type of data this prompt function accepts
+ * @param data - The data to base the prompt on (input, errors, or combination)
+ * @param state - Execution state containing attempt number and max attempts
+ * @returns Promise resolving to the generated prompt string
+ *
+ * @example
+ * ```typescript
+ * // System prompt with input only
+ * const systemPrompt: PromptFunction<string> = async (input, state) =>
+ *   `You are processing: ${input}`;
+ *
+ * // Error prompt with errors only
+ * const errorPrompt: PromptFunction<SpecError[]> = async (errors, state) =>
+ *   `Attempt ${state.attempt}/${state.maxAttempts} failed with ${errors.length} errors`;
+ *
+ * // Error prompt with both input and errors
+ * const advancedErrorPrompt: PromptFunction<{input: string, errors: SpecError[]}> =
+ *   async ({input, errors}, state) =>
+ *     `Processing "${input}" failed on attempt ${state.attempt}/${state.maxAttempts}`;
+ * ```
  */
-export type ErrorPromptFunction = (
-	errors: SpecError[],
-	attempt: number
+export type PromptFunction<T> = (
+	data: T,
+	state: AgentExecutionState
 ) => Promise<string>;
 
 /**
@@ -127,19 +148,19 @@ export interface ObservabilityConfig {
  */
 export interface PromptsConfig<Input> {
 	/**
-	 * System prompt function
+	 * System prompt function - receives agent input and execution state
 	 */
-	system: SystemPromptFunction<Input>;
+	system: PromptFunction<Input>;
 
 	/**
-	 * User prompt function
+	 * User prompt function - receives agent input and execution state
 	 */
-	user: UserPromptFunction<Input>;
+	user: PromptFunction<Input>;
 
 	/**
-	 * Error iteration prompt function
+	 * Error iteration prompt function - receives validation errors and execution state
 	 */
-	error: ErrorPromptFunction;
+	error: PromptFunction<SpecError[]>;
 }
 
 /**
@@ -202,9 +223,10 @@ export interface AgentDefinition<Input, Output> {
  *     maxTokens: 4096,
  *   },
  *   prompts: {
- *     system: async (input) => 'System prompt',
- *     user: async (input) => 'User prompt',
- *     error: async (errors, attempt) => 'Error prompt',
+ *     system: async (input, state) => `Analyse data on attempt ${state.attempt}`,
+ *     user: async (input, state) => `Process: ${input}`,
+ *     error: async (errors, state) =>
+ *       `Attempt ${state.attempt}/${state.maxAttempts} failed with ${errors.length} errors`,
  *   },
  *   validation: {
  *     outputSchema: z.object({...}),
