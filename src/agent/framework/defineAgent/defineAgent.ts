@@ -1,6 +1,14 @@
 import type {z} from 'zod';
 
+import type {Result} from '@sigil/src/common/errors';
+import {ok, err} from '@sigil/src/common/errors';
 import type {SpecError} from '@sigil/src/common/errors';
+
+import type {AgentError} from '@sigil/src/agent/framework/errors';
+import {
+	AGENT_ERROR_CODES,
+	AGENT_VALIDATION_CONSTRAINTS,
+} from '@sigil/src/agent/framework/errors';
 
 /**
  * Configuration for the LLM model used by the agent
@@ -204,16 +212,18 @@ export interface AgentDefinition<Input, Output> {
 /**
  * Factory function to create and validate an agent definition
  *
- * Validates all required fields and returns a deeply frozen (immutable) copy
- * of the agent definition to prevent accidental modification.
+ * Validates all required fields and returns a Result containing either a deeply
+ * frozen (immutable) agent definition or an array of validation errors.
+ *
+ * Collects ALL validation errors before returning to provide better developer
+ * experience - developers see all issues at once rather than fixing one at a time.
  *
  * @param definition - The agent definition to validate and freeze
- * @returns A deeply frozen agent definition
- * @throws Error if any required field is missing or invalid
+ * @returns Result containing frozen agent definition or array of validation errors
  *
  * @example
  * ```typescript
- * const agent = defineAgent({
+ * const result = defineAgent({
  *   name: 'DataAnalyser',
  *   description: 'Analyses tabular data and generates insights',
  *   model: {
@@ -240,30 +250,87 @@ export interface AgentDefinition<Input, Output> {
  *     trackTokens: true,
  *   },
  * });
+ *
+ * if (isErr(result)) {
+ *   console.error(formatAgentErrorsForDeveloper(result.error));
+ *   return;
+ * }
+ *
+ * const agent = result.data;
  * ```
  */
 export const defineAgent = <Input, Output>(
 	definition: AgentDefinition<Input, Output>
-): Readonly<AgentDefinition<Input, Output>> => {
-	// Validate required fields
+): Result<Readonly<AgentDefinition<Input, Output>>, AgentError[]> => {
+	const errors: AgentError[] = [];
+
+	// Validate name
 	if (!definition.name || definition.name.trim() === '') {
-		throw new Error('Agent name must be a non-empty string');
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_NAME,
+			severity: 'error',
+			category: 'validation',
+			context: {
+				providedValue: definition.name,
+			},
+		});
 	}
 
+	// Validate description
 	if (!definition.description || definition.description.trim() === '') {
-		throw new Error('Agent description must be a non-empty string');
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_DESCRIPTION,
+			severity: 'error',
+			category: 'validation',
+			context: {
+				providedValue: definition.description,
+			},
+		});
 	}
 
+	// Validate model name
 	if (!definition.model.name || definition.model.name.trim() === '') {
-		throw new Error('Model name must be a non-empty string');
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_MODEL_NAME,
+			severity: 'error',
+			category: 'validation',
+			path: '$.model.name',
+			context: {
+				providedValue: definition.model.name,
+			},
+		});
 	}
 
+	// Validate output schema
 	if (!definition.validation.outputSchema) {
-		throw new Error('Validation output schema must be provided');
+		errors.push({
+			code: AGENT_ERROR_CODES.MISSING_OUTPUT_SCHEMA,
+			severity: 'error',
+			category: 'validation',
+			path: '$.validation.outputSchema',
+			context: {},
+		});
 	}
 
-	if (definition.validation.maxAttempts < 1) {
-		throw new Error('Validation maxAttempts must be at least 1');
+	// Validate max attempts
+	if (
+		definition.validation.maxAttempts < AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS
+	) {
+		errors.push({
+			code: AGENT_ERROR_CODES.INVALID_MAX_ATTEMPTS,
+			severity: 'error',
+			category: 'validation',
+			path: '$.validation.maxAttempts',
+			context: {
+				providedValue: definition.validation.maxAttempts,
+				minimumValue: AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS,
+			},
+		});
+	}
+
+	// Return early if validation failed
+	if (errors.length > 0) {
+		return err(errors);
 	}
 
 	// Deep freeze the definition
@@ -288,5 +355,5 @@ export const defineAgent = <Input, Output>(
 	// Freeze top-level object
 	Object.freeze(definition);
 
-	return definition;
+	return ok(definition);
 };
