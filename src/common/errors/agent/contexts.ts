@@ -34,9 +34,7 @@ export interface EmptyModelNameContext {
 /**
  * Context for MISSING_OUTPUT_SCHEMA error
  */
-export interface MissingOutputSchemaContext {
-	// No additional context needed
-}
+export type MissingOutputSchemaContext = Record<string, never>;
 
 /**
  * Context for INVALID_MAX_ATTEMPTS error
