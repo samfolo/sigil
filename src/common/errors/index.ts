@@ -5,6 +5,7 @@
  * See ERRORS.md for usage guidelines and examples.
  */
 
+// Result system
 export type {Result, Ok, Err} from './result';
 export {
 	ok,
@@ -19,9 +20,45 @@ export {
 	isErr,
 } from './result';
 
-// SpecError system
-export {ERROR_CODES} from './codes';
-export type {ErrorCode, ErrorCategory, Severity, SpecError} from './types';
-export {formatError, formatErrorsForModel} from './format';
-export {SpecProcessingError} from './exception';
-export {isSpecErrorArray} from './predicates';
+// Generic structured error system
+export type {StructuredError, Severity, ErrorCode} from './structured';
+export {
+	formatList,
+	safeStringify,
+	formatUnknownError,
+	appendMetadata,
+	formatErrorsBySeverity,
+	StructuredErrorException,
+	isStructuredErrorArray,
+} from './structured';
+
+// Spec error system
+export {ERROR_CODES} from './spec';
+export type {
+	SpecError,
+	SpecErrorCode,
+	SpecErrorCategory,
+	MissingComponentError,
+	MissingArrayPropertyError,
+	UnknownLayoutTypeError,
+	UnknownLayoutChildTypeError,
+	InvalidAccessorError,
+	ExpectedSingleValueError,
+	FieldRequiredError,
+	EmptyLayoutError,
+	NotArrayError,
+	QueryErrorError,
+	TypeMismatchError,
+	MissingComponentContext,
+	MissingArrayPropertyContext,
+	UnknownLayoutTypeContext,
+	UnknownLayoutChildTypeContext,
+	InvalidAccessorContext,
+	ExpectedSingleValueContext,
+	FieldRequiredContext,
+	EmptyLayoutContext,
+	NotArrayContext,
+	QueryErrorContext,
+	TypeMismatchContext,
+} from './spec';
+export {formatError, formatErrorsForModel, SpecProcessingError, isSpecErrorArray, generateFieldNameSimilaritySuggestion} from './spec';
