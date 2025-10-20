@@ -9,8 +9,10 @@
  * - Error scenarios (max attempts, validation failures, API errors)
  */
 
+import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {AgentError} from '@sigil/src/common/errors';
 import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
+
 
 import type {
 	ExecuteCallbacks,
@@ -26,6 +28,76 @@ interface TestOutput {
 }
 
 /**
+ * Callback invocation record for onAttemptStart
+ */
+interface OnAttemptStartInvocation {
+	type: 'onAttemptStart';
+	state: AgentExecutionState;
+}
+
+/**
+ * Callback invocation record for onAttemptComplete
+ */
+interface OnAttemptCompleteInvocation {
+	type: 'onAttemptComplete';
+	state: AgentExecutionState;
+	success: boolean;
+}
+
+/**
+ * Callback invocation record for onValidationFailure
+ */
+interface OnValidationFailureInvocation {
+	type: 'onValidationFailure';
+	errors: unknown;
+	state: AgentExecutionState;
+}
+
+/**
+ * Callback invocation record for onSuccess
+ */
+interface OnSuccessInvocation {
+	type: 'onSuccess';
+	output: TestOutput;
+}
+
+/**
+ * Callback invocation record for onFailure
+ */
+interface OnFailureInvocation {
+	type: 'onFailure';
+	errors: AgentError[];
+}
+
+/**
+ * Discriminated union of all callback invocation types
+ *
+ * Tracks which callback was invoked and the arguments passed to it.
+ * Maintains order of invocations for verifying callback sequence.
+ */
+export type CallbackInvocation =
+	| OnAttemptStartInvocation
+	| OnAttemptCompleteInvocation
+	| OnValidationFailureInvocation
+	| OnSuccessInvocation
+	| OnFailureInvocation;
+
+/**
+ * Return type for createExecuteOptionsWithCallbackTracking factory
+ */
+export interface ExecuteOptionsWithCallbackTracking {
+	/**
+	 * Execution options configured with callback tracking
+	 */
+	options: ExecuteOptions<string, TestOutput>;
+
+	/**
+	 * Array of callback invocations in order
+	 */
+	invocations: CallbackInvocation[];
+}
+
+/**
  * 1. Minimal valid execution options - simplest possible configuration
  *
  * Basic string input with no maxAttempts override or callbacks.
@@ -36,46 +108,75 @@ export const VALID_EXECUTE_OPTIONS: ExecuteOptions<string, TestOutput> = {
 };
 
 /**
- * 2. Execution options with all callbacks defined
+ * 2. Factory for execution options with callback tracking
  *
- * Demonstrates callback instrumentation for monitoring execution progress.
- * Each callback tracks invocations for test verification.
+ * Creates fresh execution options with callbacks that record all invocations.
+ * Each invocation is pushed to the array in order, preserving call sequence.
+ * Tests can filter by type to count specific callback invocations.
+ *
+ * @returns Object containing execution options and invocations array
+ *
+ * @example
+ * ```typescript
+ * const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+ * await executeAgent(agent, options);
+ *
+ * // Count specific callback types
+ * const attemptStarts = invocations.filter(i => i.type === 'onAttemptStart');
+ * expect(attemptStarts.length).toBe(3);
+ *
+ * // Verify callback order
+ * expect(invocations.at(0)?.type).toBe('onAttemptStart');
+ * expect(invocations.at(-1)?.type).toBe('onSuccess');
+ * ```
  */
-export const VALID_EXECUTE_OPTIONS_WITH_CALLBACKS: ExecuteOptions<
-	string,
-	TestOutput
-> = (() => {
-	const callbackInvocations = {
-		attemptStarts: 0,
-		attemptCompletes: 0,
-		validationFailures: 0,
-		successes: 0,
-		failures: 0,
-	};
+export const createExecuteOptionsWithCallbackTracking =
+	(): ExecuteOptionsWithCallbackTracking => {
+	const invocations: CallbackInvocation[] = [];
 
 	const callbacks: ExecuteCallbacks<TestOutput> = {
-		onAttemptStart: () => {
-			callbackInvocations.attemptStarts += 1;
+		onAttemptStart: (state) => {
+			invocations.push({
+				type: 'onAttemptStart',
+				state,
+			});
 		},
-		onAttemptComplete: () => {
-			callbackInvocations.attemptCompletes += 1;
+		onAttemptComplete: (state, success) => {
+			invocations.push({
+				type: 'onAttemptComplete',
+				state,
+				success,
+			});
 		},
-		onValidationFailure: () => {
-			callbackInvocations.validationFailures += 1;
+		onValidationFailure: (errors, state) => {
+			invocations.push({
+				type: 'onValidationFailure',
+				errors,
+				state,
+			});
 		},
-		onSuccess: () => {
-			callbackInvocations.successes += 1;
+		onSuccess: (output) => {
+			invocations.push({
+				type: 'onSuccess',
+				output,
+			});
 		},
-		onFailure: () => {
-			callbackInvocations.failures += 1;
+		onFailure: (errors) => {
+			invocations.push({
+				type: 'onFailure',
+				errors,
+			});
 		},
 	};
 
 	return {
-		input: 'test input with callbacks',
-		callbacks,
+		options: {
+			input: 'test input with callbacks',
+			callbacks,
+		},
+		invocations,
 	};
-})();
+};
 
 /**
  * 3. Execution options with maxAttempts override
