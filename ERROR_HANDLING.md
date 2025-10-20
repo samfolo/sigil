@@ -2,6 +2,8 @@
 
 Error handling conventions for Sigil. Use `Result<T, E>` for expected errors, throw exceptions for programming errors.
 
+All error systems import from `@sigil/src/common/errors`. Generic error infrastructure in `src/common/errors/structured/`, domain errors in `src/common/errors/spec/` and `src/common/errors/agent/`.
+
 ## Decision Rules
 
 Use `Result<T, E>` for:

@@ -4,9 +4,7 @@
 
 import {describe, expect, it} from 'vitest';
 
-import {isErr, isOk} from '@sigil/src/common/errors';
-
-import {AGENT_ERROR_CODES} from '@sigil/src/agent/framework/errors';
+import {isErr, isOk, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 import {defineAgent} from './defineAgent';
 import {

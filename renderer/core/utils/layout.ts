@@ -3,7 +3,7 @@
  */
 
 import {ERROR_CODES, err, ok, type Result, type SpecError} from '@sigil/src/common/errors';
-import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors/format/utils';
+import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors';
 import type {LayoutChild, LayoutNode} from '@sigil/src/lib/generated/types/specification';
 
 import {VALID_LAYOUT_TYPES} from '../constants/constants';

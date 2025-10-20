@@ -1,14 +1,7 @@
 import type {z} from 'zod';
 
-import type {Result} from '@sigil/src/common/errors';
-import {ok, err} from '@sigil/src/common/errors';
-import type {SpecError} from '@sigil/src/common/errors';
-
-import type {AgentError} from '@sigil/src/agent/framework/errors';
-import {
-	AGENT_ERROR_CODES,
-	AGENT_VALIDATION_CONSTRAINTS,
-} from '@sigil/src/agent/framework/errors';
+import type {Result, SpecError, AgentError} from '@sigil/src/common/errors';
+import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
 
 /**
  * Configuration for the LLM model used by the agent

@@ -12,7 +12,7 @@
 
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors/types';
+import type {SpecError} from '@sigil/src/common/errors';
 import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {CellValue, Column, Row} from '../types';

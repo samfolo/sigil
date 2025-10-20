@@ -3,7 +3,7 @@
  */
 
 import {ERROR_CODES, err, isErr, ok, type Result, type SpecError} from '@sigil/src/common/errors';
-import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors/format/utils';
+import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {bindData, enrichColumns, extractColumns} from '../binding';

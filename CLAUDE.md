@@ -115,6 +115,16 @@ arrow_down: ↓
 
 Never use emoji variants (✅, ❌) or alternative unicode characters (✗, ✕, ☑, ✔).
 
+### Documentation Style
+
+All documentation must be:
+- Brief: No superfluous text or formatting
+- Concise: Highest signal-to-noise ratio
+- Precise: Exact terminology, no ambiguity
+- Effective: Actionable information only
+
+Follow the style of this file and ERROR_HANDLING.md: direct statements, minimal examples, no filler.
+
 ## File Organisation
 
 ### Naming Conventions

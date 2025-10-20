@@ -18,10 +18,10 @@
 
 import {JSONPath} from 'jsonpath-plus';
 
-import {ERROR_CODES} from '@sigil/src/common/errors/codes';
+import {ERROR_CODES} from '@sigil/src/common/errors';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors/types';
+import type {SpecError} from '@sigil/src/common/errors';
 
 /**
  * Query data using a JSONPath expression

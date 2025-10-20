@@ -1,1 +1,0 @@
-export {isAgentErrorArray} from './predicates';

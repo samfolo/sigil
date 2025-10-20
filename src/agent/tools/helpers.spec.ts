@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 
-import {ERROR_CODES} from '@sigil/src/common/errors/codes';
+import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
 import {extractArray} from './helpers';
