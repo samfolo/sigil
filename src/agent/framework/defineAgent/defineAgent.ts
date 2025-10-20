@@ -1,6 +1,7 @@
 import type {z} from 'zod';
 
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {ValidationLayer} from '@sigil/src/agent/framework/validation';
 import type {Result, SpecError, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
 
@@ -64,24 +65,6 @@ export type PromptFunction<T> = (
 ) => Promise<string>;
 
 /**
- * Custom validator with a name and validation function
- */
-export interface CustomValidator {
-	/**
-	 * Name of the validator for logging and debugging
-	 */
-	name: string;
-
-	/**
-	 * Async validation function
-	 *
-	 * @param output - The output to validate
-	 * @returns Promise resolving to the validated output or rejecting with an error
-	 */
-	validate: (output: unknown) => Promise<unknown>;
-}
-
-/**
  * Configuration for validating agent output
  *
  * @template Output - The type of output the agent produces
@@ -95,7 +78,7 @@ export interface ValidationConfig<Output> {
 	/**
 	 * Additional custom validators to run after schema validation
 	 */
-	customValidators: CustomValidator[];
+	customValidators: ValidationLayer<Output>[];
 
 	/**
 	 * Maximum number of retry attempts when validation fails

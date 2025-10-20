@@ -10,6 +10,7 @@
 import {z} from 'zod';
 
 import type {SpecError} from '@sigil/src/common/errors';
+import {err, ok} from '@sigil/src/common/errors';
 
 import type {AgentDefinition, AgentExecutionState} from './defineAgent';
 
@@ -87,22 +88,20 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 		customValidators: [
 			{
 				name: 'result-length-validator',
-				validate: async (output: unknown) => {
-					const typed = output as TestOutput;
-					if (typed.result.length < 10) {
-						throw new Error('Result must be at least 10 characters');
+				validate: async (output) => {
+					if (output.result.length < 10) {
+						return err('Result must be at least 10 characters');
 					}
-					return output;
+					return ok(output);
 				},
 			},
 			{
 				name: 'no-empty-result-validator',
-				validate: async (output: unknown) => {
-					const typed = output as TestOutput;
-					if (typed.result.trim() === '') {
-						throw new Error('Result cannot be empty or whitespace only');
+				validate: async (output) => {
+					if (output.result.trim() === '') {
+						return err('Result cannot be empty or whitespace only');
 					}
-					return output;
+					return ok(output);
 				},
 			},
 		],

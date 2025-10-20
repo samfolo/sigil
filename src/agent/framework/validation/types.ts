@@ -92,3 +92,96 @@ export interface ValidationLayer<Output> {
  * @template Output - Type of agent output being validated
  */
 export type ValidationLayers<Output> = ValidationLayer<Output>[];
+
+/**
+ * Type of validation layer being executed
+ *
+ * - `zod`: Schema validation using Zod (Layer 2)
+ * - `custom`: Custom validation logic (Layer 3+)
+ */
+export type ValidationLayerType = 'zod' | 'custom';
+
+/**
+ * Metadata about a validation layer
+ */
+export interface ValidationLayerMetadata {
+	/**
+	 * Name of the validation layer
+	 */
+	name: string;
+
+	/**
+	 * Type of validation layer
+	 */
+	type: ValidationLayerType;
+}
+
+/**
+ * Successful validation layer execution result
+ */
+export interface ValidationLayerSuccess extends ValidationLayerMetadata {
+	/**
+	 * Validation succeeded
+	 */
+	success: true;
+}
+
+/**
+ * Failed validation layer execution result
+ */
+export interface ValidationLayerFailure extends ValidationLayerMetadata {
+	/**
+	 * Validation failed
+	 */
+	success: false;
+
+	/**
+	 * Error returned by the validator
+	 *
+	 * Can be ZodError, SpecError[], ValidationFailedContext,
+	 * Error, string, or any other error type returned by the validator.
+	 */
+	error: unknown;
+}
+
+/**
+ * Result of validation layer execution
+ *
+ * Discriminated union based on success/failure
+ */
+export type ValidationLayerResult = ValidationLayerSuccess | ValidationLayerFailure;
+
+/**
+ * Callbacks for observing validation layer execution
+ *
+ * Provides lightweight observability into the validation pipeline without
+ * passing large LLM outputs through callbacks. Use these to trace which
+ * validation layers execute, which succeed/fail, and capture errors.
+ *
+ * @example
+ * ```typescript
+ * const callbacks: ValidationLayerCallbacks = {
+ *   onLayerStart: (layer) => {
+ *     console.log(`Starting ${layer.type} validation: ${layer.name}`);
+ *   },
+ *   onLayerComplete: (layer) => {
+ *     if (layer.success) {
+ *       console.log(`✓ ${layer.name} passed`);
+ *     } else {
+ *       console.log(`× ${layer.name} failed:`, layer.error);
+ *     }
+ *   },
+ * };
+ * ```
+ */
+export interface ValidationLayerCallbacks {
+	/**
+	 * Called when a validation layer starts execution
+	 */
+	onLayerStart?: (layer: ValidationLayerMetadata) => void;
+
+	/**
+	 * Called when a validation layer completes execution
+	 */
+	onLayerComplete?: (layer: ValidationLayerResult) => void;
+}

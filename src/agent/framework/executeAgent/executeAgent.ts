@@ -1,5 +1,9 @@
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {
+	ValidationLayerMetadata,
+	ValidationLayerResult,
+} from '@sigil/src/agent/framework/validation';
 import type {AgentError, Result} from '@sigil/src/common/errors';
 import {err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
@@ -66,6 +70,28 @@ export interface ExecuteCallbacks<Output> {
 	 * @param state - Execution state containing attempt number and max attempts
 	 */
 	onValidationFailure?: (errors: unknown, state: AgentExecutionState) => void;
+
+	/**
+	 * Called when a validation layer starts execution
+	 *
+	 * @param layer - Metadata about the layer being executed
+	 * @param state - Execution state containing attempt number and max attempts
+	 */
+	onValidationLayerStart?: (
+		layer: ValidationLayerMetadata,
+		state: AgentExecutionState
+	) => void;
+
+	/**
+	 * Called when a validation layer completes execution
+	 *
+	 * @param layer - Result of the layer execution (discriminated union)
+	 * @param state - Execution state containing attempt number and max attempts
+	 */
+	onValidationLayerComplete?: (
+		layer: ValidationLayerResult,
+		state: AgentExecutionState
+	) => void;
 
 	/**
 	 * Called when agent execution succeeds
@@ -179,6 +205,16 @@ export interface ExecuteSuccess<Output> {
  *   maxAttempts: 5,
  *   callbacks: {
  *     onAttemptStart: (state) => console.log(`Attempt ${state.attempt}`),
+ *     onValidationLayerStart: (layer, state) => {
+ *       console.log(`[${state.attempt}] Starting ${layer.type}: ${layer.name}`);
+ *     },
+ *     onValidationLayerComplete: (layer, state) => {
+ *       if (layer.success) {
+ *         console.log(`[${state.attempt}] ✓ ${layer.name} passed`);
+ *       } else {
+ *         console.log(`[${state.attempt}] × ${layer.name} failed:`, layer.error);
+ *       }
+ *     },
  *     onSuccess: (output) => console.log('Success!', output),
  *   },
  * });
