@@ -125,6 +125,8 @@ All documentation must be:
 
 Follow the style of this file and ERROR_HANDLING.md: direct statements, minimal examples, no filler.
 
+Code examples in documentation (JSDoc, README, .md files) must follow all code style conventions: arrow functions, no spaces in curly braces, no single-line blocks, British spelling, etc.
+
 ## File Organisation
 
 ### Naming Conventions
