@@ -1,7 +1,7 @@
 import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
+import type {SpecError} from '@sigil/src/common/errors';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors';
 
 import {extractArray, wrapArray} from '../helpers';
 

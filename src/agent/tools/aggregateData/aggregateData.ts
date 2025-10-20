@@ -2,9 +2,9 @@ import {maxBy, meanBy, minBy, sumBy} from 'lodash';
 
 import {querySingleValue} from '@sigil/renderer/core/utils/queryJSONPath';
 import {ERROR_CODES} from '@sigil/src/common/errors';
+import type {SpecError} from '@sigil/src/common/errors';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok, unwrapOr} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors';
 
 import {extractArray} from '../helpers';
 

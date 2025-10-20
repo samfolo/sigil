@@ -1,8 +1,8 @@
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors';
+import type {SpecError} from '@sigil/src/common/errors';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors';
 
 /**
  * Extract an array from various data structures (GeoJSON, nested objects, etc.)
