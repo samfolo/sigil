@@ -62,3 +62,45 @@ export type {
 	TypeMismatchContext,
 } from './spec';
 export {formatError, formatErrorsForModel, SpecProcessingError, isSpecErrorArray, generateFieldNameSimilaritySuggestion} from './spec';
+
+// Agent error system
+export {AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from './agent';
+export type {
+	AgentError,
+	AgentErrorCode,
+	AgentErrorCategory,
+	EmptyNameError,
+	EmptyDescriptionError,
+	EmptyModelNameError,
+	MissingOutputSchemaError,
+	InvalidMaxAttemptsError,
+	InvalidTemperatureError,
+	InvalidMaxTokensError,
+	PromptGenerationFailedError,
+	ValidationFailedError,
+	MaxAttemptsExceededError,
+	ApiErrorError,
+	RateLimitErrorError,
+	TokenLimitExceededError,
+	InvalidResponseError,
+	MetricsCollectionFailedError,
+	LoggingFailedError,
+	PromptType,
+	EmptyNameContext,
+	EmptyDescriptionContext,
+	EmptyModelNameContext,
+	MissingOutputSchemaContext,
+	InvalidMaxAttemptsContext,
+	InvalidTemperatureContext,
+	InvalidMaxTokensContext,
+	PromptGenerationFailedContext,
+	ValidationFailedContext,
+	MaxAttemptsExceededContext,
+	ApiErrorContext,
+	RateLimitErrorContext,
+	TokenLimitExceededContext,
+	InvalidResponseContext,
+	MetricsCollectionFailedContext,
+	LoggingFailedContext,
+} from './agent';
+export {formatAgentError, formatAgentErrorsForDeveloper, AgentProcessingError, isAgentErrorArray} from './agent';
