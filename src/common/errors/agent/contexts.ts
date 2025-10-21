@@ -74,7 +74,7 @@ export interface PromptGenerationFailedContext {
  * Context for VALIDATION_FAILED error
  */
 export interface ValidationFailedContext {
-	validatorName?: string;
+	layer?: string;
 	reason?: string;
 	attempt?: number;
 }
@@ -83,6 +83,7 @@ export interface ValidationFailedContext {
  * Context for MAX_ATTEMPTS_EXCEEDED error
  */
 export interface MaxAttemptsExceededContext {
+	attempts: number;
 	maxAttempts: number;
 	lastError?: string;
 }

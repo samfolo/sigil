@@ -35,11 +35,10 @@ export interface ModelConfig {
  *
  * The generic type parameter determines what data the function receives:
  * - `PromptFunction<Input>` - receives the agent input (used for system/user prompts)
- * - `PromptFunction<SpecError[]>` - receives validation errors (used for error prompts)
- * - `PromptFunction<{input: Input, errors: SpecError[]}>` - receives both (for advanced error handling)
+ * - `PromptFunction<string>` - receives formatted error string (used for error prompts)
  *
  * @template T - The type of data this prompt function accepts
- * @param data - The data to base the prompt on (input, errors, or combination)
+ * @param data - The data to base the prompt on (input or formatted error string)
  * @param state - Execution state containing attempt number and max attempts
  * @returns Promise resolving to the generated prompt string
  *
@@ -49,14 +48,9 @@ export interface ModelConfig {
  * const systemPrompt: PromptFunction<string> = async (input, state) =>
  *   `You are processing: ${input}`;
  *
- * // Error prompt with errors only
- * const errorPrompt: PromptFunction<SpecError[]> = async (errors, state) =>
- *   `Attempt ${state.attempt}/${state.maxAttempts} failed with ${errors.length} errors`;
- *
- * // Error prompt with both input and errors
- * const advancedErrorPrompt: PromptFunction<{input: string, errors: SpecError[]}> =
- *   async ({input, errors}, state) =>
- *     `Processing "${input}" failed on attempt ${state.attempt}/${state.maxAttempts}`;
+ * // Error prompt with formatted error string
+ * const errorPrompt: PromptFunction<string> = async (errorMessage, state) =>
+ *   `Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease fix these issues.`;
  * ```
  */
 export type PromptFunction<T> = (
@@ -128,9 +122,32 @@ export interface PromptsConfig<Input> {
 	user: PromptFunction<Input>;
 
 	/**
-	 * Error iteration prompt function - receives validation errors and execution state
+	 * Error iteration prompt function - receives formatted error string and execution state
 	 */
-	error: PromptFunction<SpecError[]>;
+	error: PromptFunction<string>;
+
+	/**
+	 * Optional error formatter function
+	 *
+	 * Converts validation errors (of any type) into a formatted string for the error prompt.
+	 * If not provided, executeAgent will use a default formatter that handles SpecError[]
+	 * and ZodError with appropriate formatting.
+	 *
+	 * @param errors - Validation errors from failed validation layer (can be any type)
+	 * @returns Formatted error string to pass to the error prompt function
+	 *
+	 * @example
+	 * ```typescript
+	 * // Custom formatter for domain-specific errors
+	 * errorFormatter: (errors) => {
+	 *   if (Array.isArray(errors)) {
+	 *     return errors.map(e => `- ${e}`).join('\n');
+	 *   }
+	 *   return String(errors);
+	 * }
+	 * ```
+	 */
+	errorFormatter?: (errors: unknown) => string;
 }
 
 /**
@@ -197,8 +214,8 @@ export interface AgentDefinition<Input, Output> {
  *   prompts: {
  *     system: async (input, state) => `Analyse data on attempt ${state.attempt}`,
  *     user: async (input, state) => `Process: ${input}`,
- *     error: async (errors, state) =>
- *       `Attempt ${state.attempt}/${state.maxAttempts} failed with ${errors.length} errors`,
+ *     error: async (errorMessage, state) =>
+ *       `Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}`,
  *   },
  *   validation: {
  *     outputSchema: z.object({...}),

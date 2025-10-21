@@ -10,6 +10,10 @@
  */
 
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {
+	ValidationLayerMetadata,
+	ValidationLayerResult,
+} from '@sigil/src/agent/framework/validation';
 import type {AgentError} from '@sigil/src/common/errors';
 import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
@@ -70,6 +74,24 @@ interface OnFailureInvocation {
 }
 
 /**
+ * Callback invocation record for onValidationLayerStart
+ */
+interface OnValidationLayerStartInvocation {
+	type: 'onValidationLayerStart';
+	layer: ValidationLayerMetadata;
+	state: AgentExecutionState;
+}
+
+/**
+ * Callback invocation record for onValidationLayerComplete
+ */
+interface OnValidationLayerCompleteInvocation {
+	type: 'onValidationLayerComplete';
+	layer: ValidationLayerResult;
+	state: AgentExecutionState;
+}
+
+/**
  * Discriminated union of all callback invocation types
  *
  * Tracks which callback was invoked and the arguments passed to it.
@@ -80,7 +102,9 @@ export type CallbackInvocation =
 	| OnAttemptCompleteInvocation
 	| OnValidationFailureInvocation
 	| OnSuccessInvocation
-	| OnFailureInvocation;
+	| OnFailureInvocation
+	| OnValidationLayerStartInvocation
+	| OnValidationLayerCompleteInvocation;
 
 /**
  * Return type for createExecuteOptionsWithCallbackTracking factory
@@ -152,6 +176,20 @@ export const createExecuteOptionsWithCallbackTracking =
 			invocations.push({
 				type: 'onValidationFailure',
 				errors,
+				state,
+			});
+		},
+		onValidationLayerStart: (layer, state) => {
+			invocations.push({
+				type: 'onValidationLayerStart',
+				layer,
+				state,
+			});
+		},
+		onValidationLayerComplete: (layer, state) => {
+			invocations.push({
+				type: 'onValidationLayerComplete',
+				layer,
 				state,
 			});
 		},

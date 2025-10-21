@@ -40,6 +40,16 @@ export interface ExecuteMetadata {
 	 * Token usage statistics
 	 */
 	tokens?: ExecuteMetadataTokenUsageStatistics;
+
+	/**
+	 * Errors thrown by callbacks during execution
+	 *
+	 * Callbacks are observability hooks and should not throw errors. However, if they do,
+	 * those errors are caught and collected here to prevent callback failures from breaking
+	 * agent execution. The presence of callback errors indicates bugs in callback implementations
+	 * that should be fixed.
+	 */
+	callbackErrors?: Error[];
 }
 
 /**
