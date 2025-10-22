@@ -15,9 +15,7 @@ import type {Config, DiscriminatedUnion} from '../types';
 export const isDiscriminatedUnion = (
 	definitionName: string,
 	config: Config
-): DiscriminatedUnion | null => {
-	return config.discriminatedUnions.find((u) => u.name === definitionName) || null;
-};
+): DiscriminatedUnion | null => config.discriminatedUnions.find((u) => u.name === definitionName) || null;
 
 /**
  * Generates Zod code for a discriminated union

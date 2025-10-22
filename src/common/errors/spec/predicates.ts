@@ -27,9 +27,7 @@ const VALID_SPEC_ERROR_CODES = new Set(Object.values(ERROR_CODES));
  * }
  * ```
  */
-export const isSpecErrorArray = (error: unknown): error is SpecError[] => {
-	return isStructuredErrorArray<SpecErrorCode, SpecErrorCategory, SpecError['context']>(
+export const isSpecErrorArray = (error: unknown): error is SpecError[] => isStructuredErrorArray<SpecErrorCode, SpecErrorCategory, SpecError['context']>(
 		error,
 		VALID_SPEC_ERROR_CODES
 	);
-};

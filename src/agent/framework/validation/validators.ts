@@ -121,8 +121,7 @@ export const validateWithZod = <Output>(
 export const createCustomValidator = <Output>(
 	name: string,
 	validateFn: CustomValidationFn<Output>
-): ValidationLayer<Output> => {
-	return {
+): ValidationLayer<Output> => ({
 		name,
 		validate: async (output: Output): Promise<Result<Output, unknown>> => {
 			try {
@@ -132,8 +131,7 @@ export const createCustomValidator = <Output>(
 				return err(error);
 			}
 		},
-	};
-};
+	});
 
 /**
  * Recursively freezes an object and all nested objects

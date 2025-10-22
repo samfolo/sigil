@@ -152,9 +152,7 @@ const MapContent = ({data, isGeoJSONData, points}: MapContentProps) => {
       {isGeoJSONData ? (
         <GeoJSON
           data={data as GeoJSON.GeoJsonObject}
-          pointToLayer={(feature, latlng) => {
-            return L.marker(latlng, {icon});
-          }}
+          pointToLayer={(feature, latlng) => L.marker(latlng, {icon})}
         />
       ) : (
         points.map((point, idx) => (

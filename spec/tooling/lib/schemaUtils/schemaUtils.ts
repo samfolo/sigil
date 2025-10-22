@@ -131,16 +131,12 @@ export const extractDefinitionName = (ref: string): string | null => {
 /**
  * Check if a ref is a local reference (starts with #/)
  */
-export const isLocalRef = (ref: string): boolean => {
-  return ref.startsWith(REF_PATTERNS.LOCAL_PREFIX);
-};
+export const isLocalRef = (ref: string): boolean => ref.startsWith(REF_PATTERNS.LOCAL_PREFIX);
 
 /**
  * Check if a ref is a cross-file reference (starts with ./)
  */
-export const isCrossFileRef = (ref: string): boolean => {
-  return ref.startsWith(REF_PATTERNS.CROSS_FILE_PREFIX);
-};
+export const isCrossFileRef = (ref: string): boolean => ref.startsWith(REF_PATTERNS.CROSS_FILE_PREFIX);
 
 /**
  * Parse a cross-file reference into file path and JSON path components
@@ -198,9 +194,7 @@ export const mergeDefinitions = (
 /**
  * Validate that a definition exists in a schema
  */
-export const hasDefinition = (schema: JsonSchema, definitionName: string): boolean => {
-  return Boolean(schema.definitions && definitionName in schema.definitions);
-};
+export const hasDefinition = (schema: JsonSchema, definitionName: string): boolean => Boolean(schema.definitions && definitionName in schema.definitions);
 
 /**
  * Get a definition from a schema by name

@@ -316,14 +316,10 @@ describe('validateLayers', () => {
 		it('should work with different error types (Error, custom objects, etc.)', async () => {
 			const customObjectErrorValidator: typeof createConditionalValidator = (
 				name
-			) => {
-				return {
+			) => ({
 					name,
-					validate: async () => {
-						return err({code: 'CUSTOM_ERROR', message: 'Custom object error'});
-					},
-				};
-			};
+					validate: async () => err({code: 'CUSTOM_ERROR', message: 'Custom object error'}),
+				});
 
 			const validator = customObjectErrorValidator('custom-object');
 
@@ -520,14 +516,12 @@ describe('validateLayers', () => {
 	describe('Mutation Detection', () => {
 		const isValidationFailedContext = (
 			value: unknown
-		): value is ValidationFailedContext => {
-			return (
+		): value is ValidationFailedContext => (
 				typeof value === 'object' &&
 				value !== null &&
 				'layer' in value &&
 				'reason' in value
 			);
-		};
 
 		it('should prevent validators from mutating output properties', async () => {
 			const mutatingValidator = createConditionalValidator('mutating', (output) => {

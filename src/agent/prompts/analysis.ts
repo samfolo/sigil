@@ -6,8 +6,7 @@ interface AnalysisPromptParams {
 /**
  * Generate the analysis prompt for data analysis
  */
-export const buildAnalysisPrompt = ({format, dataSample}: AnalysisPromptParams): string => {
-	return `Analyse this ${format} data sample and provide your analysis using the tool.
+export const buildAnalysisPrompt = ({format, dataSample}: AnalysisPromptParams): string => `Analyse this ${format} data sample and provide your analysis using the tool.
 
 IMPORTANT for keyFields:
 - "path" must be a valid JSONPath expression starting with $ (e.g., '$.name', '$.user.email', '$.items[0].id')
@@ -18,4 +17,3 @@ IMPORTANT for keyFields:
 
 Data sample:
 ${dataSample}`;
-};

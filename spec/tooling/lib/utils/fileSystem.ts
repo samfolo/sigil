@@ -24,9 +24,7 @@ export const loadJson = <T = unknown>(filePath: string): T => {
 /**
  * Load and validate a JSON Schema file
  */
-export const loadSchema = (filePath: string): JsonSchema => {
-  return loadJson<JsonSchema>(filePath);
-};
+export const loadSchema = (filePath: string): JsonSchema => loadJson<JsonSchema>(filePath);
 
 /**
  * Load and validate the config.json file
@@ -79,6 +77,4 @@ export const listFiles = (dirPath: string, pattern?: RegExp): string[] => {
 /**
  * Check if a file exists
  */
-export const fileExists = (filePath: string): boolean => {
-  return existsSync(filePath);
-};
+export const fileExists = (filePath: string): boolean => existsSync(filePath);

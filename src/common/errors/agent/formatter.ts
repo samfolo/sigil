@@ -66,9 +66,7 @@ const formatEmptyModelName = (context: EmptyModelNameContext): string => {
  */
 const formatMissingOutputSchema = (
 	_context: MissingOutputSchemaContext
-): string => {
-	return 'Validation output schema must be provided';
-};
+): string => 'Validation output schema must be provided';
 
 /**
  * Formats INVALID_MAX_ATTEMPTS error

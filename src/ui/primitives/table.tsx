@@ -4,8 +4,7 @@ import * as React from "react"
 
 import {cn} from "@sigil/src/common/utils/cn"
 
-const Table = ({className, ...props}: React.ComponentProps<"table">) => {
-  return (
+const Table = ({className, ...props}: React.ComponentProps<"table">) => (
     <div
       data-slot="table-container"
       className="relative w-full overflow-x-auto"
@@ -17,30 +16,24 @@ const Table = ({className, ...props}: React.ComponentProps<"table">) => {
       />
     </div>
   )
-}
 
-const TableHeader = ({className, ...props}: React.ComponentProps<"thead">) => {
-  return (
+const TableHeader = ({className, ...props}: React.ComponentProps<"thead">) => (
     <thead
       data-slot="table-header"
       className={cn("[&_tr]:border-b", className)}
       {...props}
     />
   )
-}
 
-const TableBody = ({className, ...props}: React.ComponentProps<"tbody">) => {
-  return (
+const TableBody = ({className, ...props}: React.ComponentProps<"tbody">) => (
     <tbody
       data-slot="table-body"
       className={cn("[&_tr:last-child]:border-0", className)}
       {...props}
     />
   )
-}
 
-const TableFooter = ({className, ...props}: React.ComponentProps<"tfoot">) => {
-  return (
+const TableFooter = ({className, ...props}: React.ComponentProps<"tfoot">) => (
     <tfoot
       data-slot="table-footer"
       className={cn(
@@ -50,10 +43,8 @@ const TableFooter = ({className, ...props}: React.ComponentProps<"tfoot">) => {
       {...props}
     />
   )
-}
 
-const TableRow = ({className, ...props}: React.ComponentProps<"tr">) => {
-  return (
+const TableRow = ({className, ...props}: React.ComponentProps<"tr">) => (
     <tr
       data-slot="table-row"
       className={cn(
@@ -63,10 +54,8 @@ const TableRow = ({className, ...props}: React.ComponentProps<"tr">) => {
       {...props}
     />
   )
-}
 
-const TableHead = ({className, ...props}: React.ComponentProps<"th">) => {
-  return (
+const TableHead = ({className, ...props}: React.ComponentProps<"th">) => (
     <th
       data-slot="table-head"
       className={cn(
@@ -76,10 +65,8 @@ const TableHead = ({className, ...props}: React.ComponentProps<"th">) => {
       {...props}
     />
   )
-}
 
-const TableCell = ({className, ...props}: React.ComponentProps<"td">) => {
-  return (
+const TableCell = ({className, ...props}: React.ComponentProps<"td">) => (
     <td
       data-slot="table-cell"
       className={cn(
@@ -89,20 +76,17 @@ const TableCell = ({className, ...props}: React.ComponentProps<"td">) => {
       {...props}
     />
   )
-}
 
 const TableCaption = ({
   className,
   ...props
-}: React.ComponentProps<"caption">) => {
-  return (
+}: React.ComponentProps<"caption">) => (
     <caption
       data-slot="table-caption"
       className={cn("text-muted-foreground mt-4 text-sm", className)}
       {...props}
     />
   )
-}
 
 export {
   Table,

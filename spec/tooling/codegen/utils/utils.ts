@@ -253,8 +253,7 @@ export const assembleGeneratedFile = (generated: GeneratedCode): string => {
 /**
  * Generates an index.ts that re-exports Zod schemas
  */
-export const generateIndexFile = (): string => {
-	return `/**
+export const generateIndexFile = (): string => `/**
  * Generated Zod schemas for runtime validation
  * DO NOT EDIT MANUALLY
  *
@@ -263,4 +262,3 @@ export const generateIndexFile = (): string => {
 
 export * from './specification';
 `;
-};

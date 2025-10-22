@@ -40,10 +40,10 @@ export const sortData = (
 	}
 
 	// Sort by field using JSONPath accessor
-	const sorted = sortBy(arrayData, (item) => {
+	const sorted = sortBy(arrayData, (item) => 
 		// At this point, accessor is valid and returns single value, so only missing fields return undefined
-		return unwrapOr(querySingleValue(item, field), undefined);
-	});
+		 unwrapOr(querySingleValue(item, field), undefined)
+	);
 
 	const sortedArray = direction === 'desc' ? sorted.reverse() : sorted;
 	const result = wrapArray(data, sortedArray);

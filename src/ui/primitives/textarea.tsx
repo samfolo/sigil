@@ -2,8 +2,7 @@ import * as React from "react"
 
 import {cn} from "@sigil/src/common/utils/cn"
 
-const Textarea = ({className, ...props}: React.ComponentProps<"textarea">) => {
-  return (
+const Textarea = ({className, ...props}: React.ComponentProps<"textarea">) => (
     <textarea
       data-slot="textarea"
       className={cn(
@@ -13,6 +12,5 @@ const Textarea = ({className, ...props}: React.ComponentProps<"textarea">) => {
       {...props}
     />
   )
-}
 
 export {Textarea}

@@ -82,14 +82,10 @@ export const INVALID_OUTPUT_MISSING_FIELD = {
  */
 export const createPassingValidator = (
 	name: string
-): ValidationLayer<TestOutput> => {
-	return {
+): ValidationLayer<TestOutput> => ({
 		name,
-		validate: async (output) => {
-			return ok(output);
-		},
-	};
-};
+		validate: async (output) => ok(output),
+	});
 
 /**
  * Creates a validation layer that always fails
@@ -111,14 +107,10 @@ export const createPassingValidator = (
 export const createFailingValidator = (
 	name: string,
 	errorMessage: string
-): ValidationLayer<TestOutput> => {
-	return {
+): ValidationLayer<TestOutput> => ({
 		name,
-		validate: async (_output) => {
-			return err(new Error(errorMessage));
-		},
-	};
-};
+		validate: async (_output) => err(new Error(errorMessage)),
+	});
 
 /**
  * Creates a validation layer with custom predicate logic
@@ -148,8 +140,7 @@ export const createFailingValidator = (
 export const createConditionalValidator = (
 	name: string,
 	predicate: (output: TestOutput) => boolean
-): ValidationLayer<TestOutput> => {
-	return {
+): ValidationLayer<TestOutput> => ({
 		name,
 		validate: async (output) => {
 			if (predicate(output)) {
@@ -157,5 +148,4 @@ export const createConditionalValidator = (
 			}
 			return err(new Error(`Validation failed: ${name}`));
 		},
-	};
-};
+	});

@@ -9,8 +9,7 @@ const ScrollArea = ({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) => {
-  return (
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) => (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
       className={cn("relative", className)}
@@ -26,14 +25,12 @@ const ScrollArea = ({
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   )
-}
 
 const ScrollBar = ({
   className,
   orientation = "vertical",
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) => {
-  return (
+}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) => (
     <ScrollAreaPrimitive.ScrollAreaScrollbar
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
@@ -53,6 +50,5 @@ const ScrollBar = ({
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   )
-}
 
 export {ScrollArea, ScrollBar}

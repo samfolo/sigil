@@ -31,27 +31,19 @@ export type QueryState<T, E = Error> =
 /**
  * Helper function to check if the query is in idle state.
  */
-export const isIdle = <T, E>(state: QueryState<T, E>): state is IdleQueryState => {
-	return state.status === 'idle';
-}
+export const isIdle = <T, E>(state: QueryState<T, E>): state is IdleQueryState => state.status === 'idle'
 
 /**
  * Helper function to check if the query is in loading state.
  */
-export const isLoading = <T, E>(state: QueryState<T, E>): state is LoadingQueryState => {
-	return state.status === 'loading';
-}
+export const isLoading = <T, E>(state: QueryState<T, E>): state is LoadingQueryState => state.status === 'loading'
 
 /**
  * Helper function to check if the query completed successfully.
  */
-export const isSuccess = <T, E>(state: QueryState<T, E>): state is SuccessQueryState<T> => {
-	return state.status === 'success';
-}
+export const isSuccess = <T, E>(state: QueryState<T, E>): state is SuccessQueryState<T> => state.status === 'success'
 
 /**
  * Helper function to check if the query resulted in an error.
  */
-export const isError = <T, E>(state: QueryState<T, E>): state is ErrorQueryState<E> => {
-	return state.status === 'error';
-}
+export const isError = <T, E>(state: QueryState<T, E>): state is ErrorQueryState<E> => state.status === 'error'

@@ -27,14 +27,12 @@ import {stringifyCellValue} from '../utils/stringifyCellValue';
  * @param columns - Column configurations from DataTableConfig
  * @returns Array of column definitions for RenderTree
  */
-export const extractColumns = (columns: DataTableColumn[]): Column[] => {
-	return columns.map((col) => ({
+export const extractColumns = (columns: DataTableColumn[]): Column[] => columns.map((col) => ({
 		id: col.accessor,
 		label: col.label,
 		dataType: 'unknown', // Will be enriched from accessor_bindings in buildRenderTree
 		alignment: col.alignment,
 	}));
-};
 
 /**
  * Enriches column definitions with metadata from accessor_bindings
@@ -48,15 +46,13 @@ export const extractColumns = (columns: DataTableColumn[]): Column[] => {
 export const enrichColumns = (
 	columns: Column[],
 	accessorBindings: Record<string, FieldMetadata>,
-): Column[] => {
-	return columns.map((col) => {
+): Column[] => columns.map((col) => {
 		const metadata = accessorBindings[col.id];
 		return {
 			...col,
 			dataType: metadata?.data_types.at(0) ?? 'unknown',
 		};
 	});
-};
 
 /**
  * Binds raw data to rows based on column definitions

@@ -313,9 +313,7 @@ describe('Result', () => {
 				return isNaN(num) ? err('Invalid number') : ok(num);
 			};
 
-			const validatePositive = (num: number): Result<number, string> => {
-				return num > 0 ? ok(num) : err('Number must be positive');
-			};
+			const validatePositive = (num: number): Result<number, string> => num > 0 ? ok(num) : err('Number must be positive');
 
 			const result = chain(parseNumber('42'), validatePositive);
 			expect(isOk(result)).toBe(true);
@@ -333,13 +331,9 @@ describe('Result', () => {
 				age: number;
 			}
 
-			const validateName = (name: string): Result<string, string> => {
-				return name.length > 0 ? ok(name) : err('Name cannot be empty');
-			};
+			const validateName = (name: string): Result<string, string> => name.length > 0 ? ok(name) : err('Name cannot be empty');
 
-			const validateAge = (age: number): Result<number, string> => {
-				return age >= 18 ? ok(age) : err('Must be 18 or older');
-			};
+			const validateAge = (age: number): Result<number, string> => age >= 18 ? ok(age) : err('Must be 18 or older');
 
 			const createUser = (name: string, age: number): Result<User, string> => {
 				const nameResult = validateName(name);
