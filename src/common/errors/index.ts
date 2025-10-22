@@ -63,6 +63,9 @@ export type {
 } from './spec';
 export {formatSpecError, formatSpecErrorsForModel, SpecProcessingError, isSpecErrorArray, generateFieldNameSimilaritySuggestion} from './spec';
 
+// Zod error system
+export {formatZodErrorsForModel} from './zod';
+
 // Agent error system
 export {AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from './agent';
 export type {
