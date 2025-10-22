@@ -1,8 +1,9 @@
 import {readFile} from 'node:fs/promises';
+
 import {Liquid} from 'liquidjs';
 
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {PromptFunction} from '@sigil/src/agent/framework/defineAgent/defineAgent';
+import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors/result';
 import {ok, err} from '@sigil/src/common/errors/result';
 
