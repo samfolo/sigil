@@ -246,9 +246,10 @@ export const executeAgent = async <Input, Output>(
 	const placeholderError: AgentError = {
 		code: AGENT_ERROR_CODES.VALIDATION_FAILED,
 		severity: 'error',
-		category: 'validation',
+		category: 'execution',
 		context: {
-			message: 'Not yet implemented',
+			layer: 'stub',
+			reason: 'Not yet implemented',
 		},
 	};
 

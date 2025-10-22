@@ -9,9 +9,10 @@
 
 import {z} from 'zod';
 
+import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import {err, ok} from '@sigil/src/common/errors';
 
-import type {AgentDefinition, AgentExecutionState} from './defineAgent';
+import type {AgentDefinition} from './defineAgent';
 
 /**
  * Simple output interface used across all test fixtures for consistency
@@ -230,8 +231,8 @@ export const INVALID_WHITESPACE_DESCRIPTION: AgentDefinition<string, TestOutput>
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
 			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
-			error: async (errors: SpecError[], state: AgentExecutionState) =>
-				`Error attempt ${state.attempt}`,
+			error: async (errorMessage: string, state: AgentExecutionState) =>
+				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
 		validation: {
 			outputSchema: TEST_OUTPUT_SCHEMA,
@@ -298,8 +299,8 @@ export const INVALID_WHITESPACE_MODEL_NAME: AgentDefinition<string, TestOutput> 
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
 			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
-			error: async (errors: SpecError[], state: AgentExecutionState) =>
-				`Error attempt ${state.attempt}`,
+			error: async (errorMessage: string, state: AgentExecutionState) =>
+				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
 		validation: {
 			outputSchema: TEST_OUTPUT_SCHEMA,
@@ -366,8 +367,8 @@ export const INVALID_NEGATIVE_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> 
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
 			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
-			error: async (errors: SpecError[], state: AgentExecutionState) =>
-				`Error attempt ${state.attempt}`,
+			error: async (errorMessage: string, state: AgentExecutionState) =>
+				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
 		validation: {
 			outputSchema: TEST_OUTPUT_SCHEMA,
@@ -404,8 +405,8 @@ export const INVALID_MISSING_OUTPUT_SCHEMA: AgentDefinition<string, TestOutput> 
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
 			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
-			error: async (errors: SpecError[], state: AgentExecutionState) =>
-				`Error attempt ${state.attempt}`,
+			error: async (errorMessage: string, state: AgentExecutionState) =>
+				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
 		validation: {
 			outputSchema: undefined as unknown as z.ZodSchema<TestOutput>,

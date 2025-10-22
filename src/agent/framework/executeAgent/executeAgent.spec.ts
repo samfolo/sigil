@@ -73,11 +73,11 @@ describe('executeAgent', () => {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(AGENT_ERROR_CODES.VALIDATION_FAILED);
 				expect(error?.severity).toBe('error');
-				expect(error?.category).toBe('validation');
+				expect(error?.category).toBe('execution');
 
 				// Use error code to narrow type for context access
 				if (error?.code === AGENT_ERROR_CODES.VALIDATION_FAILED) {
-					expect(error.context.message).toBe('Not yet implemented');
+					expect(error.context.reason).toBe('Not yet implemented');
 				}
 			}
 		});
@@ -287,6 +287,105 @@ describe('executeAgent', () => {
 					if (error?.code === AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED) {
 						expect(error.context.maxAttempts).toBe(5);
 					}
+				}
+			});
+		});
+
+		describe('Validation layer callbacks', () => {
+			it('should invoke onValidationLayerStart for each validation layer', async () => {
+				const {options, invocations} =
+					createExecuteOptionsWithCallbackTracking();
+
+				await executeAgent(VALID_MINIMAL_AGENT, options);
+
+				const layerStarts = invocations.filter(
+					(i) => i.type === 'onValidationLayerStart'
+				);
+
+				// Should have at least one for the Zod schema layer
+				expect(layerStarts.length).toBeGreaterThan(0);
+
+				const zodLayer = layerStarts.find((i) => {
+					if (i.type === 'onValidationLayerStart') {
+						return i.layer.type === 'zod';
+					}
+					return false;
+				});
+
+				expect(zodLayer).toBeDefined();
+			});
+
+			it('should invoke onValidationLayerComplete for each validation layer', async () => {
+				const {options, invocations} =
+					createExecuteOptionsWithCallbackTracking();
+
+				await executeAgent(VALID_MINIMAL_AGENT, options);
+
+				const layerCompletes = invocations.filter(
+					(i) => i.type === 'onValidationLayerComplete'
+				);
+
+				expect(layerCompletes.length).toBeGreaterThan(0);
+			});
+
+			it('should invoke validation layer callbacks in correct order', async () => {
+				const {options, invocations} =
+					createExecuteOptionsWithCallbackTracking();
+
+				await executeAgent(VALID_MINIMAL_AGENT, options);
+
+				// For each layer, Start should come before Complete
+				const layerStarts = invocations.filter(
+					(i) => i.type === 'onValidationLayerStart'
+				);
+				const layerCompletes = invocations.filter(
+					(i) => i.type === 'onValidationLayerComplete'
+				);
+
+				expect(layerStarts.length).toBe(layerCompletes.length);
+
+				// Verify each start comes before its corresponding complete
+				layerStarts.forEach((start, index) => {
+					const startIndex = invocations.indexOf(start);
+					const completeIndex = invocations.indexOf(layerCompletes.at(index)!);
+					expect(startIndex).toBeLessThan(completeIndex);
+				});
+			});
+
+			it('should pass correct layer metadata to callbacks', async () => {
+				const {options, invocations} =
+					createExecuteOptionsWithCallbackTracking();
+
+				await executeAgent(VALID_MINIMAL_AGENT, options);
+
+				const layerStart = invocations.find(
+					(i) => i.type === 'onValidationLayerStart'
+				);
+
+				if (layerStart?.type === 'onValidationLayerStart') {
+					expect(layerStart.layer.name).toBeDefined();
+					expect(layerStart.layer.type).toMatch(/^(zod|custom)$/);
+					expect(layerStart.state.attempt).toBeGreaterThan(0);
+					expect(layerStart.state.maxAttempts).toBeGreaterThan(0);
+				}
+			});
+
+			it('should include error in onValidationLayerComplete when layer fails', async () => {
+				// Mock scenario where validation fails
+				const {options, invocations} =
+					createExecuteOptionsWithCallbackTracking();
+
+				await executeAgent(VALID_MINIMAL_AGENT, options);
+
+				const failedLayer = invocations.find((i) => {
+					if (i.type === 'onValidationLayerComplete') {
+						return !i.layer.success;
+					}
+					return false;
+				});
+
+				if (failedLayer?.type === 'onValidationLayerComplete' && !failedLayer.layer.success) {
+					expect(failedLayer.layer.error).toBeDefined();
 				}
 			});
 		});

@@ -134,7 +134,7 @@ export const validateLayers = async <Output>(
 					error.message.includes('Cannot delete'))
 			) {
 				const mutationError: ValidationFailedContext = {
-					validatorName: validator.name,
+					layer: validator.name,
 					reason:
 						'Validator attempted to mutate input. Validators must not modify the input object.',
 				};

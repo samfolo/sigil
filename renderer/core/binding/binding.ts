@@ -112,7 +112,7 @@ export const bindData = (
 				const enrichedErrors = result.error.map((error) => {
 					// For INVALID_ACCESSOR errors, the path doesn't start with '$'
 					// so we just use the row path without appending the accessor
-					if (!error.path.startsWith('$')) {
+					if (!error.path || !error.path.startsWith('$')) {
 						return {
 							...error,
 							path: rowPath.join(''),

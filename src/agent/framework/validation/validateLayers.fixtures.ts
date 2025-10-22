@@ -28,7 +28,6 @@ interface TestOutput {
  * - result: string
  * - value: number
  */
-// @ts-expect-error - Zod schemas use PascalCase convention
 export const ValidOutputSchema = z.object({
 	result: z.string(),
 	value: z.number(),

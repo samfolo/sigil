@@ -89,9 +89,9 @@ export const appendMetadata = (
  * @param sectionFormat - Format for section headers ('markdown' or 'text')
  * @returns Formatted error output grouped by severity
  */
-export const formatErrorsBySeverity = <Code extends string, Category extends string, Context>(
-	errors: StructuredError<Code, Category, Context>[],
-	formatError: (error: StructuredError<Code, Category, Context>) => string,
+export const formatErrorsBySeverity = <E extends StructuredError<string, string, unknown>>(
+	errors: E[],
+	formatError: (error: E) => string,
 	sectionFormat: 'markdown' | 'text' = 'markdown'
 ): string => {
 	if (errors.length === 0) {

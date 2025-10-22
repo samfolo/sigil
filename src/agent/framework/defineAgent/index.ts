@@ -1,6 +1,5 @@
 export type {
 	AgentDefinition,
-	CustomValidator,
 	ModelConfig,
 	ObservabilityConfig,
 	PromptFunction,

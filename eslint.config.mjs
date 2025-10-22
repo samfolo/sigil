@@ -115,6 +115,9 @@ const eslintConfig = [
       // Enforce fat arrow syntax for all functions
       "prefer-arrow-callback": ["error", {allowNamedFunctions: false}],
 
+      // Require direct returns for arrow functions when possible
+      "arrow-body-style": ["error", "as-needed"],
+
       // Require curly braces for all control statements (no single-line if statements)
       "curly": ["error", "all"],
 

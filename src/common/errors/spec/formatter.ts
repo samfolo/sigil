@@ -235,6 +235,5 @@ export const formatError = (error: SpecError): string => {
  * @param errors - Array of errors to format
  * @returns Markdown-formatted error summary, or empty string if no errors
  */
-export const formatErrorsForModel = (errors: SpecError[]): string => {
-	return formatErrorsBySeverity(errors, formatError, 'markdown');
-};
+export const formatErrorsForModel = (errors: SpecError[]): string =>
+	formatErrorsBySeverity(errors, formatError, 'markdown');

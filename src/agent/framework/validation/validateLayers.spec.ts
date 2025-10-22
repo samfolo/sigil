@@ -524,7 +524,7 @@ describe('validateLayers', () => {
 			return (
 				typeof value === 'object' &&
 				value !== null &&
-				'validatorName' in value &&
+				'layer' in value &&
 				'reason' in value
 			);
 		};
@@ -544,7 +544,7 @@ describe('validateLayers', () => {
 			expect(isErr(result)).toBe(true);
 
 			if (isErr(result) && isValidationFailedContext(result.error)) {
-				expect(result.error.validatorName).toBe('mutating');
+				expect(result.error.layer).toBe('mutating');
 				expect(result.error.reason).toContain('mutate input');
 			} else {
 				throw new Error('Expected ValidationFailedContext error');
@@ -566,7 +566,7 @@ describe('validateLayers', () => {
 			expect(isErr(result)).toBe(true);
 
 			if (isErr(result) && isValidationFailedContext(result.error)) {
-				expect(result.error.validatorName).toBe('mutating');
+				expect(result.error.layer).toBe('mutating');
 			} else {
 				throw new Error('Expected ValidationFailedContext error');
 			}
@@ -592,7 +592,7 @@ describe('validateLayers', () => {
 			expect(isErr(result)).toBe(true);
 
 			if (isErr(result) && isValidationFailedContext(result.error)) {
-				expect(result.error.validatorName).toBe('mutating');
+				expect(result.error.layer).toBe('mutating');
 			} else {
 				throw new Error(
 					`Expected ValidationFailedContext error, got: ${JSON.stringify(result)}`
@@ -620,7 +620,7 @@ describe('validateLayers', () => {
 			expect(isErr(result)).toBe(true);
 
 			if (isErr(result) && isValidationFailedContext(result.error)) {
-				expect(result.error.validatorName).toBe('mutating');
+				expect(result.error.layer).toBe('mutating');
 			} else {
 				throw new Error('Expected ValidationFailedContext error');
 			}
@@ -667,7 +667,7 @@ describe('validateLayers', () => {
 				expect(customValidatorCall.type).toBe('custom');
 
 				if (isValidationFailedContext(customValidatorCall.error)) {
-					expect(customValidatorCall.error.validatorName).toBe('mutating');
+					expect(customValidatorCall.error.layer).toBe('mutating');
 					expect(customValidatorCall.error.reason).toContain('mutate input');
 				} else {
 					throw new Error('Expected ValidationFailedContext error');

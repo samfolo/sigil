@@ -131,8 +131,8 @@ const formatPromptGenerationFailed = (
 const formatValidationFailed = (context: ValidationFailedContext): string => {
 	const parts: string[] = ['Validation failed'];
 
-	if (context.validatorName) {
-		parts.push(`in "${context.validatorName}"`);
+	if (context.layer) {
+		parts.push(`in "${context.layer}"`);
 	}
 
 	if (context.attempt !== undefined) {
@@ -368,8 +368,5 @@ export const formatAgentError = (error: AgentError): string => {
  * @param errors - Array of errors to format
  * @returns Formatted error summary, or empty string if no errors
  */
-export const formatAgentErrorsForDeveloper = (
-	errors: AgentError[]
-): string => {
-	return formatErrorsBySeverity(errors, formatAgentError, 'markdown');
-};
+export const formatAgentErrorsForDeveloper = (errors: AgentError[]): string =>
+	formatErrorsBySeverity(errors, formatAgentError, 'markdown');
