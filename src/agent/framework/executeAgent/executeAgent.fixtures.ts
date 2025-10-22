@@ -172,21 +172,21 @@ export const createExecuteOptionsWithCallbackTracking =
 				success,
 			});
 		},
-		onValidationFailure: (errors, state) => {
+		onValidationFailure: (state, errors) => {
 			invocations.push({
 				type: 'onValidationFailure',
 				errors,
 				state,
 			});
 		},
-		onValidationLayerStart: (layer, state) => {
+		onValidationLayerStart: (state, layer) => {
 			invocations.push({
 				type: 'onValidationLayerStart',
 				layer,
 				state,
 			});
 		},
-		onValidationLayerComplete: (layer, state) => {
+		onValidationLayerComplete: (state, layer) => {
 			invocations.push({
 				type: 'onValidationLayerComplete',
 				layer,

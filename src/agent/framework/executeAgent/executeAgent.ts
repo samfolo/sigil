@@ -76,31 +76,31 @@ export interface ExecuteCallbacks<Output> {
 	/**
 	 * Called when output validation fails
 	 *
-	 * @param errors - Validation errors from the output schema
 	 * @param state - Execution state containing attempt number and max attempts
+	 * @param errors - Validation errors from the output schema
 	 */
-	onValidationFailure?: (errors: unknown, state: AgentExecutionState) => void;
+	onValidationFailure?: (state: AgentExecutionState, errors: unknown) => void;
 
 	/**
 	 * Called when a validation layer starts execution
 	 *
-	 * @param layer - Metadata about the layer being executed
 	 * @param state - Execution state containing attempt number and max attempts
+	 * @param layer - Metadata about the layer being executed
 	 */
 	onValidationLayerStart?: (
-		layer: ValidationLayerMetadata,
-		state: AgentExecutionState
+		state: AgentExecutionState,
+		layer: ValidationLayerMetadata
 	) => void;
 
 	/**
 	 * Called when a validation layer completes execution
 	 *
-	 * @param layer - Result of the layer execution (discriminated union)
 	 * @param state - Execution state containing attempt number and max attempts
+	 * @param layer - Result of the layer execution (discriminated union)
 	 */
 	onValidationLayerComplete?: (
-		layer: ValidationLayerResult,
-		state: AgentExecutionState
+		state: AgentExecutionState,
+		layer: ValidationLayerResult
 	) => void;
 
 	/**
@@ -215,10 +215,10 @@ export interface ExecuteSuccess<Output> {
  *   maxAttempts: 5,
  *   callbacks: {
  *     onAttemptStart: (state) => console.log(`Attempt ${state.attempt}`),
- *     onValidationLayerStart: (layer, state) => {
+ *     onValidationLayerStart: (state, layer) => {
  *       console.log(`[${state.attempt}] Starting ${layer.type}: ${layer.name}`);
  *     },
- *     onValidationLayerComplete: (layer, state) => {
+ *     onValidationLayerComplete: (state, layer) => {
  *       if (layer.success) {
  *         console.log(`[${state.attempt}] ✓ ${layer.name} passed`);
  *       } else {
