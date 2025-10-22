@@ -61,7 +61,7 @@ export type {
 	QueryErrorContext,
 	TypeMismatchContext,
 } from './spec';
-export {formatError, formatErrorsForModel, SpecProcessingError, isSpecErrorArray, generateFieldNameSimilaritySuggestion} from './spec';
+export {formatSpecError, formatSpecErrorsForModel, SpecProcessingError, isSpecErrorArray, generateFieldNameSimilaritySuggestion} from './spec';
 
 // Agent error system
 export {AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from './agent';

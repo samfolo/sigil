@@ -10,11 +10,11 @@ Isolate units under test. When testing functions that delegate to other tested f
 
 ```typescript
 // Good: Test structure and delegation
-it('should delegate to formatError for single error', () => {
+it('should delegate to formatSpecError for single error', () => {
   const errors = [createTestError()];
-  const result = formatErrorsForHumans(errors);
+  const result = formatSpecErrorsForHumans(errors);
 
-  expect(result).toBe(formatError(errors[0]));
+  expect(result).toBe(formatSpecError(errors[0]));
   expect(result).not.toMatch(/^\d+\./); // No numbering
 });
 
@@ -22,7 +22,7 @@ it('should delegate to formatError for single error', () => {
 it('should format single error', () => {
   const result = formatErrorsForHumans([createTestError()]);
   expect(result).toBe('Empty layout; vertical layout has no children at $.layout');
-  // ^ Breaks when formatError implementation changes
+  // ^ Breaks when formatSpecError implementation changes
 });
 ```
 
@@ -178,11 +178,11 @@ import {createComplexTestData} from './myFunction.fixtures';
 Avoid testing exact strings when delegating to other tested functions. Test structure instead.
 
 ```typescript
-// Brittle: Breaks when formatError changes
+// Brittle: Breaks when formatSpecError changes
 expect(result).toContain('Empty layout; vertical');
 
 // Better: Test delegation
-expect(result).toContain(formatError(errors[0]));
+expect(result).toContain(formatSpecError(errors[0]));
 
 // Best: Test structure/behaviour
 expect(result).toMatch(/^1\. /);
@@ -196,12 +196,12 @@ Don't mock internal utilities that are already tested. Use real implementations.
 ```typescript
 // Bad: Mocking tested internal utilities
 vi.mock('./format', () => ({
-  formatError: vi.fn(() => 'mocked error'),
+  formatSpecError: vi.fn(() => 'mocked error'),
 }));
 
 // Good: Use real implementations
-import {formatError} from './format';
-// formatError is tested separately, trust it
+import {formatSpecError} from './format';
+// formatSpecError is tested separately, trust it
 ```
 
 ### Testing Implementation Details
@@ -222,9 +222,9 @@ expect(myFunction(input)).toBe(expected); // Cached, but that's internal
 Empty arrays, null, undefined, and boundary conditions must be tested.
 
 ```typescript
-describe('formatErrorsForModel', () => {
+describe('formatSpecErrorsForModel', () => {
   it('should return empty string for empty array', () => {
-    expect(formatErrorsForModel([])).toBe('');
+    expect(formatSpecErrorsForModel([])).toBe('');
   });
 
   it('should handle single error', () => { /* ... */ });

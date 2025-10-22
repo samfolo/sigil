@@ -298,9 +298,9 @@ Type: NOT_ARRAY, QUERY_ERROR, TYPE_MISMATCH
 ### LLM Output
 
 ```typescript
-import {formatErrorsForModel} from '@sigil/src/common/errors';
+import {formatSpecErrorsForModel} from '@sigil/src/common/errors';
 
-const formatted = formatErrorsForModel(errors);
+const formatted = formatSpecErrorsForModel(errors);
 // ## Errors (1)
 // - Missing component; was given "UserCard" but available: "DataTable" at $.layout.children[0]
 ```

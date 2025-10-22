@@ -166,15 +166,15 @@ const formatTypeMismatch = (context: TypeMismatchContext): string => {
 };
 
 /**
- * Formats a single error into a human-readable message
+ * Formats a single SpecError into a human-readable message
  *
  * Uses templated messages for each error code with contextual information.
  * Handles null/undefined context values gracefully.
  *
- * @param error - The error to format
+ * @param error - The SpecError to format
  * @returns Formatted error message
  */
-export const formatError = (error: SpecError): string => {
+export const formatSpecError = (error: SpecError): string => {
 	let baseMessage: string;
 
 	switch (error.code) {
@@ -227,13 +227,13 @@ export const formatError = (error: SpecError): string => {
 };
 
 /**
- * Formats multiple errors into LLM-readable markdown
+ * Formats multiple SpecErrors into LLM-readable markdown
  *
  * Groups errors by severity (errors first, then warnings) and formats each
  * with a bulleted list under severity headers.
  *
- * @param errors - Array of errors to format
+ * @param errors - Array of SpecErrors to format
  * @returns Markdown-formatted error summary, or empty string if no errors
  */
-export const formatErrorsForModel = (errors: SpecError[]): string =>
-	formatErrorsBySeverity(errors, formatError, 'markdown');
+export const formatSpecErrorsForModel = (errors: SpecError[]): string =>
+	formatErrorsBySeverity(errors, formatSpecError, 'markdown');

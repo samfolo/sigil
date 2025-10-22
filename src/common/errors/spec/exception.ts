@@ -27,7 +27,7 @@
 
 import {StructuredErrorException} from '@sigil/src/common/errors/structured';
 
-import {formatError, formatErrorsForModel} from './formatter';
+import {formatSpecError, formatSpecErrorsForModel} from './formatter';
 import type {SpecError, SpecErrorCategory, SpecErrorCode} from './types';
 
 /**
@@ -45,8 +45,8 @@ export class SpecProcessingError extends StructuredErrorException<
 		// Auto-format errors if no custom message provided
 		const defaultMessage =
 			errors.length === 1
-				? formatError(errors.at(0)!)
-				: `Failed to build render tree:\n\n${formatErrorsForModel(errors)}`;
+				? formatSpecError(errors.at(0)!)
+				: `Failed to build render tree:\n\n${formatSpecErrorsForModel(errors)}`;
 
 		super(errors, message ?? defaultMessage, 'SpecProcessingError');
 	}

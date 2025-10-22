@@ -23,7 +23,7 @@ const VALID_SPEC_ERROR_CODES = new Set(Object.values(ERROR_CODES));
  * @example
  * ```typescript
  * if (isSpecErrorArray(result.error)) {
- *   console.log(formatErrorsForModel(result.error));
+ *   console.log(formatSpecErrorsForModel(result.error));
  * }
  * ```
  */

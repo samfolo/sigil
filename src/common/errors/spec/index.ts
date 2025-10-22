@@ -42,7 +42,7 @@ export type {
 } from './contexts';
 
 // Formatting utilities
-export {formatError, formatErrorsForModel} from './formatter';
+export {formatSpecError, formatSpecErrorsForModel} from './formatter';
 
 // Exception class
 export {SpecProcessingError} from './exception';

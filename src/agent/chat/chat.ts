@@ -3,7 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {buildChatSystemPrompt} from '@sigil/src/agent/prompts';
 import {aggregateData, filterData, getUniqueValues, sortData} from '@sigil/src/agent/tools';
-import {formatErrorsForModel, isSpecErrorArray} from '@sigil/src/common/errors';
+import {formatSpecErrorsForModel, isSpecErrorArray} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import type {Analysis} from '@sigil/src/common/types/analysisSchema';
 import type {ChatResponse, Message, ToolCall} from '@sigil/src/common/types/chat';
@@ -59,7 +59,7 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 				// Check if structured errors
 				if (isSpecErrorArray(result.error)) {
 					// Format for LLM consumption
-					return `Error: ${formatErrorsForModel(result.error)}`;
+					return `Error: ${formatSpecErrorsForModel(result.error)}`;
 				}
 				// Feature limitation or unexpected error - return as-is
 				return `Error: ${result.error}`;
@@ -86,7 +86,7 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 				// Check if structured errors
 				if (isSpecErrorArray(result.error)) {
 					// Format for LLM consumption
-					return `Error: ${formatErrorsForModel(result.error)}`;
+					return `Error: ${formatSpecErrorsForModel(result.error)}`;
 				}
 				// Feature limitation or unexpected error - return as-is
 				return `Error: ${result.error}`;
@@ -108,7 +108,7 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 				// Check if structured errors
 				if (isSpecErrorArray(result.error)) {
 					// Format for LLM consumption
-					return `Error: ${formatErrorsForModel(result.error)}`;
+					return `Error: ${formatSpecErrorsForModel(result.error)}`;
 				}
 				// Feature limitation or unexpected error - return as-is
 				return `Error: ${result.error}`;
@@ -127,7 +127,7 @@ export const processChat = async (request: ChatRequest): Promise<ChatResponse> =
 				// Check if structured errors
 				if (isSpecErrorArray(result.error)) {
 					// Format for LLM consumption
-					return `Error: ${formatErrorsForModel(result.error)}`;
+					return `Error: ${formatSpecErrorsForModel(result.error)}`;
 				}
 				// Feature limitation or unexpected error - return as-is
 				return `Error: ${result.error}`;
