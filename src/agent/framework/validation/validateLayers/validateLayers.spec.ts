@@ -10,6 +10,7 @@ import {err, isErr, isOk} from '@sigil/src/common/errors';
 
 import type {ValidationLayerCallbacks} from '../types';
 import {ZOD_LAYER_METADATA} from '../validators';
+
 import {validateLayers} from './validateLayers';
 import {
 	DEFAULT_PASSING_VALIDATOR_DESCRIPTION,
