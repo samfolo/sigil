@@ -86,6 +86,7 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 		customValidators: [
 			{
 				name: 'result-length-validator',
+				description: 'Result must be at least 10 characters',
 				validate: async (output) => {
 					if (output.result.length < 10) {
 						return err('Result must be at least 10 characters');
@@ -95,6 +96,7 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 			},
 			{
 				name: 'no-empty-result-validator',
+				description: 'Result cannot be empty or whitespace only',
 				validate: async (output) => {
 					if (output.result.trim() === '') {
 						return err('Result cannot be empty or whitespace only');
