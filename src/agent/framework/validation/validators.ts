@@ -153,24 +153,16 @@ export const createCustomValidator = <Output>(
  * Recursively freezes an object and all nested objects
  *
  * Prevents validation layers from mutating input by making all properties
- * read-only. Any attempt to modify the frozen object will throw a TypeError
- * at runtime.
+ * read-only. Any attempt to modify the frozen object will throw a TypeError.
  *
- * Used internally by validateLayers to ensure validators don't have side
- * effects. Validators should validate and return results, not mutate input.
+ * **Limitations:**
+ * - Circular references cause stack overflow
+ * - Special objects (Map, Set, Date, RegExp, typed arrays) remain mutable
+ * - Symbol properties are not frozen
  *
  * @template T - Type of object to freeze
  * @param obj - Object to freeze recursively
  * @returns The same object, now frozen
- *
- * @example
- * ```typescript
- * const data = {user: {name: 'Alice', roles: ['admin']}};
- * const frozen = deepFreeze(data);
- *
- * frozen.user.name = 'Bob';        // TypeError: Cannot assign to read only property
- * frozen.user.roles.push('user');   // TypeError: Cannot add property
- * ```
  */
 export const deepFreeze = <T>(obj: T): T => {
 	// Freeze the object itself

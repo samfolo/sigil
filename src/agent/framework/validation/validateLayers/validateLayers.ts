@@ -12,12 +12,30 @@ import type {
 import {deepFreeze, validateWithZod, ZOD_LAYER_METADATA} from '../validators';
 
 /**
+ * Checks if a TypeError is likely a frozen object mutation error
+ *
+ * @param error - Error to check
+ * @returns True if error message indicates mutation attempt
+ */
+const isMutationError = (error: TypeError): boolean => {
+	const message = error.message.toLowerCase();
+	return (
+		message.includes('read only') ||
+		message.includes('not extensible') ||
+		message.includes('cannot assign') ||
+		message.includes('cannot add') ||
+		message.includes('cannot delete')
+	);
+};
+
+/**
  * Orchestrates sequential validation through multiple layers with observability.
  *
- * Validation flow:
- * 1. Layer 1 (SDK): Structured output validation (handled by SDK before this)
- * 2. Layer 2 (Zod): Schema validation for type safety
- * 3. Layer 3+ (Custom): Domain-specific validation layers
+ * Validation handled by this function (Layers 2-3+ in agent pipeline):
+ * - Layer 2 (Zod): Schema validation for type safety
+ * - Layer 3+ (Custom): Domain-specific validation layers
+ *
+ * Note: Layer 1 (SDK structured output) is handled before this function.
  *
  * Fail-fast strategy: Returns the first error encountered, stopping validation
  * immediately. Unlike functions that may accumulate errors within a processing
@@ -131,10 +149,8 @@ export const validateLayers = async <Output>(
 			// Check if this is a mutation error
 			if (
 				error instanceof TypeError &&
-				(error.message.includes('read only') ||
-					error.message.includes('Cannot assign') ||
-					error.message.includes('Cannot add') ||
-					error.message.includes('Cannot delete'))
+				Object.isFrozen(frozenOutput) &&
+				isMutationError(error)
 			) {
 				const mutationError: ValidationFailedContext = {
 					layer: validator.name,
