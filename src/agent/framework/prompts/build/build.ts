@@ -11,27 +11,9 @@ import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, isErr, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 /**
- * Builds system prompt by calling the agent's system prompt function
+ * Builds system prompt by calling agent's prompt function
  *
- * Handles both synchronous throws and asynchronous rejections, wrapping any errors
- * as PROMPT_GENERATION_FAILED with appropriate context.
- *
- * @template Input - The type of input the agent accepts
- * @template Output - The type of output the agent produces
- * @param agent - Agent definition containing the system prompt function
- * @param input - Input data to pass to the prompt function
- * @param state - Execution state containing attempt number and max attempts
- * @returns Result containing generated prompt string or array of agent errors
- *
- * @example
- * ```typescript
- * const result = await buildSystemPrompt(agent, {query: 'Analyse data'}, {attempt: 1, maxAttempts: 3});
- * if (isOk(result)) {
- *   console.log(result.data); // Generated system prompt
- * } else {
- *   console.error(result.error); // PROMPT_GENERATION_FAILED error
- * }
- * ```
+ * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildSystemPrompt = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
@@ -58,27 +40,9 @@ export const buildSystemPrompt = async <Input, Output>(
 };
 
 /**
- * Builds user prompt by calling the agent's user prompt function
+ * Builds user prompt by calling agent's prompt function
  *
- * Handles both synchronous throws and asynchronous rejections, wrapping any errors
- * as PROMPT_GENERATION_FAILED with appropriate context.
- *
- * @template Input - The type of input the agent accepts
- * @template Output - The type of output the agent produces
- * @param agent - Agent definition containing the user prompt function
- * @param input - Input data to pass to the prompt function
- * @param state - Execution state containing attempt number and max attempts
- * @returns Result containing generated prompt string or array of agent errors
- *
- * @example
- * ```typescript
- * const result = await buildUserPrompt(agent, {query: 'Analyse data'}, {attempt: 1, maxAttempts: 3});
- * if (isOk(result)) {
- *   console.log(result.data); // Generated user prompt
- * } else {
- *   console.error(result.error); // PROMPT_GENERATION_FAILED error
- * }
- * ```
+ * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildUserPrompt = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
@@ -105,27 +69,9 @@ export const buildUserPrompt = async <Input, Output>(
 };
 
 /**
- * Builds error prompt by calling the agent's error prompt function
+ * Builds error prompt by calling agent's prompt function
  *
- * Handles both synchronous throws and asynchronous rejections, wrapping any errors
- * as PROMPT_GENERATION_FAILED with appropriate context.
- *
- * @template Input - The type of input the agent accepts
- * @template Output - The type of output the agent produces
- * @param agent - Agent definition containing the error prompt function
- * @param formattedError - Formatted error string to pass to the prompt function
- * @param state - Execution state containing attempt number and max attempts
- * @returns Result containing generated prompt string or array of agent errors
- *
- * @example
- * ```typescript
- * const result = await buildErrorPrompt(agent, 'Validation failed', {attempt: 2, maxAttempts: 3});
- * if (isOk(result)) {
- *   console.log(result.data); // Generated error prompt
- * } else {
- *   console.error(result.error); // PROMPT_GENERATION_FAILED error
- * }
- * ```
+ * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildErrorPrompt = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
@@ -152,65 +98,39 @@ export const buildErrorPrompt = async <Input, Output>(
 };
 
 /**
- * Result of building all prompts
+ * Built prompts for first attempt (no error prompt)
  */
-export interface BuiltPrompts {
-	/**
-	 * System prompt string
-	 */
+export interface FirstAttemptPrompts {
+	isRetry: false;
 	system: string;
-
-	/**
-	 * User prompt string
-	 */
 	user: string;
-
-	/**
-	 * Error prompt string (only present on retry attempts with validation errors)
-	 */
-	error?: string;
 }
+
+/**
+ * Built prompts for retry attempt (includes error prompt)
+ */
+export interface RetryAttemptPrompts {
+	isRetry: true;
+	system: string;
+	user: string;
+	error: string;
+}
+
+/**
+ * Result of building all prompts (discriminated union)
+ */
+export type BuiltPrompts = FirstAttemptPrompts | RetryAttemptPrompts;
 
 /**
  * Builds all required prompts for an agent execution attempt
  *
- * Convenience wrapper that builds system, user, and (conditionally) error prompts in one call.
- * Provides fail-fast behaviour: if any prompt generation fails, returns that error immediately.
+ * First attempt (state.attempt === 1): Builds system and user prompts only
+ * Retry attempts (state.attempt > 1): Builds system, user, and error prompts if formattedError provided
  *
- * On first attempt (state.attempt === 1): Builds only system and user prompts
- * On retry attempts (state.attempt > 1): Builds system, user, and error prompts if errors provided
+ * Fail-fast: Returns first error encountered during prompt building.
  *
- * @template Input - The type of input the agent accepts
- * @template Output - The type of output the agent produces
- * @param agent - Agent definition containing prompt functions
- * @param input - Input data to pass to prompt functions
- * @param state - Execution state containing attempt number and max attempts
- * @param formattedError - Optional formatted error string from previous attempt
- * @returns Result containing all built prompts or array of agent errors
- *
- * @example
- * ```typescript
- * // First attempt - no error prompt
- * const result = await buildAllPrompts(agent, {query: 'Analyse data'}, {attempt: 1, maxAttempts: 3});
- * if (isOk(result)) {
- *   console.log(result.data.system); // System prompt
- *   console.log(result.data.user);   // User prompt
- *   console.log(result.data.error);  // undefined
- * }
- *
- * // Retry attempt - includes error prompt
- * const retryResult = await buildAllPrompts(
- *   agent,
- *   {query: 'Analyse data'},
- *   {attempt: 2, maxAttempts: 3},
- *   'Validation failed: missing field'
- * );
- * if (isOk(retryResult)) {
- *   console.log(retryResult.data.system); // System prompt
- *   console.log(retryResult.data.user);   // User prompt
- *   console.log(retryResult.data.error);  // Error prompt with validation feedback
- * }
- * ```
+ * @param formattedError - Formatted error string from previous attempt
+ * @returns Result with BuiltPrompts (discriminated by isRetry), or PROMPT_GENERATION_FAILED
  */
 export const buildAllPrompts = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
@@ -230,8 +150,8 @@ export const buildAllPrompts = async <Input, Output>(
 		return userResult;
 	}
 
-	// Build error prompt only on retry attempts when errors are provided
-	const shouldBuildErrorPrompt = state.attempt > 1 && formattedError !== undefined;
+	// Build error prompt only on retry attempts when errors are provided (non-empty)
+	const shouldBuildErrorPrompt = state.attempt > 1 && !!formattedError;
 
 	if (shouldBuildErrorPrompt) {
 		const errorResult = await buildErrorPrompt(agent, formattedError, state);
@@ -240,6 +160,7 @@ export const buildAllPrompts = async <Input, Output>(
 		}
 
 		return ok({
+			isRetry: true,
 			system: systemResult.data,
 			user: userResult.data,
 			error: errorResult.data,
@@ -247,6 +168,7 @@ export const buildAllPrompts = async <Input, Output>(
 	}
 
 	return ok({
+		isRetry: false,
 		system: systemResult.data,
 		user: userResult.data,
 	});

@@ -305,7 +305,7 @@ export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 };
 
 /**
- * Agent with prompt that throws non-Error value
+ * Agent with system prompt that throws non-Error value
  */
 export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
 	name: 'NonErrorThrowAgent',
@@ -324,6 +324,74 @@ export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
 			`User prompt: ${input.query}`,
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
+	},
+	validation: {
+		outputSchema: TEST_OUTPUT_SCHEMA,
+		customValidators: [],
+		maxAttempts: 3,
+	},
+	observability: {
+		trackCost: false,
+		trackLatency: false,
+		trackAttempts: false,
+		trackTokens: false,
+	},
+};
+
+/**
+ * Agent with user prompt that throws non-Error value
+ */
+export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
+	name: 'UserNonErrorThrowAgent',
+	description: 'Agent with user prompt that throws non-Error value',
+	model: {
+		provider: 'anthropic',
+		name: 'claude-sonnet-4-5-20250929',
+		temperature: 0.7,
+		maxTokens: 1024,
+	},
+	prompts: {
+		system: async (input: TestInput, _state: AgentExecutionState) =>
+			`System prompt: ${input.query}`,
+		user: async (_input: TestInput, _state: AgentExecutionState) => {
+			throw 'String error in user prompt';
+		},
+		error: async (errorMessage: string, _state: AgentExecutionState) =>
+			`Error: ${errorMessage}`,
+	},
+	validation: {
+		outputSchema: TEST_OUTPUT_SCHEMA,
+		customValidators: [],
+		maxAttempts: 3,
+	},
+	observability: {
+		trackCost: false,
+		trackLatency: false,
+		trackAttempts: false,
+		trackTokens: false,
+	},
+};
+
+/**
+ * Agent with error prompt that throws non-Error value
+ */
+export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
+	name: 'ErrorNonErrorThrowAgent',
+	description: 'Agent with error prompt that throws non-Error value',
+	model: {
+		provider: 'anthropic',
+		name: 'claude-sonnet-4-5-20250929',
+		temperature: 0.7,
+		maxTokens: 1024,
+	},
+	prompts: {
+		system: async (input: TestInput, _state: AgentExecutionState) =>
+			`System prompt: ${input.query}`,
+		user: async (input: TestInput, _state: AgentExecutionState) =>
+			`User prompt: ${input.query}`,
+		error: async (_errorMessage: string, _state: AgentExecutionState) => {
+			throw 'String error in error prompt';
+		},
 	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,

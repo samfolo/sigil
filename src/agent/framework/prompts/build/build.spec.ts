@@ -16,6 +16,8 @@ import {
 	USER_REJECTS_AGENT,
 	ERROR_REJECTS_AGENT,
 	NON_ERROR_THROW_AGENT,
+	USER_NON_ERROR_THROW_AGENT,
+	ERROR_NON_ERROR_THROW_AGENT,
 	FIRST_ATTEMPT_STATE,
 	SECOND_ATTEMPT_STATE,
 	FINAL_ATTEMPT_STATE,
@@ -232,6 +234,26 @@ describe('buildUserPrompt', () => {
 				expect(result.error.at(0)?.context.attempt).toBe(2);
 			}
 		});
+
+		it('should handle non-Error throw', async () => {
+			const result = await buildUserPrompt(
+				USER_NON_ERROR_THROW_AGENT,
+				TEST_INPUT,
+				FIRST_ATTEMPT_STATE
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error).toHaveLength(1);
+				expect(result.error.at(0)?.code).toBe(
+					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
+				);
+				expect(result.error.at(0)?.context.reason).toBe(
+					'String error in user prompt'
+				);
+			}
+		});
 	});
 });
 
@@ -343,6 +365,26 @@ describe('buildErrorPrompt', () => {
 				expect(result.error.at(0)?.context.attempt).toBe(2);
 			}
 		});
+
+		it('should handle non-Error throw', async () => {
+			const result = await buildErrorPrompt(
+				ERROR_NON_ERROR_THROW_AGENT,
+				TEST_ERROR_MESSAGE,
+				FIRST_ATTEMPT_STATE
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error).toHaveLength(1);
+				expect(result.error.at(0)?.code).toBe(
+					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
+				);
+				expect(result.error.at(0)?.context.reason).toBe(
+					'String error in error prompt'
+				);
+			}
+		});
 	});
 });
 
@@ -358,6 +400,7 @@ describe('buildAllPrompts', () => {
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
+				expect(result.data.isRetry).toBe(false);
 				expect(result.data.system).toContain('System prompt');
 				expect(result.data.system).toContain(TEST_INPUT.query);
 				expect(result.data.system).toContain('attempt 1/3');
@@ -366,7 +409,9 @@ describe('buildAllPrompts', () => {
 				expect(result.data.user).toContain(TEST_INPUT.query);
 				expect(result.data.user).toContain('attempt 1');
 
-				expect(result.data.error).toBeUndefined();
+				if (!result.data.isRetry) {
+					expect(result.data.error).toBeUndefined();
+				}
 			}
 		});
 
@@ -381,16 +426,19 @@ describe('buildAllPrompts', () => {
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
+				expect(result.data.isRetry).toBe(true);
 				expect(result.data.system).toContain('System prompt');
 				expect(result.data.system).toContain('attempt 2/3');
 
 				expect(result.data.user).toContain('User prompt');
 				expect(result.data.user).toContain('attempt 2');
 
-				expect(result.data.error).toBeDefined();
-				expect(result.data.error).toContain('Attempt 2/3 failed');
-				expect(result.data.error).toContain(TEST_ERROR_MESSAGE);
-				expect(result.data.error).toContain('Please fix these issues');
+				if (result.data.isRetry) {
+					expect(result.data.error).toBeDefined();
+					expect(result.data.error).toContain('Attempt 2/3 failed');
+					expect(result.data.error).toContain(TEST_ERROR_MESSAGE);
+					expect(result.data.error).toContain('Please fix these issues');
+				}
 			}
 		});
 
@@ -405,9 +453,13 @@ describe('buildAllPrompts', () => {
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
+				expect(result.data.isRetry).toBe(false);
 				expect(result.data.system).toBeDefined();
 				expect(result.data.user).toBeDefined();
-				expect(result.data.error).toBeUndefined();
+
+				if (!result.data.isRetry) {
+					expect(result.data.error).toBeUndefined();
+				}
 			}
 		});
 
@@ -421,9 +473,34 @@ describe('buildAllPrompts', () => {
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
+				expect(result.data.isRetry).toBe(false);
 				expect(result.data.system).toBeDefined();
 				expect(result.data.user).toBeDefined();
-				expect(result.data.error).toBeUndefined();
+
+				if (!result.data.isRetry) {
+					expect(result.data.error).toBeUndefined();
+				}
+			}
+		});
+
+		it('should not build error prompt on retry attempt if error message is empty string', async () => {
+			const result = await buildAllPrompts(
+				WORKING_AGENT,
+				TEST_INPUT,
+				SECOND_ATTEMPT_STATE,
+				''
+			);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data.isRetry).toBe(false);
+				expect(result.data.system).toBeDefined();
+				expect(result.data.user).toBeDefined();
+
+				if (!result.data.isRetry) {
+					expect(result.data.error).toBeUndefined();
+				}
 			}
 		});
 
@@ -438,9 +515,13 @@ describe('buildAllPrompts', () => {
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
+				expect(result.data.isRetry).toBe(true);
 				expect(result.data.system).toContain('attempt 3/3');
 				expect(result.data.user).toContain('attempt 3');
-				expect(result.data.error).toContain('Attempt 3/3 failed');
+
+				if (result.data.isRetry) {
+					expect(result.data.error).toContain('Attempt 3/3 failed');
+				}
 			}
 		});
 	});
