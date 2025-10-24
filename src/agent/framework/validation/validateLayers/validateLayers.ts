@@ -8,8 +8,8 @@ import type {
 	ValidationLayerCallbacks,
 	ValidationLayerFailure,
 	ValidationLayerSuccess,
-} from './types';
-import {deepFreeze, validateWithZod} from './validators';
+} from '../types';
+import {deepFreeze, validateWithZod, ZOD_LAYER_METADATA} from '../validators';
 
 /**
  * Orchestrates sequential validation through multiple layers with observability.
@@ -70,7 +70,7 @@ export const validateLayers = async <Output>(
 ): Promise<Result<Output, unknown>> => {
 	// Layer 2: Zod schema validation
 	callbacks?.onLayerStart?.({
-		name: 'Zod',
+		...ZOD_LAYER_METADATA,
 		type: 'zod',
 	});
 
@@ -78,7 +78,7 @@ export const validateLayers = async <Output>(
 
 	if (isErr(zodResult)) {
 		const failure: ValidationLayerFailure = {
-			name: 'Zod',
+			...ZOD_LAYER_METADATA,
 			type: 'zod',
 			success: false,
 			error: zodResult.error,
@@ -88,7 +88,7 @@ export const validateLayers = async <Output>(
 	}
 
 	const success: ValidationLayerSuccess = {
-		name: 'Zod',
+		...ZOD_LAYER_METADATA,
 		type: 'zod',
 		success: true,
 	};
@@ -101,6 +101,7 @@ export const validateLayers = async <Output>(
 	for (const validator of customValidators) {
 		callbacks?.onLayerStart?.({
 			name: validator.name,
+			description: validator.description,
 			type: 'custom',
 		});
 
@@ -110,6 +111,7 @@ export const validateLayers = async <Output>(
 			if (isErr(validationResult)) {
 				const failure: ValidationLayerFailure = {
 					name: validator.name,
+					description: validator.description,
 					type: 'custom',
 					success: false,
 					error: validationResult.error,
@@ -120,6 +122,7 @@ export const validateLayers = async <Output>(
 
 			const success: ValidationLayerSuccess = {
 				name: validator.name,
+				description: validator.description,
 				type: 'custom',
 				success: true,
 			};
@@ -141,6 +144,7 @@ export const validateLayers = async <Output>(
 
 				const failure: ValidationLayerFailure = {
 					name: validator.name,
+					description: validator.description,
 					type: 'custom',
 					success: false,
 					error: mutationError,
@@ -153,6 +157,7 @@ export const validateLayers = async <Output>(
 			// Other errors
 			const failure: ValidationLayerFailure = {
 				name: validator.name,
+				description: validator.description,
 				type: 'custom',
 				success: false,
 				error,

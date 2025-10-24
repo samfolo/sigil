@@ -11,7 +11,18 @@ import type {z} from 'zod';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
-import type {ValidationLayer} from './types';
+import type {ValidationLayer, ValidationLayerMetadata} from './types';
+
+/**
+ * Metadata for the built-in Zod validation layer
+ *
+ * Used by validateLayers to provide consistent layer identity and description
+ * across validation callbacks and error formatting.
+ */
+export const ZOD_LAYER_METADATA: Pick<ValidationLayerMetadata, 'name' | 'description'> = {
+	name: 'Zod',
+	description: 'Validates that your output matches the expected JSON schema structure',
+};
 
 /**
  * Custom validation function that validates output or throws on failure
@@ -78,6 +89,7 @@ export const validateWithZod = <Output>(
  *
  * @template Output - Type of agent output being validated
  * @param name - Identifier for this validation layer (used in error messages)
+ * @param description - Human-readable explanation of what this layer validates
  * @param validateFn - Async function that validates output or throws on failure
  * @returns ValidationLayer that can be used in validation pipeline
  *
@@ -89,6 +101,7 @@ export const validateWithZod = <Output>(
  * // Simple validation with Error
  * const BUSINESS_RULES_LAYER = createCustomValidator<Analysis>(
  *   'business-rules',
+ *   'Validates business constraints and data quality requirements',
  *   async (output) => {
  *     if (output.columns.length === 0) {
  *       throw new Error('Analysis must contain at least one column');
@@ -102,6 +115,7 @@ export const validateWithZod = <Output>(
  * // Validation with SpecError[]
  * const SPEC_LAYER = createCustomValidator<Analysis>(
  *   'spec-validation',
+ *   'Validates that component IDs exist and data bindings are correct',
  *   async (output) => {
  *     const errors = validateSpecStructure(output);
  *     if (errors.length > 0) {
@@ -120,9 +134,11 @@ export const validateWithZod = <Output>(
  */
 export const createCustomValidator = <Output>(
 	name: string,
+	description: string,
 	validateFn: CustomValidationFn<Output>
 ): ValidationLayer<Output> => ({
 		name,
+		description,
 		validate: async (output: Output): Promise<Result<Output, unknown>> => {
 			try {
 				await validateFn(output);

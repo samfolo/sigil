@@ -11,7 +11,7 @@ import {z} from 'zod';
 
 import {err, ok} from '@sigil/src/common/errors/result';
 
-import type {ValidationLayer} from './types';
+import type {ValidationLayer} from '../types';
 
 /**
  * Test output interface matching the validation schema
@@ -71,19 +71,22 @@ export const INVALID_OUTPUT_MISSING_FIELD = {
  * The validator simply returns the output unchanged.
  *
  * @param name - Identifier for this validation layer
+ * @param description - Optional description (defaults to generic message)
  * @returns ValidationLayer that always returns success
  *
  * @example
  * ```typescript
- * const validator = createPassingValidator('test-validator');
+ * const validator = createPassingValidator('test-validator', 'Test validator description');
  * const result = await validator.validate({result: 'test', value: 1});
  * // result = ok({result: 'test', value: 1})
  * ```
  */
 export const createPassingValidator = (
-	name: string
+	name: string,
+	description: string = 'Test validation layer that always passes'
 ): ValidationLayer<TestOutput> => ({
 		name,
+		description,
 		validate: async (output) => ok(output),
 	});
 
@@ -95,20 +98,23 @@ export const createPassingValidator = (
  *
  * @param name - Identifier for this validation layer
  * @param errorMessage - Error message to return on failure
+ * @param description - Optional description (defaults to generic message)
  * @returns ValidationLayer that always returns error
  *
  * @example
  * ```typescript
- * const validator = createFailingValidator('strict-validator', 'Validation failed');
+ * const validator = createFailingValidator('strict-validator', 'Validation failed', 'Test validator');
  * const result = await validator.validate({result: 'test', value: 1});
  * // result = err(Error('Validation failed'))
  * ```
  */
 export const createFailingValidator = (
 	name: string,
-	errorMessage: string
+	errorMessage: string,
+	description: string = 'Test validation layer that always fails'
 ): ValidationLayer<TestOutput> => ({
 		name,
+		description,
 		validate: async (_output) => err(new Error(errorMessage)),
 	});
 
@@ -120,6 +126,7 @@ export const createFailingValidator = (
  *
  * @param name - Identifier for this validation layer
  * @param predicate - Function that returns true to pass, false to fail
+ * @param description - Optional description (defaults to generic message)
  * @returns ValidationLayer that validates based on predicate
  *
  * @example
@@ -127,7 +134,8 @@ export const createFailingValidator = (
  * // Validator that only accepts values greater than 10
  * const validator = createConditionalValidator(
  *   'min-value-validator',
- *   (output) => output.value > 10
+ *   (output) => output.value > 10,
+ *   'Validates minimum value requirement'
  * );
  *
  * const result1 = await validator.validate({result: 'test', value: 15});
@@ -139,9 +147,11 @@ export const createFailingValidator = (
  */
 export const createConditionalValidator = (
 	name: string,
-	predicate: (output: TestOutput) => boolean
+	predicate: (output: TestOutput) => boolean,
+	description: string = 'Test validation layer with conditional logic'
 ): ValidationLayer<TestOutput> => ({
 		name,
+		description,
 		validate: async (output) => {
 			if (predicate(output)) {
 				return ok(output);

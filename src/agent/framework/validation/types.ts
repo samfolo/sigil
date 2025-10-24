@@ -21,6 +21,7 @@ import type {Result} from '@sigil/src/common/errors/result';
  * // Schema validation layer using Zod
  * const SCHEMA_LAYER: ValidationLayer<Analysis> = {
  *   name: 'zod',
+ *   description: 'Validates that your output matches the expected JSON schema structure',
  *   validate: async (output) => {
  *     const result = ANALYSIS_SCHEMA.safeParse(output);
  *     return result.success
@@ -32,6 +33,7 @@ import type {Result} from '@sigil/src/common/errors/result';
  * // Custom business logic validation
  * const BUSINESS_RULES_LAYER: ValidationLayer<Analysis> = {
  *   name: 'business-rules',
+ *   description: 'Validates business constraints and data quality requirements',
  *   validate: async (output) => {
  *     if (output.columns.length === 0) {
  *       return err('Analysis must contain at least one column');
@@ -43,6 +45,7 @@ import type {Result} from '@sigil/src/common/errors/result';
  * // Spec validation using domain-specific validator
  * const SPEC_LAYER: ValidationLayer<Analysis> = {
  *   name: 'spec-validation',
+ *   description: 'Validates that component IDs exist and data bindings are correct',
  *   validate: async (output) => {
  *     const result = await validateSpec(output, context);
  *     return isOk(result) ? ok(output) : err(result.error);
@@ -60,6 +63,19 @@ export interface ValidationLayer<Output> {
 	 * Examples: 'zod', 'custom-rules', 'spec-validation'
 	 */
 	name: string;
+
+	/**
+	 * Human-readable description of this validation layer's purpose
+	 *
+	 * Explains to the language model what this layer validates and why errors occurred.
+	 * Used in error prompts to provide context about the validation architecture.
+	 *
+	 * Examples:
+	 * - 'Validates that your output matches the expected JSON schema structure'
+	 * - 'Validates that component IDs exist and data bindings are correct'
+	 * - 'Validates business constraints and data quality requirements'
+	 */
+	description: string;
 
 	/**
 	 * Validation function for agent output
@@ -109,6 +125,11 @@ export interface ValidationLayerMetadata {
 	 * Name of the validation layer
 	 */
 	name: string;
+
+	/**
+	 * Human-readable description of the layer's purpose
+	 */
+	description: string;
 
 	/**
 	 * Type of validation layer
