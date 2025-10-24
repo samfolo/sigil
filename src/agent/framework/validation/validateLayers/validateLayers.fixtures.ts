@@ -14,6 +14,13 @@ import {err, ok} from '@sigil/src/common/errors/result';
 import type {ValidationLayer} from '../types';
 
 /**
+ * Default descriptions for test validators
+ */
+export const DEFAULT_PASSING_VALIDATOR_DESCRIPTION = 'Test validation layer that always passes';
+export const DEFAULT_FAILING_VALIDATOR_DESCRIPTION = 'Test validation layer that always fails';
+export const DEFAULT_CONDITIONAL_VALIDATOR_DESCRIPTION = 'Test validation layer with conditional logic';
+
+/**
  * Test output interface matching the validation schema
  */
 interface TestOutput {
@@ -83,7 +90,7 @@ export const INVALID_OUTPUT_MISSING_FIELD = {
  */
 export const createPassingValidator = (
 	name: string,
-	description: string = 'Test validation layer that always passes'
+	description: string = DEFAULT_PASSING_VALIDATOR_DESCRIPTION
 ): ValidationLayer<TestOutput> => ({
 		name,
 		description,
@@ -111,7 +118,7 @@ export const createPassingValidator = (
 export const createFailingValidator = (
 	name: string,
 	errorMessage: string,
-	description: string = 'Test validation layer that always fails'
+	description: string = DEFAULT_FAILING_VALIDATOR_DESCRIPTION
 ): ValidationLayer<TestOutput> => ({
 		name,
 		description,
@@ -148,7 +155,7 @@ export const createFailingValidator = (
 export const createConditionalValidator = (
 	name: string,
 	predicate: (output: TestOutput) => boolean,
-	description: string = 'Test validation layer with conditional logic'
+	description: string = DEFAULT_CONDITIONAL_VALIDATOR_DESCRIPTION
 ): ValidationLayer<TestOutput> => ({
 		name,
 		description,

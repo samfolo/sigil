@@ -9,5 +9,6 @@ export type {
 	ValidationLayerCallbacks,
 } from './types';
 export type {CustomValidationFn} from './validators';
-export {createCustomValidator, validateWithZod, deepFreeze} from './validators';
+export {createCustomValidator, validateWithZod, deepFreeze, ZOD_LAYER_METADATA} from './validators';
 export {validateLayers} from './validateLayers';
+export {formatValidationErrorForPrompt} from './format';

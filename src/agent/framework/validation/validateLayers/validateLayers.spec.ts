@@ -8,9 +8,11 @@ import {ZodError} from 'zod';
 import type {ValidationFailedContext} from '@sigil/src/common/errors';
 import {err, isErr, isOk} from '@sigil/src/common/errors';
 
-import type {ValidationLayerCallbacks} from './types';
+import type {ValidationLayerCallbacks} from '../types';
+import {ZOD_LAYER_METADATA} from '../validators';
 import {validateLayers} from './validateLayers';
 import {
+	DEFAULT_PASSING_VALIDATOR_DESCRIPTION,
 	INVALID_OUTPUT_MISSING_FIELD,
 	INVALID_OUTPUT_WRONG_TYPE,
 	VALID_OUTPUT,
@@ -352,7 +354,7 @@ describe('validateLayers', () => {
 			await validateLayers(VALID_OUTPUT, ValidOutputSchema, [], callbacks);
 
 			expect(onLayerStart).toHaveBeenCalledWith({
-				name: 'Zod',
+				...ZOD_LAYER_METADATA,
 				type: 'zod',
 			});
 		});
@@ -366,7 +368,7 @@ describe('validateLayers', () => {
 			await validateLayers(VALID_OUTPUT, ValidOutputSchema, [], callbacks);
 
 			expect(onLayerComplete).toHaveBeenCalledWith({
-				name: 'Zod',
+				...ZOD_LAYER_METADATA,
 				type: 'zod',
 				success: true,
 			});
@@ -390,7 +392,8 @@ describe('validateLayers', () => {
 			const call = onLayerComplete.mock.calls.at(0)?.at(0);
 
 			if (call && !call.success) {
-				expect(call.name).toBe('Zod');
+				expect(call.name).toBe(ZOD_LAYER_METADATA.name);
+				expect(call.description).toBe(ZOD_LAYER_METADATA.description);
 				expect(call.type).toBe('zod');
 				expect(call.error).toBeInstanceOf(ZodError);
 			} else {
@@ -423,10 +426,12 @@ describe('validateLayers', () => {
 			// Check custom validator calls
 			expect(onLayerStart).toHaveBeenCalledWith({
 				name: 'first-validator',
+				description: DEFAULT_PASSING_VALIDATOR_DESCRIPTION,
 				type: 'custom',
 			});
 			expect(onLayerStart).toHaveBeenCalledWith({
 				name: 'second-validator',
+				description: DEFAULT_PASSING_VALIDATOR_DESCRIPTION,
 				type: 'custom',
 			});
 		});
