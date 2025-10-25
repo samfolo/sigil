@@ -3,14 +3,17 @@ import * as z from 'zod';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
-import {buildSystemPrompt, buildUserPrompt} from '@sigil/src/agent/framework/prompts/build';
+import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
+	ValidationLayerCallbacks,
 } from '@sigil/src/agent/framework/validation';
+import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validation/format';
+import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
 import type {AgentError, Result} from '@sigil/src/common/errors';
-import {err, ok, isErr, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
+import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
 /**
  * Token usage statistics for an agent execution
@@ -281,6 +284,9 @@ export const executeAgent = async <Input, Output>(
 	// Track callback errors
 	const callbackErrors: Error[] = [];
 
+	// Track last validation errors for MAX_ATTEMPTS_EXCEEDED error context
+	let lastValidationError: unknown = undefined;
+
 	// Build user prompt once (immutable task description)
 	const userPromptResult = await buildUserPrompt(agent, options.input);
 	if (isErr(userPromptResult)) {
@@ -379,43 +385,136 @@ export const executeAgent = async <Input, Output>(
 
 		const output = toolUse.input as Output;
 
-		// Placeholder validation: assume validation always passes
-		// TODO: Implement real validation layers in next iteration
-		//
-		// When validation is implemented, on failure:
-		// 1. Add assistant response to conversation history:
-		//    conversationHistory.push({role: 'assistant', content: response.content});
-		// 2. Build and add error prompt to conversation history:
-		//    const errorPromptResult = await buildErrorPrompt(agent, formattedError, state);
-		//    conversationHistory.push({role: 'user', content: errorPromptResult.data});
-		// 3. Continue loop with accumulated context
+		// Validate output through multi-layer validation
+		// Map ExecuteCallbacks to ValidationLayerCallbacks
+		const validationCallbacks: ValidationLayerCallbacks | undefined =
+			options.callbacks?.onValidationLayerStart ||
+			options.callbacks?.onValidationLayerComplete
+				? {
+						onLayerStart: options.callbacks?.onValidationLayerStart
+							? (layer: ValidationLayerMetadata) => {
+									safeInvokeCallback(
+										options.callbacks?.onValidationLayerStart,
+										[state, layer],
+										callbackErrors
+									);
+								}
+							: undefined,
+						onLayerComplete: options.callbacks?.onValidationLayerComplete
+							? (layer: ValidationLayerResult) => {
+									safeInvokeCallback(
+										options.callbacks?.onValidationLayerComplete,
+										[state, layer],
+										callbackErrors
+									);
+								}
+							: undefined,
+					}
+				: undefined;
 
-		// Success! Invoke onSuccess callback
-		safeInvokeCallback(options.callbacks?.onSuccess, [output], callbackErrors);
-
-		// Build metadata
-		const metadata: ExecuteMetadata = {
-			callbackErrors: callbackErrors.length > 0 ? callbackErrors : undefined,
-		};
-
-		return ok({
+		const validationResult = await validateLayers(
 			output,
-			attempts: attempt,
-			metadata,
+			agent.validation.outputSchema,
+			agent.validation.customValidators,
+			validationCallbacks
+		);
+
+		// Handle validation success
+		if (!isErr(validationResult)) {
+			// Invoke onAttemptComplete callback with success
+			safeInvokeCallback(
+				options.callbacks?.onAttemptComplete,
+				[state, true],
+				callbackErrors
+			);
+
+			// Invoke onSuccess callback
+			safeInvokeCallback(
+				options.callbacks?.onSuccess,
+				[validationResult.data],
+				callbackErrors
+			);
+
+			// Build metadata
+			const metadata: ExecuteMetadata = {
+				callbackErrors: callbackErrors.length > 0 ? callbackErrors : undefined,
+			};
+
+			return ok({
+				output: validationResult.data,
+				attempts: attempt,
+				metadata,
+			});
+		}
+
+		// Handle validation failure
+		lastValidationError = validationResult.error;
+
+		// Invoke onAttemptComplete callback with failure
+		safeInvokeCallback(
+			options.callbacks?.onAttemptComplete,
+			[state, false],
+			callbackErrors
+		);
+
+		// Invoke onValidationFailure callback
+		safeInvokeCallback(
+			options.callbacks?.onValidationFailure,
+			[state, validationResult.error],
+			callbackErrors
+		);
+
+		// Append assistant response to conversation history
+		conversationHistory.push({
+			role: 'assistant',
+			content: response.content,
 		});
+
+		// Format validation errors for prompt
+		const formattedError = formatValidationErrorForPrompt(
+			validationResult.error,
+			'validation',
+			'Multi-layer validation including schema validation and custom business rules'
+		);
+
+		// Build error prompt
+		const errorPromptResult = await buildErrorPrompt(
+			agent,
+			formattedError,
+			state
+		);
+
+		if (isErr(errorPromptResult)) {
+			return errorPromptResult;
+		}
+
+		// Append error prompt to conversation history
+		conversationHistory.push({
+			role: 'user',
+			content: errorPromptResult.data,
+		});
+
+		// Continue to next iteration
 	}
 
-	// This code path is unreachable with placeholder validation
-	// Will be used when real validation is implemented
-	return err([
-		{
-			code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
-			severity: 'error',
-			category: 'execution',
-			context: {
-				attempts: maxAttempts,
-				maxAttempts,
-			},
+	// Max attempts exceeded - all attempts failed validation
+	// Invoke onFailure callback
+	const maxAttemptsError: AgentError = {
+		code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
+		severity: 'error',
+		category: 'execution',
+		context: {
+			attempts: maxAttempts,
+			maxAttempts,
+			lastError: lastValidationError ? safeStringify(lastValidationError) : undefined,
 		},
-	]);
+	};
+
+	safeInvokeCallback(
+		options.callbacks?.onFailure,
+		[[maxAttemptsError]],
+		callbackErrors
+	);
+
+	return err([maxAttemptsError]);
 };
