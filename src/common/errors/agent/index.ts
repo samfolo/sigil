@@ -26,6 +26,7 @@ export type {
 	PromptGenerationFailedError,
 	ValidationFailedError,
 	MaxAttemptsExceededError,
+	ExecutionCancelledError,
 	ApiErrorError,
 	RateLimitErrorError,
 	TokenLimitExceededError,
@@ -37,6 +38,7 @@ export type {
 // Context types
 export type {
 	PromptType,
+	ExecutionPhase,
 	EmptyNameContext,
 	EmptyDescriptionContext,
 	EmptyModelNameContext,
@@ -47,6 +49,7 @@ export type {
 	PromptGenerationFailedContext,
 	ValidationFailedContext,
 	MaxAttemptsExceededContext,
+	ExecutionCancelledContext,
 	ApiErrorContext,
 	RateLimitErrorContext,
 	TokenLimitExceededContext,

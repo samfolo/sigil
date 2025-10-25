@@ -16,6 +16,7 @@ import type {
 	EmptyDescriptionContext,
 	EmptyModelNameContext,
 	EmptyNameContext,
+	ExecutionCancelledContext,
 	InvalidMaxAttemptsContext,
 	InvalidMaxTokensContext,
 	InvalidResponseContext,
@@ -158,6 +159,13 @@ const formatMaxAttemptsExceeded = (
 
 	return message;
 };
+
+/**
+ * Formats EXECUTION_CANCELLED error
+ */
+const formatExecutionCancelled = (
+	context: ExecutionCancelledContext
+): string => `Execution cancelled at attempt ${context.attempt} during ${context.phase} phase`;
 
 /**
  * Formats API_ERROR error
@@ -329,6 +337,9 @@ export const formatAgentError = (error: AgentError): string => {
 			baseMessage = formatMaxAttemptsExceeded(error.context);
 			break;
 
+		case AGENT_ERROR_CODES.EXECUTION_CANCELLED:
+			baseMessage = formatExecutionCancelled(error.context);
+			break;
 		case AGENT_ERROR_CODES.API_ERROR:
 			baseMessage = formatApiError(error.context);
 			break;

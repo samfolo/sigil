@@ -310,7 +310,7 @@ const createCancellationError = (
 		startTime,
 		totalInputTokens,
 		totalOutputTokens,
-		callbackErrors,
+		callbackErrors
 	});
 
 	return {
@@ -461,7 +461,7 @@ export const executeAgent = async <Input, Output>(
 				startTime,
 				totalInputTokens,
 				totalOutputTokens,
-				callbackErrors,
+				callbackErrors
 			}),
 		});
 	}
@@ -506,8 +506,7 @@ export const executeAgent = async <Input, Output>(
 		safeInvokeCallback(
 			options.callbacks?.onAttemptStart,
 			[state],
-			callbackErrors,
-			options.signal
+			callbackErrors
 		);
 
 		// Check for cancellation before building system prompt
@@ -528,7 +527,6 @@ export const executeAgent = async <Input, Output>(
 			agent,
 			options.input,
 			state,
-			options.signal
 		);
 
 		if (isErr(systemPromptResult)) {
@@ -539,7 +537,7 @@ export const executeAgent = async <Input, Output>(
 					startTime,
 					totalInputTokens,
 					totalOutputTokens,
-					callbackErrors,
+					callbackErrors
 				}),
 			});
 		}
@@ -576,8 +574,11 @@ export const executeAgent = async <Input, Output>(
 				system: systemPromptResult.data,
 				messages: conversationHistory,
 				tools: [tool],
+			},
+			{
 				signal: options.signal,
-			});
+			}
+			);
 		} catch (error) {
 			return err({
 				errors: [
@@ -596,7 +597,7 @@ export const executeAgent = async <Input, Output>(
 					startTime,
 					totalInputTokens,
 					totalOutputTokens,
-					callbackErrors,
+					callbackErrors
 				}),
 			});
 		}
@@ -628,7 +629,7 @@ export const executeAgent = async <Input, Output>(
 					startTime,
 					totalInputTokens,
 					totalOutputTokens,
-					callbackErrors,
+					callbackErrors
 				}),
 			});
 		}
@@ -659,8 +660,7 @@ export const executeAgent = async <Input, Output>(
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerStart,
 						[state, layer],
-						callbackErrors,
-						options.signal
+						callbackErrors
 					);
 				}
 				: undefined,
@@ -676,8 +676,7 @@ export const executeAgent = async <Input, Output>(
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerComplete,
 						[state, layer],
-						callbackErrors,
-						options.signal
+						callbackErrors
 					);
 				}
 			},
@@ -688,7 +687,6 @@ export const executeAgent = async <Input, Output>(
 			agent.validation.outputSchema,
 			agent.validation.customValidators,
 			validationCallbacks,
-			options.signal
 		);
 
 		// Handle validation success
@@ -697,16 +695,14 @@ export const executeAgent = async <Input, Output>(
 			safeInvokeCallback(
 				options.callbacks?.onAttemptComplete,
 				[state, true],
-				callbackErrors,
-				options.signal
+				callbackErrors
 			);
 
 			// Invoke onSuccess callback
 			safeInvokeCallback(
 				options.callbacks?.onSuccess,
 				[validationResult.data],
-				callbackErrors,
-				options.signal
+				callbackErrors
 			);
 
 			// Build metadata based on observability configuration
@@ -715,7 +711,7 @@ export const executeAgent = async <Input, Output>(
 				startTime,
 				totalInputTokens,
 				totalOutputTokens,
-				callbackErrors,
+				callbackErrors
 			});
 
 			return ok({
@@ -732,16 +728,14 @@ export const executeAgent = async <Input, Output>(
 		safeInvokeCallback(
 			options.callbacks?.onAttemptComplete,
 			[state, false],
-			callbackErrors,
-			options.signal
+			callbackErrors
 		);
 
 		// Invoke onValidationFailure callback
 		safeInvokeCallback(
 			options.callbacks?.onValidationFailure,
 			[state, validationResult.error],
-			callbackErrors,
-			options.signal
+			callbackErrors
 		);
 
 		// Append assistant response to conversation history
@@ -778,7 +772,6 @@ export const executeAgent = async <Input, Output>(
 			agent,
 			formattedError,
 			state,
-			options.signal
 		);
 
 		if (isErr(errorPromptResult)) {
@@ -789,7 +782,7 @@ export const executeAgent = async <Input, Output>(
 					startTime,
 					totalInputTokens,
 					totalOutputTokens,
-					callbackErrors,
+					callbackErrors
 				}),
 			});
 		}
@@ -819,8 +812,7 @@ export const executeAgent = async <Input, Output>(
 	safeInvokeCallback(
 		options.callbacks?.onFailure,
 		[[maxAttemptsError]],
-		callbackErrors,
-		options.signal
+		callbackErrors
 	);
 
 	// Build metadata based on observability configuration
@@ -829,7 +821,7 @@ export const executeAgent = async <Input, Output>(
 		startTime,
 		totalInputTokens,
 		totalOutputTokens,
-		callbackErrors,
+		callbackErrors
 	});
 
 	return err({
