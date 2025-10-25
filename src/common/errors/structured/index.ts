@@ -11,11 +11,11 @@ export type {StructuredError, Severity, ErrorCode} from './types';
 
 // Formatting utilities
 export {
-	formatList,
-	safeStringify,
-	formatUnknownError,
-	appendMetadata,
-	formatErrorsBySeverity,
+  formatList,
+  safeStringify,
+  formatUnknownError,
+  appendMetadata,
+  formatErrorsBySeverity,
 } from './formatter';
 
 // Exception base class

@@ -14,21 +14,21 @@ export type PromptType = 'system' | 'user' | 'error';
  * Context for EMPTY_NAME error
  */
 export interface EmptyNameContext {
-	providedValue?: string;
+  providedValue?: string;
 }
 
 /**
  * Context for EMPTY_DESCRIPTION error
  */
 export interface EmptyDescriptionContext {
-	providedValue?: string;
+  providedValue?: string;
 }
 
 /**
  * Context for EMPTY_MODEL_NAME error
  */
 export interface EmptyModelNameContext {
-	providedValue?: string;
+  providedValue?: string;
 }
 
 /**
@@ -40,101 +40,101 @@ export type MissingOutputSchemaContext = Record<string, never>;
  * Context for INVALID_MAX_ATTEMPTS error
  */
 export interface InvalidMaxAttemptsContext {
-	providedValue?: number;
-	minimumValue: number;
+  providedValue?: number;
+  minimumValue: number;
 }
 
 /**
  * Context for INVALID_TEMPERATURE error
  */
 export interface InvalidTemperatureContext {
-	providedValue?: number;
-	minimumValue: number;
-	maximumValue: number;
+  providedValue?: number;
+  minimumValue: number;
+  maximumValue: number;
 }
 
 /**
  * Context for INVALID_MAX_TOKENS error
  */
 export interface InvalidMaxTokensContext {
-	providedValue?: number;
-	minimumValue: number;
+  providedValue?: number;
+  minimumValue: number;
 }
 
 /**
  * Context for PROMPT_GENERATION_FAILED error
  */
 export interface PromptGenerationFailedContext {
-	promptType?: PromptType;
-	reason?: string;
-	attempt?: number;
+  promptType?: PromptType;
+  reason?: string;
+  attempt?: number;
 }
 
 /**
  * Context for VALIDATION_FAILED error
  */
 export interface ValidationFailedContext {
-	layer?: string;
-	reason?: string;
-	attempt?: number;
+  layer?: string;
+  reason?: string;
+  attempt?: number;
 }
 
 /**
  * Context for MAX_ATTEMPTS_EXCEEDED error
  */
 export interface MaxAttemptsExceededContext {
-	attempts: number;
-	maxAttempts: number;
-	lastError?: string;
+  attempts: number;
+  maxAttempts: number;
+  lastError?: string;
 }
 
 /**
  * Context for API_ERROR error
  */
 export interface ApiErrorContext {
-	provider?: string;
-	statusCode?: number;
-	message?: string;
+  provider?: string;
+  statusCode?: number;
+  message?: string;
 }
 
 /**
  * Context for RATE_LIMIT_ERROR error
  */
 export interface RateLimitErrorContext {
-	provider?: string;
-	retryAfter?: number;
-	limit?: string;
+  provider?: string;
+  retryAfter?: number;
+  limit?: string;
 }
 
 /**
  * Context for TOKEN_LIMIT_EXCEEDED error
  */
 export interface TokenLimitExceededContext {
-	requestedTokens?: number;
-	maximumTokens?: number;
-	provider?: string;
+  requestedTokens?: number;
+  maximumTokens?: number;
+  provider?: string;
 }
 
 /**
  * Context for INVALID_RESPONSE error
  */
 export interface InvalidResponseContext {
-	reason?: string;
-	responseType?: string;
+  reason?: string;
+  responseType?: string;
 }
 
 /**
  * Context for METRICS_COLLECTION_FAILED error
  */
 export interface MetricsCollectionFailedContext {
-	metricType?: string;
-	reason?: string;
+  metricType?: string;
+  reason?: string;
 }
 
 /**
  * Context for LOGGING_FAILED error
  */
 export interface LoggingFailedContext {
-	logLevel?: string;
-	reason?: string;
+  logLevel?: string;
+  reason?: string;
 }

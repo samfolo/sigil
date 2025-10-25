@@ -26,35 +26,35 @@ export type Severity = 'error' | 'warning';
  * @template Context - Type of context object for this error
  */
 export interface StructuredError<Code extends string, Category extends string, Context> {
-	/**
-	 * Error code identifying the specific error condition
-	 */
-	code: Code;
+  /**
+   * Error code identifying the specific error condition
+   */
+  code: Code;
 
-	/**
-	 * Severity level of this error
-	 */
-	severity: Severity;
+  /**
+   * Severity level of this error
+   */
+  severity: Severity;
 
-	/**
-	 * Category for classifying errors by domain concerns
-	 */
-	category: Category;
+  /**
+   * Category for classifying errors by domain concerns
+   */
+  category: Category;
 
-	/**
-	 * JSONPath or identifier locating where the error occurred
-	 */
-	path?: string;
+  /**
+   * JSONPath or identifier locating where the error occurred
+   */
+  path?: string;
 
-	/**
-	 * Domain-specific context providing details about this error
-	 */
-	context: Context;
+  /**
+   * Domain-specific context providing details about this error
+   */
+  context: Context;
 
-	/**
-	 * Optional suggestion for resolving the error
-	 */
-	suggestion?: string;
+  /**
+   * Optional suggestion for resolving the error
+   */
+  suggestion?: string;
 }
 
 /**

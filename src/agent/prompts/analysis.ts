@@ -1,6 +1,6 @@
 interface AnalysisPromptParams {
-	format: string;
-	dataSample: string;
+  format: string;
+  dataSample: string;
 }
 
 /**

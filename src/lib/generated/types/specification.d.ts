@@ -96,10 +96,10 @@ export type LayoutNodeSpacing = "tight" | "normal" | "relaxed";
  * via the `definition` "SizeConstraint".
  */
 export type SizeConstraint =
-	| FixedSizeConstraint
-	| FlexSizeConstraint
-	| PercentageSizeConstraint
-	| ContentSizeConstraint;
+  | FixedSizeConstraint
+  | FlexSizeConstraint
+  | PercentageSizeConstraint
+  | ContentSizeConstraint;
 /**
  * Flexible padding definition supporting shorthand and explicit sides. Follows CSS-like conventions for ease of use.
  *
@@ -111,13 +111,13 @@ export type SizeConstraint =
  * via the `definition` "Padding".
  */
 export type Padding =
-	| number
-	| {
-			bottom?: number;
-			left?: number;
-			right?: number;
-			top?: number;
-	  };
+  | number
+  | {
+      bottom?: number;
+      left?: number;
+      right?: number;
+      top?: number;
+    };
 /**
  * Alignment options for stack layout children along the cross axis.
  *
@@ -145,13 +145,13 @@ export type ComponentConfig = DataTableConfig | HierarchyConfig | CompositionCon
  * via the `definition` "Affordance".
  */
 export type Affordance =
-	| VirtualisationAffordance
-	| SortingAffordance
-	| FilteringAffordance
-	| PaginationAffordance
-	| ExportAffordance
-	| SelectionAffordance
-	| SearchAffordance;
+  | VirtualisationAffordance
+  | SortingAffordance
+  | FilteringAffordance
+  | PaginationAffordance
+  | ExportAffordance
+  | SelectionAffordance
+  | SearchAffordance;
 /**
  * A filter condition can be either a relational comparison or a logical combination. This recursive structure enables arbitrarily complex filter expressions
  *
@@ -193,19 +193,19 @@ export type FilterConditionLogicalOperator = "and" | "or" | "not";
  * via the `definition` "FilterConditionRelationalOperator".
  */
 export type FilterConditionRelationalOperator =
-	| "equals"
-	| "not_equals"
-	| "contains"
-	| "not_contains"
-	| "starts_with"
-	| "ends_with"
-	| "greater_than"
-	| "less_than"
-	| "greater_than_or_equal"
-	| "less_than_or_equal"
-	| "between"
-	| "in"
-	| "not_in";
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "greater_than"
+  | "less_than"
+  | "greater_than_or_equal"
+  | "less_than_or_equal"
+  | "between"
+  | "in"
+  | "not_in";
 /**
  * Filter interaction types that determine appropriate interaction patterns.
  *
@@ -256,9 +256,9 @@ export type ComponentType = "data-table" | "hierarchy" | "composition" | "text-i
  * via the `definition` "ValueMappingDisplayConfig".
  */
 export type ValueMappingDisplayConfig =
-	| ChipValueMappingDisplayConfig
-	| LabelValueMappingDisplayConfig
-	| BadgeValueMappingDisplayConfig;
+  | ChipValueMappingDisplayConfig
+  | LabelValueMappingDisplayConfig
+  | BadgeValueMappingDisplayConfig;
 /**
  * The value side of a filter comparison. Can be a literal value, reference to another field, list, or range
  *
@@ -266,10 +266,10 @@ export type ValueMappingDisplayConfig =
  * via the `definition` "FilterConditionValue".
  */
 export type FilterConditionValue =
-	| ValueFilterConditionValue
-	| FieldFilterConditionValue
-	| ListFilterConditionValue
-	| RangeFilterConditionValue;
+  | ValueFilterConditionValue
+  | FieldFilterConditionValue
+  | ListFilterConditionValue
+  | RangeFilterConditionValue;
 
 /**
  * Sigil Component Specification - Intermediate Representation
@@ -298,61 +298,61 @@ export type FilterConditionValue =
  * The spec is immutable once created - any modifications create a new version.
  */
 export interface ComponentSpec {
-	/**
-	 * ISO 8601 timestamp of when this spec was created. Format: YYYY-MM-DDTHH:mm:ss.sssZ
-	 */
-	created_at: string;
-	data_shape: DataShape;
-	/**
-	 * Optional description explaining the purpose or usage of this spec
-	 */
-	description?: string;
-	/**
-	 * Unique identifier for this specification (UUID v4 recommended)
-	 */
-	id: string;
-	/**
-	 * The root node containing the full layout, components, and field bindings. This encapsulates the entire visualisation specification. The rendering engine starts here to build the UI
-	 */
-	root: {
-		/**
-		 * Field metadata providing semantic information about data fields for each component.
-		 *
-		 * Structure: {[component_id]: {[field_accessor]: FieldMetadata } }
-		 *
-		 * This maps each component's fields to their metadata (types, roles, display hints, value mappings). The component_id keys correspond to IDs in ComponentSpec.components. The field_accessor keys use dot notation matching AffordedField.accessor syntax.
-		 *
-		 * Field metadata includes:
-		 * - Semantic roles (label, value, category, etc.)
-		 * - Data types with fallback options for coercion
-		 * - Value mappings for transforming raw values to display values
-		 * - Format strings for dates and numbers
-		 *
-		 * Example:
-		 * {
-		 *   "table-1": {
-		 *     "user.name": {roles: ["label"], data_types: ["string"], ...},
-		 *     "user.age": {roles: ["value"], data_types: ["number"], format: "0,0", ...}
-		 *   }
-		 * }
-		 */
-		accessor_bindings: {
-			[k: string]: {
-				[k: string]: FieldMetadata;
-			};
-		};
-		layout: LayoutNode;
-		/**
-		 * Registry of all component nodes used in this component, keyed by component ID. Using a Record ensures O(1) lookup performance and guarantees ID uniqueness. Components are referenced from LayoutChild nodes via their IDs
-		 */
-		nodes: {
-			[k: string]: ComponentNode;
-		};
-	};
-	/**
-	 * Human-readable title for the visualisation
-	 */
-	title: string;
+  /**
+   * ISO 8601 timestamp of when this spec was created. Format: YYYY-MM-DDTHH:mm:ss.sssZ
+   */
+  created_at: string;
+  data_shape: DataShape;
+  /**
+   * Optional description explaining the purpose or usage of this spec
+   */
+  description?: string;
+  /**
+   * Unique identifier for this specification (UUID v4 recommended)
+   */
+  id: string;
+  /**
+   * The root node containing the full layout, components, and field bindings. This encapsulates the entire visualisation specification. The rendering engine starts here to build the UI
+   */
+  root: {
+    /**
+     * Field metadata providing semantic information about data fields for each component.
+     *
+     * Structure: {[component_id]: {[field_accessor]: FieldMetadata } }
+     *
+     * This maps each component's fields to their metadata (types, roles, display hints, value mappings). The component_id keys correspond to IDs in ComponentSpec.components. The field_accessor keys use dot notation matching AffordedField.accessor syntax.
+     *
+     * Field metadata includes:
+     * - Semantic roles (label, value, category, etc.)
+     * - Data types with fallback options for coercion
+     * - Value mappings for transforming raw values to display values
+     * - Format strings for dates and numbers
+     *
+     * Example:
+     * {
+     *   "table-1": {
+     *     "user.name": {roles: ["label"], data_types: ["string"], ...},
+     *     "user.age": {roles: ["value"], data_types: ["number"], format: "0,0", ...}
+     *   }
+     * }
+     */
+    accessor_bindings: {
+      [k: string]: {
+        [k: string]: FieldMetadata;
+      };
+    };
+    layout: LayoutNode;
+    /**
+     * Registry of all component nodes used in this component, keyed by component ID. Using a Record ensures O(1) lookup performance and guarantees ID uniqueness. Components are referenced from LayoutChild nodes via their IDs
+     */
+    nodes: {
+      [k: string]: ComponentNode;
+    };
+  };
+  /**
+   * Human-readable title for the visualisation
+   */
+  title: string;
 }
 /**
  * Metadata describing how a data field should be interpreted and displayed.
@@ -367,45 +367,45 @@ export interface ComponentSpec {
  * via the `definition` "FieldMetadata".
  */
 export interface FieldMetadata {
-	/**
-	 * Data types for this field, in order of preference. First element is the primary type, subsequent elements are fallbacks for type coercion if the primary type fails. Example: ['number', 'string'] means 'try to parse as number, fall back to string'
-	 */
-	data_types: DataType[];
-	/**
-	 * Format string for displaying values. Uses format strings appropriate to the data type:
-	 * - Dates: 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', 'MMM D, YYYY'
-	 * - Numbers: '0,0.00', '£0,0', '$0.00a', '0%'
-	 * - Strings: typically omitted (displayed as-is)
-	 *
-	 * The rendering engine determines how to interpret format strings
-	 */
-	format?: string;
-	/**
-	 * Semantic roles this field plays in the visualisation. Always an array to support fields with multiple roles.
-	 *
-	 * Common roles:
-	 * - 'label': Human-readable identifier (e.g., name, title)
-	 * - 'value': Numeric or quantitative data
-	 * - 'time': Temporal data for time-series
-	 * - 'x', 'y': Positional data for charts
-	 * - 'category': Categorical grouping
-	 * - 'id': Unique identifier
-	 *
-	 * Example: ['x', 'time'] for a time-series x-axis
-	 */
-	roles: string[];
-	/**
-	 * Mappings from source values to display values. Maps raw data values to ValueMapping objects that define how to display them. Keys are the source values (as strings), values are the display transformations.
-	 *
-	 * Example:
-	 * {
-	 *   '0': { display_value: 'Inactive', display_config: { type: 'chip', details: { color: 'grey' } } },
-	 *   '1': { display_value: 'Active', display_config: { type: 'chip', details: { color: 'green' } } }
-	 * }
-	 */
-	value_mappings?: {
-		[k: string]: ValueMapping;
-	};
+  /**
+   * Data types for this field, in order of preference. First element is the primary type, subsequent elements are fallbacks for type coercion if the primary type fails. Example: ['number', 'string'] means 'try to parse as number, fall back to string'
+   */
+  data_types: DataType[];
+  /**
+   * Format string for displaying values. Uses format strings appropriate to the data type:
+   * - Dates: 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', 'MMM D, YYYY'
+   * - Numbers: '0,0.00', '£0,0', '$0.00a', '0%'
+   * - Strings: typically omitted (displayed as-is)
+   *
+   * The rendering engine determines how to interpret format strings
+   */
+  format?: string;
+  /**
+   * Semantic roles this field plays in the visualisation. Always an array to support fields with multiple roles.
+   *
+   * Common roles:
+   * - 'label': Human-readable identifier (e.g., name, title)
+   * - 'value': Numeric or quantitative data
+   * - 'time': Temporal data for time-series
+   * - 'x', 'y': Positional data for charts
+   * - 'category': Categorical grouping
+   * - 'id': Unique identifier
+   *
+   * Example: ['x', 'time'] for a time-series x-axis
+   */
+  roles: string[];
+  /**
+   * Mappings from source values to display values. Maps raw data values to ValueMapping objects that define how to display them. Keys are the source values (as strings), values are the display transformations.
+   *
+   * Example:
+   * {
+   *   '0': { display_value: 'Inactive', display_config: { type: 'chip', details: { color: 'grey' } } },
+   *   '1': { display_value: 'Active', display_config: { type: 'chip', details: { color: 'green' } } }
+   * }
+   */
+  value_mappings?: {
+    [k: string]: ValueMapping;
+  };
 }
 /**
  * Defines how a raw data value should be displayed.
@@ -421,14 +421,14 @@ export interface FieldMetadata {
  * via the `definition` "ValueMapping".
  */
 export interface ValueMapping {
-	/**
-	 * Optional visual styling for the display value. If omitted, the value is displayed as plain text
-	 */
-	display_config?: ChipValueMappingDisplayConfig | LabelValueMappingDisplayConfig | BadgeValueMappingDisplayConfig;
-	/**
-	 * The human-readable text to display instead of the raw value
-	 */
-	display_value: string;
+  /**
+   * Optional visual styling for the display value. If omitted, the value is displayed as plain text
+   */
+  display_config?: ChipValueMappingDisplayConfig | LabelValueMappingDisplayConfig | BadgeValueMappingDisplayConfig;
+  /**
+   * The human-readable text to display instead of the raw value
+   */
+  display_value: string;
 }
 /**
  * Display configuration for chip-style rendering. Chips are compact UI elements with optional icons, typically used for tags, statuses, or categories
@@ -437,20 +437,20 @@ export interface ValueMapping {
  * via the `definition` "ChipValueMappingDisplayConfig".
  */
 export interface ChipValueMappingDisplayConfig {
-	/**
-	 * Optional chip-specific styling
-	 */
-	details?: {
-		/**
-		 * Chip colour (CSS colour string). Examples: 'red', '#ff0000', 'rgb(255, 0, 0)'
-		 */
-		color?: string;
-		/**
-		 * Icon identifier to display in the chip. Examples: 'check', 'alert', 'info'. The specific icon set is determined by the rendering engine
-		 */
-		icon?: string;
-	};
-	type: "chip";
+  /**
+   * Optional chip-specific styling
+   */
+  details?: {
+    /**
+     * Chip colour (CSS colour string). Examples: 'red', '#ff0000', 'rgb(255, 0, 0)'
+     */
+    color?: string;
+    /**
+     * Icon identifier to display in the chip. Examples: 'check', 'alert', 'info'. The specific icon set is determined by the rendering engine
+     */
+    icon?: string;
+  };
+  type: "chip";
 }
 /**
  * Display configuration for label-style rendering. Labels are simple text with optional colouring, used for inline annotations
@@ -459,16 +459,16 @@ export interface ChipValueMappingDisplayConfig {
  * via the `definition` "LabelValueMappingDisplayConfig".
  */
 export interface LabelValueMappingDisplayConfig {
-	/**
-	 * Optional label-specific styling
-	 */
-	details?: {
-		/**
-		 * Label text colour (CSS colour string). Examples: 'blue', '#0000ff'
-		 */
-		color?: string;
-	};
-	type: "label";
+  /**
+   * Optional label-specific styling
+   */
+  details?: {
+    /**
+     * Label text colour (CSS colour string). Examples: 'blue', '#0000ff'
+     */
+    color?: string;
+  };
+  type: "label";
 }
 /**
  * Display configuration for badge-style rendering. Badges are prominent indicators, typically used for counts or status indicators
@@ -477,16 +477,16 @@ export interface LabelValueMappingDisplayConfig {
  * via the `definition` "BadgeValueMappingDisplayConfig".
  */
 export interface BadgeValueMappingDisplayConfig {
-	/**
-	 * Optional badge-specific styling
-	 */
-	details?: {
-		/**
-		 * Badge colour (CSS colour string). Examples: 'green', '#00ff00'
-		 */
-		color?: string;
-	};
-	type: "badge";
+  /**
+   * Optional badge-specific styling
+   */
+  details?: {
+    /**
+     * Badge colour (CSS colour string). Examples: 'green', '#00ff00'
+     */
+    color?: string;
+  };
+  type: "badge";
 }
 /**
  * Horizontal stack layout - arranges children left-to-right.
@@ -498,31 +498,31 @@ export interface BadgeValueMappingDisplayConfig {
  * via the `definition` "HorizontalStackLayoutNode".
  */
 export interface HorizontalStackLayoutNode {
-	/**
-	 * Ordered list of children to render in sequence
-	 */
-	children: LayoutChild[];
-	/**
-	 * Flow direction of children - fixed to 'horizontal' for this layout type
-	 */
-	direction: "horizontal";
-	height?: SizeConstraint;
-	/**
-	 * Unique identifier for this layout node
-	 */
-	id: string;
-	max_height?: SizeConstraint;
-	max_width?: SizeConstraint;
-	min_height?: SizeConstraint;
-	min_width?: SizeConstraint;
-	padding?: Padding;
-	spacing: LayoutNodeSpacing;
-	/**
-	 * Discriminator value for stack layouts
-	 */
-	type: "stack";
-	vertical_alignment?: StackLayoutNodeAlignment;
-	width?: SizeConstraint;
+  /**
+   * Ordered list of children to render in sequence
+   */
+  children: LayoutChild[];
+  /**
+   * Flow direction of children - fixed to 'horizontal' for this layout type
+   */
+  direction: "horizontal";
+  height?: SizeConstraint;
+  /**
+   * Unique identifier for this layout node
+   */
+  id: string;
+  max_height?: SizeConstraint;
+  max_width?: SizeConstraint;
+  min_height?: SizeConstraint;
+  min_width?: SizeConstraint;
+  padding?: Padding;
+  spacing: LayoutNodeSpacing;
+  /**
+   * Discriminator value for stack layouts
+   */
+  type: "stack";
+  vertical_alignment?: StackLayoutNodeAlignment;
+  width?: SizeConstraint;
 }
 /**
  * Nested layout node for hierarchical composition
@@ -531,11 +531,11 @@ export interface HorizontalStackLayoutNode {
  * via the `definition` "LayoutLayoutChild".
  */
 export interface LayoutLayoutChild {
-	/**
-	 * The nested layout node
-	 */
-	node: StackLayoutNode | GridLayoutNode;
-	type: "layout";
+  /**
+   * The nested layout node
+   */
+  node: StackLayoutNode | GridLayoutNode;
+  type: "layout";
 }
 /**
  * Grid layout that arranges children in rows and columns.
@@ -552,35 +552,35 @@ export interface LayoutLayoutChild {
  * via the `definition` "GridLayoutNode".
  */
 export interface GridLayoutNode {
-	/**
-	 * Children with optional positioning and spanning information
-	 */
-	children: GridChild[];
-	column_gap?: LayoutNodeSpacing;
-	/**
-	 * Number of columns in the grid
-	 */
-	columns: number;
-	height?: SizeConstraint;
-	/**
-	 * Unique identifier for this layout node
-	 */
-	id: string;
-	max_height?: SizeConstraint;
-	max_width?: SizeConstraint;
-	min_height?: SizeConstraint;
-	min_width?: SizeConstraint;
-	padding?: Padding;
-	row_gap?: LayoutNodeSpacing;
-	/**
-	 * Optional number of rows. If omitted, rows are created automatically as needed (auto-flow)
-	 */
-	rows?: number;
-	/**
-	 * Discriminator value for grid layouts
-	 */
-	type: "grid";
-	width?: SizeConstraint;
+  /**
+   * Children with optional positioning and spanning information
+   */
+  children: GridChild[];
+  column_gap?: LayoutNodeSpacing;
+  /**
+   * Number of columns in the grid
+   */
+  columns: number;
+  height?: SizeConstraint;
+  /**
+   * Unique identifier for this layout node
+   */
+  id: string;
+  max_height?: SizeConstraint;
+  max_width?: SizeConstraint;
+  min_height?: SizeConstraint;
+  min_width?: SizeConstraint;
+  padding?: Padding;
+  row_gap?: LayoutNodeSpacing;
+  /**
+   * Optional number of rows. If omitted, rows are created automatically as needed (auto-flow)
+   */
+  rows?: number;
+  /**
+   * Discriminator value for grid layouts
+   */
+  type: "grid";
+  width?: SizeConstraint;
 }
 /**
  * A child within a grid layout with optional positioning and spanning.
@@ -595,23 +595,23 @@ export interface GridLayoutNode {
  * via the `definition` "GridChild".
  */
 export interface GridChild {
-	/**
-	 * Number of columns this child spans. Default: 1
-	 */
-	column_span?: number;
-	/**
-	 * Explicit column position (1-indexed). Omit to use auto-flow positioning
-	 */
-	column_start?: number;
-	element: LayoutChild;
-	/**
-	 * Number of rows this child spans. Default: 1
-	 */
-	row_span?: number;
-	/**
-	 * Explicit row position (1-indexed). Omit to use auto-flow positioning
-	 */
-	row_start?: number;
+  /**
+   * Number of columns this child spans. Default: 1
+   */
+  column_span?: number;
+  /**
+   * Explicit column position (1-indexed). Omit to use auto-flow positioning
+   */
+  column_start?: number;
+  element: LayoutChild;
+  /**
+   * Number of rows this child spans. Default: 1
+   */
+  row_span?: number;
+  /**
+   * Explicit row position (1-indexed). Omit to use auto-flow positioning
+   */
+  row_start?: number;
 }
 /**
  * Fixed size in pixels. The element will be exactly this size regardless of content or container
@@ -620,11 +620,11 @@ export interface GridChild {
  * via the `definition` "FixedSizeConstraint".
  */
 export interface FixedSizeConstraint {
-	type: "fixed";
-	/**
-	 * Size in pixels
-	 */
-	value: number;
+  type: "fixed";
+  /**
+   * Size in pixels
+   */
+  value: number;
 }
 /**
  * Flex sizing with a flex factor. Element shares available space proportionally with other flex elements. E.g., flex: 1 and flex: 2 would give 33% and 67% of space respectively
@@ -633,11 +633,11 @@ export interface FixedSizeConstraint {
  * via the `definition` "FlexSizeConstraint".
  */
 export interface FlexSizeConstraint {
-	type: "flex";
-	/**
-	 * Flex factor for proportional sizing
-	 */
-	value: number;
+  type: "flex";
+  /**
+   * Flex factor for proportional sizing
+   */
+  value: number;
 }
 /**
  * Percentage of parent container size. Value should be between 0 and 100
@@ -646,11 +646,11 @@ export interface FlexSizeConstraint {
  * via the `definition` "PercentageSizeConstraint".
  */
 export interface PercentageSizeConstraint {
-	type: "percentage";
-	/**
-	 * Percentage value (0-100)
-	 */
-	value: number;
+  type: "percentage";
+  /**
+   * Percentage value (0-100)
+   */
+  value: number;
 }
 /**
  * Size to fit content. Element sizes based on its children's dimensions
@@ -659,7 +659,7 @@ export interface PercentageSizeConstraint {
  * via the `definition` "ContentSizeConstraint".
  */
 export interface ContentSizeConstraint {
-	type: "content";
+  type: "content";
 }
 /**
  * Reference to a component by its ID. The component must exist in ComponentSpec.components
@@ -668,11 +668,11 @@ export interface ContentSizeConstraint {
  * via the `definition` "ComponentLayoutChild".
  */
 export interface ComponentLayoutChild {
-	/**
-	 * ID of the component to render
-	 */
-	component_id: string;
-	type: "component";
+  /**
+   * ID of the component to render
+   */
+  component_id: string;
+  type: "component";
 }
 /**
  * Vertical stack layout - arranges children top-to-bottom.
@@ -684,31 +684,31 @@ export interface ComponentLayoutChild {
  * via the `definition` "VerticalStackLayoutNode".
  */
 export interface VerticalStackLayoutNode {
-	/**
-	 * Ordered list of children to render in sequence
-	 */
-	children: LayoutChild[];
-	/**
-	 * Flow direction of children - fixed to 'vertical' for this layout type
-	 */
-	direction: "vertical";
-	height?: SizeConstraint;
-	horizontal_alignment?: StackLayoutNodeAlignment;
-	/**
-	 * Unique identifier for this layout node
-	 */
-	id: string;
-	max_height?: SizeConstraint;
-	max_width?: SizeConstraint;
-	min_height?: SizeConstraint;
-	min_width?: SizeConstraint;
-	padding?: Padding;
-	spacing: LayoutNodeSpacing;
-	/**
-	 * Discriminator value for stack layouts
-	 */
-	type: "stack";
-	width?: SizeConstraint;
+  /**
+   * Ordered list of children to render in sequence
+   */
+  children: LayoutChild[];
+  /**
+   * Flow direction of children - fixed to 'vertical' for this layout type
+   */
+  direction: "vertical";
+  height?: SizeConstraint;
+  horizontal_alignment?: StackLayoutNodeAlignment;
+  /**
+   * Unique identifier for this layout node
+   */
+  id: string;
+  max_height?: SizeConstraint;
+  max_width?: SizeConstraint;
+  min_height?: SizeConstraint;
+  min_width?: SizeConstraint;
+  padding?: Padding;
+  spacing: LayoutNodeSpacing;
+  /**
+   * Discriminator value for stack layouts
+   */
+  type: "stack";
+  width?: SizeConstraint;
 }
 /**
  * A ComponentNode is a leaf node in the layout tree that renders data.
@@ -722,12 +722,12 @@ export interface VerticalStackLayoutNode {
  * via the `definition` "ComponentNode".
  */
 export interface ComponentNode {
-	config: ComponentConfig;
-	/**
-	 * Unique identifier for this component. Referenced by LayoutChild.component_id
-	 */
-	id: string;
-	type: ComponentType;
+  config: ComponentConfig;
+  /**
+   * Unique identifier for this component. Referenced by LayoutChild.component_id
+   */
+  id: string;
+  type: ComponentType;
 }
 /**
  * Configuration for data table components.
@@ -740,23 +740,23 @@ export interface ComponentNode {
  * via the `definition` "DataTableConfig".
  */
 export interface DataTableConfig {
-	/**
-	 * Interactive capabilities enabled for this table. Common affordances: sorting, filtering, pagination, virtualisation, search, export
-	 */
-	affordances: Affordance[];
-	/**
-	 * Column definitions specifying which fields to display and how to render them. Column order determines display order (left-to-right). Each column's accessor must reference a field in accessor_bindings
-	 */
-	columns: DataTableColumn[];
-	/**
-	 * Optional description explaining the component's purpose
-	 */
-	description?: string;
-	/**
-	 * Optional title for the component
-	 */
-	title?: string;
-	type: "data-table";
+  /**
+   * Interactive capabilities enabled for this table. Common affordances: sorting, filtering, pagination, virtualisation, search, export
+   */
+  affordances: Affordance[];
+  /**
+   * Column definitions specifying which fields to display and how to render them. Column order determines display order (left-to-right). Each column's accessor must reference a field in accessor_bindings
+   */
+  columns: DataTableColumn[];
+  /**
+   * Optional description explaining the component's purpose
+   */
+  description?: string;
+  /**
+   * Optional title for the component
+   */
+  title?: string;
+  type: "data-table";
 }
 /**
  * Enables efficient rendering of large datasets by only rendering visible items.
@@ -769,19 +769,19 @@ export interface DataTableConfig {
  * via the `definition` "VirtualisationAffordance".
  */
 export interface VirtualisationAffordance {
-	/**
-	 * Maximum number of items to keep in rendered memory. Items beyond this are unmounted to prevent memory leaks. Default: 50
-	 */
-	buffer_size?: number;
-	/**
-	 * Fixed height for each item in pixels. Required for optimal performance with fixed-height rows. Omit this for dynamic-height items (slower but more flexible)
-	 */
-	item_height?: number;
-	/**
-	 * Number of items to render outside the visible viewport. Higher values provide smoother scrolling but use more memory. Default: 3
-	 */
-	overscan_count?: number;
-	type: "virtualisation";
+  /**
+   * Maximum number of items to keep in rendered memory. Items beyond this are unmounted to prevent memory leaks. Default: 50
+   */
+  buffer_size?: number;
+  /**
+   * Fixed height for each item in pixels. Required for optimal performance with fixed-height rows. Omit this for dynamic-height items (slower but more flexible)
+   */
+  item_height?: number;
+  /**
+   * Number of items to render outside the visible viewport. Higher values provide smoother scrolling but use more memory. Default: 3
+   */
+  overscan_count?: number;
+  type: "virtualisation";
 }
 /**
  * Enables sorting data by one or more fields. Allows sorting data ascending/descending by field values. Sorting can be restricted to specific fields or allowed on all fields
@@ -790,16 +790,16 @@ export interface VirtualisationAffordance {
  * via the `definition` "SortingAffordance".
  */
 export interface SortingAffordance {
-	/**
-	 * Fields that can be sorted. Omit to allow sorting on all fields in the component
-	 */
-	allowed_fields?: AffordedField[];
-	/**
-	 * Initial sort direction. Default: 'asc'
-	 */
-	default_direction?: "asc" | "desc";
-	default_field?: AffordedField;
-	type: "sorting";
+  /**
+   * Fields that can be sorted. Omit to allow sorting on all fields in the component
+   */
+  allowed_fields?: AffordedField[];
+  /**
+   * Initial sort direction. Default: 'asc'
+   */
+  default_direction?: "asc" | "desc";
+  default_field?: AffordedField;
+  type: "sorting";
 }
 /**
  * Reference to a field in the provided data using a JSONPath accessor.
@@ -821,10 +821,10 @@ export interface SortingAffordance {
  * via the `definition` "AffordedField".
  */
 export interface AffordedField {
-	/**
-	 * JSONPath expression (must start with `$`). Supports full JSONPath specification including wildcards, filters, and recursive descent.
-	 */
-	accessor: string;
+  /**
+   * JSONPath expression (must start with `$`). Supports full JSONPath specification including wildcards, filters, and recursive descent.
+   */
+  accessor: string;
 }
 /**
  * Enables filtering data based on field values.
@@ -840,21 +840,21 @@ export interface AffordedField {
  * via the `definition` "FilteringAffordance".
  */
 export interface FilteringAffordance {
-	/**
-	 * Fields that can be filtered. Omit to allow filtering on all fields in the component
-	 */
-	allowed_fields?: AffordedField[];
-	/**
-	 * Filters applied by default when component first renders. Useful for pre-filtering data to a relevant subset. User can modify/remove these filters interactively
-	 */
-	default_filters?: FilterCondition[];
-	/**
-	 * Specifies the filter interaction type for each field. Maps field accessor to FilterType (e.g., {'age': 'number_range', 'name': 'text'}). Omit to auto-detect based on data types from FieldMetadata
-	 */
-	filter_types?: {
-		[k: string]: FilterType;
-	};
-	type: "filtering";
+  /**
+   * Fields that can be filtered. Omit to allow filtering on all fields in the component
+   */
+  allowed_fields?: AffordedField[];
+  /**
+   * Filters applied by default when component first renders. Useful for pre-filtering data to a relevant subset. User can modify/remove these filters interactively
+   */
+  default_filters?: FilterCondition[];
+  /**
+   * Specifies the filter interaction type for each field. Maps field accessor to FilterType (e.g., {'age': 'number_range', 'name': 'text'}). Omit to auto-detect based on data types from FieldMetadata
+   */
+  filter_types?: {
+    [k: string]: FilterType;
+  };
+  type: "filtering";
 }
 /**
  * Combines multiple filter conditions using logical operators.
@@ -869,12 +869,12 @@ export interface FilteringAffordance {
  * via the `definition` "LogicalFilterCondition".
  */
 export interface LogicalFilterCondition {
-	/**
-	 * Child conditions to combine. Can include both relational and other logical conditions (recursive)
-	 */
-	conditions: FilterCondition[];
-	operator: FilterConditionLogicalOperator;
-	type: "logical";
+  /**
+   * Child conditions to combine. Can include both relational and other logical conditions (recursive)
+   */
+  conditions: FilterCondition[];
+  operator: FilterConditionLogicalOperator;
+  type: "logical";
 }
 /**
  * A single field-value comparison.
@@ -885,13 +885,13 @@ export interface LogicalFilterCondition {
  * via the `definition` "RelationalFilterCondition".
  */
 export interface RelationalFilterCondition {
-	field: AffordedField;
-	operator: FilterConditionRelationalOperator;
-	type: "relational";
-	/**
-	 * What to compare the field against
-	 */
-	value: ValueFilterConditionValue | FieldFilterConditionValue | ListFilterConditionValue | RangeFilterConditionValue;
+  field: AffordedField;
+  operator: FilterConditionRelationalOperator;
+  type: "relational";
+  /**
+   * What to compare the field against
+   */
+  value: ValueFilterConditionValue | FieldFilterConditionValue | ListFilterConditionValue | RangeFilterConditionValue;
 }
 /**
  * A literal value to compare against
@@ -900,11 +900,11 @@ export interface RelationalFilterCondition {
  * via the `definition` "ValueFilterConditionValue".
  */
 export interface ValueFilterConditionValue {
-	type: "value";
-	/**
-	 * The literal value to compare
-	 */
-	value: string | number | boolean | null;
+  type: "value";
+  /**
+   * The literal value to compare
+   */
+  value: string | number | boolean | null;
 }
 /**
  * Reference to another field's value for field-to-field comparison.
@@ -915,8 +915,8 @@ export interface ValueFilterConditionValue {
  * via the `definition` "FieldFilterConditionValue".
  */
 export interface FieldFilterConditionValue {
-	field: AffordedField;
-	type: "field";
+  field: AffordedField;
+  type: "field";
 }
 /**
  * A list of values for 'in' or 'not_in' operators
@@ -925,11 +925,11 @@ export interface FieldFilterConditionValue {
  * via the `definition` "ListFilterConditionValue".
  */
 export interface ListFilterConditionValue {
-	type: "list";
-	/**
-	 * The list of acceptable values
-	 */
-	values: (string | number | boolean | null)[];
+  type: "list";
+  /**
+   * The list of acceptable values
+   */
+  values: (string | number | boolean | null)[];
 }
 /**
  * A numeric or date range for 'between' operator. Both start and end are inclusive
@@ -938,15 +938,15 @@ export interface ListFilterConditionValue {
  * via the `definition` "RangeFilterConditionValue".
  */
 export interface RangeFilterConditionValue {
-	/**
-	 * Range end (inclusive)
-	 */
-	end: string | number;
-	/**
-	 * Range start (inclusive)
-	 */
-	start: string | number;
-	type: "range";
+  /**
+   * Range end (inclusive)
+   */
+  end: string | number;
+  /**
+   * Range start (inclusive)
+   */
+  start: string | number;
+  type: "range";
 }
 /**
  * Enables paginated display of data with configurable page sizes.
@@ -962,19 +962,19 @@ export interface RangeFilterConditionValue {
  * via the `definition` "PaginationAffordance".
  */
 export interface PaginationAffordance {
-	/**
-	 * Default number of items displayed per page
-	 */
-	page_size: number;
-	/**
-	 * Whether to allow users to change page size. Default: true
-	 */
-	show_size_options?: boolean;
-	/**
-	 * Available page size options. Default: [10, 25, 50, 100]
-	 */
-	size_options?: number[];
-	type: "pagination";
+  /**
+   * Default number of items displayed per page
+   */
+  page_size: number;
+  /**
+   * Whether to allow users to change page size. Default: true
+   */
+  show_size_options?: boolean;
+  /**
+   * Available page size options. Default: [10, 25, 50, 100]
+   */
+  size_options?: number[];
+  type: "pagination";
 }
 /**
  * Enables exporting data to various file formats.
@@ -985,19 +985,19 @@ export interface PaginationAffordance {
  * via the `definition` "ExportAffordance".
  */
 export interface ExportAffordance {
-	/**
-	 * Template for generated filename. Supports placeholders: {title}, {timestamp}, {date}. Default: '{title}_{timestamp}'
-	 */
-	filename_template?: string;
-	/**
-	 * Available export formats (e.g., ['csv', 'json'])
-	 */
-	formats: ExportAffordanceFormat[];
-	/**
-	 * Whether to include column headers in exported files. Default: true
-	 */
-	include_headers?: boolean;
-	type: "export";
+  /**
+   * Template for generated filename. Supports placeholders: {title}, {timestamp}, {date}. Default: '{title}_{timestamp}'
+   */
+  filename_template?: string;
+  /**
+   * Available export formats (e.g., ['csv', 'json'])
+   */
+  formats: ExportAffordanceFormat[];
+  /**
+   * Whether to include column headers in exported files. Default: true
+   */
+  include_headers?: boolean;
+  type: "export";
 }
 /**
  * Enables interactive selection of rows/items. Allows selecting data rows, useful for bulk actions, detail views, or highlighting items of interest
@@ -1006,19 +1006,19 @@ export interface ExportAffordance {
  * via the `definition` "SelectionAffordance".
  */
 export interface SelectionAffordance {
-	/**
-	 * Selection mode: 'single' (only one item can be selected at a time) or 'multiple' (multiple items can be selected simultaneously)
-	 */
-	mode: "single" | "multiple";
-	/**
-	 * Whether selections persist when navigating between pages. Default: false (selections reset on page change)
-	 */
-	preserve_across_pages?: boolean;
-	/**
-	 * Whether to provide explicit selection indicators. Default: true for multiple mode, false for single mode
-	 */
-	show_selection_indicators?: boolean;
-	type: "selection";
+  /**
+   * Selection mode: 'single' (only one item can be selected at a time) or 'multiple' (multiple items can be selected simultaneously)
+   */
+  mode: "single" | "multiple";
+  /**
+   * Whether selections persist when navigating between pages. Default: false (selections reset on page change)
+   */
+  preserve_across_pages?: boolean;
+  /**
+   * Whether to provide explicit selection indicators. Default: true for multiple mode, false for single mode
+   */
+  show_selection_indicators?: boolean;
+  type: "selection";
 }
 /**
  * Enables full-text search across data fields.
@@ -1033,19 +1033,19 @@ export interface SelectionAffordance {
  * via the `definition` "SearchAffordance".
  */
 export interface SearchAffordance {
-	/**
-	 * Whether search is case-sensitive. Default: false (case-insensitive)
-	 */
-	case_sensitive?: boolean;
-	/**
-	 * Minimum number of characters before search activates. Prevents expensive searches on very short inputs. Default: 1
-	 */
-	min_characters?: number;
-	/**
-	 * Fields to search within. Omit to search all text fields in the component
-	 */
-	searchable_fields?: AffordedField[];
-	type: "search";
+  /**
+   * Whether search is case-sensitive. Default: false (case-insensitive)
+   */
+  case_sensitive?: boolean;
+  /**
+   * Minimum number of characters before search activates. Prevents expensive searches on very short inputs. Default: 1
+   */
+  min_characters?: number;
+  /**
+   * Fields to search within. Omit to search all text fields in the component
+   */
+  searchable_fields?: AffordedField[];
+  type: "search";
 }
 /**
  * Column configuration for data table components.
@@ -1060,27 +1060,27 @@ export interface SearchAffordance {
  * via the `definition` "DataTableColumn".
  */
 export interface DataTableColumn {
-	/**
-	 * JSONPath accessor referencing a field in accessor_bindings (must start with `$`). Examples: '$.name', '$.user.email', '$.metadata.created_at'
-	 */
-	accessor: string;
-	/**
-	 * Human-readable column header text
-	 */
-	label: string;
-	width?: SizeConstraint;
-	/**
-	 * Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers
-	 */
-	alignment?: "left" | "center" | "right";
-	/**
-	 * Whether the column is visible. Hidden columns remain in the spec but are not rendered. Default: true
-	 */
-	visible?: boolean;
-	/**
-	 * Optional description for tooltip or help text
-	 */
-	description?: string;
+  /**
+   * JSONPath accessor referencing a field in accessor_bindings (must start with `$`). Examples: '$.name', '$.user.email', '$.metadata.created_at'
+   */
+  accessor: string;
+  /**
+   * Human-readable column header text
+   */
+  label: string;
+  width?: SizeConstraint;
+  /**
+   * Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers
+   */
+  alignment?: "left" | "center" | "right";
+  /**
+   * Whether the column is visible. Hidden columns remain in the spec but are not rendered. Default: true
+   */
+  visible?: boolean;
+  /**
+   * Optional description for tooltip or help text
+   */
+  description?: string;
 }
 /**
  * Configuration for hierarchy/tree components.
@@ -1093,19 +1093,19 @@ export interface DataTableColumn {
  * via the `definition` "HierarchyConfig".
  */
 export interface HierarchyConfig {
-	/**
-	 * Interactive capabilities enabled for this hierarchy. Common affordances: search, selection, export
-	 */
-	affordances: Affordance[];
-	/**
-	 * Optional description explaining the component's purpose
-	 */
-	description?: string;
-	/**
-	 * Optional title for the component
-	 */
-	title?: string;
-	type: "hierarchy";
+  /**
+   * Interactive capabilities enabled for this hierarchy. Common affordances: search, selection, export
+   */
+  affordances: Affordance[];
+  /**
+   * Optional description explaining the component's purpose
+   */
+  description?: string;
+  /**
+   * Optional title for the component
+   */
+  title?: string;
+  type: "hierarchy";
 }
 /**
  * Configuration for composition components.
@@ -1118,19 +1118,19 @@ export interface HierarchyConfig {
  * via the `definition` "CompositionConfig".
  */
 export interface CompositionConfig {
-	/**
-	 * Interactive capabilities for the composition as a whole. Note: sub-components have their own affordances
-	 */
-	affordances: Affordance[];
-	/**
-	 * Optional description explaining the component's purpose
-	 */
-	description?: string;
-	/**
-	 * Optional title for the component
-	 */
-	title?: string;
-	type: "composition";
+  /**
+   * Interactive capabilities for the composition as a whole. Note: sub-components have their own affordances
+   */
+  affordances: Affordance[];
+  /**
+   * Optional description explaining the component's purpose
+   */
+  description?: string;
+  /**
+   * Optional title for the component
+   */
+  title?: string;
+  type: "composition";
 }
 /**
  * Configuration for text insight components.
@@ -1143,19 +1143,19 @@ export interface CompositionConfig {
  * via the `definition` "TextInsightConfig".
  */
 export interface TextInsightConfig {
-	/**
-	 * Interactive capabilities for text insights. Common affordances: search, export
-	 */
-	affordances: Affordance[];
-	/**
-	 * Optional description explaining the component's purpose
-	 */
-	description?: string;
-	/**
-	 * Optional title for the component
-	 */
-	title?: string;
-	type: "text-insight";
+  /**
+   * Interactive capabilities for text insights. Common affordances: search, export
+   */
+  affordances: Affordance[];
+  /**
+   * Optional description explaining the component's purpose
+   */
+  description?: string;
+  /**
+   * Optional title for the component
+   */
+  title?: string;
+  type: "text-insight";
 }
 /**
  * Sigil Component Specification - Intermediate Representation
@@ -1187,61 +1187,61 @@ export interface TextInsightConfig {
  * via the `definition` "ComponentSpec".
  */
 export interface ComponentSpec1 {
-	/**
-	 * ISO 8601 timestamp of when this spec was created. Format: YYYY-MM-DDTHH:mm:ss.sssZ
-	 */
-	created_at: string;
-	data_shape: DataShape;
-	/**
-	 * Optional description explaining the purpose or usage of this spec
-	 */
-	description?: string;
-	/**
-	 * Unique identifier for this specification (UUID v4 recommended)
-	 */
-	id: string;
-	/**
-	 * The root node containing the full layout, components, and field bindings. This encapsulates the entire visualisation specification. The rendering engine starts here to build the UI
-	 */
-	root: {
-		/**
-		 * Field metadata providing semantic information about data fields for each component.
-		 *
-		 * Structure: {[component_id]: {[field_accessor]: FieldMetadata } }
-		 *
-		 * This maps each component's fields to their metadata (types, roles, display hints, value mappings). The component_id keys correspond to IDs in ComponentSpec.components. The field_accessor keys use dot notation matching AffordedField.accessor syntax.
-		 *
-		 * Field metadata includes:
-		 * - Semantic roles (label, value, category, etc.)
-		 * - Data types with fallback options for coercion
-		 * - Value mappings for transforming raw values to display values
-		 * - Format strings for dates and numbers
-		 *
-		 * Example:
-		 * {
-		 *   "table-1": {
-		 *     "user.name": {roles: ["label"], data_types: ["string"], ...},
-		 *     "user.age": {roles: ["value"], data_types: ["number"], format: "0,0", ...}
-		 *   }
-		 * }
-		 */
-		accessor_bindings: {
-			[k: string]: {
-				[k: string]: FieldMetadata;
-			};
-		};
-		layout: LayoutNode;
-		/**
-		 * Registry of all component nodes used in this component, keyed by component ID. Using a Record ensures O(1) lookup performance and guarantees ID uniqueness. Components are referenced from LayoutChild nodes via their IDs
-		 */
-		nodes: {
-			[k: string]: ComponentNode;
-		};
-	};
-	/**
-	 * Human-readable title for the visualisation
-	 */
-	title: string;
+  /**
+   * ISO 8601 timestamp of when this spec was created. Format: YYYY-MM-DDTHH:mm:ss.sssZ
+   */
+  created_at: string;
+  data_shape: DataShape;
+  /**
+   * Optional description explaining the purpose or usage of this spec
+   */
+  description?: string;
+  /**
+   * Unique identifier for this specification (UUID v4 recommended)
+   */
+  id: string;
+  /**
+   * The root node containing the full layout, components, and field bindings. This encapsulates the entire visualisation specification. The rendering engine starts here to build the UI
+   */
+  root: {
+    /**
+     * Field metadata providing semantic information about data fields for each component.
+     *
+     * Structure: {[component_id]: {[field_accessor]: FieldMetadata } }
+     *
+     * This maps each component's fields to their metadata (types, roles, display hints, value mappings). The component_id keys correspond to IDs in ComponentSpec.components. The field_accessor keys use dot notation matching AffordedField.accessor syntax.
+     *
+     * Field metadata includes:
+     * - Semantic roles (label, value, category, etc.)
+     * - Data types with fallback options for coercion
+     * - Value mappings for transforming raw values to display values
+     * - Format strings for dates and numbers
+     *
+     * Example:
+     * {
+     *   "table-1": {
+     *     "user.name": {roles: ["label"], data_types: ["string"], ...},
+     *     "user.age": {roles: ["value"], data_types: ["number"], format: "0,0", ...}
+     *   }
+     * }
+     */
+    accessor_bindings: {
+      [k: string]: {
+        [k: string]: FieldMetadata;
+      };
+    };
+    layout: LayoutNode;
+    /**
+     * Registry of all component nodes used in this component, keyed by component ID. Using a Record ensures O(1) lookup performance and guarantees ID uniqueness. Components are referenced from LayoutChild nodes via their IDs
+     */
+    nodes: {
+      [k: string]: ComponentNode;
+    };
+  };
+  /**
+   * Human-readable title for the visualisation
+   */
+  title: string;
 }
 /**
  * A complete component specification including layout, components, and field bindings. This is the root structure used by the rendering engine to build a component in the UI
@@ -1250,37 +1250,37 @@ export interface ComponentSpec1 {
  * via the `definition` "Component".
  */
 export interface Component {
-	/**
-	 * Field metadata providing semantic information about data fields for each component.
-	 *
-	 * Structure: {[component_id]: {[field_accessor]: FieldMetadata } }
-	 *
-	 * This maps each component's fields to their metadata (types, roles, display hints, value mappings). The component_id keys correspond to IDs in ComponentSpec.components. The field_accessor keys use dot notation matching AffordedField.accessor syntax.
-	 *
-	 * Field metadata includes:
-	 * - Semantic roles (label, value, category, etc.)
-	 * - Data types with fallback options for coercion
-	 * - Value mappings for transforming raw values to display values
-	 * - Format strings for dates and numbers
-	 *
-	 * Example:
-	 * {
-	 *   "table-1": {
-	 *     "user.name": {roles: ["label"], data_types: ["string"], ...},
-	 *     "user.age": {roles: ["value"], data_types: ["number"], format: "0,0", ...}
-	 *   }
-	 * }
-	 */
-	accessor_bindings: {
-		[k: string]: {
-			[k: string]: FieldMetadata;
-		};
-	};
-	layout: LayoutNode;
-	/**
-	 * Registry of all component nodes used in this component, keyed by component ID. Using a Record ensures O(1) lookup performance and guarantees ID uniqueness. Components are referenced from LayoutChild nodes via their IDs
-	 */
-	nodes: {
-		[k: string]: ComponentNode;
-	};
+  /**
+   * Field metadata providing semantic information about data fields for each component.
+   *
+   * Structure: {[component_id]: {[field_accessor]: FieldMetadata } }
+   *
+   * This maps each component's fields to their metadata (types, roles, display hints, value mappings). The component_id keys correspond to IDs in ComponentSpec.components. The field_accessor keys use dot notation matching AffordedField.accessor syntax.
+   *
+   * Field metadata includes:
+   * - Semantic roles (label, value, category, etc.)
+   * - Data types with fallback options for coercion
+   * - Value mappings for transforming raw values to display values
+   * - Format strings for dates and numbers
+   *
+   * Example:
+   * {
+   *   "table-1": {
+   *     "user.name": {roles: ["label"], data_types: ["string"], ...},
+   *     "user.age": {roles: ["value"], data_types: ["number"], format: "0,0", ...}
+   *   }
+   * }
+   */
+  accessor_bindings: {
+    [k: string]: {
+      [k: string]: FieldMetadata;
+    };
+  };
+  layout: LayoutNode;
+  /**
+   * Registry of all component nodes used in this component, keyed by component ID. Using a Record ensures O(1) lookup performance and guarantees ID uniqueness. Components are referenced from LayoutChild nodes via their IDs
+   */
+  nodes: {
+    [k: string]: ComponentNode;
+  };
 }

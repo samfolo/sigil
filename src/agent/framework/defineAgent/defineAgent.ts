@@ -9,25 +9,25 @@ import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/s
  * Configuration for the LLM model used by the agent
  */
 export interface ModelConfig {
-	/**
-	 * LLM provider (currently only Anthropic is supported)
-	 */
-	provider: 'anthropic';
+  /**
+   * LLM provider (currently only Anthropic is supported)
+   */
+  provider: 'anthropic';
 
-	/**
-	 * Model name (e.g., 'claude-sonnet-4-5-20250929')
-	 */
-	name: string;
+  /**
+   * Model name (e.g., 'claude-sonnet-4-5-20250929')
+   */
+  name: string;
 
-	/**
-	 * Temperature for response generation (0-1)
-	 */
-	temperature: number;
+  /**
+   * Temperature for response generation (0-1)
+   */
+  temperature: number;
 
-	/**
-	 * Maximum tokens in the response
-	 */
-	maxTokens: number;
+  /**
+   * Maximum tokens in the response
+   */
+  maxTokens: number;
 }
 
 /**
@@ -52,8 +52,8 @@ export interface ModelConfig {
  * ```
  */
 export type SystemPromptFunction<Input> = (
-	input: Input,
-	state: AgentExecutionState
+  input: Input,
+  state: AgentExecutionState
 ) => Promise<string>;
 
 /**
@@ -73,7 +73,7 @@ export type SystemPromptFunction<Input> = (
  * ```
  */
 export type UserPromptFunction<Input> = (
-	input: Input
+  input: Input
 ) => Promise<string>;
 
 /**
@@ -93,8 +93,8 @@ export type UserPromptFunction<Input> = (
  * ```
  */
 export type ErrorPromptFunction = (
-	formattedError: string,
-	state: AgentExecutionState
+  formattedError: string,
+  state: AgentExecutionState
 ) => Promise<string>;
 
 /**
@@ -103,45 +103,45 @@ export type ErrorPromptFunction = (
  * @template Output - The type of output the agent produces
  */
 export interface ValidationConfig<Output> {
-	/**
-	 * Zod schema for validating and typing the agent output
-	 */
-	outputSchema: z.ZodSchema<Output>;
+  /**
+   * Zod schema for validating and typing the agent output
+   */
+  outputSchema: z.ZodSchema<Output>;
 
-	/**
-	 * Additional custom validators to run after schema validation
-	 */
-	customValidators: ValidationLayer<Output>[];
+  /**
+   * Additional custom validators to run after schema validation
+   */
+  customValidators: ValidationLayer<Output>[];
 
-	/**
-	 * Maximum number of retry attempts when validation fails
-	 */
-	maxAttempts: number;
+  /**
+   * Maximum number of retry attempts when validation fails
+   */
+  maxAttempts: number;
 }
 
 /**
  * Observability configuration for tracking agent execution metrics
  */
 export interface ObservabilityConfig {
-	/**
-	 * Track API costs for agent execution
-	 */
-	trackCost: boolean;
+  /**
+   * Track API costs for agent execution
+   */
+  trackCost: boolean;
 
-	/**
-	 * Track latency/response time
-	 */
-	trackLatency: boolean;
+  /**
+   * Track latency/response time
+   */
+  trackLatency: boolean;
 
-	/**
-	 * Track number of attempts/retries
-	 */
-	trackAttempts: boolean;
+  /**
+   * Track number of attempts/retries
+   */
+  trackAttempts: boolean;
 
-	/**
-	 * Track token usage (input/output)
-	 */
-	trackTokens: boolean;
+  /**
+   * Track token usage (input/output)
+   */
+  trackTokens: boolean;
 }
 
 /**
@@ -150,52 +150,52 @@ export interface ObservabilityConfig {
  * @template Input - The type of input the agent accepts
  */
 export interface PromptsConfig<Input> {
-	/**
-	 * System prompt function - receives agent input and execution state
-	 *
-	 * Called on each attempt and can adapt based on state (e.g., mention retry count).
-	 * The system prompt provides meta-context about the execution environment.
-	 */
-	system: SystemPromptFunction<Input>;
+  /**
+   * System prompt function - receives agent input and execution state
+   *
+   * Called on each attempt and can adapt based on state (e.g., mention retry count).
+   * The system prompt provides meta-context about the execution environment.
+   */
+  system: SystemPromptFunction<Input>;
 
-	/**
-	 * User prompt function - receives agent input only
-	 *
-	 * Called once before the retry loop to generate the immutable task description.
-	 * This prompt is preserved in conversation history across all retry attempts,
-	 * ensuring the model always has access to the original task requirements.
-	 */
-	user: UserPromptFunction<Input>;
+  /**
+   * User prompt function - receives agent input only
+   *
+   * Called once before the retry loop to generate the immutable task description.
+   * This prompt is preserved in conversation history across all retry attempts,
+   * ensuring the model always has access to the original task requirements.
+   */
+  user: UserPromptFunction<Input>;
 
-	/**
-	 * Error iteration prompt function - receives formatted error string and execution state
-	 *
-	 * Called after validation failures to provide feedback for retry attempts.
-	 */
-	error: ErrorPromptFunction;
+  /**
+   * Error iteration prompt function - receives formatted error string and execution state
+   *
+   * Called after validation failures to provide feedback for retry attempts.
+   */
+  error: ErrorPromptFunction;
 
-	/**
-	 * Optional error formatter function
-	 *
-	 * Converts validation errors (of any type) into a formatted string for the error prompt.
-	 * If not provided, executeAgent will use a default formatter that handles SpecError[]
-	 * and ZodError with appropriate formatting.
-	 *
-	 * @param errors - Validation errors from failed validation layer (can be any type)
-	 * @returns Formatted error string to pass to the error prompt function
-	 *
-	 * @example
-	 * ```typescript
-	 * // Custom formatter for domain-specific errors
-	 * errorFormatter: (errors) => {
-	 *   if (Array.isArray(errors)) {
-	 *     return errors.map(e => `- ${e}`).join('\n');
-	 *   }
-	 *   return String(errors);
-	 * }
-	 * ```
-	 */
-	errorFormatter?: (errors: unknown) => string;
+  /**
+   * Optional error formatter function
+   *
+   * Converts validation errors (of any type) into a formatted string for the error prompt.
+   * If not provided, executeAgent will use a default formatter that handles SpecError[]
+   * and ZodError with appropriate formatting.
+   *
+   * @param errors - Validation errors from failed validation layer (can be any type)
+   * @returns Formatted error string to pass to the error prompt function
+   *
+   * @example
+   * ```typescript
+   * // Custom formatter for domain-specific errors
+   * errorFormatter: (errors) => {
+   *   if (Array.isArray(errors)) {
+   *     return errors.map(e => `- ${e}`).join('\n');
+   *   }
+   *   return String(errors);
+   * }
+   * ```
+   */
+  errorFormatter?: (errors: unknown) => string;
 }
 
 /**
@@ -205,35 +205,35 @@ export interface PromptsConfig<Input> {
  * @template Output - The type of output the agent produces
  */
 export interface AgentDefinition<Input, Output> {
-	/**
-	 * Unique name for the agent
-	 */
-	name: string;
+  /**
+   * Unique name for the agent
+   */
+  name: string;
 
-	/**
-	 * Human-readable description of the agent's purpose
-	 */
-	description: string;
+  /**
+   * Human-readable description of the agent's purpose
+   */
+  description: string;
 
-	/**
-	 * LLM model configuration
-	 */
-	model: ModelConfig;
+  /**
+   * LLM model configuration
+   */
+  model: ModelConfig;
 
-	/**
-	 * Prompt generation functions
-	 */
-	prompts: PromptsConfig<Input>;
+  /**
+   * Prompt generation functions
+   */
+  prompts: PromptsConfig<Input>;
 
-	/**
-	 * Output validation configuration
-	 */
-	validation: ValidationConfig<Output>;
+  /**
+   * Output validation configuration
+   */
+  validation: ValidationConfig<Output>;
 
-	/**
-	 * Observability tracking configuration
-	 */
-	observability: ObservabilityConfig;
+  /**
+   * Observability tracking configuration
+   */
+  observability: ObservabilityConfig;
 }
 
 /**
@@ -287,100 +287,100 @@ export interface AgentDefinition<Input, Output> {
  * ```
  */
 export const defineAgent = <Input, Output>(
-	definition: AgentDefinition<Input, Output>
+  definition: AgentDefinition<Input, Output>
 ): Result<Readonly<AgentDefinition<Input, Output>>, AgentError[]> => {
-	const errors: AgentError[] = [];
+  const errors: AgentError[] = [];
 
-	// Validate name
-	if (!definition.name || definition.name.trim() === '') {
-		errors.push({
-			code: AGENT_ERROR_CODES.EMPTY_NAME,
-			severity: 'error',
-			category: 'validation',
-			context: {
-				providedValue: definition.name,
-			},
-		});
-	}
+  // Validate name
+  if (!definition.name || definition.name.trim() === '') {
+    errors.push({
+      code: AGENT_ERROR_CODES.EMPTY_NAME,
+      severity: 'error',
+      category: 'validation',
+      context: {
+        providedValue: definition.name,
+      },
+    });
+  }
 
-	// Validate description
-	if (!definition.description || definition.description.trim() === '') {
-		errors.push({
-			code: AGENT_ERROR_CODES.EMPTY_DESCRIPTION,
-			severity: 'error',
-			category: 'validation',
-			context: {
-				providedValue: definition.description,
-			},
-		});
-	}
+  // Validate description
+  if (!definition.description || definition.description.trim() === '') {
+    errors.push({
+      code: AGENT_ERROR_CODES.EMPTY_DESCRIPTION,
+      severity: 'error',
+      category: 'validation',
+      context: {
+        providedValue: definition.description,
+      },
+    });
+  }
 
-	// Validate model name
-	if (!definition.model.name || definition.model.name.trim() === '') {
-		errors.push({
-			code: AGENT_ERROR_CODES.EMPTY_MODEL_NAME,
-			severity: 'error',
-			category: 'validation',
-			path: '$.model.name',
-			context: {
-				providedValue: definition.model.name,
-			},
-		});
-	}
+  // Validate model name
+  if (!definition.model.name || definition.model.name.trim() === '') {
+    errors.push({
+      code: AGENT_ERROR_CODES.EMPTY_MODEL_NAME,
+      severity: 'error',
+      category: 'validation',
+      path: '$.model.name',
+      context: {
+        providedValue: definition.model.name,
+      },
+    });
+  }
 
-	// Validate output schema
-	if (!definition.validation.outputSchema) {
-		errors.push({
-			code: AGENT_ERROR_CODES.MISSING_OUTPUT_SCHEMA,
-			severity: 'error',
-			category: 'validation',
-			path: '$.validation.outputSchema',
-			context: {},
-		});
-	}
+  // Validate output schema
+  if (!definition.validation.outputSchema) {
+    errors.push({
+      code: AGENT_ERROR_CODES.MISSING_OUTPUT_SCHEMA,
+      severity: 'error',
+      category: 'validation',
+      path: '$.validation.outputSchema',
+      context: {},
+    });
+  }
 
-	// Validate max attempts
-	if (
-		definition.validation.maxAttempts < AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS
-	) {
-		errors.push({
-			code: AGENT_ERROR_CODES.INVALID_MAX_ATTEMPTS,
-			severity: 'error',
-			category: 'validation',
-			path: '$.validation.maxAttempts',
-			context: {
-				providedValue: definition.validation.maxAttempts,
-				minimumValue: AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS,
-			},
-		});
-	}
+  // Validate max attempts
+  if (
+    definition.validation.maxAttempts < AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS
+  ) {
+    errors.push({
+      code: AGENT_ERROR_CODES.INVALID_MAX_ATTEMPTS,
+      severity: 'error',
+      category: 'validation',
+      path: '$.validation.maxAttempts',
+      context: {
+        providedValue: definition.validation.maxAttempts,
+        minimumValue: AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS,
+      },
+    });
+  }
 
-	// Return early if validation failed
-	if (errors.length > 0) {
-		return err(errors);
-	}
+  // Return early if validation failed
+  if (errors.length > 0) {
+    return err(errors);
+  }
 
-	// Deep freeze the definition
-	// Freeze model config
-	Object.freeze(definition.model);
+  // Deep freeze the definition
+  // Freeze model config
+  Object.freeze(definition.model);
 
-	// Freeze prompts config
-	Object.freeze(definition.prompts);
+  // Freeze prompts config
+  Object.freeze(definition.prompts);
 
-	// Freeze custom validators array and each validator
-	for (const validator of definition.validation.customValidators) {
-		Object.freeze(validator);
-	}
-	Object.freeze(definition.validation.customValidators);
+  // Freeze custom validators array and each validator
+  for (const validator of definition.validation.customValidators) {
+    Object.freeze(validator);
+  }
+  Object.freeze(definition.validation.customValidators);
 
-	// Freeze validation config
-	Object.freeze(definition.validation);
+  // Freeze validation config
+  Object.freeze(definition.validation);
 
-	// Freeze observability config
-	Object.freeze(definition.observability);
+  // Freeze observability config
+  Object.freeze(definition.observability);
 
-	// Freeze top-level object
-	Object.freeze(definition);
+  // Freeze top-level object
+  Object.freeze(definition);
 
-	return ok(definition);
+  return ok(definition);
 };

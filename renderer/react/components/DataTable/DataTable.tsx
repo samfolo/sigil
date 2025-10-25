@@ -17,15 +17,15 @@ import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Table
  * Maps column alignment to Tailwind CSS classes
  */
 const getAlignmentClass = (alignment?: Column['alignment']): string => {
-	switch (alignment) {
-		case 'center':
-			return 'text-center';
-		case 'right':
-			return 'text-right';
-		case 'left':
-		default:
-			return 'text-left';
-	}
+  switch (alignment) {
+    case 'center':
+      return 'text-center';
+    case 'right':
+      return 'text-right';
+    case 'left':
+    default:
+      return 'text-left';
+  }
 };
 
 /**
@@ -38,57 +38,57 @@ const getAlignmentClass = (alignment?: Column['alignment']): string => {
  * @returns Rendered table element
  */
 const DataTableComponent = (props: TableProps): ReactElement => {
-	const {title, description, columns, data} = props;
+  const {title, description, columns, data} = props;
 
-	// Generate stable IDs for ARIA associations
-	const descriptionId = useId();
+  // Generate stable IDs for ARIA associations
+  const descriptionId = useId();
 
-	return (
-		<div className="space-y-4">
-			{description && (
-				<p id={descriptionId} className="text-sm text-muted-foreground">
-					{description}
-				</p>
-			)}
+  return (
+    <div className="space-y-4">
+      {description && (
+        <p id={descriptionId} className="text-sm text-muted-foreground">
+          {description}
+        </p>
+      )}
 
-			<div className="rounded-md border">
-				<Table aria-describedby={description ? descriptionId : undefined}>
-					{title && <TableCaption className="caption-top mb-2 text-2xl font-semibold tracking-tight text-foreground">{title}</TableCaption>}
-					<TableHeader>
-						<TableRow>
-							{columns.map((column) => (
-								<TableHead key={column.id} scope="col" className={cn(getAlignmentClass(column.alignment))}>
-									{column.label}
-								</TableHead>
-							))}
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{data.length === 0 ? (
-							<TableRow>
-								<TableCell colSpan={columns.length} className="h-24 text-center" role="status">
-									No results
-								</TableCell>
-							</TableRow>
-						) : (
-							data.map((row) => (
-								<TableRow key={row.id}>
-									{columns.map((column) => {
-										const cell = row.cells[column.id];
-										return (
-											<TableCell key={column.id} className={cn(getAlignmentClass(column.alignment))}>
-												{cell?.display ?? ''}
-											</TableCell>
-										);
-									})}
-								</TableRow>
-							))
-						)}
-					</TableBody>
-				</Table>
-			</div>
-		</div>
-	);
+      <div className="rounded-md border">
+        <Table aria-describedby={description ? descriptionId : undefined}>
+          {title && <TableCaption className="caption-top mb-2 text-2xl font-semibold tracking-tight text-foreground">{title}</TableCaption>}
+          <TableHeader>
+            <TableRow>
+              {columns.map((column) => (
+                <TableHead key={column.id} scope="col" className={cn(getAlignmentClass(column.alignment))}>
+                  {column.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center" role="status">
+                  No results
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((row) => (
+                <TableRow key={row.id}>
+                  {columns.map((column) => {
+                    const cell = row.cells[column.id];
+                    return (
+                      <TableCell key={column.id} className={cn(getAlignmentClass(column.alignment))}>
+                        {cell?.display ?? ''}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
 };
 
 /**

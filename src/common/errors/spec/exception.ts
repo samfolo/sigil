@@ -37,17 +37,17 @@ import type {SpecError, SpecErrorCategory, SpecErrorCode} from './types';
  * Use only at React/tool boundaries, not for internal error handling.
  */
 export class SpecProcessingError extends StructuredErrorException<
-	SpecErrorCode,
-	SpecErrorCategory,
-	SpecError['context']
+  SpecErrorCode,
+  SpecErrorCategory,
+  SpecError['context']
 > {
-	constructor(errors: SpecError[], message?: string) {
-		// Auto-format errors if no custom message provided
-		const defaultMessage =
-			errors.length === 1
-				? formatSpecError(errors.at(0)!)
-				: `Failed to build render tree:\n\n${formatSpecErrorsForModel(errors)}`;
+  constructor(errors: SpecError[], message?: string) {
+    // Auto-format errors if no custom message provided
+    const defaultMessage =
+      errors.length === 1
+        ? formatSpecError(errors.at(0)!)
+        : `Failed to build render tree:\n\n${formatSpecErrorsForModel(errors)}`;
 
-		super(errors, message ?? defaultMessage, 'SpecProcessingError');
-	}
+    super(errors, message ?? defaultMessage, 'SpecProcessingError');
+  }
 }

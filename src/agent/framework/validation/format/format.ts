@@ -9,10 +9,10 @@
 import {ZodError} from 'zod';
 
 import {
-	formatSpecErrorsForModel,
-	formatZodErrorsForModel,
-	isSpecErrorArray,
-	safeStringify,
+  formatSpecErrorsForModel,
+  formatZodErrorsForModel,
+  isSpecErrorArray,
+  safeStringify,
 } from '@sigil/src/common/errors';
 
 /**
@@ -95,23 +95,23 @@ import {
  * ```
  */
 export const formatValidationErrorForPrompt = (
-	error: unknown,
-	layerName: string,
-	layerDescription: string
+  error: unknown,
+  layerName: string,
+  layerDescription: string
 ): string => {
-	let formattedError: string;
+  let formattedError: string;
 
-	// Dispatch to appropriate formatter based on error type
-	if (error instanceof ZodError) {
-		formattedError = formatZodErrorsForModel(error);
-	} else if (isSpecErrorArray(error)) {
-		formattedError = formatSpecErrorsForModel(error);
-	} else if (error instanceof Error) {
-		formattedError = error.message;
-	} else {
-		formattedError = safeStringify(error);
-	}
+  // Dispatch to appropriate formatter based on error type
+  if (error instanceof ZodError) {
+    formattedError = formatZodErrorsForModel(error);
+  } else if (isSpecErrorArray(error)) {
+    formattedError = formatSpecErrorsForModel(error);
+  } else if (error instanceof Error) {
+    formattedError = error.message;
+  } else {
+    formattedError = safeStringify(error);
+  }
 
-	// Prepend layer context for LLM
-	return `The following errors occurred during ${layerName}:\n${layerDescription}\n\n${formattedError}`;
+  // Prepend layer context for LLM
+  return `The following errors occurred during ${layerName}:\n${layerDescription}\n\n${formattedError}`;
 };

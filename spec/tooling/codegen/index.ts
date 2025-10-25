@@ -23,15 +23,15 @@ const projectRoot = resolve(specDir, '..');
  * Main execution
  */
 const main = () => {
-	try {
-		runCodegen(specDir, projectRoot);
-	} catch (error) {
-		console.error('\n× Error generating Zod schemas:', error);
-		if (error instanceof Error) {
-			console.error(error.stack);
-		}
-		process.exit(1);
-	}
+  try {
+    runCodegen(specDir, projectRoot);
+  } catch (error) {
+    console.error('\n× Error generating Zod schemas:', error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    }
+    process.exit(1);
+  }
 };
 
 main();

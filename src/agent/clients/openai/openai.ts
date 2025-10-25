@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
 export interface OpenAIClientConfig {
-	apiKey?: string;
+  apiKey?: string;
 }
 
 /**
@@ -13,14 +13,14 @@ export interface OpenAIClientConfig {
  * @throws Error if API key is not provided and not found in environment variables
  */
 export const createOpenAIClient = (config?: OpenAIClientConfig): OpenAI => {
-	const apiKey = config?.apiKey ?? process.env.OPENAI_API_KEY;
+  const apiKey = config?.apiKey ?? process.env.OPENAI_API_KEY;
 
-	if (!apiKey) {
-		throw new Error(
-			'OPENAI_API_KEY is not configured. Please add it to your environment variables.\n' +
-			'Get your API key from: https://platform.openai.com/api-keys'
-		);
-	}
+  if (!apiKey) {
+    throw new Error(
+      'OPENAI_API_KEY is not configured. Please add it to your environment variables.\n' +
+      'Get your API key from: https://platform.openai.com/api-keys'
+    );
+  }
 
-	return new OpenAI({apiKey});
+  return new OpenAI({apiKey});
 };

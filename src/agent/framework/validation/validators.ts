@@ -20,8 +20,8 @@ import type {ValidationLayer, ValidationLayerIdentity} from './types';
  * across validation callbacks and error formatting.
  */
 export const ZOD_LAYER_METADATA: ValidationLayerIdentity = {
-	name: 'Zod',
-	description: 'Validates that your output matches the expected JSON schema structure',
+  name: 'Zod',
+  description: 'Validates that your output matches the expected JSON schema structure',
 };
 
 /**
@@ -65,16 +65,16 @@ export type CustomValidationFn<Output> = (output: Output) => Promise<void>;
  * ```
  */
 export const validateWithZod = <Output>(
-	output: unknown,
-	schema: z.ZodSchema<Output>
+  output: unknown,
+  schema: z.ZodSchema<Output>
 ): Result<Output, z.ZodError> => {
-	const result = schema.safeParse(output);
+  const result = schema.safeParse(output);
 
-	if (result.success) {
-		return ok(result.data);
-	}
+  if (result.success) {
+    return ok(result.data);
+  }
 
-	return err(result.error);
+  return err(result.error);
 };
 
 /**
@@ -133,21 +133,21 @@ export const validateWithZod = <Output>(
  * ```
  */
 export const createCustomValidator = <Output>(
-	name: string,
-	description: string,
-	validateFn: CustomValidationFn<Output>
+  name: string,
+  description: string,
+  validateFn: CustomValidationFn<Output>
 ): ValidationLayer<Output> => ({
-		name,
-		description,
-		validate: async (output: Output): Promise<Result<Output, unknown>> => {
-			try {
-				await validateFn(output);
-				return ok(output);
-			} catch (error) {
-				return err(error);
-			}
-		},
-	});
+    name,
+    description,
+    validate: async (output: Output): Promise<Result<Output, unknown>> => {
+      try {
+        await validateFn(output);
+        return ok(output);
+      } catch (error) {
+        return err(error);
+      }
+    },
+  });
 
 /**
  * Recursively freezes an object and all nested objects
@@ -165,16 +165,16 @@ export const createCustomValidator = <Output>(
  * @returns The same object, now frozen
  */
 export const deepFreeze = <T>(obj: T): T => {
-	// Freeze the object itself
-	Object.freeze(obj);
+  // Freeze the object itself
+  Object.freeze(obj);
 
-	// Recursively freeze all nested objects
-	Object.getOwnPropertyNames(obj).forEach((prop) => {
-		const value = (obj as Record<string, unknown>)[prop];
-		if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-			deepFreeze(value);
-		}
-	});
+  // Recursively freeze all nested objects
+  Object.getOwnPropertyNames(obj).forEach((prop) => {
+    const value = (obj as Record<string, unknown>)[prop];
+    if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+      deepFreeze(value);
+    }
+  });
 
-	return obj;
+  return obj;
 };

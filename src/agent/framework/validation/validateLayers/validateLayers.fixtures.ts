@@ -24,8 +24,8 @@ export const DEFAULT_CONDITIONAL_VALIDATOR_DESCRIPTION = 'Test validation layer 
  * Test output interface matching the validation schema
  */
 interface TestOutput {
-	result: string;
-	value: number;
+  result: string;
+  value: number;
 }
 
 /**
@@ -36,8 +36,8 @@ interface TestOutput {
  * - value: number
  */
 export const ValidOutputSchema = z.object({
-	result: z.string(),
-	value: z.number(),
+  result: z.string(),
+  value: z.number(),
 });
 
 /**
@@ -46,8 +46,8 @@ export const ValidOutputSchema = z.object({
  * Passes Zod validation successfully.
  */
 export const VALID_OUTPUT: TestOutput = {
-	result: 'success',
-	value: 42,
+  result: 'success',
+  value: 42,
 };
 
 /**
@@ -58,8 +58,8 @@ export const VALID_OUTPUT: TestOutput = {
  * - value should be number but is string
  */
 export const INVALID_OUTPUT_WRONG_TYPE = {
-	result: 123,
-	value: 'wrong',
+  result: 123,
+  value: 'wrong',
 };
 
 /**
@@ -68,7 +68,7 @@ export const INVALID_OUTPUT_WRONG_TYPE = {
  * Fails Zod validation due to missing 'value' field.
  */
 export const INVALID_OUTPUT_MISSING_FIELD = {
-	result: 'success',
+  result: 'success',
 };
 
 /**
@@ -89,13 +89,13 @@ export const INVALID_OUTPUT_MISSING_FIELD = {
  * ```
  */
 export const createPassingValidator = (
-	name: string,
-	description: string = DEFAULT_PASSING_VALIDATOR_DESCRIPTION
+  name: string,
+  description: string = DEFAULT_PASSING_VALIDATOR_DESCRIPTION
 ): ValidationLayer<TestOutput> => ({
-		name,
-		description,
-		validate: async (output) => ok(output),
-	});
+  name,
+  description,
+  validate: async (output) => ok(output),
+});
 
 /**
  * Creates a validation layer that always fails
@@ -116,14 +116,14 @@ export const createPassingValidator = (
  * ```
  */
 export const createFailingValidator = (
-	name: string,
-	errorMessage: string,
-	description: string = DEFAULT_FAILING_VALIDATOR_DESCRIPTION
+  name: string,
+  errorMessage: string,
+  description: string = DEFAULT_FAILING_VALIDATOR_DESCRIPTION
 ): ValidationLayer<TestOutput> => ({
-		name,
-		description,
-		validate: async (_output) => err(new Error(errorMessage)),
-	});
+  name,
+  description,
+  validate: async (_output) => err(new Error(errorMessage)),
+});
 
 /**
  * Creates a validation layer with custom predicate logic
@@ -153,16 +153,16 @@ export const createFailingValidator = (
  * ```
  */
 export const createConditionalValidator = (
-	name: string,
-	predicate: (output: TestOutput) => boolean,
-	description: string = DEFAULT_CONDITIONAL_VALIDATOR_DESCRIPTION
+  name: string,
+  predicate: (output: TestOutput) => boolean,
+  description: string = DEFAULT_CONDITIONAL_VALIDATOR_DESCRIPTION
 ): ValidationLayer<TestOutput> => ({
-		name,
-		description,
-		validate: async (output) => {
-			if (predicate(output)) {
-				return ok(output);
-			}
-			return err(new Error(`Validation failed: ${name}`));
-		},
-	});
+  name,
+  description,
+  validate: async (output) => {
+    if (predicate(output)) {
+      return ok(output);
+    }
+    return err(new Error(`Validation failed: ${name}`));
+  },
+});

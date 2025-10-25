@@ -9,89 +9,87 @@
  * - Error scenarios (max attempts, validation failures, API errors)
  */
 
-import {vi} from 'vitest';
-
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {
-	ValidationLayerMetadata,
-	ValidationLayerResult,
+  ValidationLayerMetadata,
+  ValidationLayerResult,
 } from '@sigil/src/agent/framework/validation';
 import type {AgentError} from '@sigil/src/common/errors';
 import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 
 import type {
-	ExecuteCallbacks,
-	ExecuteFailure,
-	ExecuteOptions,
-	ExecuteSuccess,
+  ExecuteCallbacks,
+  ExecuteFailure,
+  ExecuteOptions,
+  ExecuteSuccess,
 } from './executeAgent';
 
 /**
  * Simple output interface matching the test agent's output schema
  */
 interface TestOutput {
-	result: string;
+  result: string;
 }
 
 /**
  * Callback invocation record for onAttemptStart
  */
 interface OnAttemptStartInvocation {
-	type: 'onAttemptStart';
-	state: AgentExecutionState;
+  type: 'onAttemptStart';
+  state: AgentExecutionState;
 }
 
 /**
  * Callback invocation record for onAttemptComplete
  */
 interface OnAttemptCompleteInvocation {
-	type: 'onAttemptComplete';
-	state: AgentExecutionState;
-	success: boolean;
+  type: 'onAttemptComplete';
+  state: AgentExecutionState;
+  success: boolean;
 }
 
 /**
  * Callback invocation record for onValidationFailure
  */
 interface OnValidationFailureInvocation {
-	type: 'onValidationFailure';
-	errors: unknown;
-	state: AgentExecutionState;
+  type: 'onValidationFailure';
+  errors: unknown;
+  state: AgentExecutionState;
 }
 
 /**
  * Callback invocation record for onSuccess
  */
 interface OnSuccessInvocation {
-	type: 'onSuccess';
-	output: TestOutput;
+  type: 'onSuccess';
+  output: TestOutput;
 }
 
 /**
  * Callback invocation record for onFailure
  */
 interface OnFailureInvocation {
-	type: 'onFailure';
-	errors: AgentError[];
+  type: 'onFailure';
+  errors: AgentError[];
 }
 
 /**
  * Callback invocation record for onValidationLayerStart
  */
 interface OnValidationLayerStartInvocation {
-	type: 'onValidationLayerStart';
-	layer: ValidationLayerMetadata;
-	state: AgentExecutionState;
+  type: 'onValidationLayerStart';
+  layer: ValidationLayerMetadata;
+  state: AgentExecutionState;
 }
 
 /**
  * Callback invocation record for onValidationLayerComplete
  */
 interface OnValidationLayerCompleteInvocation {
-	type: 'onValidationLayerComplete';
-	layer: ValidationLayerResult;
-	state: AgentExecutionState;
+  type: 'onValidationLayerComplete';
+  layer: ValidationLayerResult;
+  state: AgentExecutionState;
 }
 
 /**
@@ -101,27 +99,27 @@ interface OnValidationLayerCompleteInvocation {
  * Maintains order of invocations for verifying callback sequence.
  */
 export type CallbackInvocation =
-	| OnAttemptStartInvocation
-	| OnAttemptCompleteInvocation
-	| OnValidationFailureInvocation
-	| OnSuccessInvocation
-	| OnFailureInvocation
-	| OnValidationLayerStartInvocation
-	| OnValidationLayerCompleteInvocation;
+  | OnAttemptStartInvocation
+  | OnAttemptCompleteInvocation
+  | OnValidationFailureInvocation
+  | OnSuccessInvocation
+  | OnFailureInvocation
+  | OnValidationLayerStartInvocation
+  | OnValidationLayerCompleteInvocation;
 
 /**
  * Return type for createExecuteOptionsWithCallbackTracking factory
  */
 export interface ExecuteOptionsWithCallbackTracking {
-	/**
-	 * Execution options configured with callback tracking
-	 */
-	options: ExecuteOptions<string, TestOutput>;
+  /**
+   * Execution options configured with callback tracking
+   */
+  options: ExecuteOptions<string, TestOutput>;
 
-	/**
-	 * Array of callback invocations in order
-	 */
-	invocations: CallbackInvocation[];
+  /**
+   * Array of callback invocations in order
+   */
+  invocations: CallbackInvocation[];
 }
 
 /**
@@ -131,7 +129,7 @@ export interface ExecuteOptionsWithCallbackTracking {
  * Used with VALID_MINIMAL_AGENT from defineAgent fixtures in tests.
  */
 export const VALID_EXECUTE_OPTIONS: ExecuteOptions<string, TestOutput> = {
-	input: 'test input',
+  input: 'test input',
 };
 
 /**
@@ -158,66 +156,66 @@ export const VALID_EXECUTE_OPTIONS: ExecuteOptions<string, TestOutput> = {
  * ```
  */
 export const createExecuteOptionsWithCallbackTracking =
-	(): ExecuteOptionsWithCallbackTracking => {
-	const invocations: CallbackInvocation[] = [];
+  (): ExecuteOptionsWithCallbackTracking => {
+    const invocations: CallbackInvocation[] = [];
 
-	const callbacks: ExecuteCallbacks<TestOutput> = {
-		onAttemptStart: (state) => {
-			invocations.push({
-				type: 'onAttemptStart',
-				state,
-			});
-		},
-		onAttemptComplete: (state, success) => {
-			invocations.push({
-				type: 'onAttemptComplete',
-				state,
-				success,
-			});
-		},
-		onValidationFailure: (state, errors) => {
-			invocations.push({
-				type: 'onValidationFailure',
-				errors,
-				state,
-			});
-		},
-		onValidationLayerStart: (state, layer) => {
-			invocations.push({
-				type: 'onValidationLayerStart',
-				layer,
-				state,
-			});
-		},
-		onValidationLayerComplete: (state, layer) => {
-			invocations.push({
-				type: 'onValidationLayerComplete',
-				layer,
-				state,
-			});
-		},
-		onSuccess: (output) => {
-			invocations.push({
-				type: 'onSuccess',
-				output,
-			});
-		},
-		onFailure: (errors) => {
-			invocations.push({
-				type: 'onFailure',
-				errors,
-			});
-		},
-	};
+    const callbacks: ExecuteCallbacks<TestOutput> = {
+      onAttemptStart: (state) => {
+        invocations.push({
+          type: 'onAttemptStart',
+          state,
+        });
+      },
+      onAttemptComplete: (state, success) => {
+        invocations.push({
+          type: 'onAttemptComplete',
+          state,
+          success,
+        });
+      },
+      onValidationFailure: (state, errors) => {
+        invocations.push({
+          type: 'onValidationFailure',
+          errors,
+          state,
+        });
+      },
+      onValidationLayerStart: (state, layer) => {
+        invocations.push({
+          type: 'onValidationLayerStart',
+          layer,
+          state,
+        });
+      },
+      onValidationLayerComplete: (state, layer) => {
+        invocations.push({
+          type: 'onValidationLayerComplete',
+          layer,
+          state,
+        });
+      },
+      onSuccess: (output) => {
+        invocations.push({
+          type: 'onSuccess',
+          output,
+        });
+      },
+      onFailure: (errors) => {
+        invocations.push({
+          type: 'onFailure',
+          errors,
+        });
+      },
+    };
 
-	return {
-		options: {
-			input: 'test input with callbacks',
-			callbacks,
-		},
-		invocations,
-	};
-};
+    return {
+      options: {
+        input: 'test input with callbacks',
+        callbacks,
+      },
+      invocations,
+    };
+  };
 
 /**
  * 3. Execution options with maxAttempts override
@@ -225,11 +223,11 @@ export const createExecuteOptionsWithCallbackTracking =
  * Overrides the agent's default maxAttempts (3 in VALID_MINIMAL_AGENT) to 5.
  */
 export const VALID_EXECUTE_OPTIONS_WITH_MAX_ATTEMPTS_OVERRIDE: ExecuteOptions<
-	string,
-	TestOutput
+  string,
+  TestOutput
 > = {
-	input: 'test input',
-	maxAttempts: 5,
+  input: 'test input',
+  maxAttempts: 5,
 };
 
 /**
@@ -244,15 +242,15 @@ export const VALID_EXECUTE_OPTIONS_WITH_MAX_ATTEMPTS_OVERRIDE: ExecuteOptions<
  * Tests wrap it with ok() as needed.
  */
 export const EXPECTED_SUCCESS: ExecuteSuccess<TestOutput> = {
-	output: {result: 'success result'},
-	attempts: 1,
-	metadata: {
-		latency: 2500,
-		tokens: {
-			input: 100,
-			output: 50,
-		},
-	},
+  output: {result: 'success result'},
+  attempts: 1,
+  metadata: {
+    latency: 2500,
+    tokens: {
+      input: 100,
+      output: 50,
+    },
+  },
 };
 
 /**
@@ -269,24 +267,24 @@ export const EXPECTED_SUCCESS: ExecuteSuccess<TestOutput> = {
  * Tests wrap it with err() as needed.
  */
 export const EXPECTED_MAX_ATTEMPTS_ERROR: ExecuteFailure = {
-	errors: [
-		{
-			code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
-			severity: 'error',
-			category: 'execution',
-			context: {
-				attempts: 3,
-				maxAttempts: 3,
-			},
-		},
-	],
-	metadata: {
-		latency: 5000,
-		tokens: {
-			input: 300,
-			output: 150,
-		},
-	},
+  errors: [
+    {
+      code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
+      severity: 'error',
+      category: 'execution',
+      context: {
+        attempts: 3,
+        maxAttempts: 3,
+      },
+    },
+  ],
+  metadata: {
+    latency: 5000,
+    tokens: {
+      input: 300,
+      output: 150,
+    },
+  },
 };
 
 /**
@@ -303,24 +301,24 @@ export const EXPECTED_MAX_ATTEMPTS_ERROR: ExecuteFailure = {
  * Tests wrap it with err() as needed.
  */
 export const EXPECTED_VALIDATION_FAILED_ERROR: ExecuteFailure = {
-	errors: [
-		{
-			code: AGENT_ERROR_CODES.VALIDATION_FAILED,
-			severity: 'error',
-			category: 'execution',
-			context: {
-				layer: 'zod',
-				attempt: 2,
-			},
-		},
-	],
-	metadata: {
-		latency: 2000,
-		tokens: {
-			input: 200,
-			output: 100,
-		},
-	},
+  errors: [
+    {
+      code: AGENT_ERROR_CODES.VALIDATION_FAILED,
+      severity: 'error',
+      category: 'execution',
+      context: {
+        layer: 'zod',
+        attempt: 2,
+      },
+    },
+  ],
+  metadata: {
+    latency: 2000,
+    tokens: {
+      input: 200,
+      output: 100,
+    },
+  },
 };
 
 /**
@@ -337,24 +335,24 @@ export const EXPECTED_VALIDATION_FAILED_ERROR: ExecuteFailure = {
  * Tests wrap it with err() as needed.
  */
 export const EXPECTED_API_ERROR: ExecuteFailure = {
-	errors: [
-		{
-			code: AGENT_ERROR_CODES.API_ERROR,
-			severity: 'error',
-			category: 'model',
-			context: {
-				statusCode: 500,
-				message: 'Internal server error',
-			},
-		},
-	],
-	metadata: {
-		latency: 1000,
-		tokens: {
-			input: 0,
-			output: 0,
-		},
-	},
+  errors: [
+    {
+      code: AGENT_ERROR_CODES.API_ERROR,
+      severity: 'error',
+      category: 'model',
+      context: {
+        statusCode: 500,
+        message: 'Internal server error',
+      },
+    },
+  ],
+  metadata: {
+    latency: 1000,
+    tokens: {
+      input: 0,
+      output: 0,
+    },
+  },
 };
 
 /**
@@ -369,28 +367,28 @@ export const EXPECTED_API_ERROR: ExecuteFailure = {
  * @returns Mock API response object
  */
 export const createSuccessResponse = (
-	result = 'success result',
-	inputTokens = 100,
-	outputTokens = 50
+  result = 'success result',
+  inputTokens = 100,
+  outputTokens = 50
 ) => ({
-	id: 'msg_test123',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_test123',
-			name: 'generate_output',
-			input: {result},
-		},
-	],
-	stop_reason: 'end_turn' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
+  id: 'msg_test123',
+  type: 'message' as const,
+  role: 'assistant' as const,
+  model: 'claude-sonnet-4-5-20250929',
+  content: [
+    {
+      type: 'tool_use' as const,
+      id: 'toolu_test123',
+      name: 'generate_output',
+      input: {result},
+    },
+  ],
+  stop_reason: 'end_turn' as const,
+  stop_sequence: null,
+  usage: {
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+  },
 });
 
 /**
@@ -404,24 +402,24 @@ export const createSuccessResponse = (
  * @returns Mock API response object
  */
 export const createInvalidResponse = (inputTokens = 100, outputTokens = 50) => ({
-	id: 'msg_test456',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_test456',
-			name: 'generate_output',
-			input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
-		},
-	],
-	stop_reason: 'end_turn' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
+  id: 'msg_test456',
+  type: 'message' as const,
+  role: 'assistant' as const,
+  model: 'claude-sonnet-4-5-20250929',
+  content: [
+    {
+      type: 'tool_use' as const,
+      id: 'toolu_test456',
+      name: 'generate_output',
+      input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
+    },
+  ],
+  stop_reason: 'end_turn' as const,
+  stop_sequence: null,
+  usage: {
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+  },
 });
 
 /**
@@ -431,29 +429,38 @@ export const createInvalidResponse = (inputTokens = 100, outputTokens = 50) => (
  * Used with createMockApiCalls to configure sequential API responses in tests.
  */
 export type MockCallConfig =
-	| {
-			type: 'success';
-			result?: string;
-			inputTokens?: number;
-			outputTokens?: number;
-			delay?: number;
-	  }
-	| {
-			type: 'invalid';
-			inputTokens?: number;
-			outputTokens?: number;
-			delay?: number;
-	  }
-	| {
-			type: 'error';
-			error: Error;
-			delay?: number;
-	  }
-	| {
-			type: 'custom';
-			response: any;
-			delay?: number;
-	  };
+  | {
+      type: 'success';
+      result?: string;
+      inputTokens?: number;
+      outputTokens?: number;
+      delay?: number;
+    }
+  | {
+      type: 'invalid';
+      inputTokens?: number;
+      outputTokens?: number;
+      delay?: number;
+    }
+  | {
+      type: 'error';
+      error: Error;
+      delay?: number;
+    }
+  | {
+      type: 'custom';
+      response: unknown;
+      delay?: number;
+    };
+
+
+/**
+ * Mock function interface
+ * Represents a vi.fn() mock with mockImplementation method
+ */
+interface MockFunction {
+  mockImplementation: (cb: () => Promise<unknown>) => void
+};
 
 /**
  * Configures a mock API function with sequential responses
@@ -485,38 +492,38 @@ export type MockCallConfig =
  * ]);
  * ```
  */
-export const createMockApiCalls = (mock: any, configs: MockCallConfig[]) => {
-	let callIndex = 0;
+export const createMockApiCalls = (mock: MockFunction, configs: MockCallConfig[]) => {
+  let callIndex = 0;
 
-	mock.mockImplementation(async () => {
-		const config = configs[Math.min(callIndex++, configs.length - 1)];
+  mock.mockImplementation(async () => {
+    const config = configs[Math.min(callIndex++, configs.length - 1)];
 
-		if (config.delay) {
-			await new Promise((resolve) => {
-				setTimeout(resolve, config.delay);
-			});
-		}
+    if (config.delay) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, config.delay);
+      });
+    }
 
-		if (config.type === 'error') {
-			throw config.error;
-		}
+    if (config.type === 'error') {
+      throw config.error;
+    }
 
-		if (config.type === 'custom') {
-			return config.response;
-		}
+    if (config.type === 'custom') {
+      return config.response;
+    }
 
-		if (config.type === 'invalid') {
-			return createInvalidResponse(
-				config.inputTokens ?? 100,
-				config.outputTokens ?? 50
-			);
-		}
+    if (config.type === 'invalid') {
+      return createInvalidResponse(
+        config.inputTokens ?? 100,
+        config.outputTokens ?? 50
+      );
+    }
 
-		// success
-		return createSuccessResponse(
-			config.result ?? 'success result',
-			config.inputTokens ?? 100,
-			config.outputTokens ?? 50
-		);
-	});
+    // success
+    return createSuccessResponse(
+      config.result ?? 'success result',
+      config.inputTokens ?? 100,
+      config.outputTokens ?? 50
+    );
+  });
 };

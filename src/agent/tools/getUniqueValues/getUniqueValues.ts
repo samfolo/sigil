@@ -17,26 +17,26 @@ type UniqueValuesError = 'not_array' | 'no_array_property' | SpecError[];
  * @returns Result containing array of unique values, or error
  */
 export const getUniqueValues = (
-	data: unknown,
-	field: string
+  data: unknown,
+  field: string
 ): Result<unknown[], UniqueValuesError> => {
-	// Extract array from data structure
-	const arrayResult = extractArray(data);
-	if (isErr(arrayResult)) {
-		return err(arrayResult.error);
-	}
-	const arrayData = arrayResult.data;
+  // Extract array from data structure
+  const arrayResult = extractArray(data);
+  if (isErr(arrayResult)) {
+    return err(arrayResult.error);
+  }
+  const arrayData = arrayResult.data;
 
-	// Validate accessor by checking first item (fail fast on invalid accessor or array result)
-	if (arrayData.length > 0) {
-		const testResult = querySingleValue(arrayData.at(0), field);
-		if (isErr(testResult)) {
-			// Propagate the SpecError array from querySingleValue
-			return err(testResult.error);
-		}
-	}
+  // Validate accessor by checking first item (fail fast on invalid accessor or array result)
+  if (arrayData.length > 0) {
+    const testResult = querySingleValue(arrayData.at(0), field);
+    if (isErr(testResult)) {
+      // Propagate the SpecError array from querySingleValue
+      return err(testResult.error);
+    }
+  }
 
-	const values = arrayData.map((item) => unwrapOr(querySingleValue(item, field), undefined));
+  const values = arrayData.map((item) => unwrapOr(querySingleValue(item, field), undefined));
 
-	return ok(uniq(values));
+  return ok(uniq(values));
 };

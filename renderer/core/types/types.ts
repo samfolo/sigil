@@ -29,8 +29,8 @@ export type RenderTree = RenderNode;
  * Future: hierarchy, composition, text-insight
  */
 export interface RenderNode {
-	type: 'data-table';
-	props: TableProps;
+  type: 'data-table';
+  props: TableProps;
 }
 
 /**
@@ -40,45 +40,45 @@ export interface RenderNode {
  * All data transformations (value mappings, type coercion, etc.) are complete.
  */
 export interface TableProps {
-	/** Optional title for the table */
-	title?: string;
+  /** Optional title for the table */
+  title?: string;
 
-	/** Optional description explaining the table's purpose */
-	description?: string;
+  /** Optional description explaining the table's purpose */
+  description?: string;
 
-	/** Column definitions derived from accessor_bindings */
-	columns: Column[];
+  /** Column definitions derived from accessor_bindings */
+  columns: Column[];
 
-	/** Processed row data with transformed values */
-	data: Row[];
+  /** Processed row data with transformed values */
+  data: Row[];
 }
 
 /**
  * Column definition derived from FieldMetadata in accessor_bindings
  */
 export interface Column {
-	/** Field accessor (e.g., "name", "email") */
-	id: string;
+  /** Field accessor (e.g., "name", "email") */
+  id: string;
 
-	/** Display label for the column header */
-	label: string;
+  /** Display label for the column header */
+  label: string;
 
-	/** Primary data type from FieldMetadata.data_types[0] */
-	dataType: string;
+  /** Primary data type from FieldMetadata.data_types[0] */
+  dataType: string;
 
-	/** Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers */
-	alignment?: 'left' | 'center' | 'right';
+  /** Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers */
+  alignment?: 'left' | 'center' | 'right';
 }
 
 /**
  * Row represents a single data record with unique identification
  */
 export interface Row {
-	/** Unique identifier for this row (generated from index or hash) */
-	id: string;
+  /** Unique identifier for this row (generated from index or hash) */
+  id: string;
 
-	/** Cell values keyed by column accessor */
-	cells: Record<string, CellValue>;
+  /** Cell values keyed by column accessor */
+  cells: Record<string, CellValue>;
 }
 
 /**
@@ -90,17 +90,17 @@ export interface Row {
  * - Debugging value transformations
  */
 export interface CellValue {
-	/** Original value from the data source */
-	raw: unknown;
+  /** Original value from the data source */
+  raw: unknown;
 
-	/** Display value after applying value_mappings and formatting
-	 * Applies value_mappings first, then format strings for dates/numbers
-	 */
-	display: string;
+  /** Display value after applying value_mappings and formatting
+   * Applies value_mappings first, then format strings for dates/numbers
+   */
+  display: string;
 
-	/** Optional format string from FieldMetadata (e.g., 'DD/MM/YYYY', '0,0.00') */
-	format?: string;
+  /** Optional format string from FieldMetadata (e.g., 'DD/MM/YYYY', '0,0.00') */
+  format?: string;
 
-	/** Data type from FieldMetadata for format hint */
-	dataType?: string;
+  /** Data type from FieldMetadata for format hint */
+  dataType?: string;
 }

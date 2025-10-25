@@ -37,17 +37,17 @@ import type {AgentError, AgentErrorCategory, AgentErrorCode} from './types';
  * Use only at React/system boundaries, not for internal error handling.
  */
 export class AgentProcessingError extends StructuredErrorException<
-	AgentErrorCode,
-	AgentErrorCategory,
-	AgentError['context']
+  AgentErrorCode,
+  AgentErrorCategory,
+  AgentError['context']
 > {
-	constructor(errors: AgentError[], message?: string) {
-		// Auto-format errors if no custom message provided
-		const defaultMessage =
-			errors.length === 1
-				? formatAgentError(errors.at(0)!)
-				: `Agent processing failed:\n\n${formatAgentErrorsForDeveloper(errors)}`;
+  constructor(errors: AgentError[], message?: string) {
+    // Auto-format errors if no custom message provided
+    const defaultMessage =
+      errors.length === 1
+        ? formatAgentError(errors.at(0)!)
+        : `Agent processing failed:\n\n${formatAgentErrorsForDeveloper(errors)}`;
 
-		super(errors, message ?? defaultMessage, 'AgentProcessingError');
-	}
+    super(errors, message ?? defaultMessage, 'AgentProcessingError');
+  }
 }

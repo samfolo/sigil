@@ -26,16 +26,16 @@
  * Successful result containing data
  */
 export interface Ok<T> {
-	success: true;
-	data: T;
+  success: true;
+  data: T;
 }
 
 /**
  * Failed result containing error
  */
 export interface Err<E> {
-	success: false;
-	error: E;
+  success: false;
+  error: E;
 }
 
 /**
@@ -47,16 +47,16 @@ export type Result<T, E = Error> = Ok<T> | Err<E>;
  * Creates a successful Result
  */
 export const ok = <T, E = Error>(data: T): Result<T, E> => ({
-	success: true,
-	data,
+  success: true,
+  data,
 });
 
 /**
  * Creates a failed Result
  */
 export const err = <T, E = Error>(error: E): Result<T, E> => ({
-	success: false,
-	error,
+  success: false,
+  error,
 });
 
 /**
@@ -70,13 +70,13 @@ export const err = <T, E = Error>(error: E): Result<T, E> => ({
  * ```
  */
 export const mapResult = <T, U, E>(
-	result: Result<T, E>,
-	fn: (data: T) => U
+  result: Result<T, E>,
+  fn: (data: T) => U
 ): Result<U, E> => {
-	if (result.success) {
-		return ok(fn(result.data));
-	}
-	return result;
+  if (result.success) {
+    return ok(fn(result.data));
+  }
+  return result;
 };
 
 /**
@@ -90,13 +90,13 @@ export const mapResult = <T, U, E>(
  * ```
  */
 export const mapError = <T, E, F>(
-	result: Result<T, E>,
-	fn: (error: E) => F
+  result: Result<T, E>,
+  fn: (error: E) => F
 ): Result<T, F> => {
-	if (!result.success) {
-		return err(fn(result.error));
-	}
-	return result;
+  if (!result.success) {
+    return err(fn(result.error));
+  }
+  return result;
 };
 
 /**
@@ -109,13 +109,13 @@ export const mapError = <T, E, F>(
  * ```
  */
 export const chain = <T, U, E>(
-	result: Result<T, E>,
-	fn: (data: T) => Result<U, E>
+  result: Result<T, E>,
+  fn: (data: T) => Result<U, E>
 ): Result<U, E> => {
-	if (result.success) {
-		return fn(result.data);
-	}
-	return result;
+  if (result.success) {
+    return fn(result.data);
+  }
+  return result;
 };
 
 /**
@@ -144,8 +144,8 @@ export const unwrapOr = <T, E>(result: Result<T, E>, defaultValue: T): T => resu
  * ```
  */
 export const unwrapOrElse = <T, E>(
-	result: Result<T, E>,
-	fn: (error: E) => T
+  result: Result<T, E>,
+  fn: (error: E) => T
 ): T => result.success ? result.data : fn(result.error);
 
 /**
@@ -162,16 +162,16 @@ export const unwrapOrElse = <T, E>(
  * ```
  */
 export const all = <T, E>(results: Result<T, E>[]): Result<T[], E> => {
-	const data: T[] = [];
+  const data: T[] = [];
 
-	for (const result of results) {
-		if (!result.success) {
-			return result;
-		}
-		data.push(result.data);
-	}
+  for (const result of results) {
+    if (!result.success) {
+      return result;
+    }
+    data.push(result.data);
+  }
 
-	return ok(data);
+  return ok(data);
 };
 
 /**

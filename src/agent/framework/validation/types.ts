@@ -17,22 +17,22 @@ import type {Result} from '@sigil/src/common/errors/result';
  * @template Output - Type of agent output being validated
  */
 export interface ValidationLayer<Output> {
-	/**
-	 * Layer identifier used in error messages
-	 */
-	name: string;
+  /**
+   * Layer identifier used in error messages
+   */
+  name: string;
 
-	/**
-	 * Human-readable description for LLM error prompts
-	 */
-	description: string;
+  /**
+   * Human-readable description for LLM error prompts
+   */
+  description: string;
 
-	/**
-	 * Validates agent output
-	 *
-	 * @returns Result with validated output or error
-	 */
-	validate: (output: Output) => Promise<Result<Output, unknown>>;
+  /**
+   * Validates agent output
+   *
+   * @returns Result with validated output or error
+   */
+  validate: (output: Output) => Promise<Result<Output, unknown>>;
 }
 
 /**
@@ -54,20 +54,20 @@ export type ValidationLayerType = 'zod' | 'custom';
  * Metadata about a validation layer
  */
 export interface ValidationLayerMetadata {
-	/**
-	 * Name of the validation layer
-	 */
-	name: string;
+  /**
+   * Name of the validation layer
+   */
+  name: string;
 
-	/**
-	 * Human-readable description of the layer's purpose
-	 */
-	description: string;
+  /**
+   * Human-readable description of the layer's purpose
+   */
+  description: string;
 
-	/**
-	 * Type of validation layer
-	 */
-	type: ValidationLayerType;
+  /**
+   * Type of validation layer
+   */
+  type: ValidationLayerType;
 }
 
 /**
@@ -82,28 +82,28 @@ export type ValidationLayerIdentity = Pick<ValidationLayerMetadata, 'name' | 'de
  * Successful validation layer execution result
  */
 export interface ValidationLayerSuccess extends ValidationLayerMetadata {
-	/**
-	 * Validation succeeded
-	 */
-	success: true;
+  /**
+   * Validation succeeded
+   */
+  success: true;
 }
 
 /**
  * Failed validation layer execution result
  */
 export interface ValidationLayerFailure extends ValidationLayerMetadata {
-	/**
-	 * Validation failed
-	 */
-	success: false;
+  /**
+   * Validation failed
+   */
+  success: false;
 
-	/**
-	 * Error returned by the validator
-	 *
-	 * Can be ZodError, SpecError[], ValidationFailedContext,
-	 * Error, string, or any other error type returned by the validator.
-	 */
-	error: unknown;
+  /**
+   * Error returned by the validator
+   *
+   * Can be ZodError, SpecError[], ValidationFailedContext,
+   * Error, string, or any other error type returned by the validator.
+   */
+  error: unknown;
 }
 
 /**
@@ -137,13 +137,13 @@ export type ValidationLayerResult = ValidationLayerSuccess | ValidationLayerFail
  * ```
  */
 export interface ValidationLayerCallbacks {
-	/**
-	 * Called when a validation layer starts execution
-	 */
-	onLayerStart?: (layer: ValidationLayerMetadata) => void;
+  /**
+   * Called when a validation layer starts execution
+   */
+  onLayerStart?: (layer: ValidationLayerMetadata) => void;
 
-	/**
-	 * Called when a validation layer completes execution
-	 */
-	onLayerComplete?: (layer: ValidationLayerResult) => void;
+  /**
+   * Called when a validation layer completes execution
+   */
+  onLayerComplete?: (layer: ValidationLayerResult) => void;
 }

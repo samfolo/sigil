@@ -13,34 +13,34 @@ import type {Config, DiscriminatedUnion} from '../types';
  * Checks if a definition is a discriminated union based on config
  */
 export const isDiscriminatedUnion = (
-	definitionName: string,
-	config: Config
+  definitionName: string,
+  config: Config
 ): DiscriminatedUnion | null => config.discriminatedUnions.find((u) => u.name === definitionName) || null;
 
 /**
  * Generates Zod code for a discriminated union
  */
 export const generateDiscriminatedUnion = (
-	union: DiscriminatedUnion,
-	indent: string = ''
+  union: DiscriminatedUnion,
+  indent: string = ''
 ): string => {
-	const discriminator = JSON.stringify(union.discriminator);
+  const discriminator = JSON.stringify(union.discriminator);
 
-	// Get schema names for all variants
-	const variantSchemas = union.variants.map((v) => toSchemaName(v.type)).join(',\n  ');
+  // Get schema names for all variants
+  const variantSchemas = union.variants.map((v) => toSchemaName(v.type)).join(',\n  ');
 
-	return `${indent}z.discriminatedUnion(${discriminator}, [\n  ${variantSchemas}\n${indent}])`;
+  return `${indent}z.discriminatedUnion(${discriminator}, [\n  ${variantSchemas}\n${indent}])`;
 };
 
 /**
  * Gets all discriminated union definitions from config
  */
 export const getDiscriminatedUnions = (config: Config): Map<string, DiscriminatedUnion> => {
-	const map = new Map<string, DiscriminatedUnion>();
-	for (const union of config.discriminatedUnions) {
-		map.set(union.name, union);
-	}
-	return map;
+  const map = new Map<string, DiscriminatedUnion>();
+  for (const union of config.discriminatedUnions) {
+    map.set(union.name, union);
+  }
+  return map;
 };
 
 /**
@@ -49,20 +49,20 @@ export const getDiscriminatedUnions = (config: Config): Map<string, Discriminate
  * @returns Ok with the union if all variants exist, or Err with array of missing variant names
  */
 export const validateDiscriminatedUnionVariants = (
-	union: DiscriminatedUnion,
-	definitions: Record<string, unknown>
+  union: DiscriminatedUnion,
+  definitions: Record<string, unknown>
 ): Result<DiscriminatedUnion, string[]> => {
-	const missingVariants: string[] = [];
+  const missingVariants: string[] = [];
 
-	for (const variant of union.variants) {
-		if (!definitions[variant.type]) {
-			missingVariants.push(variant.type);
-		}
-	}
+  for (const variant of union.variants) {
+    if (!definitions[variant.type]) {
+      missingVariants.push(variant.type);
+    }
+  }
 
-	if (missingVariants.length > 0) {
-		return err(missingVariants);
-	}
+  if (missingVariants.length > 0) {
+    return err(missingVariants);
+  }
 
-	return ok(union);
+  return ok(union);
 };

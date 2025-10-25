@@ -5,28 +5,28 @@
  */
 
 export interface IdleQueryState {
-	status: 'idle';
+  status: 'idle';
 }
 
 export interface LoadingQueryState {
-	status: 'loading';
+  status: 'loading';
 }
 
 export interface SuccessQueryState<T> {
-	status: 'success';
-	data: T;
+  status: 'success';
+  data: T;
 }
 
 export interface ErrorQueryState<E> {
-	status: 'error';
-	error: E;
+  status: 'error';
+  error: E;
 }
 
 export type QueryState<T, E = Error> =
-	| IdleQueryState
-	| LoadingQueryState
-	| SuccessQueryState<T>
-	| ErrorQueryState<E>;
+  | IdleQueryState
+  | LoadingQueryState
+  | SuccessQueryState<T>
+  | ErrorQueryState<E>;
 
 /**
  * Helper function to check if the query is in idle state.

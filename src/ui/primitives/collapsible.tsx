@@ -9,19 +9,19 @@ const Collapsible = ({
 const CollapsibleTrigger = ({
   ...props
 }: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleTrigger>) => (
-    <CollapsiblePrimitive.CollapsibleTrigger
-      data-slot="collapsible-trigger"
-      {...props}
-    />
-  )
+  <CollapsiblePrimitive.CollapsibleTrigger
+    data-slot="collapsible-trigger"
+    {...props}
+  />
+)
 
 const CollapsibleContent = ({
   ...props
 }: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleContent>) => (
-    <CollapsiblePrimitive.CollapsibleContent
-      data-slot="collapsible-content"
-      {...props}
-    />
-  )
+  <CollapsiblePrimitive.CollapsibleContent
+    data-slot="collapsible-content"
+    {...props}
+  />
+)
 
 export {Collapsible, CollapsibleTrigger, CollapsibleContent}
