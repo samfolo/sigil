@@ -59,7 +59,8 @@ describe('executeAgent', () => {
 			// Type narrowing should work correctly with isErr
 			if (isErr(result)) {
 				// If types are preserved correctly, this should compile without errors
-				const errors = result.error;
+				const failure = result.error;
+				const errors = failure.errors;
 				const firstError = errors.at(0);
 
 				expect(Array.isArray(errors)).toBe(true);
@@ -123,7 +124,7 @@ describe('executeAgent', () => {
 				}
 			});
 
-			it('should populate metadata (cost, latency, tokens)', async () => {
+			it('should populate metadata (latency, tokens)', async () => {
 				const result = await executeAgent(
 					VALID_MINIMAL_AGENT,
 					VALID_EXECUTE_OPTIONS
@@ -133,7 +134,6 @@ describe('executeAgent', () => {
 
 				if (isOk(result)) {
 					expect(result.data.metadata).toBeDefined();
-					expect(result.data.metadata?.cost).toBeTypeOf('number');
 					expect(result.data.metadata?.latency).toBeTypeOf('number');
 					expect(result.data.metadata?.tokens).toBeDefined();
 					expect(result.data.metadata?.tokens?.input).toBeTypeOf('number');
@@ -220,7 +220,7 @@ describe('executeAgent', () => {
 				expect(isErr(result)).toBe(true);
 
 				if (isErr(result)) {
-					const error = result.error.at(0);
+					const error = result.error.errors.at(0);
 					expect(error?.code).toBe(AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED);
 					expect(error?.category).toBe('execution');
 
@@ -252,7 +252,7 @@ describe('executeAgent', () => {
 				expect(isErr(result)).toBe(true);
 
 				if (isErr(result)) {
-					const error = result.error.at(0);
+					const error = result.error.errors.at(0);
 
 					// Use error code to narrow type for context access
 					if (error?.code === AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED) {
@@ -271,7 +271,7 @@ describe('executeAgent', () => {
 				expect(isErr(result)).toBe(true);
 
 				if (isErr(result)) {
-					const error = result.error.at(0);
+					const error = result.error.errors.at(0);
 
 					// Use error code to narrow type for context access
 					if (error?.code === AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED) {

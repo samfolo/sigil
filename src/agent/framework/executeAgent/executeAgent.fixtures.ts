@@ -20,6 +20,7 @@ import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 import type {
 	ExecuteCallbacks,
+	ExecuteFailure,
 	ExecuteOptions,
 	ExecuteSuccess,
 } from './executeAgent';
@@ -235,7 +236,7 @@ export const VALID_EXECUTE_OPTIONS_WITH_MAX_ATTEMPTS_OVERRIDE: ExecuteOptions<
  * Represents a successful execution with:
  * - Valid output matching the agent's output schema
  * - Single attempt (no retries needed)
- * - Sample metadata for cost, latency, and token usage
+ * - Sample metadata for latency and token usage
  *
  * Note: This is the success data structure, not wrapped in ok().
  * Tests wrap it with ok() as needed.
@@ -244,7 +245,6 @@ export const EXPECTED_SUCCESS: ExecuteSuccess<TestOutput> = {
 	output: {result: 'success result'},
 	attempts: 1,
 	metadata: {
-		cost: 0.05,
 		latency: 2500,
 		tokens: {
 			input: 100,
@@ -263,20 +263,29 @@ export const EXPECTED_SUCCESS: ExecuteSuccess<TestOutput> = {
  * - attempts: Final attempt number when max was reached
  * - maxAttempts: The configured limit
  *
- * Note: This is an error array, not wrapped in err().
+ * Note: This is an ExecuteFailure structure, not wrapped in err().
  * Tests wrap it with err() as needed.
  */
-export const EXPECTED_MAX_ATTEMPTS_ERROR: AgentError[] = [
-	{
-		code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
-		severity: 'error',
-		category: 'execution',
-		context: {
-			attempts: 3,
-			maxAttempts: 3,
+export const EXPECTED_MAX_ATTEMPTS_ERROR: ExecuteFailure = {
+	errors: [
+		{
+			code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
+			severity: 'error',
+			category: 'execution',
+			context: {
+				attempts: 3,
+				maxAttempts: 3,
+			},
+		},
+	],
+	metadata: {
+		latency: 5000,
+		tokens: {
+			input: 300,
+			output: 150,
 		},
 	},
-];
+};
 
 /**
  * 6. Expected validation failed error
@@ -288,20 +297,29 @@ export const EXPECTED_MAX_ATTEMPTS_ERROR: AgentError[] = [
  * - layer: Which validation layer failed ('zod' or 'custom')
  * - attempt: Which attempt number encountered the failure
  *
- * Note: This is an error array, not wrapped in err().
+ * Note: This is an ExecuteFailure structure, not wrapped in err().
  * Tests wrap it with err() as needed.
  */
-export const EXPECTED_VALIDATION_FAILED_ERROR: AgentError[] = [
-	{
-		code: AGENT_ERROR_CODES.VALIDATION_FAILED,
-		severity: 'error',
-		category: 'execution',
-		context: {
-			layer: 'zod',
-			attempt: 2,
+export const EXPECTED_VALIDATION_FAILED_ERROR: ExecuteFailure = {
+	errors: [
+		{
+			code: AGENT_ERROR_CODES.VALIDATION_FAILED,
+			severity: 'error',
+			category: 'execution',
+			context: {
+				layer: 'zod',
+				attempt: 2,
+			},
+		},
+	],
+	metadata: {
+		latency: 2000,
+		tokens: {
+			input: 200,
+			output: 100,
 		},
 	},
-];
+};
 
 /**
  * 7. Expected API error
@@ -313,17 +331,26 @@ export const EXPECTED_VALIDATION_FAILED_ERROR: AgentError[] = [
  * - statusCode: HTTP status code from the API
  * - message: Human-readable error message
  *
- * Note: This is an error array, not wrapped in err().
+ * Note: This is an ExecuteFailure structure, not wrapped in err().
  * Tests wrap it with err() as needed.
  */
-export const EXPECTED_API_ERROR: AgentError[] = [
-	{
-		code: AGENT_ERROR_CODES.API_ERROR,
-		severity: 'error',
-		category: 'model',
-		context: {
-			statusCode: 500,
-			message: 'Internal server error',
+export const EXPECTED_API_ERROR: ExecuteFailure = {
+	errors: [
+		{
+			code: AGENT_ERROR_CODES.API_ERROR,
+			severity: 'error',
+			category: 'model',
+			context: {
+				statusCode: 500,
+				message: 'Internal server error',
+			},
+		},
+	],
+	metadata: {
+		latency: 1000,
+		tokens: {
+			input: 0,
+			output: 0,
 		},
 	},
-];
+};

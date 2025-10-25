@@ -2,7 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import * as z from 'zod';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
-import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
+import type {AgentDefinition, ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
 import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {
@@ -34,11 +34,6 @@ export interface ExecuteMetadataTokenUsageStatistics {
  * Execution metadata containing resource usage and performance data
  */
 export interface ExecuteMetadata {
-	/**
-	 * Execution cost in GBP
-	 */
-	cost?: number;
-
 	/**
 	 * Total execution latency in milliseconds
 	 */
@@ -155,8 +150,8 @@ export interface ExecuteOptions<Input, Output> {
  * Successful agent execution result data
  *
  * This is the success data structure, not a Result wrapper.
- * Failures are represented by AgentError[] in the Result pattern:
- * `Result<ExecuteSuccess<Output>, AgentError[]>`
+ * Failures are represented by ExecuteFailure in the Result pattern:
+ * `Result<ExecuteSuccess<Output>, ExecuteFailure>`
  *
  * @template Output - The type of validated output the agent produces
  */
@@ -179,6 +174,28 @@ export interface ExecuteSuccess<Output> {
 	 * Optional execution metadata
 	 *
 	 * Contains information about resource usage and performance
+	 */
+	metadata?: ExecuteMetadata;
+}
+
+/**
+ * Failed agent execution result data
+ *
+ * This is the failure data structure, not a Result wrapper.
+ * Returned in the error case of the Result pattern:
+ * `Result<ExecuteSuccess<Output>, ExecuteFailure>`
+ */
+export interface ExecuteFailure {
+	/**
+	 * Array of errors that occurred during execution
+	 */
+	errors: AgentError[];
+
+	/**
+	 * Optional execution metadata
+	 *
+	 * Contains information about resource usage and performance.
+	 * Populated even for failed executions to track cost and latency of failures.
 	 */
 	metadata?: ExecuteMetadata;
 }
@@ -210,7 +227,7 @@ export interface ExecuteSuccess<Output> {
  *
  * @param agent - Agent definition created by defineAgent()
  * @param options - Execution configuration including input data and optional overrides
- * @returns Promise resolving to Result containing either ExecuteSuccess or AgentError[]
+ * @returns Promise resolving to Result containing either ExecuteSuccess or ExecuteFailure
  *
  * @example
  * ```typescript
@@ -240,12 +257,44 @@ export interface ExecuteSuccess<Output> {
  * if (isOk(result)) {
  *   console.log('Output:', result.data.output);
  *   console.log('Attempts:', result.data.attempts);
- *   console.log('Cost:', result.data.metadata?.cost);
+ *   console.log('Latency:', result.data.metadata?.latency);
+ *   console.log('Tokens:', result.data.metadata?.tokens);
  * } else {
- *   console.error('Execution failed:', result.error);
+ *   console.error('Execution failed:', result.error.errors);
+ *   console.error('Failure metadata:', result.error.metadata);
  * }
  * ```
  */
+/**
+ * Options for building execution metadata
+ */
+interface BuildMetadataOptions {
+	/**
+	 * Observability configuration from agent definition
+	 */
+	observability: ObservabilityConfig;
+
+	/**
+	 * Execution start time from performance.now()
+	 */
+	startTime: number;
+
+	/**
+	 * Total input tokens consumed across all attempts
+	 */
+	totalInputTokens: number;
+
+	/**
+	 * Total output tokens generated across all attempts
+	 */
+	totalOutputTokens: number;
+
+	/**
+	 * Array of callback errors (empty if none occurred)
+	 */
+	callbackErrors: Error[];
+}
+
 /**
  * Helper function to safely invoke callbacks and collect errors
  *
@@ -274,10 +323,51 @@ const safeInvokeCallback = <Args extends unknown[]>(
 	}
 };
 
+/**
+ * Builds execution metadata based on observability configuration
+ *
+ * Respects the agent's observability flags to determine which metrics to include.
+ * Always includes callback errors if any occurred, regardless of flags.
+ *
+ * @param options - Options for building metadata
+ * @returns ExecuteMetadata object with fields populated based on observability flags
+ */
+const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata => {
+	const endTime = performance.now();
+	const metadata: ExecuteMetadata = {};
+
+	// Include latency if tracking is enabled
+	if (options.observability.trackLatency) {
+		metadata.latency = endTime - options.startTime;
+	}
+
+	// Include token usage if tracking is enabled
+	if (options.observability.trackTokens) {
+		metadata.tokens = {
+			input: options.totalInputTokens,
+			output: options.totalOutputTokens,
+		};
+	}
+
+	// Always include callback errors if any occurred
+	if (options.callbackErrors.length > 0) {
+		metadata.callbackErrors = options.callbackErrors;
+	}
+
+	return metadata;
+};
+
 export const executeAgent = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
 	options: ExecuteOptions<Input, Output>
-): Promise<Result<ExecuteSuccess<Output>, AgentError[]>> => {
+): Promise<Result<ExecuteSuccess<Output>, ExecuteFailure>> => {
+	// Track execution start time for latency calculation
+	const startTime = performance.now();
+
+	// Track token usage across all attempts
+	let totalInputTokens = 0;
+	let totalOutputTokens = 0;
+
 	// Determine max attempts (options override or agent default)
 	const maxAttempts = options.maxAttempts ?? agent.validation.maxAttempts;
 
@@ -290,7 +380,16 @@ export const executeAgent = async <Input, Output>(
 	// Build user prompt once (immutable task description)
 	const userPromptResult = await buildUserPrompt(agent, options.input);
 	if (isErr(userPromptResult)) {
-		return userPromptResult;
+		return err({
+			errors: userPromptResult.error,
+			metadata: buildMetadata({
+				observability: agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors,
+			}),
+		});
 	}
 
 	// Initialise conversation history with the original task
@@ -327,7 +426,16 @@ export const executeAgent = async <Input, Output>(
 		);
 
 		if (isErr(systemPromptResult)) {
-			return systemPromptResult;
+			return err({
+				errors: systemPromptResult.error,
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
 		}
 
 		// Define tool for structured output
@@ -351,18 +459,31 @@ export const executeAgent = async <Input, Output>(
 				tools: [tool],
 			});
 		} catch (error) {
-			return err([
-				{
-					code: AGENT_ERROR_CODES.API_ERROR,
-					severity: 'error',
-					category: 'model',
-					context: {
-						attempt,
-						message: error instanceof Error ? error.message : String(error),
+			return err({
+				errors: [
+					{
+						code: AGENT_ERROR_CODES.API_ERROR,
+						severity: 'error',
+						category: 'model',
+						context: {
+							attempt,
+							message: error instanceof Error ? error.message : String(error),
+						},
 					},
-				},
-			]);
+				],
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
 		}
+
+		// Accumulate token usage from this attempt
+		totalInputTokens += response.usage.input_tokens;
+		totalOutputTokens += response.usage.output_tokens;
 
 		// Extract output from tool use
 		const toolUse = response.content.find(
@@ -370,17 +491,26 @@ export const executeAgent = async <Input, Output>(
 		);
 
 		if (!toolUse || toolUse.name !== 'generate_output') {
-			return err([
-				{
-					code: AGENT_ERROR_CODES.INVALID_RESPONSE,
-					severity: 'error',
-					category: 'model',
-					context: {
-						attempt,
-						reason: 'Model did not use the generate_output tool',
+			return err({
+				errors: [
+					{
+						code: AGENT_ERROR_CODES.INVALID_RESPONSE,
+						severity: 'error',
+						category: 'model',
+						context: {
+							attempt,
+							reason: 'Model did not use the generate_output tool',
+						},
 					},
-				},
-			]);
+				],
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
 		}
 
 		const output = toolUse.input as Output;
@@ -435,10 +565,14 @@ export const executeAgent = async <Input, Output>(
 				callbackErrors
 			);
 
-			// Build metadata
-			const metadata: ExecuteMetadata = {
-				callbackErrors: callbackErrors.length > 0 ? callbackErrors : undefined,
-			};
+			// Build metadata based on observability configuration
+			const metadata = buildMetadata({
+				observability: agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors,
+			});
 
 			return ok({
 				output: validationResult.data,
@@ -485,7 +619,16 @@ export const executeAgent = async <Input, Output>(
 		);
 
 		if (isErr(errorPromptResult)) {
-			return errorPromptResult;
+			return err({
+				errors: errorPromptResult.error,
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
 		}
 
 		// Append error prompt to conversation history
@@ -516,5 +659,17 @@ export const executeAgent = async <Input, Output>(
 		callbackErrors
 	);
 
-	return err([maxAttemptsError]);
+	// Build metadata based on observability configuration
+	const metadata = buildMetadata({
+		observability: agent.observability,
+		startTime,
+		totalInputTokens,
+		totalOutputTokens,
+		callbackErrors,
+	});
+
+	return err({
+		errors: [maxAttemptsError],
+		metadata,
+	});
 };
