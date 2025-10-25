@@ -36,12 +36,12 @@ import {prettifyError, type ZodError} from 'zod';
  * ```
  */
 export const formatZodErrorsForModel = (error: ZodError): string => {
-  if (error.issues.length === 0) {
-    return '';
-  }
+	if (error.issues.length === 0) {
+		return '';
+	}
 
-  const prettyErrors = prettifyError(error);
-  const header = `## Errors (${error.issues.length})`;
+	const prettyErrors = prettifyError(error);
+	const header = `## Errors (${error.issues.length})`;
 
-  return `${header}\n${prettyErrors}`;
+	return `${header}\n${prettyErrors}`;
 };

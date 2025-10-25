@@ -6,10 +6,10 @@ import type {AgentDefinition, ObservabilityConfig} from '@sigil/src/agent/framew
 import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {
-  ValidationLayerMetadata,
-  ValidationLayerResult,
-  ValidationLayerCallbacks,
-  ValidationLayerIdentity,
+	ValidationLayerMetadata,
+	ValidationLayerResult,
+	ValidationLayerCallbacks,
+	ValidationLayerIdentity,
 } from '@sigil/src/agent/framework/validation';
 import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validation/format';
 import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
@@ -307,21 +307,21 @@ interface BuildMetadataOptions {
  * @param callbackErrors - Array to collect any errors that occur
  */
 const safeInvokeCallback = <Args extends unknown[]>(
-  callback: ((...args: Args) => void) | undefined,
-  args: Args,
-  callbackErrors: Error[]
+	callback: ((...args: Args) => void) | undefined,
+	args: Args,
+	callbackErrors: Error[]
 ): void => {
-  if (!callback) {
-    return;
-  }
+	if (!callback) {
+		return;
+	}
 
-  try {
-    callback(...args);
-  } catch (error) {
-    callbackErrors.push(
-      error instanceof Error ? error : new Error(String(error))
-    );
-  }
+	try {
+		callback(...args);
+	} catch (error) {
+		callbackErrors.push(
+			error instanceof Error ? error : new Error(String(error))
+		);
+	}
 };
 
 /**
@@ -334,363 +334,363 @@ const safeInvokeCallback = <Args extends unknown[]>(
  * @returns ExecuteMetadata object with fields populated based on observability flags
  */
 const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata => {
-  const endTime = performance.now();
-  const metadata: ExecuteMetadata = {};
+	const endTime = performance.now();
+	const metadata: ExecuteMetadata = {};
 
-  // Include latency if tracking is enabled
-  if (options.observability.trackLatency) {
-    metadata.latency = endTime - options.startTime;
-  }
+	// Include latency if tracking is enabled
+	if (options.observability.trackLatency) {
+		metadata.latency = endTime - options.startTime;
+	}
 
-  // Include token usage if tracking is enabled
-  if (options.observability.trackTokens) {
-    metadata.tokens = {
-      input: options.totalInputTokens,
-      output: options.totalOutputTokens,
-    };
-  }
+	// Include token usage if tracking is enabled
+	if (options.observability.trackTokens) {
+		metadata.tokens = {
+			input: options.totalInputTokens,
+			output: options.totalOutputTokens,
+		};
+	}
 
-  // Always include callback errors if any occurred
-  if (options.callbackErrors.length > 0) {
-    metadata.callbackErrors = options.callbackErrors;
-  }
+	// Always include callback errors if any occurred
+	if (options.callbackErrors.length > 0) {
+		metadata.callbackErrors = options.callbackErrors;
+	}
 
-  return metadata;
+	return metadata;
 };
 
 export const executeAgent = async <Input, Output>(
-  agent: AgentDefinition<Input, Output>,
-  options: ExecuteOptions<Input, Output>
+	agent: AgentDefinition<Input, Output>,
+	options: ExecuteOptions<Input, Output>
 ): Promise<Result<ExecuteSuccess<Output>, ExecuteFailure>> => {
-  // Track execution start time for latency calculation
-  const startTime = performance.now();
+	// Track execution start time for latency calculation
+	const startTime = performance.now();
 
-  // Track token usage across all attempts
-  let totalInputTokens = 0;
-  let totalOutputTokens = 0;
+	// Track token usage across all attempts
+	let totalInputTokens = 0;
+	let totalOutputTokens = 0;
 
-  // Determine max attempts (options override or agent default)
-  const maxAttempts = options.maxAttempts ?? agent.validation.maxAttempts;
+	// Determine max attempts (options override or agent default)
+	const maxAttempts = options.maxAttempts ?? agent.validation.maxAttempts;
 
-  // Track callback errors
-  const callbackErrors: Error[] = [];
+	// Track callback errors
+	const callbackErrors: Error[] = [];
 
-  // Track last validation errors for MAX_ATTEMPTS_EXCEEDED error context
-  let lastValidationError: unknown;
+	// Track last validation errors for MAX_ATTEMPTS_EXCEEDED error context
+	let lastValidationError: unknown;
 
-  // Track last failed validation layer for error formatting
-  // Permanent structure to avoid TypeScript narrowing issues with undefined assignment
-  const lastFailedLayer: ValidationLayerIdentity = {
-    name: 'validation',
-    description: 'No description provided for validation layer',
-  };
+	// Track last failed validation layer for error formatting
+	// Permanent structure to avoid TypeScript narrowing issues with undefined assignment
+	const lastFailedLayer: ValidationLayerIdentity = {
+		name: 'validation',
+		description: 'No description provided for validation layer',
+	};
 
-  // Build user prompt once (immutable task description)
-  const userPromptResult = await buildUserPrompt(agent, options.input);
-  if (isErr(userPromptResult)) {
-    return err({
-      errors: userPromptResult.error,
-      metadata: buildMetadata({
-        observability: agent.observability,
-        startTime,
-        totalInputTokens,
-        totalOutputTokens,
-        callbackErrors,
-      }),
-    });
-  }
+	// Build user prompt once (immutable task description)
+	const userPromptResult = await buildUserPrompt(agent, options.input);
+	if (isErr(userPromptResult)) {
+		return err({
+			errors: userPromptResult.error,
+			metadata: buildMetadata({
+				observability: agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors,
+			}),
+		});
+	}
 
-  // Initialise conversation history with the original task
-  const conversationHistory: Anthropic.MessageParam[] = [
-    {
-      role: 'user',
-      content: userPromptResult.data,
-    },
-  ];
+	// Initialise conversation history with the original task
+	const conversationHistory: Anthropic.MessageParam[] = [
+		{
+			role: 'user',
+			content: userPromptResult.data,
+		},
+	];
 
-  // Create Anthropic client once (reuse across retries)
-  const anthropic = createAnthropicClient();
+	// Create Anthropic client once (reuse across retries)
+	const anthropic = createAnthropicClient();
 
-  // Retry loop
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    // Create execution state
-    const state: AgentExecutionState = {
-      attempt,
-      maxAttempts,
-    };
+	// Retry loop
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		// Create execution state
+		const state: AgentExecutionState = {
+			attempt,
+			maxAttempts,
+		};
 
-    // Reset failed layer tracking for this attempt
-    lastFailedLayer.name = 'validation';
-    lastFailedLayer.description = 'No description provided for validation layer';
+		// Reset failed layer tracking for this attempt
+		lastFailedLayer.name = 'validation';
+		lastFailedLayer.description = 'No description provided for validation layer';
 
-    // Invoke onAttemptStart callback
-    safeInvokeCallback(
-      options.callbacks?.onAttemptStart,
-      [state],
-      callbackErrors
-    );
+		// Invoke onAttemptStart callback
+		safeInvokeCallback(
+			options.callbacks?.onAttemptStart,
+			[state],
+			callbackErrors
+		);
 
-    // Build system prompt (can adapt based on attempt)
-    const systemPromptResult = await buildSystemPrompt(
-      agent,
-      options.input,
-      state
-    );
+		// Build system prompt (can adapt based on attempt)
+		const systemPromptResult = await buildSystemPrompt(
+			agent,
+			options.input,
+			state
+		);
 
-    if (isErr(systemPromptResult)) {
-      return err({
-        errors: systemPromptResult.error,
-        metadata: buildMetadata({
-          observability: agent.observability,
-          startTime,
-          totalInputTokens,
-          totalOutputTokens,
-          callbackErrors,
-        }),
-      });
-    }
+		if (isErr(systemPromptResult)) {
+			return err({
+				errors: systemPromptResult.error,
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
+		}
 
-    // Define tool for structured output
-    // Convert Zod schema to JSON Schema for Anthropic API
-    // Agent output schemas are always objects, so this cast is safe
-    const tool: Anthropic.Tool = {
-      name: 'generate_output',
-      description: 'Generate the structured output according to the schema',
-      input_schema: z.toJSONSchema(agent.validation.outputSchema) as Anthropic.Tool.InputSchema,
-    };
+		// Define tool for structured output
+		// Convert Zod schema to JSON Schema for Anthropic API
+		// Agent output schemas are always objects, so this cast is safe
+		const tool: Anthropic.Tool = {
+			name: 'generate_output',
+			description: 'Generate the structured output according to the schema',
+			input_schema: z.toJSONSchema(agent.validation.outputSchema) as Anthropic.Tool.InputSchema,
+		};
 
-    // Call Anthropic API with accumulated conversation history
-    let response: Anthropic.Message;
-    try {
-      response = await anthropic.messages.create({
-        model: agent.model.name,
-        max_tokens: agent.model.maxTokens,
-        temperature: agent.model.temperature,
-        system: systemPromptResult.data,
-        messages: conversationHistory,
-        tools: [tool],
-      });
-    } catch (error) {
-      return err({
-        errors: [
-          {
-            code: AGENT_ERROR_CODES.API_ERROR,
-            severity: 'error',
-            category: 'model',
-            context: {
-              attempt,
-              message: error instanceof Error ? error.message : String(error),
-            },
-          },
-        ],
-        metadata: buildMetadata({
-          observability: agent.observability,
-          startTime,
-          totalInputTokens,
-          totalOutputTokens,
-          callbackErrors,
-        }),
-      });
-    }
+		// Call Anthropic API with accumulated conversation history
+		let response: Anthropic.Message;
+		try {
+			response = await anthropic.messages.create({
+				model: agent.model.name,
+				max_tokens: agent.model.maxTokens,
+				temperature: agent.model.temperature,
+				system: systemPromptResult.data,
+				messages: conversationHistory,
+				tools: [tool],
+			});
+		} catch (error) {
+			return err({
+				errors: [
+					{
+						code: AGENT_ERROR_CODES.API_ERROR,
+						severity: 'error',
+						category: 'model',
+						context: {
+							attempt,
+							message: error instanceof Error ? error.message : String(error),
+						},
+					},
+				],
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
+		}
 
-    // Accumulate token usage from this attempt
-    totalInputTokens += response.usage.input_tokens;
-    totalOutputTokens += response.usage.output_tokens;
+		// Accumulate token usage from this attempt
+		totalInputTokens += response.usage.input_tokens;
+		totalOutputTokens += response.usage.output_tokens;
 
-    // Extract output from tool use
-    const toolUse = response.content.find(
-      (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
-    );
+		// Extract output from tool use
+		const toolUse = response.content.find(
+			(block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+		);
 
-    if (!toolUse || toolUse.name !== 'generate_output') {
-      return err({
-        errors: [
-          {
-            code: AGENT_ERROR_CODES.INVALID_RESPONSE,
-            severity: 'error',
-            category: 'model',
-            context: {
-              attempt,
-              reason: 'Model did not use the generate_output tool',
-            },
-          },
-        ],
-        metadata: buildMetadata({
-          observability: agent.observability,
-          startTime,
-          totalInputTokens,
-          totalOutputTokens,
-          callbackErrors,
-        }),
-      });
-    }
+		if (!toolUse || toolUse.name !== 'generate_output') {
+			return err({
+				errors: [
+					{
+						code: AGENT_ERROR_CODES.INVALID_RESPONSE,
+						severity: 'error',
+						category: 'model',
+						context: {
+							attempt,
+							reason: 'Model did not use the generate_output tool',
+						},
+					},
+				],
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
+		}
 
-    // Type assertion is safe: validateLayers will catch any schema mismatches
-    // The LLM output structure is validated through multi-layer validation below
-    const output = toolUse.input as Output;
+		// Type assertion is safe: validateLayers will catch any schema mismatches
+		// The LLM output structure is validated through multi-layer validation below
+		const output = toolUse.input as Output;
 
-    // Validate output through multi-layer validation
-    // Map ExecuteCallbacks to ValidationLayerCallbacks
-    // Always provide onLayerComplete to capture failed layer metadata for error formatting
-    const validationCallbacks: ValidationLayerCallbacks = {
-      onLayerStart: options.callbacks?.onValidationLayerStart
-        ? (layer: ValidationLayerMetadata) => {
-          safeInvokeCallback(
-            options.callbacks?.onValidationLayerStart,
-            [state, layer],
-            callbackErrors
-          );
-        }
-        : undefined,
-      onLayerComplete: (layer: ValidationLayerResult) => {
-        // Always capture failed layer metadata for error formatting
-        if (!layer.success) {
-          lastFailedLayer.name = layer.name;
-          lastFailedLayer.description = layer.description;
-        }
+		// Validate output through multi-layer validation
+		// Map ExecuteCallbacks to ValidationLayerCallbacks
+		// Always provide onLayerComplete to capture failed layer metadata for error formatting
+		const validationCallbacks: ValidationLayerCallbacks = {
+			onLayerStart: options.callbacks?.onValidationLayerStart
+				? (layer: ValidationLayerMetadata) => {
+					safeInvokeCallback(
+						options.callbacks?.onValidationLayerStart,
+						[state, layer],
+						callbackErrors
+					);
+				}
+				: undefined,
+			onLayerComplete: (layer: ValidationLayerResult) => {
+				// Always capture failed layer metadata for error formatting
+				if (!layer.success) {
+					lastFailedLayer.name = layer.name;
+					lastFailedLayer.description = layer.description;
+				}
 
-        // Call user callback if provided
-        if (options.callbacks?.onValidationLayerComplete) {
-          safeInvokeCallback(
-            options.callbacks?.onValidationLayerComplete,
-            [state, layer],
-            callbackErrors
-          );
-        }
-      },
-    };
+				// Call user callback if provided
+				if (options.callbacks?.onValidationLayerComplete) {
+					safeInvokeCallback(
+						options.callbacks?.onValidationLayerComplete,
+						[state, layer],
+						callbackErrors
+					);
+				}
+			},
+		};
 
-    const validationResult = await validateLayers(
-      output,
-      agent.validation.outputSchema,
-      agent.validation.customValidators,
-      validationCallbacks
-    );
+		const validationResult = await validateLayers(
+			output,
+			agent.validation.outputSchema,
+			agent.validation.customValidators,
+			validationCallbacks
+		);
 
-    // Handle validation success
-    if (!isErr(validationResult)) {
-      // Invoke onAttemptComplete callback with success
-      safeInvokeCallback(
-        options.callbacks?.onAttemptComplete,
-        [state, true],
-        callbackErrors
-      );
+		// Handle validation success
+		if (!isErr(validationResult)) {
+			// Invoke onAttemptComplete callback with success
+			safeInvokeCallback(
+				options.callbacks?.onAttemptComplete,
+				[state, true],
+				callbackErrors
+			);
 
-      // Invoke onSuccess callback
-      safeInvokeCallback(
-        options.callbacks?.onSuccess,
-        [validationResult.data],
-        callbackErrors
-      );
+			// Invoke onSuccess callback
+			safeInvokeCallback(
+				options.callbacks?.onSuccess,
+				[validationResult.data],
+				callbackErrors
+			);
 
-      // Build metadata based on observability configuration
-      const metadata = buildMetadata({
-        observability: agent.observability,
-        startTime,
-        totalInputTokens,
-        totalOutputTokens,
-        callbackErrors,
-      });
+			// Build metadata based on observability configuration
+			const metadata = buildMetadata({
+				observability: agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors,
+			});
 
-      return ok({
-        output: validationResult.data,
-        attempts: attempt,
-        metadata,
-      });
-    }
+			return ok({
+				output: validationResult.data,
+				attempts: attempt,
+				metadata,
+			});
+		}
 
-    // Handle validation failure
-    lastValidationError = validationResult.error;
+		// Handle validation failure
+		lastValidationError = validationResult.error;
 
-    // Invoke onAttemptComplete callback with failure
-    safeInvokeCallback(
-      options.callbacks?.onAttemptComplete,
-      [state, false],
-      callbackErrors
-    );
+		// Invoke onAttemptComplete callback with failure
+		safeInvokeCallback(
+			options.callbacks?.onAttemptComplete,
+			[state, false],
+			callbackErrors
+		);
 
-    // Invoke onValidationFailure callback
-    safeInvokeCallback(
-      options.callbacks?.onValidationFailure,
-      [state, validationResult.error],
-      callbackErrors
-    );
+		// Invoke onValidationFailure callback
+		safeInvokeCallback(
+			options.callbacks?.onValidationFailure,
+			[state, validationResult.error],
+			callbackErrors
+		);
 
-    // Append assistant response to conversation history
-    conversationHistory.push({
-      role: 'assistant',
-      content: response.content,
-    });
+		// Append assistant response to conversation history
+		conversationHistory.push({
+			role: 'assistant',
+			content: response.content,
+		});
 
-    // Format validation errors for prompt using layer-specific context
-    // Falls back to generic context if layer metadata is missing or empty
-    const layerName = lastFailedLayer.name || 'validation';
-    const layerDescription = lastFailedLayer.description || 'No description provided for validation layer';
-    const formattedError = formatValidationErrorForPrompt(
-      validationResult.error,
-      layerName,
-      layerDescription
-    );
+		// Format validation errors for prompt using layer-specific context
+		// Falls back to generic context if layer metadata is missing or empty
+		const layerName = lastFailedLayer.name || 'validation';
+		const layerDescription = lastFailedLayer.description || 'No description provided for validation layer';
+		const formattedError = formatValidationErrorForPrompt(
+			validationResult.error,
+			layerName,
+			layerDescription
+		);
 
-    // Build error prompt
-    const errorPromptResult = await buildErrorPrompt(
-      agent,
-      formattedError,
-      state
-    );
+		// Build error prompt
+		const errorPromptResult = await buildErrorPrompt(
+			agent,
+			formattedError,
+			state
+		);
 
-    if (isErr(errorPromptResult)) {
-      return err({
-        errors: errorPromptResult.error,
-        metadata: buildMetadata({
-          observability: agent.observability,
-          startTime,
-          totalInputTokens,
-          totalOutputTokens,
-          callbackErrors,
-        }),
-      });
-    }
+		if (isErr(errorPromptResult)) {
+			return err({
+				errors: errorPromptResult.error,
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors,
+				}),
+			});
+		}
 
-    // Append error prompt to conversation history
-    conversationHistory.push({
-      role: 'user',
-      content: errorPromptResult.data,
-    });
+		// Append error prompt to conversation history
+		conversationHistory.push({
+			role: 'user',
+			content: errorPromptResult.data,
+		});
 
-    // Continue to next iteration
-  }
+		// Continue to next iteration
+	}
 
-  // Max attempts exceeded - all attempts failed validation
-  // Invoke onFailure callback
-  const maxAttemptsError: AgentError = {
-    code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
-    severity: 'error',
-    category: 'execution',
-    context: {
-      attempts: maxAttempts,
-      maxAttempts,
-      lastError: lastValidationError ? safeStringify(lastValidationError) : undefined,
-    },
-  };
+	// Max attempts exceeded - all attempts failed validation
+	// Invoke onFailure callback
+	const maxAttemptsError: AgentError = {
+		code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
+		severity: 'error',
+		category: 'execution',
+		context: {
+			attempts: maxAttempts,
+			maxAttempts,
+			lastError: lastValidationError ? safeStringify(lastValidationError) : undefined,
+		},
+	};
 
-  safeInvokeCallback(
-    options.callbacks?.onFailure,
-    [[maxAttemptsError]],
-    callbackErrors
-  );
+	safeInvokeCallback(
+		options.callbacks?.onFailure,
+		[[maxAttemptsError]],
+		callbackErrors
+	);
 
-  // Build metadata based on observability configuration
-  const metadata = buildMetadata({
-    observability: agent.observability,
-    startTime,
-    totalInputTokens,
-    totalOutputTokens,
-    callbackErrors,
-  });
+	// Build metadata based on observability configuration
+	const metadata = buildMetadata({
+		observability: agent.observability,
+		startTime,
+		totalInputTokens,
+		totalOutputTokens,
+		callbackErrors,
+	});
 
-  return err({
-    errors: [maxAttemptsError],
-    metadata,
-  });
+	return err({
+		errors: [maxAttemptsError],
+		metadata,
+	});
 };

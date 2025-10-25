@@ -29,6 +29,6 @@ const VALID_AGENT_ERROR_CODES = new Set(Object.values(AGENT_ERROR_CODES));
  * ```
  */
 export const isAgentErrorArray = (value: unknown): value is AgentError[] => isStructuredErrorArray<AgentErrorCode, AgentErrorCategory, AgentError['context']>(
-  value,
-  VALID_AGENT_ERROR_CODES
+	value,
+	VALID_AGENT_ERROR_CODES
 );

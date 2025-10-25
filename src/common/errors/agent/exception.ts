@@ -41,13 +41,13 @@ export class AgentProcessingError extends StructuredErrorException<
   AgentErrorCategory,
   AgentError['context']
 > {
-  constructor(errors: AgentError[], message?: string) {
-    // Auto-format errors if no custom message provided
-    const defaultMessage =
+	constructor(errors: AgentError[], message?: string) {
+		// Auto-format errors if no custom message provided
+		const defaultMessage =
       errors.length === 1
-        ? formatAgentError(errors.at(0)!)
-        : `Agent processing failed:\n\n${formatAgentErrorsForDeveloper(errors)}`;
+      	? formatAgentError(errors.at(0)!)
+      	: `Agent processing failed:\n\n${formatAgentErrorsForDeveloper(errors)}`;
 
-    super(errors, message ?? defaultMessage, 'AgentProcessingError');
-  }
+		super(errors, message ?? defaultMessage, 'AgentProcessingError');
+	}
 }

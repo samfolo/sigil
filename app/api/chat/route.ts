@@ -17,15 +17,15 @@ interface ChatRequest {
 }
 
 export const POST = async (request: NextRequest) => {
-  try {
-    const body: ChatRequest = await request.json();
-    const responseData = await processChat(body);
-    return NextResponse.json(responseData);
-  } catch (error) {
-    console.error('Chat API error:', error);
-    return NextResponse.json(
-      {error: 'Failed to process chat request'},
-      {status: 500}
-    );
-  }
+	try {
+		const body: ChatRequest = await request.json();
+		const responseData = await processChat(body);
+		return NextResponse.json(responseData);
+	} catch (error) {
+		console.error('Chat API error:', error);
+		return NextResponse.json(
+			{error: 'Failed to process chat request'},
+			{status: 500}
+		);
+	}
 };

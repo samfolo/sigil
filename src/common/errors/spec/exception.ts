@@ -41,13 +41,13 @@ export class SpecProcessingError extends StructuredErrorException<
   SpecErrorCategory,
   SpecError['context']
 > {
-  constructor(errors: SpecError[], message?: string) {
-    // Auto-format errors if no custom message provided
-    const defaultMessage =
+	constructor(errors: SpecError[], message?: string) {
+		// Auto-format errors if no custom message provided
+		const defaultMessage =
       errors.length === 1
-        ? formatSpecError(errors.at(0)!)
-        : `Failed to build render tree:\n\n${formatSpecErrorsForModel(errors)}`;
+      	? formatSpecError(errors.at(0)!)
+      	: `Failed to build render tree:\n\n${formatSpecErrorsForModel(errors)}`;
 
-    super(errors, message ?? defaultMessage, 'SpecProcessingError');
-  }
+		super(errors, message ?? defaultMessage, 'SpecProcessingError');
+	}
 }

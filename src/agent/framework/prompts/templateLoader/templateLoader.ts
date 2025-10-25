@@ -3,9 +3,9 @@ import {readFile} from 'node:fs/promises';
 import {Liquid} from 'liquidjs';
 
 import type {
-  SystemPromptFunction,
-  UserPromptFunction,
-  ErrorPromptFunction,
+	SystemPromptFunction,
+	UserPromptFunction,
+	ErrorPromptFunction,
 } from '@sigil/src/agent/framework/defineAgent';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors/result';
@@ -62,18 +62,18 @@ export type TemplateFunction<T> = (
  * ```
  */
 export const loadTemplate = async <T>(
-  filePath: string
+	filePath: string
 ): Promise<Result<TemplateFunction<T>, Error>> => {
-  try {
-    const templateString = await readFile(filePath, 'utf-8');
-    return compileTemplate<T>(templateString);
-  } catch (error) {
-    return err(
-      error instanceof Error
-        ? error
-        : new Error(`Failed to load template from ${filePath}`)
-    );
-  }
+	try {
+		const templateString = await readFile(filePath, 'utf-8');
+		return compileTemplate<T>(templateString);
+	} catch (error) {
+		return err(
+			error instanceof Error
+				? error
+				: new Error(`Failed to load template from ${filePath}`)
+		);
+	}
 };
 
 /**
@@ -116,24 +116,24 @@ export const loadTemplate = async <T>(
  * ```
  */
 export const compileTemplate = <T>(
-  templateString: string
+	templateString: string
 ): Result<TemplateFunction<T>, Error> => {
-  try {
-    const template = liquidEngine.parse(templateString);
+	try {
+		const template = liquidEngine.parse(templateString);
 
-    const templateFunction: TemplateFunction<T> = async (
-      data: T,
-      state: AgentExecutionState
-    ): Promise<string> => liquidEngine.render(template, {data, state});
+		const templateFunction: TemplateFunction<T> = async (
+			data: T,
+			state: AgentExecutionState
+		): Promise<string> => liquidEngine.render(template, {data, state});
 
-    return ok(templateFunction);
-  } catch (error) {
-    return err(
-      error instanceof Error
-        ? error
-        : new Error('Failed to compile template')
-    );
-  }
+		return ok(templateFunction);
+	} catch (error) {
+		return err(
+			error instanceof Error
+				? error
+				: new Error('Failed to compile template')
+		);
+	}
 };
 
 /**
@@ -156,7 +156,7 @@ export const compileTemplate = <T>(
  * ```
  */
 export const asSystemPromptFunction = <Input>(
-  template: TemplateFunction<Input>
+	template: TemplateFunction<Input>
 ): SystemPromptFunction<Input> => template;
 
 /**
@@ -179,7 +179,7 @@ export const asSystemPromptFunction = <Input>(
  * ```
  */
 export const asUserPromptFunction = <Input>(
-  template: TemplateFunction<Input>
+	template: TemplateFunction<Input>
 ): UserPromptFunction<Input> => async (input: Input): Promise<string> => template(input, {attempt: 1, maxAttempts: 1});
 
 /**
@@ -201,5 +201,5 @@ export const asUserPromptFunction = <Input>(
  * ```
  */
 export const asErrorPromptFunction = (
-  template: TemplateFunction<string>
+	template: TemplateFunction<string>
 ): ErrorPromptFunction => template;

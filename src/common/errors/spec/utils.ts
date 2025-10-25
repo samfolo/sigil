@@ -24,20 +24,20 @@ import {DEFAULT_LEVENSHTEIN_DISTANCE} from '@sigil/renderer/core/constants/const
  * ```
  */
 export const generateFieldNameSimilaritySuggestion = (
-  actualKey: string,
-  candidates: string[],
-  maxDistance: number = DEFAULT_LEVENSHTEIN_DISTANCE
+	actualKey: string,
+	candidates: string[],
+	maxDistance: number = DEFAULT_LEVENSHTEIN_DISTANCE
 ): string | undefined => {
-  // Deduplicate candidates
-  const uniqueCandidates = [...new Set(candidates)];
+	// Deduplicate candidates
+	const uniqueCandidates = [...new Set(candidates)];
 
-  // Lowercase once for efficiency
-  const lowerActualKey = actualKey.toLowerCase();
+	// Lowercase once for efficiency
+	const lowerActualKey = actualKey.toLowerCase();
 
-  // Find closest match within the distance threshold
-  const closest = uniqueCandidates.find(
-    candidate => distance(lowerActualKey, candidate.toLowerCase()) <= maxDistance
-  );
+	// Find closest match within the distance threshold
+	const closest = uniqueCandidates.find(
+		candidate => distance(lowerActualKey, candidate.toLowerCase()) <= maxDistance
+	);
 
-  return closest ? `Did you mean '${closest}'?` : undefined;
+	return closest ? `Did you mean '${closest}'?` : undefined;
 };

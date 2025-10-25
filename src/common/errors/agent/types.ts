@@ -10,22 +10,22 @@ import type {ErrorCode, StructuredError} from '@sigil/src/common/errors/structur
 
 import type {AGENT_ERROR_CODES} from './codes';
 import type {
-  ApiErrorContext,
-  EmptyDescriptionContext,
-  EmptyModelNameContext,
-  EmptyNameContext,
-  InvalidMaxAttemptsContext,
-  InvalidMaxTokensContext,
-  InvalidResponseContext,
-  InvalidTemperatureContext,
-  LoggingFailedContext,
-  MaxAttemptsExceededContext,
-  MetricsCollectionFailedContext,
-  MissingOutputSchemaContext,
-  PromptGenerationFailedContext,
-  RateLimitErrorContext,
-  TokenLimitExceededContext,
-  ValidationFailedContext,
+	ApiErrorContext,
+	EmptyDescriptionContext,
+	EmptyModelNameContext,
+	EmptyNameContext,
+	InvalidMaxAttemptsContext,
+	InvalidMaxTokensContext,
+	InvalidResponseContext,
+	InvalidTemperatureContext,
+	LoggingFailedContext,
+	MaxAttemptsExceededContext,
+	MetricsCollectionFailedContext,
+	MissingOutputSchemaContext,
+	PromptGenerationFailedContext,
+	RateLimitErrorContext,
+	TokenLimitExceededContext,
+	ValidationFailedContext,
 } from './contexts';
 
 /**

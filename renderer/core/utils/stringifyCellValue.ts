@@ -33,52 +33,52 @@ import {MAX_DISPLAY_LENGTH} from '../constants';
  * @returns Display string suitable for rendering
  */
 export const stringifyCellValue = (value: unknown, format?: string, dataType?: string): string => {
-  // Handle null/undefined
-  if (value === null || value === undefined) {
-    return '';
-  }
+	// Handle null/undefined
+	if (value === null || value === undefined) {
+		return '';
+	}
 
-  // Handle Date objects using Luxon
-  if (value instanceof Date) {
-    return formatDate(DateTime.fromJSDate(value), format);
-  }
+	// Handle Date objects using Luxon
+	if (value instanceof Date) {
+		return formatDate(DateTime.fromJSDate(value), format);
+	}
 
-  // Handle strings
-  if (typeof value === 'string') {
-    // Try to parse as date if dataType hints at it or format is provided
-    if (dataType === 'date' || format) {
-      const dateTime = DateTime.fromISO(value);
-      if (dateTime.isValid) {
-        return formatDate(dateTime, format);
-      }
-    }
-    return value;
-  }
+	// Handle strings
+	if (typeof value === 'string') {
+		// Try to parse as date if dataType hints at it or format is provided
+		if (dataType === 'date' || format) {
+			const dateTime = DateTime.fromISO(value);
+			if (dateTime.isValid) {
+				return formatDate(dateTime, format);
+			}
+		}
+		return value;
+	}
 
-  // Handle numbers
-  if (typeof value === 'number') {
-    // TODO: Implement number formatting (numeral.js or similar)
-    // For now, just convert to string
-    return String(value);
-  }
+	// Handle numbers
+	if (typeof value === 'number') {
+		// TODO: Implement number formatting (numeral.js or similar)
+		// For now, just convert to string
+		return String(value);
+	}
 
-  // Handle booleans
-  if (typeof value === 'boolean') {
-    return String(value);
-  }
+	// Handle booleans
+	if (typeof value === 'boolean') {
+		return String(value);
+	}
 
-  // Handle arrays
-  if (Array.isArray(value)) {
-    return stringifyComplexValue(value);
-  }
+	// Handle arrays
+	if (Array.isArray(value)) {
+		return stringifyComplexValue(value);
+	}
 
-  // Handle objects (including circular references)
-  if (typeof value === 'object') {
-    return stringifyComplexValue(value);
-  }
+	// Handle objects (including circular references)
+	if (typeof value === 'object') {
+		return stringifyComplexValue(value);
+	}
 
-  // Fallback for any other types (functions, symbols, etc.)
-  return String(value);
+	// Fallback for any other types (functions, symbols, etc.)
+	return String(value);
 };
 
 /**
@@ -96,43 +96,43 @@ export const stringifyCellValue = (value: unknown, format?: string, dataType?: s
  * @returns Formatted date string
  */
 const formatDate = (dateTime: DateTime, format?: string): string => {
-  if (!dateTime.isValid) {
-    return String(dateTime);
-  }
+	if (!dateTime.isValid) {
+		return String(dateTime);
+	}
 
-  // No format specified, use sensible default
-  if (!format) {
-    return dateTime.toLocaleString(DateTime.DATETIME_SHORT);
-  }
+	// No format specified, use sensible default
+	if (!format) {
+		return dateTime.toLocaleString(DateTime.DATETIME_SHORT);
+	}
 
-  // Try common preset mappings from spec
-  const presetMap: Record<string, Intl.DateTimeFormatOptions> = {
-    iso8601: DateTime.DATETIME_SHORT,
-    DATE_SHORT: DateTime.DATE_SHORT,
-    DATE_MED: DateTime.DATE_MED,
-    DATE_FULL: DateTime.DATE_FULL,
-    DATETIME_SHORT: DateTime.DATETIME_SHORT,
-    DATETIME_MED: DateTime.DATETIME_MED,
-    DATETIME_FULL: DateTime.DATETIME_FULL,
-  };
+	// Try common preset mappings from spec
+	const presetMap: Record<string, Intl.DateTimeFormatOptions> = {
+		iso8601: DateTime.DATETIME_SHORT,
+		DATE_SHORT: DateTime.DATE_SHORT,
+		DATE_MED: DateTime.DATE_MED,
+		DATE_FULL: DateTime.DATE_FULL,
+		DATETIME_SHORT: DateTime.DATETIME_SHORT,
+		DATETIME_MED: DateTime.DATETIME_MED,
+		DATETIME_FULL: DateTime.DATETIME_FULL,
+	};
 
-  if (format in presetMap) {
-    return dateTime.toLocaleString(presetMap[format]);
-  }
+	if (format in presetMap) {
+		return dateTime.toLocaleString(presetMap[format]);
+	}
 
-  // Try custom format string
-  try {
-    const formatted = dateTime.toFormat(format);
-    // Check if format was valid (Luxon returns the original string if invalid)
-    if (formatted && formatted !== format) {
-      return formatted;
-    }
-  } catch {
-    // Format string was invalid, fall through to default
-  }
+	// Try custom format string
+	try {
+		const formatted = dateTime.toFormat(format);
+		// Check if format was valid (Luxon returns the original string if invalid)
+		if (formatted && formatted !== format) {
+			return formatted;
+		}
+	} catch {
+		// Format string was invalid, fall through to default
+	}
 
-  // Fallback to locale string
-  return dateTime.toLocaleString(DateTime.DATETIME_SHORT);
+	// Fallback to locale string
+	return dateTime.toLocaleString(DateTime.DATETIME_SHORT);
 };
 
 /**
@@ -145,20 +145,20 @@ const formatDate = (dateTime: DateTime, format?: string): string => {
  * @returns JSON string, truncated if necessary
  */
 const stringifyComplexValue = (value: unknown): string => {
-  try {
-    const json = JSON.stringify(value);
+	try {
+		const json = JSON.stringify(value);
 
-    // Truncate long values
-    if (json.length > MAX_DISPLAY_LENGTH) {
-      return `${json.slice(0, MAX_DISPLAY_LENGTH)}...`;
-    }
+		// Truncate long values
+		if (json.length > MAX_DISPLAY_LENGTH) {
+			return `${json.slice(0, MAX_DISPLAY_LENGTH)}...`;
+		}
 
-    return json;
-  } catch (error) {
-    // Handle circular references or other serialisation errors
-    if (error instanceof Error && error.message.includes('circular')) {
-      return '[Circular Reference]';
-    }
-    return '[Complex Object]';
-  }
+		return json;
+	} catch (error) {
+		// Handle circular references or other serialisation errors
+		if (error instanceof Error && error.message.includes('circular')) {
+			return '[Circular Reference]';
+		}
+		return '[Complex Object]';
+	}
 };

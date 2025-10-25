@@ -28,10 +28,10 @@ import {stringifyCellValue} from '../utils/stringifyCellValue';
  * @returns Array of column definitions for RenderTree
  */
 export const extractColumns = (columns: DataTableColumn[]): Column[] => columns.map((col) => ({
-  id: col.accessor,
-  label: col.label,
-  dataType: 'unknown', // Will be enriched from accessor_bindings in buildRenderTree
-  alignment: col.alignment,
+	id: col.accessor,
+	label: col.label,
+	dataType: 'unknown', // Will be enriched from accessor_bindings in buildRenderTree
+	alignment: col.alignment,
 }));
 
 /**
@@ -44,14 +44,14 @@ export const extractColumns = (columns: DataTableColumn[]): Column[] => columns.
  * @returns Enriched column definitions
  */
 export const enrichColumns = (
-  columns: Column[],
-  accessorBindings: Record<string, FieldMetadata>,
+	columns: Column[],
+	accessorBindings: Record<string, FieldMetadata>,
 ): Column[] => columns.map((col) => {
-  const metadata = accessorBindings[col.id];
-  return {
-    ...col,
-    dataType: metadata?.data_types.at(0) ?? 'unknown',
-  };
+	const metadata = accessorBindings[col.id];
+	return {
+		...col,
+		dataType: metadata?.data_types.at(0) ?? 'unknown',
+	};
 });
 
 /**
@@ -79,94 +79,94 @@ export const enrichColumns = (
  * @returns Result containing array of processed rows, or accumulated errors
  */
 export const bindData = (
-  data: unknown[],
-  columns: Column[],
-  accessorBindings: Record<string, FieldMetadata>,
-  pathContext: string[],
+	data: unknown[],
+	columns: Column[],
+	accessorBindings: Record<string, FieldMetadata>,
+	pathContext: string[],
 ): Result<Row[], SpecError[]> => {
-  const errors: SpecError[] = [];
-  const rows: Row[] = [];
+	const errors: SpecError[] = [];
+	const rows: Row[] = [];
 
-  for (let index = 0; index < data.length; index++) {
-    const rowData = data[index];
+	for (let index = 0; index < data.length; index++) {
+		const rowData = data[index];
 
-    // Construct row-level path context (e.g., ['$', '[0]'])
-    const rowPath = [...pathContext, `[${index}]`];
+		// Construct row-level path context (e.g., ['$', '[0]'])
+		const rowPath = [...pathContext, `[${index}]`];
 
-    // Generate unique row ID from index
-    const rowId = `row-${index}`;
+		// Generate unique row ID from index
+		const rowId = `row-${index}`;
 
-    // Extract cell values for each column
-    const cells: Record<string, CellValue> = {};
+		// Extract cell values for each column
+		const cells: Record<string, CellValue> = {};
 
-    for (const column of columns) {
-      const result = queryJSONPath(rowData, column.id);
-      const metadata = accessorBindings[column.id];
+		for (const column of columns) {
+			const result = queryJSONPath(rowData, column.id);
+			const metadata = accessorBindings[column.id];
 
-      if (isErr(result)) {
-        // Enrich errors with full path context
-        const enrichedErrors = result.error.map((error) => {
-          // For INVALID_ACCESSOR errors, the path doesn't start with '$'
-          // so we just use the row path without appending the accessor
-          if (!error.path || !error.path.startsWith('$')) {
-            return {
-              ...error,
-              path: rowPath.join(''),
-            };
-          }
+			if (isErr(result)) {
+				// Enrich errors with full path context
+				const enrichedErrors = result.error.map((error) => {
+					// For INVALID_ACCESSOR errors, the path doesn't start with '$'
+					// so we just use the row path without appending the accessor
+					if (!error.path || !error.path.startsWith('$')) {
+						return {
+							...error,
+							path: rowPath.join(''),
+						};
+					}
 
-          // Strip '$' or '$.' prefix from accessor to avoid double-root
-          let accessorPath: string;
-          if (error.path.startsWith('$.')) {
-            accessorPath = error.path.slice(1); // '$.user.name' → '.user.name'
-          } else if (error.path === '$') {
-            accessorPath = ''; // Root accessor becomes empty
-          } else {
-            accessorPath = error.path.slice(1); // '$[0]' → '[0]'
-          }
+					// Strip '$' or '$.' prefix from accessor to avoid double-root
+					let accessorPath: string;
+					if (error.path.startsWith('$.')) {
+						accessorPath = error.path.slice(1); // '$.user.name' → '.user.name'
+					} else if (error.path === '$') {
+						accessorPath = ''; // Root accessor becomes empty
+					} else {
+						accessorPath = error.path.slice(1); // '$[0]' → '[0]'
+					}
 
-          return {
-            ...error,
-            path: rowPath.join('') + accessorPath, // '$[5].user.name'
-          };
-        });
+					return {
+						...error,
+						path: rowPath.join('') + accessorPath, // '$[5].user.name'
+					};
+				});
 
-        errors.push(...enrichedErrors);
+				errors.push(...enrichedErrors);
 
-        // Use fallback values
-        cells[column.id] = {
-          raw: null,
-          display: stringifyCellValue(null, metadata?.format, metadata?.data_types.at(0)),
-          format: metadata?.format,
-          dataType: metadata?.data_types.at(0),
-        };
+				// Use fallback values
+				cells[column.id] = {
+					raw: null,
+					display: stringifyCellValue(null, metadata?.format, metadata?.data_types.at(0)),
+					format: metadata?.format,
+					dataType: metadata?.data_types.at(0),
+				};
 
-        continue; // Skip to next column
-      }
+				continue; // Skip to next column
+			}
 
-      // Success case - use result.data as rawValue
-      const rawValue = result.data;
+			// Success case - use result.data as rawValue
+			const rawValue = result.data;
 
-      cells[column.id] = {
-        raw: rawValue,
-        display: applyValueMapping(rawValue, metadata),
-        format: metadata?.format,
-        dataType: metadata?.data_types.at(0), // Store primary type for reference
-      };
-    }
+			cells[column.id] = {
+				raw: rawValue,
+				display: applyValueMapping(rawValue, metadata),
+				format: metadata?.format,
+				dataType: metadata?.data_types.at(0), // Store primary type for reference
+			};
+		}
 
-    rows.push({
-      id: rowId,
-      cells,
-    });
-  }
+		rows.push({
+			id: rowId,
+			cells,
+		});
+	}
 
-  // Return accumulated errors if any occurred
-  if (errors.length > 0) {
-    return err(errors);
-  }
+	// Return accumulated errors if any occurred
+	if (errors.length > 0) {
+		return err(errors);
+	}
 
-  return ok(rows);
+	return ok(rows);
 };
 
 /**
@@ -187,34 +187,34 @@ export const bindData = (
  * @returns Display string
  */
 const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): string => {
-  // Handle null/undefined
-  if (rawValue === null || rawValue === undefined) {
-    return '';
-  }
+	// Handle null/undefined
+	if (rawValue === null || rawValue === undefined) {
+		return '';
+	}
 
-  // Check for value mapping first (takes precedence)
-  if (metadata?.value_mappings) {
-    const key = String(rawValue);
-    const mapping = metadata.value_mappings[key];
+	// Check for value mapping first (takes precedence)
+	if (metadata?.value_mappings) {
+		const key = String(rawValue);
+		const mapping = metadata.value_mappings[key];
 
-    if (mapping) {
-      return mapping.display_value;
-    }
-  }
+		if (mapping) {
+			return mapping.display_value;
+		}
+	}
 
-  // Try formatting with each data type in order
-  if (metadata?.data_types && metadata.data_types.length > 0) {
-    for (const dataType of metadata.data_types) {
-      const formatted = stringifyCellValue(rawValue, metadata.format, dataType);
+	// Try formatting with each data type in order
+	if (metadata?.data_types && metadata.data_types.length > 0) {
+		for (const dataType of metadata.data_types) {
+			const formatted = stringifyCellValue(rawValue, metadata.format, dataType);
 
-      // If formatting succeeded (not fallback), use it
-      // Simple heuristic: if it's not the same as String(rawValue), we formatted it
-      if (formatted !== String(rawValue) || dataType === metadata.data_types.at(-1)) {
-        return formatted;
-      }
-    }
-  }
+			// If formatting succeeded (not fallback), use it
+			// Simple heuristic: if it's not the same as String(rawValue), we formatted it
+			if (formatted !== String(rawValue) || dataType === metadata.data_types.at(-1)) {
+				return formatted;
+			}
+		}
+	}
 
-  // Final fallback: stringify with no type hints
-  return stringifyCellValue(rawValue);
+	// Final fallback: stringify with no type hints
+	return stringifyCellValue(rawValue);
 };

@@ -10,17 +10,17 @@ import type {ErrorCode, StructuredError} from '@sigil/src/common/errors/structur
 
 import type {ERROR_CODES} from './codes';
 import type {
-  EmptyLayoutContext,
-  ExpectedSingleValueContext,
-  FieldRequiredContext,
-  InvalidAccessorContext,
-  MissingArrayPropertyContext,
-  MissingComponentContext,
-  NotArrayContext,
-  QueryErrorContext,
-  TypeMismatchContext,
-  UnknownLayoutChildTypeContext,
-  UnknownLayoutTypeContext,
+	EmptyLayoutContext,
+	ExpectedSingleValueContext,
+	FieldRequiredContext,
+	InvalidAccessorContext,
+	MissingArrayPropertyContext,
+	MissingComponentContext,
+	NotArrayContext,
+	QueryErrorContext,
+	TypeMismatchContext,
+	UnknownLayoutChildTypeContext,
+	UnknownLayoutTypeContext,
 } from './contexts';
 
 /**

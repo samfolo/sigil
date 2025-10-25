@@ -19,33 +19,33 @@ export interface ListData {
  * Standard execution states for testing
  */
 export const FIRST_ATTEMPT_STATE: AgentExecutionState = {
-  attempt: 1,
-  maxAttempts: 3,
+	attempt: 1,
+	maxAttempts: 3,
 };
 
 export const SECOND_ATTEMPT_STATE: AgentExecutionState = {
-  attempt: 2,
-  maxAttempts: 3,
+	attempt: 2,
+	maxAttempts: 3,
 };
 
 export const FINAL_ATTEMPT_STATE: AgentExecutionState = {
-  attempt: 3,
-  maxAttempts: 3,
+	attempt: 3,
+	maxAttempts: 3,
 };
 
 /**
  * Sample data for testing
  */
 export const SIMPLE_DATA: SimpleData = {
-  message: 'Hello, world!',
+	message: 'Hello, world!',
 };
 
 export const QUERY_DATA: QueryData = {
-  query: 'Analyse sales data',
+	query: 'Analyse sales data',
 };
 
 export const LIST_DATA: ListData = {
-  items: ['first', 'second', 'third'],
+	items: ['first', 'second', 'third'],
 };
 
 /**

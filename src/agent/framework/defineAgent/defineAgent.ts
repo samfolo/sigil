@@ -287,100 +287,100 @@ export interface AgentDefinition<Input, Output> {
  * ```
  */
 export const defineAgent = <Input, Output>(
-  definition: AgentDefinition<Input, Output>
+	definition: AgentDefinition<Input, Output>
 ): Result<Readonly<AgentDefinition<Input, Output>>, AgentError[]> => {
-  const errors: AgentError[] = [];
+	const errors: AgentError[] = [];
 
-  // Validate name
-  if (!definition.name || definition.name.trim() === '') {
-    errors.push({
-      code: AGENT_ERROR_CODES.EMPTY_NAME,
-      severity: 'error',
-      category: 'validation',
-      context: {
-        providedValue: definition.name,
-      },
-    });
-  }
+	// Validate name
+	if (!definition.name || definition.name.trim() === '') {
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_NAME,
+			severity: 'error',
+			category: 'validation',
+			context: {
+				providedValue: definition.name,
+			},
+		});
+	}
 
-  // Validate description
-  if (!definition.description || definition.description.trim() === '') {
-    errors.push({
-      code: AGENT_ERROR_CODES.EMPTY_DESCRIPTION,
-      severity: 'error',
-      category: 'validation',
-      context: {
-        providedValue: definition.description,
-      },
-    });
-  }
+	// Validate description
+	if (!definition.description || definition.description.trim() === '') {
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_DESCRIPTION,
+			severity: 'error',
+			category: 'validation',
+			context: {
+				providedValue: definition.description,
+			},
+		});
+	}
 
-  // Validate model name
-  if (!definition.model.name || definition.model.name.trim() === '') {
-    errors.push({
-      code: AGENT_ERROR_CODES.EMPTY_MODEL_NAME,
-      severity: 'error',
-      category: 'validation',
-      path: '$.model.name',
-      context: {
-        providedValue: definition.model.name,
-      },
-    });
-  }
+	// Validate model name
+	if (!definition.model.name || definition.model.name.trim() === '') {
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_MODEL_NAME,
+			severity: 'error',
+			category: 'validation',
+			path: '$.model.name',
+			context: {
+				providedValue: definition.model.name,
+			},
+		});
+	}
 
-  // Validate output schema
-  if (!definition.validation.outputSchema) {
-    errors.push({
-      code: AGENT_ERROR_CODES.MISSING_OUTPUT_SCHEMA,
-      severity: 'error',
-      category: 'validation',
-      path: '$.validation.outputSchema',
-      context: {},
-    });
-  }
+	// Validate output schema
+	if (!definition.validation.outputSchema) {
+		errors.push({
+			code: AGENT_ERROR_CODES.MISSING_OUTPUT_SCHEMA,
+			severity: 'error',
+			category: 'validation',
+			path: '$.validation.outputSchema',
+			context: {},
+		});
+	}
 
-  // Validate max attempts
-  if (
-    definition.validation.maxAttempts < AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS
-  ) {
-    errors.push({
-      code: AGENT_ERROR_CODES.INVALID_MAX_ATTEMPTS,
-      severity: 'error',
-      category: 'validation',
-      path: '$.validation.maxAttempts',
-      context: {
-        providedValue: definition.validation.maxAttempts,
-        minimumValue: AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS,
-      },
-    });
-  }
+	// Validate max attempts
+	if (
+		definition.validation.maxAttempts < AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS
+	) {
+		errors.push({
+			code: AGENT_ERROR_CODES.INVALID_MAX_ATTEMPTS,
+			severity: 'error',
+			category: 'validation',
+			path: '$.validation.maxAttempts',
+			context: {
+				providedValue: definition.validation.maxAttempts,
+				minimumValue: AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS,
+			},
+		});
+	}
 
-  // Return early if validation failed
-  if (errors.length > 0) {
-    return err(errors);
-  }
+	// Return early if validation failed
+	if (errors.length > 0) {
+		return err(errors);
+	}
 
-  // Deep freeze the definition
-  // Freeze model config
-  Object.freeze(definition.model);
+	// Deep freeze the definition
+	// Freeze model config
+	Object.freeze(definition.model);
 
-  // Freeze prompts config
-  Object.freeze(definition.prompts);
+	// Freeze prompts config
+	Object.freeze(definition.prompts);
 
-  // Freeze custom validators array and each validator
-  for (const validator of definition.validation.customValidators) {
-    Object.freeze(validator);
-  }
-  Object.freeze(definition.validation.customValidators);
+	// Freeze custom validators array and each validator
+	for (const validator of definition.validation.customValidators) {
+		Object.freeze(validator);
+	}
+	Object.freeze(definition.validation.customValidators);
 
-  // Freeze validation config
-  Object.freeze(definition.validation);
+	// Freeze validation config
+	Object.freeze(definition.validation);
 
-  // Freeze observability config
-  Object.freeze(definition.observability);
+	// Freeze observability config
+	Object.freeze(definition.observability);
 
-  // Freeze top-level object
-  Object.freeze(definition);
+	// Freeze top-level object
+	Object.freeze(definition);
 
-  return ok(definition);
+	return ok(definition);
 };

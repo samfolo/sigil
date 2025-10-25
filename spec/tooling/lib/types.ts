@@ -23,31 +23,31 @@ export interface JsonSchema {
  * Zod schema for validating config.json structure
  */
 export const ConfigSchema = z.object({
-  $schema: z.string().optional(),
-  version: z.string(),
-  description: z.string().optional(),
-  entryPoint: z.string(),
-  fragments: z.record(
-    z.string(),
-    z.object({
-      path: z.string(),
-      description: z.string(),
-      dependencies: z.array(z.string()),
-    })
-  ),
-  discriminatedUnions: z.array(
-    z.object({
-      name: z.string(),
-      location: z.string(),
-      discriminator: z.string(),
-      variants: z.array(
-        z.object({
-          value: z.string(),
-          type: z.string(),
-        })
-      ),
-    })
-  ),
+	$schema: z.string().optional(),
+	version: z.string(),
+	description: z.string().optional(),
+	entryPoint: z.string(),
+	fragments: z.record(
+		z.string(),
+		z.object({
+			path: z.string(),
+			description: z.string(),
+			dependencies: z.array(z.string()),
+		})
+	),
+	discriminatedUnions: z.array(
+		z.object({
+			name: z.string(),
+			location: z.string(),
+			discriminator: z.string(),
+			variants: z.array(
+				z.object({
+					value: z.string(),
+					type: z.string(),
+				})
+			),
+		})
+	),
 });
 
 /**

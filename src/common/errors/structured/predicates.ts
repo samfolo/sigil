@@ -24,19 +24,19 @@ import type {StructuredError} from './types';
  * ```
  */
 export const isStructuredErrorArray = <Code extends string, Category extends string, Context>(
-  value: unknown,
-  validCodes: ReadonlySet<string>
+	value: unknown,
+	validCodes: ReadonlySet<string>
 ): value is StructuredError<Code, Category, Context>[] => {
-  if (!Array.isArray(value) || value.length === 0) {
-    return false;
-  }
+	if (!Array.isArray(value) || value.length === 0) {
+		return false;
+	}
 
-  // Check first element has required StructuredError properties
-  const firstItem = value.at(0);
-  if (!firstItem || typeof firstItem !== 'object' || !('code' in firstItem)) {
-    return false;
-  }
+	// Check first element has required StructuredError properties
+	const firstItem = value.at(0);
+	if (!firstItem || typeof firstItem !== 'object' || !('code' in firstItem)) {
+		return false;
+	}
 
-  // Validate that the code matches one of the valid domain codes (O(1) lookup)
-  return validCodes.has(firstItem.code as string);
+	// Validate that the code matches one of the valid domain codes (O(1) lookup)
+	return validCodes.has(firstItem.code as string);
 };

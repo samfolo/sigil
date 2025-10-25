@@ -25,21 +25,21 @@ const fragmentsDir = resolve(specDir, 'schema/fragments');
  * Main execution
  */
 const main = () => {
-  console.log('🔄 Bundling schema fragments...\n');
+	console.log('🔄 Bundling schema fragments...\n');
 
-  try {
-    const bundled = bundleSchemas(fragmentsDir);
+	try {
+		const bundled = bundleSchemas(fragmentsDir);
 
-    const outputPath = resolve(specDir, 'schema/specification.schema.json');
-    writeJson(outputPath, bundled);
+		const outputPath = resolve(specDir, 'schema/specification.schema.json');
+		writeJson(outputPath, bundled);
 
-    console.log('\n✓ Schema bundled successfully!');
-    console.log(`   Output: ${outputPath}`);
-    console.log(`   Total definitions: ${Object.keys(bundled.definitions || {}).length}`);
-  } catch (error) {
-    console.error('× Error bundling schema:', error);
-    process.exit(1);
-  }
+		console.log('\n✓ Schema bundled successfully!');
+		console.log(`   Output: ${outputPath}`);
+		console.log(`   Total definitions: ${Object.keys(bundled.definitions || {}).length}`);
+	} catch (error) {
+		console.error('× Error bundling schema:', error);
+		process.exit(1);
+	}
 };
 
 main();

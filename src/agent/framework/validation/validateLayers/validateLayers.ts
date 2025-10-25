@@ -4,10 +4,10 @@ import type {Result, ValidationFailedContext} from '@sigil/src/common/errors';
 import {err, isErr} from '@sigil/src/common/errors';
 
 import type {
-  ValidationLayer,
-  ValidationLayerCallbacks,
-  ValidationLayerFailure,
-  ValidationLayerSuccess,
+	ValidationLayer,
+	ValidationLayerCallbacks,
+	ValidationLayerFailure,
+	ValidationLayerSuccess,
 } from '../types';
 import {deepFreeze, validateWithZod, ZOD_LAYER_METADATA} from '../validators';
 
@@ -18,14 +18,14 @@ import {deepFreeze, validateWithZod, ZOD_LAYER_METADATA} from '../validators';
  * @returns True if error message indicates mutation attempt
  */
 const isMutationError = (error: TypeError): boolean => {
-  const message = error.message.toLowerCase();
-  return (
-    message.includes('read only') ||
+	const message = error.message.toLowerCase();
+	return (
+		message.includes('read only') ||
     message.includes('not extensible') ||
     message.includes('cannot assign') ||
     message.includes('cannot add') ||
     message.includes('cannot delete')
-  );
+	);
 };
 
 /**
@@ -81,108 +81,108 @@ const isMutationError = (error: TypeError): boolean => {
  * ```
  */
 export const validateLayers = async <Output>(
-  output: unknown,
-  schema: z.ZodSchema<Output>,
-  customValidators: ValidationLayer<Output>[],
-  callbacks?: ValidationLayerCallbacks
+	output: unknown,
+	schema: z.ZodSchema<Output>,
+	customValidators: ValidationLayer<Output>[],
+	callbacks?: ValidationLayerCallbacks
 ): Promise<Result<Output, unknown>> => {
-  // Layer 2: Zod schema validation
-  callbacks?.onLayerStart?.({
-    ...ZOD_LAYER_METADATA,
-    type: 'zod',
-  });
+	// Layer 2: Zod schema validation
+	callbacks?.onLayerStart?.({
+		...ZOD_LAYER_METADATA,
+		type: 'zod',
+	});
 
-  const zodResult = validateWithZod(output, schema);
+	const zodResult = validateWithZod(output, schema);
 
-  if (isErr(zodResult)) {
-    const failure: ValidationLayerFailure = {
-      ...ZOD_LAYER_METADATA,
-      type: 'zod',
-      success: false,
-      error: zodResult.error,
-    };
-    callbacks?.onLayerComplete?.(failure);
-    return zodResult;
-  }
+	if (isErr(zodResult)) {
+		const failure: ValidationLayerFailure = {
+			...ZOD_LAYER_METADATA,
+			type: 'zod',
+			success: false,
+			error: zodResult.error,
+		};
+		callbacks?.onLayerComplete?.(failure);
+		return zodResult;
+	}
 
-  const success: ValidationLayerSuccess = {
-    ...ZOD_LAYER_METADATA,
-    type: 'zod',
-    success: true,
-  };
-  callbacks?.onLayerComplete?.(success);
+	const success: ValidationLayerSuccess = {
+		...ZOD_LAYER_METADATA,
+		type: 'zod',
+		success: true,
+	};
+	callbacks?.onLayerComplete?.(success);
 
-  // Deep freeze the validated output to prevent mutations
-  const frozenOutput = deepFreeze(zodResult.data);
+	// Deep freeze the validated output to prevent mutations
+	const frozenOutput = deepFreeze(zodResult.data);
 
-  // Layer 3+: Custom validators (sequential, fail-fast)
-  for (const validator of customValidators) {
-    callbacks?.onLayerStart?.({
-      name: validator.name,
-      description: validator.description,
-      type: 'custom',
-    });
+	// Layer 3+: Custom validators (sequential, fail-fast)
+	for (const validator of customValidators) {
+		callbacks?.onLayerStart?.({
+			name: validator.name,
+			description: validator.description,
+			type: 'custom',
+		});
 
-    try {
-      const validationResult = await validator.validate(frozenOutput);
+		try {
+			const validationResult = await validator.validate(frozenOutput);
 
-      if (isErr(validationResult)) {
-        const failure: ValidationLayerFailure = {
-          name: validator.name,
-          description: validator.description,
-          type: 'custom',
-          success: false,
-          error: validationResult.error,
-        };
-        callbacks?.onLayerComplete?.(failure);
-        return validationResult;
-      }
+			if (isErr(validationResult)) {
+				const failure: ValidationLayerFailure = {
+					name: validator.name,
+					description: validator.description,
+					type: 'custom',
+					success: false,
+					error: validationResult.error,
+				};
+				callbacks?.onLayerComplete?.(failure);
+				return validationResult;
+			}
 
-      const success: ValidationLayerSuccess = {
-        name: validator.name,
-        description: validator.description,
-        type: 'custom',
-        success: true,
-      };
-      callbacks?.onLayerComplete?.(success);
-    } catch (error) {
-      // Check if this is a mutation error
-      if (
-        error instanceof TypeError &&
+			const success: ValidationLayerSuccess = {
+				name: validator.name,
+				description: validator.description,
+				type: 'custom',
+				success: true,
+			};
+			callbacks?.onLayerComplete?.(success);
+		} catch (error) {
+			// Check if this is a mutation error
+			if (
+				error instanceof TypeError &&
         Object.isFrozen(frozenOutput) &&
         isMutationError(error)
-      ) {
-        const mutationError: ValidationFailedContext = {
-          layer: validator.name,
-          reason:
+			) {
+				const mutationError: ValidationFailedContext = {
+					layer: validator.name,
+					reason:
             'Validator attempted to mutate input. Validators must not modify the input object.',
-        };
+				};
 
-        const failure: ValidationLayerFailure = {
-          name: validator.name,
-          description: validator.description,
-          type: 'custom',
-          success: false,
-          error: mutationError,
-        };
-        callbacks?.onLayerComplete?.(failure);
+				const failure: ValidationLayerFailure = {
+					name: validator.name,
+					description: validator.description,
+					type: 'custom',
+					success: false,
+					error: mutationError,
+				};
+				callbacks?.onLayerComplete?.(failure);
 
-        return err(mutationError);
-      }
+				return err(mutationError);
+			}
 
-      // Other errors
-      const failure: ValidationLayerFailure = {
-        name: validator.name,
-        description: validator.description,
-        type: 'custom',
-        success: false,
-        error,
-      };
-      callbacks?.onLayerComplete?.(failure);
+			// Other errors
+			const failure: ValidationLayerFailure = {
+				name: validator.name,
+				description: validator.description,
+				type: 'custom',
+				success: false,
+				error,
+			};
+			callbacks?.onLayerComplete?.(failure);
 
-      return err(error);
-    }
-  }
+			return err(error);
+		}
+	}
 
-  return zodResult;
+	return zodResult;
 };

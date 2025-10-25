@@ -19,47 +19,47 @@ import {VALID_LAYOUT_TYPES} from '../constants/constants';
  * @returns Result containing the first child element, or array of structured errors
  */
 export const extractFirstLayoutChild = (layout: LayoutNode): Result<LayoutChild, SpecError[]> => {
-  switch (layout.type) {
-    case 'stack': {
-      const child = layout.children.at(0);
-      if (!child) {
-        return err([{
-          code: ERROR_CODES.EMPTY_LAYOUT,
-          severity: 'error',
-          category: 'spec',
-          path: '$.root.layout',
-          context: {layoutType: 'stack'}
-        }]);
-      }
-      return ok(child);
-    }
+	switch (layout.type) {
+		case 'stack': {
+			const child = layout.children.at(0);
+			if (!child) {
+				return err([{
+					code: ERROR_CODES.EMPTY_LAYOUT,
+					severity: 'error',
+					category: 'spec',
+					path: '$.root.layout',
+					context: {layoutType: 'stack'}
+				}]);
+			}
+			return ok(child);
+		}
 
-    case 'grid': {
-      const gridCell = layout.children.at(0);
-      if (!gridCell) {
-        return err([{
-          code: ERROR_CODES.EMPTY_LAYOUT,
-          severity: 'error',
-          category: 'spec',
-          path: '$.root.layout',
-          context: {layoutType: 'grid'}
-        }]);
-      }
-      return ok(gridCell.element);
-    }
+		case 'grid': {
+			const gridCell = layout.children.at(0);
+			if (!gridCell) {
+				return err([{
+					code: ERROR_CODES.EMPTY_LAYOUT,
+					severity: 'error',
+					category: 'spec',
+					path: '$.root.layout',
+					context: {layoutType: 'grid'}
+				}]);
+			}
+			return ok(gridCell.element);
+		}
 
-    default: {
-      const _exhaustive: never = layout;
-      const layoutType = (_exhaustive as {type: string}).type;
-      const suggestion = generateFieldNameSimilaritySuggestion(layoutType, [...VALID_LAYOUT_TYPES]);
-      return err([{
-        code: ERROR_CODES.UNKNOWN_LAYOUT_TYPE,
-        severity: 'error',
-        category: 'spec',
-        path: '$.root.layout',
-        context: {layoutType, validTypes: [...VALID_LAYOUT_TYPES]},
-        suggestion
-      }]);
-    }
-  }
+		default: {
+			const _exhaustive: never = layout;
+			const layoutType = (_exhaustive as {type: string}).type;
+			const suggestion = generateFieldNameSimilaritySuggestion(layoutType, [...VALID_LAYOUT_TYPES]);
+			return err([{
+				code: ERROR_CODES.UNKNOWN_LAYOUT_TYPE,
+				severity: 'error',
+				category: 'spec',
+				path: '$.root.layout',
+				context: {layoutType, validTypes: [...VALID_LAYOUT_TYPES]},
+				suggestion
+			}]);
+		}
+	}
 };

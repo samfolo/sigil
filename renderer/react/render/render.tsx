@@ -29,28 +29,28 @@ import {DataTable} from '../components';
  * @throws Error if rendering fails (converts Result errors to exceptions for React error boundaries)
  */
 export const render = (spec: ComponentSpec, data: unknown[]): ReactElement => {
-  const renderTreeResult = buildRenderTree(spec, data);
+	const renderTreeResult = buildRenderTree(spec, data);
 
-  // Convert Result error to exception for React error boundary handling
-  if (!renderTreeResult.success) {
-    // Handle union type: SpecError[] | string
-    if (Array.isArray(renderTreeResult.error)) {
-      // Structured errors that model can fix - use SpecProcessingError
-      throw new SpecProcessingError(renderTreeResult.error);
-    } else {
-      // Feature limitation - use plain Error
-      throw new Error(`Failed to build render tree: ${renderTreeResult.error}`);
-    }
-  }
+	// Convert Result error to exception for React error boundary handling
+	if (!renderTreeResult.success) {
+		// Handle union type: SpecError[] | string
+		if (Array.isArray(renderTreeResult.error)) {
+			// Structured errors that model can fix - use SpecProcessingError
+			throw new SpecProcessingError(renderTreeResult.error);
+		} else {
+			// Feature limitation - use plain Error
+			throw new Error(`Failed to build render tree: ${renderTreeResult.error}`);
+		}
+	}
 
-  const renderTree = renderTreeResult.data;
+	const renderTree = renderTreeResult.data;
 
-  // Switch on RenderNode type for type narrowing
-  switch (renderTree.type) {
-    case 'data-table':
-      return <DataTable {...renderTree.props} />;
+	// Switch on RenderNode type for type narrowing
+	switch (renderTree.type) {
+		case 'data-table':
+			return <DataTable {...renderTree.props} />;
 
-    default:
-      throw new Error(`Unknown render node type: ${renderTree.type}`);
-  }
+		default:
+			throw new Error(`Unknown render node type: ${renderTree.type}`);
+	}
 };

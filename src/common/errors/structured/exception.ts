@@ -25,25 +25,25 @@ export class StructuredErrorException<
   Category extends string,
   Context
 > extends Error {
-  /**
+	/**
    * Structured errors that caused the processing failure
    */
-  public readonly errors: StructuredError<Code, Category, Context>[];
+	public readonly errors: StructuredError<Code, Category, Context>[];
 
-  /**
+	/**
    * Creates a new structured error exception
    *
    * @param errors - Array of structured errors
    * @param message - Optional custom message (if not provided, subclasses should format errors)
    * @param name - Name of the exception (defaults to 'StructuredErrorException')
    */
-  constructor(
-    errors: StructuredError<Code, Category, Context>[],
-    message?: string,
-    name: string = 'StructuredErrorException'
-  ) {
-    super(message);
-    this.name = name;
-    this.errors = errors;
-  }
+	constructor(
+		errors: StructuredError<Code, Category, Context>[],
+		message?: string,
+		name: string = 'StructuredErrorException'
+	) {
+		super(message);
+		this.name = name;
+		this.errors = errors;
+	}
 }

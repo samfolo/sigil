@@ -14,17 +14,17 @@ interface ChatPromptParams {
  * Generate the system prompt for chat-based data analysis
  */
 export const buildChatSystemPrompt = ({
-  dataType,
-  description,
-  dataStructureInfo,
-  recordCount,
-  keyFields,
-  recommendedVisualisation,
-  rationale,
+	dataType,
+	description,
+	dataStructureInfo,
+	recordCount,
+	keyFields,
+	recommendedVisualisation,
+	rationale,
 }: ChatPromptParams): string => {
-  const isGeoJSON = dataStructureInfo.includes('GeoJSON');
+	const isGeoJSON = dataStructureInfo.includes('GeoJSON');
 
-  return `You are a data analysis assistant. The user is currently viewing a dataset with the following properties:
+	return `You are a data analysis assistant. The user is currently viewing a dataset with the following properties:
 
 Data Type: ${dataType}
 Description: ${description}
