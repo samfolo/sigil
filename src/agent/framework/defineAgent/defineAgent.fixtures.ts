@@ -41,11 +41,11 @@ export const VALID_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
 			`You are a test agent processing: ${input}`,
-		user: async (input: string) =>
+		user: async (input: string, _signal?: AbortSignal) =>
 			`Please process this input: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Attempt ${state.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
 	},
 	validation: {
@@ -74,11 +74,11 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 		maxTokens: 2048,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
 			`You are an advanced agent. System context: ${input}`,
-		user: async (input: string) =>
+		user: async (input: string, _signal?: AbortSignal) =>
 			`Process this with full validation: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease correct these issues.`,
 	},
 	validation: {
@@ -87,7 +87,7 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 			{
 				name: 'result-length-validator',
 				description: 'Result must be at least 10 characters',
-				validate: async (output) => {
+				validate: async (output, _signal?: AbortSignal) => {
 					if (output.result.length < 10) {
 						return err('Result must be at least 10 characters');
 					}
@@ -97,7 +97,7 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 			{
 				name: 'no-empty-result-validator',
 				description: 'Result cannot be empty or whitespace only',
-				validate: async (output) => {
+				validate: async (output, _signal?: AbortSignal) => {
 					if (output.result.trim() === '') {
 						return err('Result cannot be empty or whitespace only');
 					}
@@ -130,9 +130,9 @@ export const INVALID_EMPTY_NAME: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string) => `User: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) => `System: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
 	validation: {
@@ -163,9 +163,9 @@ export const INVALID_WHITESPACE_NAME: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string) => `User: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) => `System: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
 	validation: {
@@ -196,9 +196,9 @@ export const INVALID_EMPTY_DESCRIPTION: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string) => `User: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) => `System: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
 	validation: {
@@ -230,10 +230,10 @@ export const INVALID_WHITESPACE_DESCRIPTION: AgentDefinition<string, TestOutput>
   		maxTokens: 1024,
   	},
   	prompts: {
-  		system: async (input: string, _state: AgentExecutionState) =>
+  		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
   			`System: ${input}`,
-  		user: async (input: string) => `User: ${input}`,
-  		error: async (errorMessage: string, state: AgentExecutionState) =>
+  		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+  		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
   	},
   	validation: {
@@ -264,9 +264,9 @@ export const INVALID_EMPTY_MODEL_NAME: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string) => `User: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) => `System: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
 	validation: {
@@ -298,10 +298,10 @@ export const INVALID_WHITESPACE_MODEL_NAME: AgentDefinition<string, TestOutput> 
   		maxTokens: 1024,
   	},
   	prompts: {
-  		system: async (input: string, _state: AgentExecutionState) =>
+  		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
   			`System: ${input}`,
-  		user: async (input: string) => `User: ${input}`,
-  		error: async (errorMessage: string, state: AgentExecutionState) =>
+  		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+  		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
   	},
   	validation: {
@@ -332,9 +332,9 @@ export const INVALID_ZERO_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string) => `User: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) => `System: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
 	validation: {
@@ -366,10 +366,10 @@ export const INVALID_NEGATIVE_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> 
   		maxTokens: 1024,
   	},
   	prompts: {
-  		system: async (input: string, _state: AgentExecutionState) =>
+  		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
   			`System: ${input}`,
-  		user: async (input: string) => `User: ${input}`,
-  		error: async (errorMessage: string, state: AgentExecutionState) =>
+  		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+  		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
   	},
   	validation: {
@@ -404,10 +404,10 @@ export const INVALID_MISSING_OUTPUT_SCHEMA: AgentDefinition<string, TestOutput> 
   		maxTokens: 1024,
   	},
   	prompts: {
-  		system: async (input: string, _state: AgentExecutionState) =>
+  		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
   			`System: ${input}`,
-  		user: async (input: string) => `User: ${input}`,
-  		error: async (errorMessage: string, state: AgentExecutionState) =>
+  		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+  		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
   	},
   	validation: {
@@ -442,9 +442,9 @@ export const INVALID_MULTIPLE_ERRORS: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string) => `User: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) => `System: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
 	validation: {

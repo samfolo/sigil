@@ -820,5 +820,140 @@ describe('executeAgent', () => {
 				}
 			});
 		});
+
+		describe('Cancellation support', () => {
+			it('should return EXECUTION_CANCELLED when signal is already aborted before execution', async () => {
+				const abortController = new AbortController();
+				abortController.abort();
+
+				const result = await executeAgent(VALID_MINIMAL_AGENT, {
+					input: 'test input',
+					signal: abortController.signal,
+				});
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					const error = result.error.errors.at(0);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+					expect(error?.category).toBe('execution');
+
+					if (error?.code === AGENT_ERROR_CODES.EXECUTION_CANCELLED) {
+						expect(error.context.attempt).toBe(0);
+						expect(error.context.phase).toBe('prompt_generation');
+					}
+
+					// Should still have metadata
+					expect(result.error.metadata).toBeDefined();
+				}
+			});
+
+			it('should return EXECUTION_CANCELLED when aborted during retry loop', async () => {
+				const abortController = new AbortController();
+
+				// First call: return invalid response with delay, abort during that delay
+				// This ensures abort happens after first attempt but before second
+				createMockApiCalls(mockMessagesCreate, [
+					{
+						type: 'custom',
+						response: (() => {
+							// Schedule abort to happen after response returns
+							setTimeout(() => {
+								abortController.abort();
+							}, 5);
+							return createInvalidResponse();
+						})(),
+						delay: 10,
+					},
+				]);
+
+				const result = await executeAgent(VALID_COMPLETE_AGENT, {
+					input: 'test input',
+					signal: abortController.signal,
+				});
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					const error = result.error.errors.at(0);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+
+					if (error?.code === AGENT_ERROR_CODES.EXECUTION_CANCELLED) {
+						expect(error.context.attempt).toBe(1);
+						// Abort happens during validation of first attempt's response
+						expect(error.context.phase).toBe('validation');
+					}
+				}
+			});
+
+			it('should include correct phase context when cancelled before execution', async () => {
+				const abortController = new AbortController();
+				abortController.abort();
+
+				const result = await executeAgent(VALID_MINIMAL_AGENT, {
+					input: 'test input',
+					signal: abortController.signal,
+				});
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					const error = result.error.errors.at(0);
+
+					if (error?.code === AGENT_ERROR_CODES.EXECUTION_CANCELLED) {
+						// Aborted before execution started, should be in prompt_generation phase
+						expect(error.context.phase).toBe('prompt_generation');
+					}
+				}
+			});
+
+			it('should populate metadata even when cancelled', async () => {
+				const abortController = new AbortController();
+				abortController.abort();
+
+				const result = await executeAgent(VALID_COMPLETE_AGENT, {
+					input: 'test input',
+					signal: abortController.signal,
+				});
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					// Metadata should be populated for observability
+					expect(result.error.metadata).toBeDefined();
+					expect(result.error.metadata?.latency).toBeTypeOf('number');
+					expect(result.error.metadata?.tokens).toBeDefined();
+				}
+			});
+
+			it('should not invoke callbacks after cancellation', async () => {
+				const abortController = new AbortController();
+				abortController.abort();
+
+				const callbackInvocations: string[] = [];
+
+				const result = await executeAgent(VALID_MINIMAL_AGENT, {
+					input: 'test input',
+					signal: abortController.signal,
+					callbacks: {
+						onAttemptStart: () => {
+							callbackInvocations.push('onAttemptStart');
+						},
+						onSuccess: () => {
+							callbackInvocations.push('onSuccess');
+						},
+						onFailure: () => {
+							callbackInvocations.push('onFailure');
+						},
+					},
+				});
+
+				expect(isErr(result)).toBe(true);
+
+				// No success/failure callbacks should be invoked
+				expect(callbackInvocations).not.toContain('onSuccess');
+				expect(callbackInvocations).not.toContain('onFailure');
+			});
+		});
 	});
 });

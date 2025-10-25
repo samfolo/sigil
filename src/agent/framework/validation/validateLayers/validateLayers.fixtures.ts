@@ -94,7 +94,7 @@ export const createPassingValidator = (
 ): ValidationLayer<TestOutput> => ({
 	name,
 	description,
-	validate: async (output) => ok(output),
+	validate: async (output, _signal?: AbortSignal) => ok(output),
 });
 
 /**
@@ -122,7 +122,7 @@ export const createFailingValidator = (
 ): ValidationLayer<TestOutput> => ({
 	name,
 	description,
-	validate: async (_output) => err(new Error(errorMessage)),
+	validate: async (_output, _signal?: AbortSignal) => err(new Error(errorMessage)),
 });
 
 /**
@@ -159,7 +159,7 @@ export const createConditionalValidator = (
 ): ValidationLayer<TestOutput> => ({
 	name,
 	description,
-	validate: async (output) => {
+	validate: async (output, _signal?: AbortSignal) => {
 		if (predicate(output)) {
 			return ok(output);
 		}

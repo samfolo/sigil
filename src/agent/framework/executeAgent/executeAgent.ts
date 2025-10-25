@@ -59,8 +59,9 @@ export interface ExecuteMetadata {
 /**
  * Callback functions for monitoring agent execution progress
  *
- * All callbacks receive an optional AbortSignal to allow cancellation of
- * long-running observability operations (e.g., logging to external services).
+ * Callbacks are synchronous, fire-and-forget observability hooks. They should
+ * be lightweight operations like logging or metrics collection. For async operations,
+ * use non-blocking patterns (e.g., `void asyncOperation().catch(handleError)`).
  *
  * @template Output - The type of validated output the agent produces
  */
@@ -69,39 +70,34 @@ export interface ExecuteCallbacks<Output> {
    * Called when an execution attempt starts
    *
    * @param state - Execution state containing attempt number and max attempts
-   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onAttemptStart?: (state: AgentExecutionState, signal?: AbortSignal) => void;
+  onAttemptStart?: (state: AgentExecutionState) => void;
 
   /**
    * Called when an execution attempt completes
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param success - Whether the attempt succeeded validation
-   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onAttemptComplete?: (state: AgentExecutionState, success: boolean, signal?: AbortSignal) => void;
+  onAttemptComplete?: (state: AgentExecutionState, success: boolean) => void;
 
   /**
    * Called when output validation fails
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param errors - Validation errors from the output schema
-   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onValidationFailure?: (state: AgentExecutionState, errors: unknown, signal?: AbortSignal) => void;
+  onValidationFailure?: (state: AgentExecutionState, errors: unknown) => void;
 
   /**
    * Called when a validation layer starts execution
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param layer - Metadata about the layer being executed
-   * @param signal - Optional AbortSignal to cancel callback operations
    */
   onValidationLayerStart?: (
     state: AgentExecutionState,
-    layer: ValidationLayerMetadata,
-    signal?: AbortSignal
+    layer: ValidationLayerMetadata
   ) => void;
 
   /**
@@ -109,29 +105,25 @@ export interface ExecuteCallbacks<Output> {
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param layer - Result of the layer execution (discriminated union)
-   * @param signal - Optional AbortSignal to cancel callback operations
    */
   onValidationLayerComplete?: (
     state: AgentExecutionState,
-    layer: ValidationLayerResult,
-    signal?: AbortSignal
+    layer: ValidationLayerResult
   ) => void;
 
   /**
    * Called when agent execution succeeds
    *
    * @param output - The validated output from the agent
-   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onSuccess?: (output: Output, signal?: AbortSignal) => void;
+  onSuccess?: (output: Output) => void;
 
   /**
    * Called when agent execution fails after all attempts
    *
    * @param errors - Array of AgentError describing what went wrong
-   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onFailure?: (errors: AgentError[], signal?: AbortSignal) => void;
+  onFailure?: (errors: AgentError[]) => void;
 }
 
 /**
@@ -362,25 +354,22 @@ interface BuildMetadataOptions {
  *
  * Wraps callback invocations in try-catch to prevent callback failures from
  * breaking agent execution. Collects any callback errors for inclusion in metadata.
- * Passes the AbortSignal to callbacks to allow cancellation of observability operations.
  *
  * @param callback - The callback function to invoke (may be undefined)
  * @param args - Arguments to pass to the callback
  * @param callbackErrors - Array to collect any errors that occur
- * @param signal - Optional AbortSignal to pass to callback
  */
 const safeInvokeCallback = <Args extends unknown[]>(
-	callback: ((...args: [...Args, AbortSignal?]) => void) | undefined,
+	callback: ((...args: Args) => void) | undefined,
 	args: Args,
-	callbackErrors: Error[],
-	signal?: AbortSignal
+	callbackErrors: Error[]
 ): void => {
 	if (!callback) {
 		return;
 	}
 
 	try {
-		callback(...args, signal);
+		callback(...args);
 	} catch (error) {
 		callbackErrors.push(
 			error instanceof Error ? error : new Error(String(error))
