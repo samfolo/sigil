@@ -2,7 +2,7 @@
  * Tests for executeAgent function
  */
 
-import {describe, expect, it, vi} from 'vitest';
+import {describe, expect, it, vi, beforeEach} from 'vitest';
 
 import {
 	isErr,
@@ -10,35 +10,19 @@ import {
 	AGENT_ERROR_CODES,
 } from '@sigil/src/common/errors';
 
+// Create a mock messages.create function that we can control
+const mockMessagesCreate = vi.fn();
+
 // Mock the Anthropic client to avoid real API calls in tests
 vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 	createAnthropicClient: vi.fn(() => ({
 		messages: {
-			create: vi.fn(async () => ({
-				id: 'msg_test123',
-				type: 'message',
-				role: 'assistant',
-				model: 'claude-sonnet-4-5-20250929',
-				content: [
-					{
-						type: 'tool_use',
-						id: 'toolu_test123',
-						name: 'generate_output',
-						input: {result: 'success result'},
-					},
-				],
-				stop_reason: 'end_turn',
-				stop_sequence: null,
-				usage: {
-					input_tokens: 100,
-					output_tokens: 50,
-				},
-			})),
+			create: mockMessagesCreate,
 		},
 	})),
 }));
 
-import {VALID_MINIMAL_AGENT} from '../defineAgent/defineAgent.fixtures';
+import {VALID_MINIMAL_AGENT, VALID_COMPLETE_AGENT} from '../defineAgent/defineAgent.fixtures';
 
 import {executeAgent} from './executeAgent';
 import {
@@ -48,7 +32,64 @@ import {
 	createExecuteOptionsWithCallbackTracking,
 } from './executeAgent.fixtures';
 
+/**
+ * Helper to create a successful API response
+ */
+const createSuccessResponse = (result = 'success result', inputTokens = 100, outputTokens = 50) => ({
+	id: 'msg_test123',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_test123',
+			name: 'generate_output',
+			input: {result},
+		},
+	],
+	stop_reason: 'end_turn' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
+
+/**
+ * Helper to create a response with validation failure (too short)
+ * This will fail VALID_COMPLETE_AGENT's custom validator requiring 10+ chars
+ */
+const createInvalidResponse = (inputTokens = 100, outputTokens = 50) => ({
+	id: 'msg_test456',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_test456',
+			name: 'generate_output',
+			input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
+		},
+	],
+	stop_reason: 'end_turn' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
+
 describe('executeAgent', () => {
+	beforeEach(() => {
+		// Reset mock before each test
+		mockMessagesCreate.mockReset();
+
+		// Default: return success on first call
+		mockMessagesCreate.mockResolvedValue(createSuccessResponse());
+	});
+
 	describe('Type Safety', () => {
 		it('should preserve generic type parameters', async () => {
 			const result = await executeAgent(
@@ -76,9 +117,8 @@ describe('executeAgent', () => {
 		});
 	});
 
-	describe.skip('Future Implementation Tests', () => {
+	describe('Future Implementation Tests', () => {
 		// These tests define expected behaviour for the full implementation.
-		// Unskip and implement when executeAgent logic is added.
 
 		describe('Successful execution', () => {
 			it('should return success Result on first attempt', async () => {
@@ -125,8 +165,9 @@ describe('executeAgent', () => {
 			});
 
 			it('should populate metadata (latency, tokens)', async () => {
+				// Use VALID_COMPLETE_AGENT which has observability enabled
 				const result = await executeAgent(
-					VALID_MINIMAL_AGENT,
+					VALID_COMPLETE_AGENT,
 					VALID_EXECUTE_OPTIONS
 				);
 
@@ -144,9 +185,14 @@ describe('executeAgent', () => {
 
 		describe('Retry logic', () => {
 			it('should retry on validation failure', async () => {
-				// Mock validation failure on first attempt, success on second
+				// Use VALID_COMPLETE_AGENT which has custom validators
+				// Mock: first call returns invalid (too short), second returns valid
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+
 				const result = await executeAgent(
-					VALID_MINIMAL_AGENT,
+					VALID_COMPLETE_AGENT,
 					VALID_EXECUTE_OPTIONS
 				);
 
@@ -158,9 +204,15 @@ describe('executeAgent', () => {
 			});
 
 			it('should increment attempt counter', async () => {
-				// Mock multiple validation failures
+				// Use VALID_COMPLETE_AGENT which has custom validators
+				// Mock: first two calls return invalid, third returns valid
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+
 				const result = await executeAgent(
-					VALID_MINIMAL_AGENT,
+					VALID_COMPLETE_AGENT,
 					VALID_EXECUTE_OPTIONS
 				);
 
@@ -186,10 +238,15 @@ describe('executeAgent', () => {
 			});
 
 			it('should invoke onValidationFailure callback', async () => {
+				// Use VALID_COMPLETE_AGENT and set up failure then success
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+
 				const {options, invocations} =
 					createExecuteOptionsWithCallbackTracking();
 
-				await executeAgent(VALID_MINIMAL_AGENT, options);
+				await executeAgent(VALID_COMPLETE_AGENT, options);
 
 				const validationFailures = invocations.filter(
 					(i) => i.type === 'onValidationFailure'
@@ -201,9 +258,11 @@ describe('executeAgent', () => {
 
 		describe('Max attempts exceeded', () => {
 			it('should return error Result after max attempts', async () => {
-				// Mock validation failure on all attempts
+				// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
+				mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+
 				const result = await executeAgent(
-					VALID_MINIMAL_AGENT,
+					VALID_COMPLETE_AGENT,
 					VALID_EXECUTE_OPTIONS
 				);
 
@@ -211,9 +270,12 @@ describe('executeAgent', () => {
 			});
 
 			it('should return AgentError with MAX_ATTEMPTS_EXCEEDED code', async () => {
-				// Mock validation failure on all attempts
+				// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
+				// VALID_COMPLETE_AGENT has maxAttempts: 5
+				mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+
 				const result = await executeAgent(
-					VALID_MINIMAL_AGENT,
+					VALID_COMPLETE_AGENT,
 					VALID_EXECUTE_OPTIONS
 				);
 
@@ -226,17 +288,20 @@ describe('executeAgent', () => {
 
 					// Use error code to narrow type for context access
 					if (error?.code === AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED) {
-						expect(error.context.attempts).toBe(3);
-						expect(error.context.maxAttempts).toBe(3);
+						expect(error.context.attempts).toBe(5);
+						expect(error.context.maxAttempts).toBe(5);
 					}
 				}
 			});
 
 			it('should invoke onFailure callback', async () => {
+				// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
+				mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+
 				const {options, invocations} =
 					createExecuteOptionsWithCallbackTracking();
 
-				await executeAgent(VALID_MINIMAL_AGENT, options);
+				await executeAgent(VALID_COMPLETE_AGENT, options);
 
 				const failures = invocations.filter((i) => i.type === 'onFailure');
 
@@ -244,8 +309,12 @@ describe('executeAgent', () => {
 			});
 
 			it('should include final attempt count', async () => {
+				// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
+				// VALID_COMPLETE_AGENT has maxAttempts: 5
+				mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+
 				const result = await executeAgent(
-					VALID_MINIMAL_AGENT,
+					VALID_COMPLETE_AGENT,
 					VALID_EXECUTE_OPTIONS
 				);
 
@@ -256,15 +325,18 @@ describe('executeAgent', () => {
 
 					// Use error code to narrow type for context access
 					if (error?.code === AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED) {
-						expect(error.context.attempts).toBe(3);
-						expect(error.context.maxAttempts).toBe(3);
+						expect(error.context.attempts).toBe(5);
+						expect(error.context.maxAttempts).toBe(5);
 					}
 				}
 			});
 
 			it('should respect maxAttempts override', async () => {
+				// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
+				mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+
 				const result = await executeAgent(
-					VALID_MINIMAL_AGENT,
+					VALID_COMPLETE_AGENT,
 					VALID_EXECUTE_OPTIONS_WITH_MAX_ATTEMPTS_OVERRIDE
 				);
 
@@ -361,11 +433,15 @@ describe('executeAgent', () => {
 			});
 
 			it('should include error in onValidationLayerComplete when layer fails', async () => {
-				// Mock scenario where validation fails
+				// Use VALID_COMPLETE_AGENT and mock failure then success to trigger validation error
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+
 				const {options, invocations} =
 					createExecuteOptionsWithCallbackTracking();
 
-				await executeAgent(VALID_MINIMAL_AGENT, options);
+				await executeAgent(VALID_COMPLETE_AGENT, options);
 
 				const failedLayer = invocations.find((i) => {
 					if (i.type === 'onValidationLayerComplete') {
@@ -420,6 +496,372 @@ describe('executeAgent', () => {
 
 				// Execution should continue despite callback errors
 				expect(isOk(result) || isErr(result)).toBe(true);
+			});
+		});
+
+		describe('Conversation history', () => {
+			it('should accumulate conversation history across retries', async () => {
+				// Mock: first call invalid, second call valid
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+
+				const result = await executeAgent(
+					VALID_COMPLETE_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isOk(result)).toBe(true);
+
+				// Verify API was called twice (once for each attempt)
+				expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+
+				// Second call should have accumulated history
+				const secondCall = mockMessagesCreate.mock.calls.at(1);
+				expect(secondCall).toBeDefined();
+
+				if (secondCall) {
+					const messages = secondCall.at(0)?.messages;
+					expect(messages).toBeDefined();
+					expect(messages?.length).toBeGreaterThan(1); // User + assistant + error
+				}
+			});
+
+			it('should include original user prompt in first attempt', async () => {
+				await executeAgent(VALID_MINIMAL_AGENT, VALID_EXECUTE_OPTIONS);
+
+				expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
+
+				const firstCall = mockMessagesCreate.mock.calls.at(0);
+				const messages = firstCall?.at(0)?.messages;
+
+				expect(messages).toBeDefined();
+				expect(messages?.at(0)?.role).toBe('user');
+				expect(messages?.at(0)?.content).toContain('test input');
+			});
+
+			it('should append assistant response after validation failure', async () => {
+				// Mock: first call invalid, second call valid
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+
+				await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
+
+				expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+
+				// Second call should have assistant response in history
+				const secondCall = mockMessagesCreate.mock.calls.at(1);
+				const messages = secondCall?.at(0)?.messages;
+
+				// Should have: user (original), assistant (failed), user (error)
+				expect(messages?.length).toBeGreaterThanOrEqual(3);
+
+				const assistantMessage = messages?.find((m: {role: string}) => m.role === 'assistant');
+				expect(assistantMessage).toBeDefined();
+			});
+
+			it('should append error prompts after validation failures', async () => {
+				// Mock: first call invalid, second call valid
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse())
+					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+
+				await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
+
+				// Second call should have error prompt
+				const secondCall = mockMessagesCreate.mock.calls.at(1);
+				const messages = secondCall?.at(0)?.messages;
+
+				// Find user messages (original + error)
+				const userMessages = messages?.filter((m: {role: string}) => m.role === 'user');
+				expect(userMessages?.length).toBeGreaterThan(1);
+
+				// Last user message should be the error prompt
+				const errorMessage = userMessages?.at(-1);
+				expect(errorMessage?.content).toBeDefined();
+			});
+		});
+
+		describe('Edge cases', () => {
+			it('should handle API errors gracefully', async () => {
+				// Mock API error
+				mockMessagesCreate.mockRejectedValueOnce(new Error('API connection failed'));
+
+				const result = await executeAgent(
+					VALID_MINIMAL_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					const error = result.error.errors.at(0);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.API_ERROR);
+					expect(error?.category).toBe('model');
+				}
+			});
+
+			it('should handle missing tool use in response', async () => {
+				// Mock response without tool_use
+				mockMessagesCreate.mockResolvedValueOnce({
+					id: 'msg_test',
+					type: 'message',
+					role: 'assistant',
+					model: 'claude-sonnet-4-5-20250929',
+					content: [
+						{
+							type: 'text',
+							text: 'I cannot use the tool',
+						},
+					],
+					stop_reason: 'end_turn',
+					stop_sequence: null,
+					usage: {
+						input_tokens: 100,
+						output_tokens: 50,
+					},
+				});
+
+				const result = await executeAgent(
+					VALID_MINIMAL_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					const error = result.error.errors.at(0);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.INVALID_RESPONSE);
+					expect(error?.category).toBe('model');
+				}
+			});
+
+			it('should handle wrong tool name in response', async () => {
+				// Mock response with wrong tool name
+				mockMessagesCreate.mockResolvedValueOnce({
+					id: 'msg_test',
+					type: 'message',
+					role: 'assistant',
+					model: 'claude-sonnet-4-5-20250929',
+					content: [
+						{
+							type: 'tool_use',
+							id: 'toolu_test',
+							name: 'wrong_tool',
+							input: {result: 'test'},
+						},
+					],
+					stop_reason: 'end_turn',
+					stop_sequence: null,
+					usage: {
+						input_tokens: 100,
+						output_tokens: 50,
+					},
+				});
+
+				const result = await executeAgent(
+					VALID_MINIMAL_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					const error = result.error.errors.at(0);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.INVALID_RESPONSE);
+				}
+			});
+
+			it('should include metadata even on failures', async () => {
+				// Mock API error
+				mockMessagesCreate.mockRejectedValueOnce(new Error('API error'));
+
+				const result = await executeAgent(
+					VALID_COMPLETE_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					// Metadata should still be populated for observability
+					expect(result.error.metadata).toBeDefined();
+					expect(result.error.metadata?.latency).toBeTypeOf('number');
+				}
+			});
+
+			it('should collect callback errors in metadata', async () => {
+				const result = await executeAgent(VALID_COMPLETE_AGENT, {
+					input: 'test input',
+					callbacks: {
+						onAttemptStart: () => {
+							throw new Error('Callback error 1');
+						},
+						onValidationLayerStart: () => {
+							throw new Error('Callback error 2');
+						},
+					},
+				});
+
+				if (isOk(result)) {
+					expect(result.data.metadata?.callbackErrors).toBeDefined();
+					expect(result.data.metadata?.callbackErrors?.length).toBeGreaterThan(0);
+				}
+			});
+
+			it('should handle zero-length validation error messages', async () => {
+				// Mock: all attempts fail
+				mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+
+				const result = await executeAgent(
+					VALID_COMPLETE_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isErr(result)).toBe(true);
+
+				// Should have MAX_ATTEMPTS_EXCEEDED error
+				if (isErr(result)) {
+					const error = result.error.errors.at(0);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED);
+
+					// Context should include lastError (stringified validation errors)
+					if (error?.code === AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED) {
+						expect(error.context.lastError).toBeDefined();
+					}
+				}
+			});
+		});
+
+		describe('Metadata collection', () => {
+			it('should calculate latency accurately with mock delays', async () => {
+				// Mock API with deliberate 100ms delay
+				mockMessagesCreate.mockImplementation(async () => {
+					await new Promise((resolve) => setTimeout(resolve, 100));
+					return createSuccessResponse();
+				});
+
+				const result = await executeAgent(
+					VALID_COMPLETE_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isOk(result)).toBe(true);
+
+				if (isOk(result)) {
+					// Latency should be at least 100ms
+					expect(result.data.metadata?.latency).toBeGreaterThanOrEqual(100);
+					// But within reasonable bounds (< 300ms for safety margin)
+					expect(result.data.metadata?.latency).toBeLessThan(300);
+				}
+			});
+
+			it('should accumulate tokens across multiple attempts', async () => {
+				// First attempt: 100 input, 50 output (invalid)
+				// Second attempt: 150 input, 75 output (valid)
+				// Expected total: 250 input, 125 output
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse(100, 50))
+					.mockResolvedValueOnce(
+						createSuccessResponse('valid result that is long enough', 150, 75)
+					);
+
+				const result = await executeAgent(
+					VALID_COMPLETE_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isOk(result)).toBe(true);
+
+				if (isOk(result)) {
+					expect(result.data.metadata?.tokens?.input).toBe(250);
+					expect(result.data.metadata?.tokens?.output).toBe(125);
+				}
+			});
+
+			it('should NOT include latency when trackLatency is false', async () => {
+				// VALID_MINIMAL_AGENT has trackLatency: false
+				const result = await executeAgent(
+					VALID_MINIMAL_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isOk(result)).toBe(true);
+
+				if (isOk(result)) {
+					expect(result.data.metadata?.latency).toBeUndefined();
+				}
+			});
+
+			it('should NOT include tokens when trackTokens is false', async () => {
+				// VALID_MINIMAL_AGENT has trackTokens: false
+				const result = await executeAgent(
+					VALID_MINIMAL_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isOk(result)).toBe(true);
+
+				if (isOk(result)) {
+					expect(result.data.metadata?.tokens).toBeUndefined();
+				}
+			});
+
+			it('should measure latency for entire execution including all attempts', async () => {
+				// Mock with 50ms delay on each attempt
+				let callCount = 0;
+				mockMessagesCreate.mockImplementation(async () => {
+					await new Promise((resolve) => setTimeout(resolve, 50));
+					callCount++;
+					// Return invalid first two times, valid third time
+					if (callCount <= 2) {
+						return createInvalidResponse();
+					}
+					return createSuccessResponse('valid result that is long enough');
+				});
+
+				const result = await executeAgent(
+					VALID_COMPLETE_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isOk(result)).toBe(true);
+
+				if (isOk(result)) {
+					// Should measure total time across all 3 attempts (3 * 50ms = 150ms minimum)
+					expect(result.data.metadata?.latency).toBeGreaterThanOrEqual(150);
+					expect(result.data.attempts).toBe(3);
+				}
+			});
+
+			it('should accumulate tokens even when execution fails', async () => {
+				// Mock: all attempts fail with different token counts
+				// Attempt 1: 100 input, 50 output
+				// Attempt 2: 120 input, 60 output
+				// Attempt 3: 140 input, 70 output
+				// Attempt 4: 160 input, 80 output
+				// Attempt 5: 180 input, 90 output
+				// Expected total: 700 input, 350 output
+				mockMessagesCreate
+					.mockResolvedValueOnce(createInvalidResponse(100, 50))
+					.mockResolvedValueOnce(createInvalidResponse(120, 60))
+					.mockResolvedValueOnce(createInvalidResponse(140, 70))
+					.mockResolvedValueOnce(createInvalidResponse(160, 80))
+					.mockResolvedValueOnce(createInvalidResponse(180, 90));
+
+				const result = await executeAgent(
+					VALID_COMPLETE_AGENT,
+					VALID_EXECUTE_OPTIONS
+				);
+
+				expect(isErr(result)).toBe(true);
+
+				if (isErr(result)) {
+					// Tokens should still be accumulated across all failed attempts
+					expect(result.error.metadata?.tokens?.input).toBe(700);
+					expect(result.error.metadata?.tokens?.output).toBe(350);
+				}
 			});
 		});
 	});
