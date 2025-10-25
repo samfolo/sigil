@@ -1,9 +1,11 @@
 export type {
 	AgentDefinition,
+	ErrorPromptFunction,
 	ModelConfig,
 	ObservabilityConfig,
-	PromptFunction,
 	PromptsConfig,
+	SystemPromptFunction,
+	UserPromptFunction,
 	ValidationConfig,
 } from './defineAgent';
 export {defineAgent} from './defineAgent';

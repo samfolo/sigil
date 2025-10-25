@@ -31,30 +31,69 @@ export interface ModelConfig {
 }
 
 /**
- * Generic prompt function that generates prompts based on input data and execution state
+ * System prompt function - receives input and execution state
  *
- * The generic type parameter determines what data the function receives:
- * - `PromptFunction<Input>` - receives the agent input (used for system/user prompts)
- * - `PromptFunction<string>` - receives formatted error string (used for error prompts)
+ * Called on each attempt. Can adapt based on state.attempt to provide
+ * retry-specific context (e.g., "this is retry 2/5").
  *
- * @template T - The type of data this prompt function accepts
- * @param data - The data to base the prompt on (input or formatted error string)
+ * @template Input - The type of input data the agent accepts
+ * @param input - The agent input data
  * @param state - Execution state containing attempt number and max attempts
- * @returns Promise resolving to the generated prompt string
+ * @returns Promise resolving to the generated system prompt string
  *
  * @example
  * ```typescript
- * // System prompt with input only
- * const systemPrompt: PromptFunction<string> = async (input, state) =>
- *   `You are processing: ${input}`;
+ * const systemPrompt: SystemPromptFunction<string> = async (input, state) => {
+ *   if (state.attempt > 1) {
+ *     return `You are processing: ${input}. Retry ${state.attempt}/${state.maxAttempts}.`;
+ *   }
+ *   return `You are processing: ${input}`;
+ * };
+ * ```
+ */
+export type SystemPromptFunction<Input> = (
+	input: Input,
+	state: AgentExecutionState
+) => Promise<string>;
+
+/**
+ * User prompt function - receives input only
  *
- * // Error prompt with formatted error string
- * const errorPrompt: PromptFunction<string> = async (errorMessage, state) =>
+ * Called once before the retry loop. Represents the immutable task description
+ * that is preserved in conversation history across all retry attempts.
+ *
+ * @template Input - The type of input data the agent accepts
+ * @param input - The agent input data
+ * @returns Promise resolving to the generated user prompt string
+ *
+ * @example
+ * ```typescript
+ * const userPrompt: UserPromptFunction<string> = async (input) =>
+ *   `Please process this input: ${input}`;
+ * ```
+ */
+export type UserPromptFunction<Input> = (
+	input: Input
+) => Promise<string>;
+
+/**
+ * Error prompt function - receives formatted error and execution state
+ *
+ * Called after validation failures. Can adapt based on state.attempt to
+ * provide attempt-specific feedback.
+ *
+ * @param formattedError - The formatted error string from validation failure
+ * @param state - Execution state containing attempt number and max attempts
+ * @returns Promise resolving to the generated error prompt string
+ *
+ * @example
+ * ```typescript
+ * const errorPrompt: ErrorPromptFunction = async (errorMessage, state) =>
  *   `Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease fix these issues.`;
  * ```
  */
-export type PromptFunction<T> = (
-	data: T,
+export type ErrorPromptFunction = (
+	formattedError: string,
 	state: AgentExecutionState
 ) => Promise<string>;
 
@@ -117,7 +156,7 @@ export interface PromptsConfig<Input> {
 	 * Called on each attempt and can adapt based on state (e.g., mention retry count).
 	 * The system prompt provides meta-context about the execution environment.
 	 */
-	system: PromptFunction<Input>;
+	system: SystemPromptFunction<Input>;
 
 	/**
 	 * User prompt function - receives agent input only
@@ -126,14 +165,14 @@ export interface PromptsConfig<Input> {
 	 * This prompt is preserved in conversation history across all retry attempts,
 	 * ensuring the model always has access to the original task requirements.
 	 */
-	user: (input: Input) => Promise<string>;
+	user: UserPromptFunction<Input>;
 
 	/**
 	 * Error iteration prompt function - receives formatted error string and execution state
 	 *
 	 * Called after validation failures to provide feedback for retry attempts.
 	 */
-	error: PromptFunction<string>;
+	error: ErrorPromptFunction;
 
 	/**
 	 * Optional error formatter function

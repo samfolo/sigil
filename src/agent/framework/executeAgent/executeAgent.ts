@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
+import * as z from 'zod';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
@@ -324,10 +325,12 @@ export const executeAgent = async <Input, Output>(
 		}
 
 		// Define tool for structured output
+		// Convert Zod schema to JSON Schema for Anthropic API
+		// Agent output schemas are always objects, so this cast is safe
 		const tool: Anthropic.Tool = {
 			name: 'generate_output',
 			description: 'Generate the structured output according to the schema',
-			input_schema: agent.validation.outputSchema,
+			input_schema: z.toJSONSchema(agent.validation.outputSchema) as Anthropic.Tool.InputSchema,
 		};
 
 		// Call Anthropic API with accumulated conversation history

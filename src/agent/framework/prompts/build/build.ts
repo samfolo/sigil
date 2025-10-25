@@ -147,7 +147,7 @@ export const buildAllPrompts = async <Input, Output>(
 	}
 
 	// Build user prompt (fail-fast)
-	const userResult = await buildUserPrompt(agent, input, state);
+	const userResult = await buildUserPrompt(agent, input);
 	if (isErr(userResult)) {
 		return userResult;
 	}
