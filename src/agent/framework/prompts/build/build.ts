@@ -13,15 +13,17 @@ import {ok, err, isErr, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 /**
  * Builds system prompt by calling agent's prompt function
  *
+ * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildSystemPrompt = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
 	input: Input,
-	state: AgentExecutionState
+	state: AgentExecutionState,
+	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
 	try {
-		const prompt = await agent.prompts.system(input, state);
+		const prompt = await agent.prompts.system(input, state, signal);
 		return ok(prompt);
 	} catch (error) {
 		return err([
@@ -46,14 +48,16 @@ export const buildSystemPrompt = async <Input, Output>(
  * The user prompt does not receive execution state since it represents the original
  * task requirements and is preserved across all retry attempts.
  *
+ * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildUserPrompt = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
-	input: Input
+	input: Input,
+	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
 	try {
-		const prompt = await agent.prompts.user(input);
+		const prompt = await agent.prompts.user(input, signal);
 		return ok(prompt);
 	} catch (error) {
 		return err([
@@ -73,15 +77,17 @@ export const buildUserPrompt = async <Input, Output>(
 /**
  * Builds error prompt by calling agent's prompt function
  *
+ * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildErrorPrompt = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
 	formattedError: string,
-	state: AgentExecutionState
+	state: AgentExecutionState,
+	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
 	try {
-		const prompt = await agent.prompts.error(formattedError, state);
+		const prompt = await agent.prompts.error(formattedError, state, signal);
 		return ok(prompt);
 	} catch (error) {
 		return err([

@@ -46,6 +46,9 @@ const isMutationError = (error: TypeError): boolean => {
  * to prevent validators from mutating the input. Any mutation attempt will be
  * caught and returned as a structured error identifying the offending validator.
  *
+ * Cancellation: Checks AbortSignal before each validation layer. If aborted,
+ * returns a structured error with 'validation' phase context.
+ *
  * executeAgent uses this for retry logic: validation failures trigger retries
  * with error context until success or max attempts reached.
  *
@@ -54,6 +57,7 @@ const isMutationError = (error: TypeError): boolean => {
  * @param schema - Zod schema for Layer 2 type validation
  * @param customValidators - Additional validation layers to run sequentially
  * @param callbacks - Optional callbacks for observing validation execution
+ * @param signal - Optional AbortSignal to cancel validation
  * @returns Result containing validated output or first error encountered
  *
  * @example
@@ -71,7 +75,8 @@ const isMutationError = (error: TypeError): boolean => {
  *         console.log(`× ${layer.name} failed:`, layer.error);
  *       }
  *     },
- *   }
+ *   },
+ *   signal
  * );
  *
  * if (isErr(result)) {
@@ -84,8 +89,17 @@ export const validateLayers = async <Output>(
 	output: unknown,
 	schema: z.ZodSchema<Output>,
 	customValidators: ValidationLayer<Output>[],
-	callbacks?: ValidationLayerCallbacks
+	callbacks?: ValidationLayerCallbacks,
+	signal?: AbortSignal
 ): Promise<Result<Output, unknown>> => {
+	// Check for cancellation before starting validation
+	if (signal?.aborted) {
+		return err({
+			layer: 'validation',
+			reason: 'Validation cancelled before Zod layer',
+		});
+	}
+
 	// Layer 2: Zod schema validation
 	callbacks?.onLayerStart?.({
 		...ZOD_LAYER_METADATA,
@@ -117,6 +131,14 @@ export const validateLayers = async <Output>(
 
 	// Layer 3+: Custom validators (sequential, fail-fast)
 	for (const validator of customValidators) {
+		// Check for cancellation before each custom validator
+		if (signal?.aborted) {
+			return err({
+				layer: validator.name,
+				reason: `Validation cancelled before ${validator.name} layer`,
+			});
+		}
+
 		callbacks?.onLayerStart?.({
 			name: validator.name,
 			description: validator.description,
@@ -124,7 +146,7 @@ export const validateLayers = async <Output>(
 		});
 
 		try {
-			const validationResult = await validator.validate(frozenOutput);
+			const validationResult = await validator.validate(frozenOutput, signal);
 
 			if (isErr(validationResult)) {
 				const failure: ValidationLayerFailure = {

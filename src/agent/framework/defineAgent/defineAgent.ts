@@ -39,11 +39,12 @@ export interface ModelConfig {
  * @template Input - The type of input data the agent accepts
  * @param input - The agent input data
  * @param state - Execution state containing attempt number and max attempts
+ * @param signal - Optional AbortSignal to cancel long-running prompt generation
  * @returns Promise resolving to the generated system prompt string
  *
  * @example
  * ```typescript
- * const systemPrompt: SystemPromptFunction<string> = async (input, state) => {
+ * const systemPrompt: SystemPromptFunction<string> = async (input, state, signal) => {
  *   if (state.attempt > 1) {
  *     return `You are processing: ${input}. Retry ${state.attempt}/${state.maxAttempts}.`;
  *   }
@@ -53,7 +54,8 @@ export interface ModelConfig {
  */
 export type SystemPromptFunction<Input> = (
   input: Input,
-  state: AgentExecutionState
+  state: AgentExecutionState,
+  signal?: AbortSignal
 ) => Promise<string>;
 
 /**
@@ -64,16 +66,18 @@ export type SystemPromptFunction<Input> = (
  *
  * @template Input - The type of input data the agent accepts
  * @param input - The agent input data
+ * @param signal - Optional AbortSignal to cancel long-running prompt generation
  * @returns Promise resolving to the generated user prompt string
  *
  * @example
  * ```typescript
- * const userPrompt: UserPromptFunction<string> = async (input) =>
+ * const userPrompt: UserPromptFunction<string> = async (input, signal) =>
  *   `Please process this input: ${input}`;
  * ```
  */
 export type UserPromptFunction<Input> = (
-  input: Input
+  input: Input,
+  signal?: AbortSignal
 ) => Promise<string>;
 
 /**
@@ -84,17 +88,19 @@ export type UserPromptFunction<Input> = (
  *
  * @param formattedError - The formatted error string from validation failure
  * @param state - Execution state containing attempt number and max attempts
+ * @param signal - Optional AbortSignal to cancel long-running prompt generation
  * @returns Promise resolving to the generated error prompt string
  *
  * @example
  * ```typescript
- * const errorPrompt: ErrorPromptFunction = async (errorMessage, state) =>
+ * const errorPrompt: ErrorPromptFunction = async (errorMessage, state, signal) =>
  *   `Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease fix these issues.`;
  * ```
  */
 export type ErrorPromptFunction = (
   formattedError: string,
-  state: AgentExecutionState
+  state: AgentExecutionState,
+  signal?: AbortSignal
 ) => Promise<string>;
 
 /**

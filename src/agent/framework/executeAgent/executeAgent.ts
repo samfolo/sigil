@@ -13,7 +13,7 @@ import type {
 } from '@sigil/src/agent/framework/validation';
 import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validation/format';
 import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
-import type {AgentError, Result} from '@sigil/src/common/errors';
+import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors';
 import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
 /**
@@ -59,6 +59,9 @@ export interface ExecuteMetadata {
 /**
  * Callback functions for monitoring agent execution progress
  *
+ * All callbacks receive an optional AbortSignal to allow cancellation of
+ * long-running observability operations (e.g., logging to external services).
+ *
  * @template Output - The type of validated output the agent produces
  */
 export interface ExecuteCallbacks<Output> {
@@ -66,34 +69,39 @@ export interface ExecuteCallbacks<Output> {
    * Called when an execution attempt starts
    *
    * @param state - Execution state containing attempt number and max attempts
+   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onAttemptStart?: (state: AgentExecutionState) => void;
+  onAttemptStart?: (state: AgentExecutionState, signal?: AbortSignal) => void;
 
   /**
    * Called when an execution attempt completes
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param success - Whether the attempt succeeded validation
+   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onAttemptComplete?: (state: AgentExecutionState, success: boolean) => void;
+  onAttemptComplete?: (state: AgentExecutionState, success: boolean, signal?: AbortSignal) => void;
 
   /**
    * Called when output validation fails
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param errors - Validation errors from the output schema
+   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onValidationFailure?: (state: AgentExecutionState, errors: unknown) => void;
+  onValidationFailure?: (state: AgentExecutionState, errors: unknown, signal?: AbortSignal) => void;
 
   /**
    * Called when a validation layer starts execution
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param layer - Metadata about the layer being executed
+   * @param signal - Optional AbortSignal to cancel callback operations
    */
   onValidationLayerStart?: (
     state: AgentExecutionState,
-    layer: ValidationLayerMetadata
+    layer: ValidationLayerMetadata,
+    signal?: AbortSignal
   ) => void;
 
   /**
@@ -101,25 +109,29 @@ export interface ExecuteCallbacks<Output> {
    *
    * @param state - Execution state containing attempt number and max attempts
    * @param layer - Result of the layer execution (discriminated union)
+   * @param signal - Optional AbortSignal to cancel callback operations
    */
   onValidationLayerComplete?: (
     state: AgentExecutionState,
-    layer: ValidationLayerResult
+    layer: ValidationLayerResult,
+    signal?: AbortSignal
   ) => void;
 
   /**
    * Called when agent execution succeeds
    *
    * @param output - The validated output from the agent
+   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onSuccess?: (output: Output) => void;
+  onSuccess?: (output: Output, signal?: AbortSignal) => void;
 
   /**
    * Called when agent execution fails after all attempts
    *
    * @param errors - Array of AgentError describing what went wrong
+   * @param signal - Optional AbortSignal to cancel callback operations
    */
-  onFailure?: (errors: AgentError[]) => void;
+  onFailure?: (errors: AgentError[], signal?: AbortSignal) => void;
 }
 
 /**
@@ -145,6 +157,15 @@ export interface ExecuteOptions<Input, Output> {
    * Optional callback functions to monitor execution progress
    */
   callbacks?: ExecuteCallbacks<Output>;
+
+  /**
+   * Optional AbortSignal to cancel execution mid-flight
+   *
+   * When the signal is aborted, execution will stop at the next cancellation
+   * checkpoint and return an EXECUTION_CANCELLED error. The signal is propagated
+   * to all async operations (prompt generation, validation, API calls) and callbacks.
+   */
+  signal?: AbortSignal;
 }
 
 /**
@@ -267,6 +288,46 @@ export interface ExecuteFailure {
  * ```
  */
 /**
+ * Creates an EXECUTION_CANCELLED error with proper context
+ *
+ * @param attempt - Current attempt number when cancellation occurred
+ * @param phase - Execution phase where cancellation was detected
+ * @returns ExecuteFailure with EXECUTION_CANCELLED error
+ */
+const createCancellationError = (
+	attempt: number,
+	phase: ExecutionPhase,
+	observability: ObservabilityConfig,
+	startTime: number,
+	totalInputTokens: number,
+	totalOutputTokens: number,
+	callbackErrors: Error[]
+): ExecuteFailure => {
+	const error: AgentError = {
+		code: AGENT_ERROR_CODES.EXECUTION_CANCELLED,
+		severity: 'error',
+		category: 'execution',
+		context: {
+			attempt,
+			phase,
+		},
+	};
+
+	const metadata = buildMetadata({
+		observability,
+		startTime,
+		totalInputTokens,
+		totalOutputTokens,
+		callbackErrors,
+	});
+
+	return {
+		errors: [error],
+		metadata,
+	};
+};
+
+/**
  * Options for building execution metadata
  */
 interface BuildMetadataOptions {
@@ -301,22 +362,25 @@ interface BuildMetadataOptions {
  *
  * Wraps callback invocations in try-catch to prevent callback failures from
  * breaking agent execution. Collects any callback errors for inclusion in metadata.
+ * Passes the AbortSignal to callbacks to allow cancellation of observability operations.
  *
  * @param callback - The callback function to invoke (may be undefined)
  * @param args - Arguments to pass to the callback
  * @param callbackErrors - Array to collect any errors that occur
+ * @param signal - Optional AbortSignal to pass to callback
  */
 const safeInvokeCallback = <Args extends unknown[]>(
-	callback: ((...args: Args) => void) | undefined,
+	callback: ((...args: [...Args, AbortSignal?]) => void) | undefined,
 	args: Args,
-	callbackErrors: Error[]
+	callbackErrors: Error[],
+	signal?: AbortSignal
 ): void => {
 	if (!callback) {
 		return;
 	}
 
 	try {
-		callback(...args);
+		callback(...args, signal);
 	} catch (error) {
 		callbackErrors.push(
 			error instanceof Error ? error : new Error(String(error))
@@ -385,8 +449,21 @@ export const executeAgent = async <Input, Output>(
 		description: 'No description provided for validation layer',
 	};
 
+	// Check for cancellation before building user prompt
+	if (options.signal?.aborted) {
+		return err(createCancellationError(
+			0,
+			'prompt_generation',
+			agent.observability,
+			startTime,
+			totalInputTokens,
+			totalOutputTokens,
+			callbackErrors
+		));
+	}
+
 	// Build user prompt once (immutable task description)
-	const userPromptResult = await buildUserPrompt(agent, options.input);
+	const userPromptResult = await buildUserPrompt(agent, options.input, options.signal);
 	if (isErr(userPromptResult)) {
 		return err({
 			errors: userPromptResult.error,
@@ -413,6 +490,19 @@ export const executeAgent = async <Input, Output>(
 
 	// Retry loop
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		// Check for cancellation at start of each iteration
+		if (options.signal?.aborted) {
+			return err(createCancellationError(
+				attempt,
+				'prompt_generation',
+				agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors
+			));
+		}
+
 		// Create execution state
 		const state: AgentExecutionState = {
 			attempt,
@@ -427,14 +517,29 @@ export const executeAgent = async <Input, Output>(
 		safeInvokeCallback(
 			options.callbacks?.onAttemptStart,
 			[state],
-			callbackErrors
+			callbackErrors,
+			options.signal
 		);
+
+		// Check for cancellation before building system prompt
+		if (options.signal?.aborted) {
+			return err(createCancellationError(
+				attempt,
+				'prompt_generation',
+				agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors
+			));
+		}
 
 		// Build system prompt (can adapt based on attempt)
 		const systemPromptResult = await buildSystemPrompt(
 			agent,
 			options.input,
-			state
+			state,
+			options.signal
 		);
 
 		if (isErr(systemPromptResult)) {
@@ -459,6 +564,19 @@ export const executeAgent = async <Input, Output>(
 			input_schema: z.toJSONSchema(agent.validation.outputSchema) as Anthropic.Tool.InputSchema,
 		};
 
+		// Check for cancellation before API call
+		if (options.signal?.aborted) {
+			return err(createCancellationError(
+				attempt,
+				'api_call',
+				agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors
+			));
+		}
+
 		// Call Anthropic API with accumulated conversation history
 		let response: Anthropic.Message;
 		try {
@@ -469,6 +587,7 @@ export const executeAgent = async <Input, Output>(
 				system: systemPromptResult.data,
 				messages: conversationHistory,
 				tools: [tool],
+				signal: options.signal,
 			});
 		} catch (error) {
 			return err({
@@ -529,6 +648,19 @@ export const executeAgent = async <Input, Output>(
 		// The LLM output structure is validated through multi-layer validation below
 		const output = toolUse.input as Output;
 
+		// Check for cancellation before validation
+		if (options.signal?.aborted) {
+			return err(createCancellationError(
+				attempt,
+				'validation',
+				agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors
+			));
+		}
+
 		// Validate output through multi-layer validation
 		// Map ExecuteCallbacks to ValidationLayerCallbacks
 		// Always provide onLayerComplete to capture failed layer metadata for error formatting
@@ -538,7 +670,8 @@ export const executeAgent = async <Input, Output>(
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerStart,
 						[state, layer],
-						callbackErrors
+						callbackErrors,
+						options.signal
 					);
 				}
 				: undefined,
@@ -554,7 +687,8 @@ export const executeAgent = async <Input, Output>(
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerComplete,
 						[state, layer],
-						callbackErrors
+						callbackErrors,
+						options.signal
 					);
 				}
 			},
@@ -564,7 +698,8 @@ export const executeAgent = async <Input, Output>(
 			output,
 			agent.validation.outputSchema,
 			agent.validation.customValidators,
-			validationCallbacks
+			validationCallbacks,
+			options.signal
 		);
 
 		// Handle validation success
@@ -573,14 +708,16 @@ export const executeAgent = async <Input, Output>(
 			safeInvokeCallback(
 				options.callbacks?.onAttemptComplete,
 				[state, true],
-				callbackErrors
+				callbackErrors,
+				options.signal
 			);
 
 			// Invoke onSuccess callback
 			safeInvokeCallback(
 				options.callbacks?.onSuccess,
 				[validationResult.data],
-				callbackErrors
+				callbackErrors,
+				options.signal
 			);
 
 			// Build metadata based on observability configuration
@@ -606,14 +743,16 @@ export const executeAgent = async <Input, Output>(
 		safeInvokeCallback(
 			options.callbacks?.onAttemptComplete,
 			[state, false],
-			callbackErrors
+			callbackErrors,
+			options.signal
 		);
 
 		// Invoke onValidationFailure callback
 		safeInvokeCallback(
 			options.callbacks?.onValidationFailure,
 			[state, validationResult.error],
-			callbackErrors
+			callbackErrors,
+			options.signal
 		);
 
 		// Append assistant response to conversation history
@@ -632,11 +771,25 @@ export const executeAgent = async <Input, Output>(
 			layerDescription
 		);
 
+		// Check for cancellation before building error prompt
+		if (options.signal?.aborted) {
+			return err(createCancellationError(
+				attempt,
+				'prompt_generation',
+				agent.observability,
+				startTime,
+				totalInputTokens,
+				totalOutputTokens,
+				callbackErrors
+			));
+		}
+
 		// Build error prompt
 		const errorPromptResult = await buildErrorPrompt(
 			agent,
 			formattedError,
-			state
+			state,
+			options.signal
 		);
 
 		if (isErr(errorPromptResult)) {
@@ -677,7 +830,8 @@ export const executeAgent = async <Input, Output>(
 	safeInvokeCallback(
 		options.callbacks?.onFailure,
 		[[maxAttemptsError]],
-		callbackErrors
+		callbackErrors,
+		options.signal
 	);
 
 	// Build metadata based on observability configuration

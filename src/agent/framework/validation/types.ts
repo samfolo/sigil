@@ -30,9 +30,11 @@ export interface ValidationLayer<Output> {
   /**
    * Validates agent output
    *
+   * @param output - The output to validate
+   * @param signal - Optional AbortSignal to cancel long-running validation
    * @returns Result with validated output or error
    */
-  validate: (output: Output) => Promise<Result<Output, unknown>>;
+  validate: (output: Output, signal?: AbortSignal) => Promise<Result<Output, unknown>>;
 }
 
 /**
