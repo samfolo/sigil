@@ -364,12 +364,14 @@ export const EXPECTED_API_ERROR: ExecuteFailure = {
  * @param result - The result value to include in the response
  * @param inputTokens - Number of input tokens consumed
  * @param outputTokens - Number of output tokens generated
+ * @param toolName - Name of the tool to use (defaults to 'generate_output')
  * @returns Mock API response object
  */
 export const createSuccessResponse = (
 	result = 'success result',
 	inputTokens = 100,
-	outputTokens = 50
+	outputTokens = 50,
+	toolName = 'generate_output'
 ) => ({
 	id: 'msg_test123',
 	type: 'message' as const,
@@ -379,7 +381,7 @@ export const createSuccessResponse = (
 		{
 			type: 'tool_use' as const,
 			id: 'toolu_test123',
-			name: 'generate_output',
+			name: toolName,
 			input: {result},
 		},
 	],
@@ -399,9 +401,14 @@ export const createSuccessResponse = (
  *
  * @param inputTokens - Number of input tokens consumed
  * @param outputTokens - Number of output tokens generated
+ * @param toolName - Name of the tool to use (defaults to 'generate_output')
  * @returns Mock API response object
  */
-export const createInvalidResponse = (inputTokens = 100, outputTokens = 50) => ({
+export const createInvalidResponse = (
+	inputTokens = 100,
+	outputTokens = 50,
+	toolName = 'generate_output'
+) => ({
 	id: 'msg_test456',
 	type: 'message' as const,
 	role: 'assistant' as const,
@@ -410,7 +417,7 @@ export const createInvalidResponse = (inputTokens = 100, outputTokens = 50) => (
 		{
 			type: 'tool_use' as const,
 			id: 'toolu_test456',
-			name: 'generate_output',
+			name: toolName,
 			input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
 		},
 	],

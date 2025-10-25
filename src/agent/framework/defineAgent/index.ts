@@ -3,8 +3,10 @@ export type {
 	ErrorPromptFunction,
 	ModelConfig,
 	ObservabilityConfig,
+	OutputToolConfig,
 	PromptsConfig,
 	SystemPromptFunction,
+	ToolsConfig,
 	UserPromptFunction,
 	ValidationConfig,
 } from './defineAgent';

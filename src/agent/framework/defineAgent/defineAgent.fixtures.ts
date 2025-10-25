@@ -48,6 +48,12 @@ export const VALID_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Attempt ${state.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
 	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the test output result',
+		},
+	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -80,6 +86,12 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 			`Process this with full validation: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease correct these issues.`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the fully validated output result',
+		},
 	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
@@ -135,6 +147,12 @@ export const INVALID_EMPTY_NAME: AgentDefinition<string, TestOutput> = {
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the output',
+		},
+	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -168,6 +186,12 @@ export const INVALID_WHITESPACE_NAME: AgentDefinition<string, TestOutput> = {
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the output',
+		},
+	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -200,6 +224,12 @@ export const INVALID_EMPTY_DESCRIPTION: AgentDefinition<string, TestOutput> = {
 		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the output',
+		},
 	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
@@ -236,6 +266,12 @@ export const INVALID_WHITESPACE_DESCRIPTION: AgentDefinition<string, TestOutput>
   		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
   	},
+  	tools: {
+  		output: {
+  			name: 'generate_output',
+  			description: 'Generate the output',
+  		},
+  	},
   	validation: {
   		outputSchema: TEST_OUTPUT_SCHEMA,
   		customValidators: [],
@@ -268,6 +304,12 @@ export const INVALID_EMPTY_MODEL_NAME: AgentDefinition<string, TestOutput> = {
 		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the output',
+		},
 	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
@@ -304,6 +346,12 @@ export const INVALID_WHITESPACE_MODEL_NAME: AgentDefinition<string, TestOutput> 
   		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
   	},
+  	tools: {
+  		output: {
+  			name: 'generate_output',
+  			description: 'Generate the output',
+  		},
+  	},
   	validation: {
   		outputSchema: TEST_OUTPUT_SCHEMA,
   		customValidators: [],
@@ -336,6 +384,12 @@ export const INVALID_ZERO_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> = {
 		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the output',
+		},
 	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
@@ -371,6 +425,12 @@ export const INVALID_NEGATIVE_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> 
   		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
   		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
+  	},
+  	tools: {
+  		output: {
+  			name: 'generate_output',
+  			description: 'Generate the output',
+  		},
   	},
   	validation: {
   		outputSchema: TEST_OUTPUT_SCHEMA,
@@ -410,6 +470,12 @@ export const INVALID_MISSING_OUTPUT_SCHEMA: AgentDefinition<string, TestOutput> 
   		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
   			`Error attempt ${state.attempt}: ${errorMessage}`,
   	},
+  	tools: {
+  		output: {
+  			name: 'generate_output',
+  			description: 'Generate the output',
+  		},
+  	},
   	validation: {
   		outputSchema: undefined as unknown as z.ZodSchema<TestOutput>,
   		customValidators: [],
@@ -446,6 +512,12 @@ export const INVALID_MULTIPLE_ERRORS: AgentDefinition<string, TestOutput> = {
 		user: async (input: string, _signal?: AbortSignal) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the output',
+		},
 	},
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
