@@ -43,7 +43,7 @@ export const VALID_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) =>
 			`You are a test agent processing: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) =>
+		user: async (input: string) =>
 			`Please process this input: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Attempt ${state.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
@@ -76,7 +76,7 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = {
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) =>
 			`You are an advanced agent. System context: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) =>
+		user: async (input: string) =>
 			`Process this with full validation: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease correct these issues.`,
@@ -131,7 +131,7 @@ export const INVALID_EMPTY_NAME: AgentDefinition<string, TestOutput> = {
 	},
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+		user: async (input: string) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
@@ -164,7 +164,7 @@ export const INVALID_WHITESPACE_NAME: AgentDefinition<string, TestOutput> = {
 	},
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+		user: async (input: string) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
@@ -197,7 +197,7 @@ export const INVALID_EMPTY_DESCRIPTION: AgentDefinition<string, TestOutput> = {
 	},
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+		user: async (input: string) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
@@ -232,7 +232,7 @@ export const INVALID_WHITESPACE_DESCRIPTION: AgentDefinition<string, TestOutput>
 		prompts: {
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
-			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+			user: async (input: string) => `User: ${input}`,
 			error: async (errorMessage: string, state: AgentExecutionState) =>
 				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
@@ -265,7 +265,7 @@ export const INVALID_EMPTY_MODEL_NAME: AgentDefinition<string, TestOutput> = {
 	},
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+		user: async (input: string) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
@@ -300,7 +300,7 @@ export const INVALID_WHITESPACE_MODEL_NAME: AgentDefinition<string, TestOutput> 
 		prompts: {
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
-			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+			user: async (input: string) => `User: ${input}`,
 			error: async (errorMessage: string, state: AgentExecutionState) =>
 				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
@@ -333,7 +333,7 @@ export const INVALID_ZERO_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> = {
 	},
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+		user: async (input: string) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},
@@ -368,7 +368,7 @@ export const INVALID_NEGATIVE_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> 
 		prompts: {
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
-			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+			user: async (input: string) => `User: ${input}`,
 			error: async (errorMessage: string, state: AgentExecutionState) =>
 				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
@@ -406,7 +406,7 @@ export const INVALID_MISSING_OUTPUT_SCHEMA: AgentDefinition<string, TestOutput> 
 		prompts: {
 			system: async (input: string, _state: AgentExecutionState) =>
 				`System: ${input}`,
-			user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+			user: async (input: string) => `User: ${input}`,
 			error: async (errorMessage: string, state: AgentExecutionState) =>
 				`Error attempt ${state.attempt}: ${errorMessage}`,
 		},
@@ -443,7 +443,7 @@ export const INVALID_MULTIPLE_ERRORS: AgentDefinition<string, TestOutput> = {
 	},
 	prompts: {
 		system: async (input: string, _state: AgentExecutionState) => `System: ${input}`,
-		user: async (input: string, _state: AgentExecutionState) => `User: ${input}`,
+		user: async (input: string) => `User: ${input}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Error attempt ${state.attempt}: ${errorMessage}`,
 	},

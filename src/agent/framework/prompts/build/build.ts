@@ -42,15 +42,18 @@ export const buildSystemPrompt = async <Input, Output>(
 /**
  * Builds user prompt by calling agent's prompt function
  *
+ * Called once before the retry loop to generate the immutable task description.
+ * The user prompt does not receive execution state since it represents the original
+ * task requirements and is preserved across all retry attempts.
+ *
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildUserPrompt = async <Input, Output>(
 	agent: AgentDefinition<Input, Output>,
-	input: Input,
-	state: AgentExecutionState
+	input: Input
 ): Promise<Result<string, AgentError[]>> => {
 	try {
-		const prompt = await agent.prompts.user(input, state);
+		const prompt = await agent.prompts.user(input);
 		return ok(prompt);
 	} catch (error) {
 		return err([
@@ -61,7 +64,6 @@ export const buildUserPrompt = async <Input, Output>(
 				context: {
 					promptType: 'user',
 					reason: error instanceof Error ? error.message : String(error),
-					attempt: state.attempt,
 				},
 			},
 		]);

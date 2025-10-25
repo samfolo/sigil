@@ -146,8 +146,7 @@ describe('buildUserPrompt', () => {
 		it('should generate user prompt successfully', async () => {
 			const result = await buildUserPrompt(
 				WORKING_AGENT,
-				TEST_INPUT,
-				FIRST_ATTEMPT_STATE
+				TEST_INPUT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -155,35 +154,6 @@ describe('buildUserPrompt', () => {
 			if (isOk(result)) {
 				expect(result.data).toContain('User prompt');
 				expect(result.data).toContain(TEST_INPUT.query);
-				expect(result.data).toContain('attempt 1');
-			}
-		});
-
-		it('should pass execution state correctly', async () => {
-			const result = await buildUserPrompt(
-				WORKING_AGENT,
-				TEST_INPUT,
-				SECOND_ATTEMPT_STATE
-			);
-
-			expect(isOk(result)).toBe(true);
-
-			if (isOk(result)) {
-				expect(result.data).toContain('attempt 2');
-			}
-		});
-
-		it('should handle final attempt state', async () => {
-			const result = await buildUserPrompt(
-				WORKING_AGENT,
-				TEST_INPUT,
-				FINAL_ATTEMPT_STATE
-			);
-
-			expect(isOk(result)).toBe(true);
-
-			if (isOk(result)) {
-				expect(result.data).toContain('attempt 3');
 			}
 		});
 	});
@@ -192,8 +162,7 @@ describe('buildUserPrompt', () => {
 		it('should handle synchronous throw', async () => {
 			const result = await buildUserPrompt(
 				USER_THROWS_AGENT,
-				TEST_INPUT,
-				FIRST_ATTEMPT_STATE
+				TEST_INPUT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -209,15 +178,13 @@ describe('buildUserPrompt', () => {
 				expect(result.error.at(0)?.context.reason).toBe(
 					'User prompt generation failed'
 				);
-				expect(result.error.at(0)?.context.attempt).toBe(1);
 			}
 		});
 
 		it('should handle asynchronous rejection', async () => {
 			const result = await buildUserPrompt(
 				USER_REJECTS_AGENT,
-				TEST_INPUT,
-				SECOND_ATTEMPT_STATE
+				TEST_INPUT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -231,15 +198,13 @@ describe('buildUserPrompt', () => {
 				expect(result.error.at(0)?.context.reason).toBe(
 					'User prompt async failure'
 				);
-				expect(result.error.at(0)?.context.attempt).toBe(2);
 			}
 		});
 
 		it('should handle non-Error throw', async () => {
 			const result = await buildUserPrompt(
 				USER_NON_ERROR_THROW_AGENT,
-				TEST_INPUT,
-				FIRST_ATTEMPT_STATE
+				TEST_INPUT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -407,7 +372,6 @@ describe('buildAllPrompts', () => {
 
 				expect(result.data.user).toContain('User prompt');
 				expect(result.data.user).toContain(TEST_INPUT.query);
-				expect(result.data.user).toContain('attempt 1');
 
 				if (!result.data.isRetry) {
 					expect(result.data.error).toBeUndefined();
@@ -431,7 +395,6 @@ describe('buildAllPrompts', () => {
 				expect(result.data.system).toContain('attempt 2/3');
 
 				expect(result.data.user).toContain('User prompt');
-				expect(result.data.user).toContain('attempt 2');
 
 				if (result.data.isRetry) {
 					expect(result.data.error).toBeDefined();
@@ -517,7 +480,7 @@ describe('buildAllPrompts', () => {
 			if (isOk(result)) {
 				expect(result.data.isRetry).toBe(true);
 				expect(result.data.system).toContain('attempt 3/3');
-				expect(result.data.user).toContain('attempt 3');
+				expect(result.data.user).toContain('User prompt');
 
 				if (result.data.isRetry) {
 					expect(result.data.error).toContain('Attempt 3/3 failed');

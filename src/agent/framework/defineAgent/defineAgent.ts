@@ -113,16 +113,25 @@ export interface ObservabilityConfig {
 export interface PromptsConfig<Input> {
 	/**
 	 * System prompt function - receives agent input and execution state
+	 *
+	 * Called on each attempt and can adapt based on state (e.g., mention retry count).
+	 * The system prompt provides meta-context about the execution environment.
 	 */
 	system: PromptFunction<Input>;
 
 	/**
-	 * User prompt function - receives agent input and execution state
+	 * User prompt function - receives agent input only
+	 *
+	 * Called once before the retry loop to generate the immutable task description.
+	 * This prompt is preserved in conversation history across all retry attempts,
+	 * ensuring the model always has access to the original task requirements.
 	 */
-	user: PromptFunction<Input>;
+	user: (input: Input) => Promise<string>;
 
 	/**
 	 * Error iteration prompt function - receives formatted error string and execution state
+	 *
+	 * Called after validation failures to provide feedback for retry attempts.
 	 */
 	error: PromptFunction<string>;
 

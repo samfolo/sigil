@@ -85,8 +85,8 @@ export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput> = {
 	prompts: {
 		system: async (input: TestInput, state: AgentExecutionState) =>
 			`System prompt for ${input.query} (attempt ${state.attempt}/${state.maxAttempts})`,
-		user: async (input: TestInput, state: AgentExecutionState) =>
-			`User prompt: ${input.query} (attempt ${state.attempt})`,
+		user: async (input: TestInput) =>
+			`User prompt: ${input.query}`,
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease fix these issues.`,
 	},
@@ -119,7 +119,7 @@ export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		system: async (_input: TestInput, _state: AgentExecutionState) => {
 			throw new Error('System prompt generation failed');
 		},
-		user: async (input: TestInput, _state: AgentExecutionState) =>
+		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
@@ -152,7 +152,7 @@ export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 	prompts: {
 		system: async (input: TestInput, _state: AgentExecutionState) =>
 			`System prompt: ${input.query}`,
-		user: async (_input: TestInput, _state: AgentExecutionState) => {
+		user: async (_input: TestInput) => {
 			throw new Error('User prompt generation failed');
 		},
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
@@ -186,7 +186,7 @@ export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 	prompts: {
 		system: async (input: TestInput, _state: AgentExecutionState) =>
 			`System prompt: ${input.query}`,
-		user: async (input: TestInput, _state: AgentExecutionState) =>
+		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
 		error: async (_errorMessage: string, _state: AgentExecutionState) => {
 			throw new Error('Error prompt generation failed');
@@ -220,7 +220,7 @@ export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 	prompts: {
 		system: async (_input: TestInput, _state: AgentExecutionState) =>
 			Promise.reject(new Error('System prompt async failure')),
-		user: async (input: TestInput, _state: AgentExecutionState) =>
+		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
@@ -253,7 +253,7 @@ export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 	prompts: {
 		system: async (input: TestInput, _state: AgentExecutionState) =>
 			`System prompt: ${input.query}`,
-		user: async (_input: TestInput, _state: AgentExecutionState) =>
+		user: async (_input: TestInput) =>
 			Promise.reject(new Error('User prompt async failure')),
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
@@ -286,7 +286,7 @@ export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 	prompts: {
 		system: async (input: TestInput, _state: AgentExecutionState) =>
 			`System prompt: ${input.query}`,
-		user: async (input: TestInput, _state: AgentExecutionState) =>
+		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
 		error: async (_errorMessage: string, _state: AgentExecutionState) =>
 			Promise.reject(new Error('Error prompt async failure')),
@@ -320,7 +320,7 @@ export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		system: async (_input: TestInput, _state: AgentExecutionState) => {
 			throw 'String error instead of Error object';
 		},
-		user: async (input: TestInput, _state: AgentExecutionState) =>
+		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
@@ -353,7 +353,7 @@ export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> 
 	prompts: {
 		system: async (input: TestInput, _state: AgentExecutionState) =>
 			`System prompt: ${input.query}`,
-		user: async (_input: TestInput, _state: AgentExecutionState) => {
+		user: async (_input: TestInput) => {
 			throw 'String error in user prompt';
 		},
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
@@ -387,7 +387,7 @@ export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput>
 	prompts: {
 		system: async (input: TestInput, _state: AgentExecutionState) =>
 			`System prompt: ${input.query}`,
-		user: async (input: TestInput, _state: AgentExecutionState) =>
+		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
 		error: async (_errorMessage: string, _state: AgentExecutionState) => {
 			throw 'String error in error prompt';
