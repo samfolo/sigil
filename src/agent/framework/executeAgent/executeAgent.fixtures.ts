@@ -9,6 +9,8 @@
  * - Error scenarios (max attempts, validation failures, API errors)
  */
 
+import {vi} from 'vitest';
+
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
@@ -353,4 +355,104 @@ export const EXPECTED_API_ERROR: ExecuteFailure = {
 			output: 0,
 		},
 	},
+};
+
+/**
+ * Mock API call configuration
+ *
+ * Discriminated union representing different response types for mock API calls.
+ * Used with createMockApiCalls to configure sequential API responses in tests.
+ */
+export type MockCallConfig =
+	| {
+			type: 'success';
+			result?: string;
+			inputTokens?: number;
+			outputTokens?: number;
+			delay?: number;
+	  }
+	| {
+			type: 'invalid';
+			inputTokens?: number;
+			outputTokens?: number;
+			delay?: number;
+	  }
+	| {
+			type: 'error';
+			error: Error;
+			delay?: number;
+	  }
+	| {
+			type: 'custom';
+			response: any;
+			delay?: number;
+	  };
+
+/**
+ * Creates a mock API function with sequential responses
+ *
+ * Generates a vi.fn() mock that returns different responses on each call.
+ * The final config entry persists for all subsequent calls beyond the array length.
+ *
+ * @param configs - Array of response configurations
+ * @returns Configured vi.fn() mock
+ *
+ * @example
+ * ```typescript
+ * // Simple retry scenario
+ * mockMessagesCreate = createMockApiCalls([
+ *   {type: 'invalid'},
+ *   {type: 'success', result: 'valid result that is long enough'}
+ * ]);
+ *
+ * // Token accumulation test
+ * mockMessagesCreate = createMockApiCalls([
+ *   {type: 'invalid', inputTokens: 100, outputTokens: 50},
+ *   {type: 'success', result: 'valid result', inputTokens: 150, outputTokens: 75}
+ * ]);
+ *
+ * // Latency measurement
+ * mockMessagesCreate = createMockApiCalls([
+ *   {type: 'invalid', delay: 50},
+ *   {type: 'success', result: 'valid result', delay: 50}
+ * ]);
+ * ```
+ */
+export const createMockApiCalls = (configs: MockCallConfig[]) => {
+	const mock = vi.fn();
+	let callIndex = 0;
+
+	mock.mockImplementation(async () => {
+		const config = configs[Math.min(callIndex++, configs.length - 1)];
+
+		if (config.delay) {
+			await new Promise((resolve) => {
+				setTimeout(resolve, config.delay);
+			});
+		}
+
+		if (config.type === 'error') {
+			throw config.error;
+		}
+
+		if (config.type === 'custom') {
+			return config.response;
+		}
+
+		if (config.type === 'invalid') {
+			return createInvalidResponse(
+				config.inputTokens ?? 100,
+				config.outputTokens ?? 50
+			);
+		}
+
+		// success
+		return createSuccessResponse(
+			config.result ?? 'success result',
+			config.inputTokens ?? 100,
+			config.outputTokens ?? 50
+		);
+	});
+
+	return mock;
 };
