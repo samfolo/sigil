@@ -2,14 +2,41 @@
  * Tests for executeAgent function
  */
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 
 import {
 	isErr,
 	isOk,
 	AGENT_ERROR_CODES,
-	isAgentErrorArray,
 } from '@sigil/src/common/errors';
+
+// Mock the Anthropic client to avoid real API calls in tests
+vi.mock('@sigil/src/agent/clients/anthropic', () => ({
+	createAnthropicClient: vi.fn(() => ({
+		messages: {
+			create: vi.fn(async () => ({
+				id: 'msg_test123',
+				type: 'message',
+				role: 'assistant',
+				model: 'claude-sonnet-4-5-20250929',
+				content: [
+					{
+						type: 'tool_use',
+						id: 'toolu_test123',
+						name: 'generate_output',
+						input: {result: 'success result'},
+					},
+				],
+				stop_reason: 'end_turn',
+				stop_sequence: null,
+				usage: {
+					input_tokens: 100,
+					output_tokens: 50,
+				},
+			})),
+		},
+	})),
+}));
 
 import {VALID_MINIMAL_AGENT} from '../defineAgent/defineAgent.fixtures';
 
@@ -46,43 +73,6 @@ describe('executeAgent', () => {
 				expect(typeof attempts).toBe('number');
 			}
 		});
-	});
-
-	describe('Stub Implementation', () => {
-		it('should return error Result', async () => {
-			const result = await executeAgent(
-				VALID_MINIMAL_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
-
-			expect(isErr(result)).toBe(true);
-		});
-
-		it('should return AgentError[] with VALIDATION_FAILED code', async () => {
-			const result = await executeAgent(
-				VALID_MINIMAL_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
-
-			expect(isErr(result)).toBe(true);
-
-			if (isErr(result)) {
-				expect(isAgentErrorArray(result.error)).toBe(true);
-				expect(result.error).toHaveLength(1);
-
-				const error = result.error.at(0);
-				expect(error?.code).toBe(AGENT_ERROR_CODES.VALIDATION_FAILED);
-				expect(error?.severity).toBe('error');
-				expect(error?.category).toBe('execution');
-
-				// Use error code to narrow type for context access
-				if (error?.code === AGENT_ERROR_CODES.VALIDATION_FAILED) {
-					expect(error.context.reason).toBe('Not yet implemented');
-				}
-			}
-		});
-
-		// These tests verify stub behaviour and will change when implementation is added
 	});
 
 	describe.skip('Future Implementation Tests', () => {

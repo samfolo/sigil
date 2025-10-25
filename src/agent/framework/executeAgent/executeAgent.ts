@@ -1,11 +1,15 @@
+import type Anthropic from '@anthropic-ai/sdk';
+
+import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
+import {buildAllPrompts} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
 } from '@sigil/src/agent/framework/validation';
 import type {AgentError, Result} from '@sigil/src/common/errors';
-import {err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
+import {err, ok, isErr, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 /**
  * Token usage statistics for an agent execution
@@ -238,20 +242,185 @@ export interface ExecuteSuccess<Output> {
  * }
  * ```
  */
-export const executeAgent = async <Input, Output>(
-	_agent: AgentDefinition<Input, Output>,
-	_options: ExecuteOptions<Input, Output>
-): Promise<Result<ExecuteSuccess<Output>, AgentError[]>> => {
-	// Stub implementation - to be replaced with actual execution logic
-	const placeholderError: AgentError = {
-		code: AGENT_ERROR_CODES.VALIDATION_FAILED,
-		severity: 'error',
-		category: 'execution',
-		context: {
-			layer: 'stub',
-			reason: 'Not yet implemented',
-		},
-	};
+/**
+ * Helper function to safely invoke callbacks and collect errors
+ *
+ * Wraps callback invocations in try-catch to prevent callback failures from
+ * breaking agent execution. Collects any callback errors for inclusion in metadata.
+ *
+ * @param callback - The callback function to invoke (may be undefined)
+ * @param args - Arguments to pass to the callback
+ * @param callbackErrors - Array to collect any errors that occur
+ */
+const safeInvokeCallback = <Args extends unknown[]>(
+	callback: ((...args: Args) => void) | undefined,
+	args: Args,
+	callbackErrors: Error[]
+): void => {
+	if (!callback) {
+		return;
+	}
 
-	return err([placeholderError]);
+	try {
+		callback(...args);
+	} catch (error) {
+		callbackErrors.push(
+			error instanceof Error ? error : new Error(String(error))
+		);
+	}
+};
+
+export const executeAgent = async <Input, Output>(
+	agent: AgentDefinition<Input, Output>,
+	options: ExecuteOptions<Input, Output>
+): Promise<Result<ExecuteSuccess<Output>, AgentError[]>> => {
+	// Determine max attempts (options override or agent default)
+	const maxAttempts = options.maxAttempts ?? agent.validation.maxAttempts;
+
+	// Track callback errors
+	const callbackErrors: Error[] = [];
+
+	// Track previous response for retry message construction
+	let previousResponse: Anthropic.Message | undefined;
+
+	// Create Anthropic client once (reuse across retries)
+	const anthropic = createAnthropicClient();
+
+	// Retry loop
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		// Create execution state
+		const state: AgentExecutionState = {
+			attempt,
+			maxAttempts,
+		};
+
+		// Invoke onAttemptStart callback
+		safeInvokeCallback(
+			options.callbacks?.onAttemptStart,
+			[state],
+			callbackErrors
+		);
+
+		// Build prompts (no formattedError on first attempt, would have it on retries)
+		const promptsResult = await buildAllPrompts(
+			agent,
+			options.input,
+			state,
+			undefined // formattedError - would be populated on retries when validation fails
+		);
+
+		if (isErr(promptsResult)) {
+			return promptsResult;
+		}
+
+		const prompts = promptsResult.data;
+
+		// Build messages array for Anthropic API
+		const messages: Anthropic.MessageParam[] = [];
+
+		// First message: user prompt
+		messages.push({
+			role: 'user',
+			content: prompts.user,
+		});
+
+		// On retry: include previous response and error feedback
+		if (prompts.isRetry && previousResponse) {
+			messages.push({
+				role: 'assistant',
+				content: previousResponse.content,
+			});
+			messages.push({
+				role: 'user',
+				content: prompts.error,
+			});
+		}
+
+		// Define tool for structured output
+		const tool: Anthropic.Tool = {
+			name: 'generate_output',
+			description: 'Generate the structured output according to the schema',
+			input_schema: agent.validation.outputSchema,
+		};
+
+		// Call Anthropic API
+		let response: Anthropic.Message;
+		try {
+			response = await anthropic.messages.create({
+				model: agent.model.name,
+				max_tokens: agent.model.maxTokens,
+				temperature: agent.model.temperature,
+				system: prompts.system,
+				messages,
+				tools: [tool],
+			});
+		} catch (error) {
+			return err([
+				{
+					code: AGENT_ERROR_CODES.API_ERROR,
+					severity: 'error',
+					category: 'model',
+					context: {
+						attempt,
+						message: error instanceof Error ? error.message : String(error),
+					},
+				},
+			]);
+		}
+
+		// Store response for potential retry
+		previousResponse = response;
+
+		// Extract output from tool use
+		const toolUse = response.content.find(
+			(block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+		);
+
+		if (!toolUse || toolUse.name !== 'generate_output') {
+			return err([
+				{
+					code: AGENT_ERROR_CODES.INVALID_RESPONSE,
+					severity: 'error',
+					category: 'model',
+					context: {
+						attempt,
+						reason: 'Model did not use the generate_output tool',
+					},
+				},
+			]);
+		}
+
+		const output = toolUse.input as Output;
+
+		// Placeholder validation: assume validation always passes
+		// TODO: Implement real validation layers in next iteration
+
+		// Success! Invoke onSuccess callback
+		safeInvokeCallback(options.callbacks?.onSuccess, [output], callbackErrors);
+
+		// Build metadata
+		const metadata: ExecuteMetadata = {
+			callbackErrors: callbackErrors.length > 0 ? callbackErrors : undefined,
+		};
+
+		return ok({
+			output,
+			attempts: attempt,
+			metadata,
+		});
+	}
+
+	// This code path is unreachable with placeholder validation
+	// Will be used when real validation is implemented
+	return err([
+		{
+			code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
+			severity: 'error',
+			category: 'execution',
+			context: {
+				attempts: maxAttempts,
+				maxAttempts,
+			},
+		},
+	]);
 };
