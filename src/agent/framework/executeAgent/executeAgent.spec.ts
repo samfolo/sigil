@@ -30,56 +30,10 @@ import {
 	VALID_EXECUTE_OPTIONS_WITH_MAX_ATTEMPTS_OVERRIDE,
 	EXPECTED_SUCCESS,
 	createExecuteOptionsWithCallbackTracking,
+	createSuccessResponse,
+	createInvalidResponse,
+	createMockApiCalls,
 } from './executeAgent.fixtures';
-
-/**
- * Helper to create a successful API response
- */
-const createSuccessResponse = (result = 'success result', inputTokens = 100, outputTokens = 50) => ({
-	id: 'msg_test123',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_test123',
-			name: 'generate_output',
-			input: {result},
-		},
-	],
-	stop_reason: 'end_turn' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
-});
-
-/**
- * Helper to create a response with validation failure (too short)
- * This will fail VALID_COMPLETE_AGENT's custom validator requiring 10+ chars
- */
-const createInvalidResponse = (inputTokens = 100, outputTokens = 50) => ({
-	id: 'msg_test456',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_test456',
-			name: 'generate_output',
-			input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
-		},
-	],
-	stop_reason: 'end_turn' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
-});
 
 describe('executeAgent', () => {
 	beforeEach(() => {
@@ -187,9 +141,10 @@ describe('executeAgent', () => {
 			it('should retry on validation failure', async () => {
 				// Use VALID_COMPLETE_AGENT which has custom validators
 				// Mock: first call returns invalid (too short), second returns valid
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid'},
+					{type: 'success', result: 'valid result that is long enough'},
+				]);
 
 				const result = await executeAgent(
 					VALID_COMPLETE_AGENT,
@@ -206,10 +161,11 @@ describe('executeAgent', () => {
 			it('should increment attempt counter', async () => {
 				// Use VALID_COMPLETE_AGENT which has custom validators
 				// Mock: first two calls return invalid, third returns valid
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid'},
+					{type: 'invalid'},
+					{type: 'success', result: 'valid result that is long enough'},
+				]);
 
 				const result = await executeAgent(
 					VALID_COMPLETE_AGENT,
@@ -239,9 +195,10 @@ describe('executeAgent', () => {
 
 			it('should invoke onValidationFailure callback', async () => {
 				// Use VALID_COMPLETE_AGENT and set up failure then success
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid'},
+					{type: 'success', result: 'valid result that is long enough'},
+				]);
 
 				const {options, invocations} =
 					createExecuteOptionsWithCallbackTracking();
@@ -434,9 +391,10 @@ describe('executeAgent', () => {
 
 			it('should include error in onValidationLayerComplete when layer fails', async () => {
 				// Use VALID_COMPLETE_AGENT and mock failure then success to trigger validation error
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid'},
+					{type: 'success', result: 'valid result that is long enough'},
+				]);
 
 				const {options, invocations} =
 					createExecuteOptionsWithCallbackTracking();
@@ -502,9 +460,10 @@ describe('executeAgent', () => {
 		describe('Conversation history', () => {
 			it('should accumulate conversation history across retries', async () => {
 				// Mock: first call invalid, second call valid
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid'},
+					{type: 'success', result: 'valid result that is long enough'},
+				]);
 
 				const result = await executeAgent(
 					VALID_COMPLETE_AGENT,
@@ -542,9 +501,10 @@ describe('executeAgent', () => {
 
 			it('should append assistant response after validation failure', async () => {
 				// Mock: first call invalid, second call valid
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid'},
+					{type: 'success', result: 'valid result that is long enough'},
+				]);
 
 				await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -563,9 +523,10 @@ describe('executeAgent', () => {
 
 			it('should append error prompts after validation failures', async () => {
 				// Mock: first call invalid, second call valid
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse())
-					.mockResolvedValueOnce(createSuccessResponse('valid result that is long enough'));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid'},
+					{type: 'success', result: 'valid result that is long enough'},
+				]);
 
 				await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -761,11 +722,10 @@ describe('executeAgent', () => {
 				// First attempt: 100 input, 50 output (invalid)
 				// Second attempt: 150 input, 75 output (valid)
 				// Expected total: 250 input, 125 output
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse(100, 50))
-					.mockResolvedValueOnce(
-						createSuccessResponse('valid result that is long enough', 150, 75)
-					);
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid', inputTokens: 100, outputTokens: 50},
+					{type: 'success', result: 'valid result that is long enough', inputTokens: 150, outputTokens: 75},
+				]);
 
 				const result = await executeAgent(
 					VALID_COMPLETE_AGENT,
@@ -810,16 +770,11 @@ describe('executeAgent', () => {
 
 			it('should measure latency for entire execution including all attempts', async () => {
 				// Mock with 50ms delay on each attempt
-				let callCount = 0;
-				mockMessagesCreate.mockImplementation(async () => {
-					await new Promise((resolve) => setTimeout(resolve, 50));
-					callCount++;
-					// Return invalid first two times, valid third time
-					if (callCount <= 2) {
-						return createInvalidResponse();
-					}
-					return createSuccessResponse('valid result that is long enough');
-				});
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid', delay: 50},
+					{type: 'invalid', delay: 50},
+					{type: 'success', result: 'valid result that is long enough', delay: 50},
+				]);
 
 				const result = await executeAgent(
 					VALID_COMPLETE_AGENT,
@@ -843,12 +798,13 @@ describe('executeAgent', () => {
 				// Attempt 4: 160 input, 80 output
 				// Attempt 5: 180 input, 90 output
 				// Expected total: 700 input, 350 output
-				mockMessagesCreate
-					.mockResolvedValueOnce(createInvalidResponse(100, 50))
-					.mockResolvedValueOnce(createInvalidResponse(120, 60))
-					.mockResolvedValueOnce(createInvalidResponse(140, 70))
-					.mockResolvedValueOnce(createInvalidResponse(160, 80))
-					.mockResolvedValueOnce(createInvalidResponse(180, 90));
+				createMockApiCalls(mockMessagesCreate, [
+					{type: 'invalid', inputTokens: 100, outputTokens: 50},
+					{type: 'invalid', inputTokens: 120, outputTokens: 60},
+					{type: 'invalid', inputTokens: 140, outputTokens: 70},
+					{type: 'invalid', inputTokens: 160, outputTokens: 80},
+					{type: 'invalid', inputTokens: 180, outputTokens: 90},
+				]);
 
 				const result = await executeAgent(
 					VALID_COMPLETE_AGENT,

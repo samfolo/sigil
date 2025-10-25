@@ -358,6 +358,73 @@ export const EXPECTED_API_ERROR: ExecuteFailure = {
 };
 
 /**
+ * Creates a successful API response
+ *
+ * Helper to construct a mock API response with valid tool_use output.
+ * Used in tests to simulate successful agent executions.
+ *
+ * @param result - The result value to include in the response
+ * @param inputTokens - Number of input tokens consumed
+ * @param outputTokens - Number of output tokens generated
+ * @returns Mock API response object
+ */
+export const createSuccessResponse = (
+	result = 'success result',
+	inputTokens = 100,
+	outputTokens = 50
+) => ({
+	id: 'msg_test123',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_test123',
+			name: 'generate_output',
+			input: {result},
+		},
+	],
+	stop_reason: 'end_turn' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
+
+/**
+ * Creates a response with validation failure
+ *
+ * Helper to construct a mock API response that will fail validation.
+ * Result is 'short' which fails VALID_COMPLETE_AGENT's custom validator requiring 10+ chars.
+ *
+ * @param inputTokens - Number of input tokens consumed
+ * @param outputTokens - Number of output tokens generated
+ * @returns Mock API response object
+ */
+export const createInvalidResponse = (inputTokens = 100, outputTokens = 50) => ({
+	id: 'msg_test456',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_test456',
+			name: 'generate_output',
+			input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
+		},
+	],
+	stop_reason: 'end_turn' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
+
+/**
  * Mock API call configuration
  *
  * Discriminated union representing different response types for mock API calls.
@@ -389,37 +456,36 @@ export type MockCallConfig =
 	  };
 
 /**
- * Creates a mock API function with sequential responses
+ * Configures a mock API function with sequential responses
  *
- * Generates a vi.fn() mock that returns different responses on each call.
+ * Configures an existing vi.fn() mock to return different responses on each call.
  * The final config entry persists for all subsequent calls beyond the array length.
  *
+ * @param mock - Existing vi.fn() mock to configure
  * @param configs - Array of response configurations
- * @returns Configured vi.fn() mock
  *
  * @example
  * ```typescript
  * // Simple retry scenario
- * mockMessagesCreate = createMockApiCalls([
+ * createMockApiCalls(mockMessagesCreate, [
  *   {type: 'invalid'},
  *   {type: 'success', result: 'valid result that is long enough'}
  * ]);
  *
  * // Token accumulation test
- * mockMessagesCreate = createMockApiCalls([
+ * createMockApiCalls(mockMessagesCreate, [
  *   {type: 'invalid', inputTokens: 100, outputTokens: 50},
  *   {type: 'success', result: 'valid result', inputTokens: 150, outputTokens: 75}
  * ]);
  *
  * // Latency measurement
- * mockMessagesCreate = createMockApiCalls([
+ * createMockApiCalls(mockMessagesCreate, [
  *   {type: 'invalid', delay: 50},
  *   {type: 'success', result: 'valid result', delay: 50}
  * ]);
  * ```
  */
-export const createMockApiCalls = (configs: MockCallConfig[]) => {
-	const mock = vi.fn();
+export const createMockApiCalls = (mock: any, configs: MockCallConfig[]) => {
 	let callIndex = 0;
 
 	mock.mockImplementation(async () => {
@@ -453,6 +519,4 @@ export const createMockApiCalls = (configs: MockCallConfig[]) => {
 			config.outputTokens ?? 50
 		);
 	});
-
-	return mock;
 };
