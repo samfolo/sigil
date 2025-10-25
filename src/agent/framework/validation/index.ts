@@ -3,6 +3,7 @@ export type {
 	ValidationLayers,
 	ValidationLayerType,
 	ValidationLayerMetadata,
+	ValidationLayerIdentity,
 	ValidationLayerSuccess,
 	ValidationLayerFailure,
 	ValidationLayerResult,

@@ -9,6 +9,7 @@ import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
 	ValidationLayerCallbacks,
+	ValidationLayerIdentity,
 } from '@sigil/src/agent/framework/validation';
 import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validation/format';
 import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
@@ -375,7 +376,10 @@ export const executeAgent = async <Input, Output>(
 	const callbackErrors: Error[] = [];
 
 	// Track last validation errors for MAX_ATTEMPTS_EXCEEDED error context
-	let lastValidationError: unknown = undefined;
+	let lastValidationError: unknown;
+
+	// Track last failed validation layer for error formatting
+	let lastFailedLayer: ValidationLayerIdentity | undefined;
 
 	// Build user prompt once (immutable task description)
 	const userPromptResult = await buildUserPrompt(agent, options.input);
@@ -410,6 +414,9 @@ export const executeAgent = async <Input, Output>(
 			attempt,
 			maxAttempts,
 		};
+
+		// Reset failed layer tracking for this attempt
+		lastFailedLayer = undefined;
 
 		// Invoke onAttemptStart callback
 		safeInvokeCallback(
@@ -513,34 +520,42 @@ export const executeAgent = async <Input, Output>(
 			});
 		}
 
+		// Type assertion is safe: validateLayers will catch any schema mismatches
+		// The LLM output structure is validated through multi-layer validation below
 		const output = toolUse.input as Output;
 
 		// Validate output through multi-layer validation
 		// Map ExecuteCallbacks to ValidationLayerCallbacks
-		const validationCallbacks: ValidationLayerCallbacks | undefined =
-			options.callbacks?.onValidationLayerStart ||
-			options.callbacks?.onValidationLayerComplete
-				? {
-						onLayerStart: options.callbacks?.onValidationLayerStart
-							? (layer: ValidationLayerMetadata) => {
-									safeInvokeCallback(
-										options.callbacks?.onValidationLayerStart,
-										[state, layer],
-										callbackErrors
-									);
-								}
-							: undefined,
-						onLayerComplete: options.callbacks?.onValidationLayerComplete
-							? (layer: ValidationLayerResult) => {
-									safeInvokeCallback(
-										options.callbacks?.onValidationLayerComplete,
-										[state, layer],
-										callbackErrors
-									);
-								}
-							: undefined,
+		// Always provide onLayerComplete to capture failed layer metadata for error formatting
+		const validationCallbacks: ValidationLayerCallbacks = {
+			onLayerStart: options.callbacks?.onValidationLayerStart
+				? (layer: ValidationLayerMetadata) => {
+						safeInvokeCallback(
+							options.callbacks?.onValidationLayerStart,
+							[state, layer],
+							callbackErrors
+						);
 					}
-				: undefined;
+				: undefined,
+			onLayerComplete: (layer: ValidationLayerResult) => {
+				// Always capture failed layer metadata for error formatting
+				if (!layer.success) {
+					lastFailedLayer = {
+						name: layer.name,
+						description: layer.description,
+					};
+				}
+
+				// Call user callback if provided
+				if (options.callbacks?.onValidationLayerComplete) {
+					safeInvokeCallback(
+						options.callbacks?.onValidationLayerComplete,
+						[state, layer],
+						callbackErrors
+					);
+				}
+			},
+		};
 
 		const validationResult = await validateLayers(
 			output,
@@ -604,11 +619,12 @@ export const executeAgent = async <Input, Output>(
 			content: response.content,
 		});
 
-		// Format validation errors for prompt
+		// Format validation errors for prompt using layer-specific context
+		// Falls back to generic context if layer metadata wasn't captured
 		const formattedError = formatValidationErrorForPrompt(
 			validationResult.error,
-			'validation',
-			'Multi-layer validation including schema validation and custom business rules'
+			lastFailedLayer?.name ?? 'validation',
+			lastFailedLayer?.description ?? 'No description provided for validation layer'
 		);
 
 		// Build error prompt

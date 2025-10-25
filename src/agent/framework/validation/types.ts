@@ -71,6 +71,14 @@ export interface ValidationLayerMetadata {
 }
 
 /**
+ * Identifying information for a validation layer (name and description only)
+ *
+ * Used when layer type information is not needed, such as for error formatting
+ * or tracking failed validation layers.
+ */
+export type ValidationLayerIdentity = Pick<ValidationLayerMetadata, 'name' | 'description'>;
+
+/**
  * Successful validation layer execution result
  */
 export interface ValidationLayerSuccess extends ValidationLayerMetadata {

@@ -11,7 +11,7 @@ import type {z} from 'zod';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
-import type {ValidationLayer, ValidationLayerMetadata} from './types';
+import type {ValidationLayer, ValidationLayerIdentity} from './types';
 
 /**
  * Metadata for the built-in Zod validation layer
@@ -19,7 +19,7 @@ import type {ValidationLayer, ValidationLayerMetadata} from './types';
  * Used by validateLayers to provide consistent layer identity and description
  * across validation callbacks and error formatting.
  */
-export const ZOD_LAYER_METADATA: Pick<ValidationLayerMetadata, 'name' | 'description'> = {
+export const ZOD_LAYER_METADATA: ValidationLayerIdentity = {
 	name: 'Zod',
 	description: 'Validates that your output matches the expected JSON schema structure',
 };

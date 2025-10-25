@@ -130,6 +130,9 @@ const eslintConfig = [
       // Enforce object shorthand syntax
       "object-shorthand": ["error", "always"],
 
+      // Disallow redundant undefined initialisation
+      "no-undef-init": "error",
+
       // TypeScript-specific rules
       "@typescript-eslint/method-signature-style": ["error", "property"],
       "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
