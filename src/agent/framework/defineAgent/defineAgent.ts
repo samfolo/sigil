@@ -1,3 +1,4 @@
+import type {Tool} from '@anthropic-ai/sdk/resources/messages';
 import type {z} from 'zod';
 
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
@@ -151,6 +152,53 @@ export interface ObservabilityConfig {
 }
 
 /**
+ * Configuration for the output tool that produces the agent's validated result
+ *
+ * The output tool's input_schema is automatically derived from validation.outputSchema.
+ * When this tool is called, executeAgent validates its input and completes execution.
+ */
+export interface OutputToolConfig {
+  /**
+   * Name of the output tool
+   *
+   * This is the tool name the model must call to provide its final result.
+   * Must be a non-empty string.
+   */
+  name: string;
+
+  /**
+   * Description of what the output tool does
+   *
+   * Provides context to the model about when and how to use this tool.
+   * Must be a non-empty string.
+   */
+  description: string;
+}
+
+/**
+ * Configuration for all tools available to the agent
+ *
+ * Supports both the required output tool and optional helper tools for
+ * multi-step workflows, data exploration, and context retrieval.
+ */
+export interface ToolsConfig {
+  /**
+   * Output tool configuration (REQUIRED)
+   *
+   * This tool produces the agent's final validated result. Its input_schema
+   * is automatically derived from validation.outputSchema.
+   */
+  output: OutputToolConfig;
+
+  /**
+   * Additional helper tools (OPTIONAL)
+   *
+   * Helper tools enable multi-step workflows, data exploration, or context retrieval.
+   */
+  additional?: Tool[];
+}
+
+/**
  * Collection of prompt generation functions for the agent
  *
  * @template Input - The type of input the agent accepts
@@ -205,7 +253,7 @@ export interface PromptsConfig<Input> {
 }
 
 /**
- * Complete agent definition combining model config, prompts, validation, and observability
+ * Complete agent definition combining model config, prompts, tools, validation, and observability
  *
  * @template Input - The type of input the agent accepts
  * @template Output - The type of output the agent produces
@@ -230,6 +278,11 @@ export interface AgentDefinition<Input, Output> {
    * Prompt generation functions
    */
   prompts: PromptsConfig<Input>;
+
+  /**
+   * Tools configuration
+   */
+  tools: ToolsConfig;
 
   /**
    * Output validation configuration
@@ -334,6 +387,32 @@ export const defineAgent = <Input, Output>(
 		});
 	}
 
+	// Validate output tool name
+	if (!definition.tools.output.name || definition.tools.output.name.trim() === '') {
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_OUTPUT_TOOL_NAME,
+			severity: 'error',
+			category: 'validation',
+			path: '$.tools.output.name',
+			context: {
+				providedValue: definition.tools.output.name,
+			},
+		});
+	}
+
+	// Validate output tool description
+	if (!definition.tools.output.description || definition.tools.output.description.trim() === '') {
+		errors.push({
+			code: AGENT_ERROR_CODES.EMPTY_OUTPUT_TOOL_DESCRIPTION,
+			severity: 'error',
+			category: 'validation',
+			path: '$.tools.output.description',
+			context: {
+				providedValue: definition.tools.output.description,
+			},
+		});
+	}
+
 	// Validate output schema
 	if (!definition.validation.outputSchema) {
 		errors.push({
@@ -372,6 +451,13 @@ export const defineAgent = <Input, Output>(
 
 	// Freeze prompts config
 	Object.freeze(definition.prompts);
+
+	// Freeze tools config
+	Object.freeze(definition.tools.output);
+	if (definition.tools.additional) {
+		Object.freeze(definition.tools.additional);
+	}
+	Object.freeze(definition.tools);
 
 	// Freeze custom validators array and each validator
 	for (const validator of definition.validation.customValidators) {
