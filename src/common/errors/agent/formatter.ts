@@ -16,6 +16,8 @@ import type {
 	EmptyDescriptionContext,
 	EmptyModelNameContext,
 	EmptyNameContext,
+	EmptyOutputToolDescriptionContext,
+	EmptyOutputToolNameContext,
 	ExecutionCancelledContext,
 	InvalidMaxAttemptsContext,
 	InvalidMaxTokensContext,
@@ -60,6 +62,26 @@ const formatEmptyModelName = (context: EmptyModelNameContext): string => {
 		return `Model name must be a non-empty string; was given "${context.providedValue}"`;
 	}
 	return 'Model name must be a non-empty string';
+};
+
+/**
+ * Formats EMPTY_OUTPUT_TOOL_NAME error
+ */
+const formatEmptyOutputToolName = (context: EmptyOutputToolNameContext): string => {
+	if (context.providedValue !== undefined) {
+		return `Output tool name must be a non-empty string; was given "${context.providedValue}"`;
+	}
+	return 'Output tool name must be a non-empty string';
+};
+
+/**
+ * Formats EMPTY_OUTPUT_TOOL_DESCRIPTION error
+ */
+const formatEmptyOutputToolDescription = (context: EmptyOutputToolDescriptionContext): string => {
+	if (context.providedValue !== undefined) {
+		return `Output tool description must be a non-empty string; was given "${context.providedValue}"`;
+	}
+	return 'Output tool description must be a non-empty string';
 };
 
 /**
@@ -307,6 +329,14 @@ export const formatAgentError = (error: AgentError): string => {
 
 		case AGENT_ERROR_CODES.EMPTY_MODEL_NAME:
 			baseMessage = formatEmptyModelName(error.context);
+			break;
+
+		case AGENT_ERROR_CODES.EMPTY_OUTPUT_TOOL_NAME:
+			baseMessage = formatEmptyOutputToolName(error.context);
+			break;
+
+		case AGENT_ERROR_CODES.EMPTY_OUTPUT_TOOL_DESCRIPTION:
+			baseMessage = formatEmptyOutputToolDescription(error.context);
 			break;
 
 		case AGENT_ERROR_CODES.MISSING_OUTPUT_SCHEMA:

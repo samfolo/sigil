@@ -14,6 +14,8 @@ import type {
 	EmptyDescriptionContext,
 	EmptyModelNameContext,
 	EmptyNameContext,
+	EmptyOutputToolDescriptionContext,
+	EmptyOutputToolNameContext,
 	ExecutionCancelledContext,
 	InvalidMaxAttemptsContext,
 	InvalidMaxTokensContext,
@@ -72,6 +74,24 @@ export interface EmptyModelNameError
     typeof AGENT_ERROR_CODES.EMPTY_MODEL_NAME,
     AgentErrorCategory,
     EmptyModelNameContext
+  > {
+  category: 'validation';
+}
+
+export interface EmptyOutputToolNameError
+  extends StructuredError<
+    typeof AGENT_ERROR_CODES.EMPTY_OUTPUT_TOOL_NAME,
+    AgentErrorCategory,
+    EmptyOutputToolNameContext
+  > {
+  category: 'validation';
+}
+
+export interface EmptyOutputToolDescriptionError
+  extends StructuredError<
+    typeof AGENT_ERROR_CODES.EMPTY_OUTPUT_TOOL_DESCRIPTION,
+    AgentErrorCategory,
+    EmptyOutputToolDescriptionContext
   > {
   category: 'validation';
 }
@@ -215,6 +235,8 @@ export type AgentError =
   | EmptyNameError
   | EmptyDescriptionError
   | EmptyModelNameError
+  | EmptyOutputToolNameError
+  | EmptyOutputToolDescriptionError
   | MissingOutputSchemaError
   | InvalidMaxAttemptsError
   | InvalidTemperatureError

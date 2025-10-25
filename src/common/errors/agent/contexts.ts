@@ -32,6 +32,20 @@ export interface EmptyModelNameContext {
 }
 
 /**
+ * Context for EMPTY_OUTPUT_TOOL_NAME error
+ */
+export interface EmptyOutputToolNameContext {
+  providedValue?: string;
+}
+
+/**
+ * Context for EMPTY_OUTPUT_TOOL_DESCRIPTION error
+ */
+export interface EmptyOutputToolDescriptionContext {
+  providedValue?: string;
+}
+
+/**
  * Context for MISSING_OUTPUT_SCHEMA error
  */
 export type MissingOutputSchemaContext = Record<string, never>;

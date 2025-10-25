@@ -35,6 +35,16 @@ const TEST_OUTPUT_SCHEMA = z.object({
 });
 
 /**
+ * Default tools config for test fixtures
+ */
+const TEST_TOOLS_CONFIG = {
+	output: {
+		name: 'generate_output',
+		description: 'Generate the test output',
+	},
+};
+
+/**
  * Execution state for first attempt
  */
 export const FIRST_ATTEMPT_STATE: AgentExecutionState = {
@@ -90,6 +100,7 @@ export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		error: async (errorMessage: string, state: AgentExecutionState) =>
 			`Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease fix these issues.`,
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -124,6 +135,7 @@ export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -158,6 +170,7 @@ export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -192,6 +205,7 @@ export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 			throw new Error('Error prompt generation failed');
 		},
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -225,6 +239,7 @@ export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -258,6 +273,7 @@ export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -291,6 +307,7 @@ export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		error: async (_errorMessage: string, _state: AgentExecutionState) =>
 			Promise.reject(new Error('Error prompt async failure')),
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -325,6 +342,7 @@ export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -359,6 +377,7 @@ export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> 
 		error: async (errorMessage: string, _state: AgentExecutionState) =>
 			`Error: ${errorMessage}`,
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
@@ -393,6 +412,7 @@ export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput>
 			throw 'String error in error prompt';
 		},
 	},
+	tools: TEST_TOOLS_CONFIG,
 	validation: {
 		outputSchema: TEST_OUTPUT_SCHEMA,
 		customValidators: [],
