@@ -379,7 +379,11 @@ export const executeAgent = async <Input, Output>(
 	let lastValidationError: unknown;
 
 	// Track last failed validation layer for error formatting
-	let lastFailedLayer: ValidationLayerIdentity | undefined;
+	// Permanent structure to avoid TypeScript narrowing issues with undefined assignment
+	const lastFailedLayer: ValidationLayerIdentity = {
+		name: 'validation',
+		description: 'No description provided for validation layer',
+	};
 
 	// Build user prompt once (immutable task description)
 	const userPromptResult = await buildUserPrompt(agent, options.input);
@@ -416,7 +420,8 @@ export const executeAgent = async <Input, Output>(
 		};
 
 		// Reset failed layer tracking for this attempt
-		lastFailedLayer = undefined;
+		lastFailedLayer.name = 'validation';
+		lastFailedLayer.description = 'No description provided for validation layer';
 
 		// Invoke onAttemptStart callback
 		safeInvokeCallback(
@@ -540,10 +545,8 @@ export const executeAgent = async <Input, Output>(
 			onLayerComplete: (layer: ValidationLayerResult) => {
 				// Always capture failed layer metadata for error formatting
 				if (!layer.success) {
-					lastFailedLayer = {
-						name: layer.name,
-						description: layer.description,
-					};
+					lastFailedLayer.name = layer.name;
+					lastFailedLayer.description = layer.description;
 				}
 
 				// Call user callback if provided
@@ -620,11 +623,13 @@ export const executeAgent = async <Input, Output>(
 		});
 
 		// Format validation errors for prompt using layer-specific context
-		// Falls back to generic context if layer metadata wasn't captured
+		// Falls back to generic context if layer metadata is missing or empty
+		const layerName = lastFailedLayer.name || 'validation';
+		const layerDescription = lastFailedLayer.description || 'No description provided for validation layer';
 		const formattedError = formatValidationErrorForPrompt(
 			validationResult.error,
-			lastFailedLayer?.name ?? 'validation',
-			lastFailedLayer?.description ?? 'No description provided for validation layer'
+			layerName,
+			layerDescription
 		);
 
 		// Build error prompt
