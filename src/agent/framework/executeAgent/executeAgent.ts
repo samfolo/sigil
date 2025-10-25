@@ -542,14 +542,19 @@ export const executeAgent = async <Input, Output>(
 			});
 		}
 
-		// Define tool for structured output
+		// Build tools array from agent configuration
 		// Convert Zod schema to JSON Schema for Anthropic API
 		// Agent output schemas are always objects, so this cast is safe
-		const tool: Anthropic.Tool = {
-			name: 'generate_output',
-			description: 'Generate the structured output according to the schema',
+		const outputTool: Anthropic.Tool = {
+			name: agent.tools.output.name,
+			description: agent.tools.output.description,
 			input_schema: z.toJSONSchema(agent.validation.outputSchema) as Anthropic.Tool.InputSchema,
 		};
+
+		const tools: Anthropic.Tool[] = [
+			outputTool,
+			...(agent.tools.additional || []),
+		];
 
 		// Check for cancellation before API call
 		if (options.signal?.aborted) {
@@ -573,7 +578,7 @@ export const executeAgent = async <Input, Output>(
 				temperature: agent.model.temperature,
 				system: systemPromptResult.data,
 				messages: conversationHistory,
-				tools: [tool],
+				tools,
 			},
 			{
 				signal: options.signal,
@@ -606,37 +611,72 @@ export const executeAgent = async <Input, Output>(
 		totalInputTokens += response.usage.input_tokens;
 		totalOutputTokens += response.usage.output_tokens;
 
-		// Extract output from tool use
-		const toolUse = response.content.find(
+		// Find all tool uses in the response
+		const toolUses = response.content.filter(
 			(block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
 		);
 
-		if (!toolUse || toolUse.name !== 'generate_output') {
-			return err({
-				errors: [
-					{
-						code: AGENT_ERROR_CODES.INVALID_RESPONSE,
-						severity: 'error',
-						category: 'model',
-						context: {
-							attempt,
-							reason: 'Model did not use the generate_output tool',
+		// Check if the output tool was called (search from end in case model reflected and called it multiple times)
+		const outputToolUse = toolUses.findLast(
+			(toolUse) => toolUse.name === agent.tools.output.name
+		);
+
+		if (!outputToolUse) {
+			// Output tool not called - check what was called instead
+			if (toolUses.length > 0) {
+				// Helper tools called (not yet supported)
+				return err({
+					errors: [
+						{
+							code: AGENT_ERROR_CODES.INVALID_RESPONSE,
+							severity: 'error',
+							category: 'model',
+							context: {
+								attempt,
+								reason: 'Model called helper tools but tool calling loop not yet implemented. Only output tool is currently supported.',
+								calledTools: toolUses.map((t) => t.name),
+								expectedTool: agent.tools.output.name,
+							},
 						},
-					},
-				],
-				metadata: buildMetadata({
-					observability: agent.observability,
-					startTime,
-					totalInputTokens,
-					totalOutputTokens,
-					callbackErrors
-				}),
-			});
+					],
+					metadata: buildMetadata({
+						observability: agent.observability,
+						startTime,
+						totalInputTokens,
+						totalOutputTokens,
+						callbackErrors
+					}),
+				});
+			} else {
+				// No tools called at all
+				return err({
+					errors: [
+						{
+							code: AGENT_ERROR_CODES.INVALID_RESPONSE,
+							severity: 'error',
+							category: 'model',
+							context: {
+								attempt,
+								reason: 'Model did not use any tools',
+								expectedTool: agent.tools.output.name,
+							},
+						},
+					],
+					metadata: buildMetadata({
+						observability: agent.observability,
+						startTime,
+						totalInputTokens,
+						totalOutputTokens,
+						callbackErrors
+					}),
+				});
+			}
 		}
 
+		// Output tool was called - extract and validate
 		// Type assertion is safe: validateLayers will catch any schema mismatches
 		// The LLM output structure is validated through multi-layer validation below
-		const output = toolUse.input as Output;
+		const output = outputToolUse.input as Output;
 
 		// Check for cancellation before validation
 		if (options.signal?.aborted) {
