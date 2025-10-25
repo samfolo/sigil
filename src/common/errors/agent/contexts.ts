@@ -89,6 +89,19 @@ export interface MaxAttemptsExceededContext {
 }
 
 /**
+ * Execution phase where cancellation occurred
+ */
+export type ExecutionPhase = 'prompt_generation' | 'validation' | 'api_call';
+
+/**
+ * Context for EXECUTION_CANCELLED error
+ */
+export interface ExecutionCancelledContext {
+  attempt: number;
+  phase: ExecutionPhase;
+}
+
+/**
  * Context for API_ERROR error
  */
 export interface ApiErrorContext {

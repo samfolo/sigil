@@ -14,6 +14,7 @@ import type {
 	EmptyDescriptionContext,
 	EmptyModelNameContext,
 	EmptyNameContext,
+	ExecutionCancelledContext,
 	InvalidMaxAttemptsContext,
 	InvalidMaxTokensContext,
 	InvalidResponseContext,
@@ -139,6 +140,15 @@ export interface MaxAttemptsExceededError
   category: 'execution';
 }
 
+export interface ExecutionCancelledError
+  extends StructuredError<
+    typeof AGENT_ERROR_CODES.EXECUTION_CANCELLED,
+    AgentErrorCategory,
+    ExecutionCancelledContext
+  > {
+  category: 'execution';
+}
+
 // Model errors
 export interface ApiErrorError
   extends StructuredError<
@@ -212,6 +222,7 @@ export type AgentError =
   | PromptGenerationFailedError
   | ValidationFailedError
   | MaxAttemptsExceededError
+  | ExecutionCancelledError
   | ApiErrorError
   | RateLimitErrorError
   | TokenLimitExceededError
