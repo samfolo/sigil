@@ -2,7 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
-import {buildAllPrompts} from '@sigil/src/agent/framework/prompts/build';
+import {buildSystemPrompt, buildUserPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
@@ -280,8 +280,19 @@ export const executeAgent = async <Input, Output>(
 	// Track callback errors
 	const callbackErrors: Error[] = [];
 
-	// Track previous response for retry message construction
-	let previousResponse: Anthropic.Message | undefined;
+	// Build user prompt once (immutable task description)
+	const userPromptResult = await buildUserPrompt(agent, options.input);
+	if (isErr(userPromptResult)) {
+		return userPromptResult;
+	}
+
+	// Initialise conversation history with the original task
+	const conversationHistory: Anthropic.MessageParam[] = [
+		{
+			role: 'user',
+			content: userPromptResult.data,
+		},
+	];
 
 	// Create Anthropic client once (reuse across retries)
 	const anthropic = createAnthropicClient();
@@ -301,39 +312,15 @@ export const executeAgent = async <Input, Output>(
 			callbackErrors
 		);
 
-		// Build prompts (no formattedError on first attempt, would have it on retries)
-		const promptsResult = await buildAllPrompts(
+		// Build system prompt (can adapt based on attempt)
+		const systemPromptResult = await buildSystemPrompt(
 			agent,
 			options.input,
-			state,
-			undefined // formattedError - would be populated on retries when validation fails
+			state
 		);
 
-		if (isErr(promptsResult)) {
-			return promptsResult;
-		}
-
-		const prompts = promptsResult.data;
-
-		// Build messages array for Anthropic API
-		const messages: Anthropic.MessageParam[] = [];
-
-		// First message: user prompt
-		messages.push({
-			role: 'user',
-			content: prompts.user,
-		});
-
-		// On retry: include previous response and error feedback
-		if (prompts.isRetry && previousResponse) {
-			messages.push({
-				role: 'assistant',
-				content: previousResponse.content,
-			});
-			messages.push({
-				role: 'user',
-				content: prompts.error,
-			});
+		if (isErr(systemPromptResult)) {
+			return systemPromptResult;
 		}
 
 		// Define tool for structured output
@@ -343,15 +330,15 @@ export const executeAgent = async <Input, Output>(
 			input_schema: agent.validation.outputSchema,
 		};
 
-		// Call Anthropic API
+		// Call Anthropic API with accumulated conversation history
 		let response: Anthropic.Message;
 		try {
 			response = await anthropic.messages.create({
 				model: agent.model.name,
 				max_tokens: agent.model.maxTokens,
 				temperature: agent.model.temperature,
-				system: prompts.system,
-				messages,
+				system: systemPromptResult.data,
+				messages: conversationHistory,
 				tools: [tool],
 			});
 		} catch (error) {
@@ -367,9 +354,6 @@ export const executeAgent = async <Input, Output>(
 				},
 			]);
 		}
-
-		// Store response for potential retry
-		previousResponse = response;
 
 		// Extract output from tool use
 		const toolUse = response.content.find(
@@ -394,6 +378,14 @@ export const executeAgent = async <Input, Output>(
 
 		// Placeholder validation: assume validation always passes
 		// TODO: Implement real validation layers in next iteration
+		//
+		// When validation is implemented, on failure:
+		// 1. Add assistant response to conversation history:
+		//    conversationHistory.push({role: 'assistant', content: response.content});
+		// 2. Build and add error prompt to conversation history:
+		//    const errorPromptResult = await buildErrorPrompt(agent, formattedError, state);
+		//    conversationHistory.push({role: 'user', content: errorPromptResult.data});
+		// 3. Continue loop with accumulated context
 
 		// Success! Invoke onSuccess callback
 		safeInvokeCallback(options.callbacks?.onSuccess, [output], callbackErrors);
