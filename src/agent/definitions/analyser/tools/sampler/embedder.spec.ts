@@ -4,14 +4,17 @@
  * @vitest-environment node
  */
 
-import {describe, it, expect, afterEach} from 'vitest';
+import {afterEach, describe, expect, it} from 'vitest';
+
+import {isOk} from '@sigil/src/common/errors/result';
 
 import {
-	getEmbedder,
-	embedText,
-	embedBatch,
-	cleanupEmbedder,
 	EMBEDDING_DIMENSION,
+	MAX_BATCH_SIZE,
+	cleanupEmbedder,
+	embedBatch,
+	embedText,
+	getEmbedder,
 } from './embedder';
 
 /**
@@ -28,121 +31,237 @@ describe('embedder', () => {
 	});
 
 	describe('getEmbedder', () => {
-		it('should return a singleton instance', async () => {
-			const embedder1 = await getEmbedder();
-			const embedder2 = await getEmbedder();
+		it('should return successful result with singleton instance', async () => {
+			const result1 = await getEmbedder();
+			const result2 = await getEmbedder();
 
-			expect(embedder1).toBe(embedder2);
+			expect(isOk(result1)).toBe(true);
+			expect(isOk(result2)).toBe(true);
+
+			if (isOk(result1) && isOk(result2)) {
+				expect(result1.data).toBe(result2.data);
+			}
 		});
 
 		it('should create new instance after cleanup', async () => {
-			const embedder1 = await getEmbedder();
-			cleanupEmbedder();
-			const embedder2 = await getEmbedder();
+			const result1 = await getEmbedder();
+			expect(isOk(result1)).toBe(true);
 
-			// Note: We can't directly compare instances since cleanup sets to null
-			// Instead verify both are valid pipelines
-			expect(embedder1).toBeDefined();
-			expect(embedder2).toBeDefined();
+			cleanupEmbedder();
+
+			const result2 = await getEmbedder();
+			expect(isOk(result2)).toBe(true);
+
+			// Both should be valid pipelines
+			if (isOk(result1) && isOk(result2)) {
+				expect(result1.data).toBeDefined();
+				expect(result2.data).toBeDefined();
+			}
 		});
 	});
 
 	describe('embedText', () => {
 		it('should return 384-dimensional vector', async () => {
-			const embedding = await embedText('hello world');
+			const result = await embedText('hello world');
 
-			expect(embedding).toHaveLength(EMBEDDING_DIMENSION);
-			expect(embedding.every((val) => typeof val === 'number')).toBe(true);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(EMBEDDING_DIMENSION);
+				expect(result.data.every((val) => typeof val === 'number')).toBe(true);
+			}
 		});
 
 		it('should return normalised vector with magnitude ≈ 1', async () => {
-			const embedding = await embedText('This is CSV data with columns');
+			const result = await embedText('This is CSV data with columns');
 
-			// Calculate L2 norm (magnitude)
-			const magnitude = Math.sqrt(
-				embedding.reduce((sum, val) => sum + val * val, 0)
-			);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				// Calculate L2 norm (magnitude)
+				const magnitude = Math.sqrt(
+					result.data.reduce((sum, val) => sum + val * val, 0)
+				);
 
-			// Should be very close to 1 (within floating point precision)
-			expect(magnitude).toBeCloseTo(NORMALISED_MAGNITUDE, MAGNITUDE_PRECISION);
+				// Should be very close to 1 (within floating point precision)
+				expect(magnitude).toBeCloseTo(NORMALISED_MAGNITUDE, MAGNITUDE_PRECISION);
+			}
 		});
 
 		it('should produce different embeddings for different texts', async () => {
-			const embedding1 = await embedText('hello world');
-			const embedding2 = await embedText('goodbye world');
+			const result1 = await embedText('hello world');
+			const result2 = await embedText('goodbye world');
 
-			// Embeddings should be different
-			const areSame = embedding1.every((val, idx) => val === embedding2[idx]);
-			expect(areSame).toBe(false);
+			expect(isOk(result1)).toBe(true);
+			expect(isOk(result2)).toBe(true);
+
+			if (isOk(result1) && isOk(result2)) {
+				// Embeddings should be different
+				const areSame = result1.data.every(
+					(val, idx) => val === result2.data.at(idx)
+				);
+				expect(areSame).toBe(false);
+			}
 		});
 
 		it('should handle empty string', async () => {
-			const embedding = await embedText('');
+			const result = await embedText('');
 
-			expect(embedding).toHaveLength(EMBEDDING_DIMENSION);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(EMBEDDING_DIMENSION);
+			}
 		});
 	});
 
 	describe('embedBatch', () => {
 		it('should handle multiple texts', async () => {
 			const texts = ['text one', 'text two', 'text three'];
-			const embeddings = await embedBatch(texts);
+			const result = await embedBatch(texts);
 
-			expect(embeddings).toHaveLength(texts.length);
-			expect(embeddings[0]).toHaveLength(EMBEDDING_DIMENSION);
-			expect(embeddings[1]).toHaveLength(EMBEDDING_DIMENSION);
-			expect(embeddings[2]).toHaveLength(EMBEDDING_DIMENSION);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(texts.length);
+				expect(result.data.at(0)).toHaveLength(EMBEDDING_DIMENSION);
+				expect(result.data.at(1)).toHaveLength(EMBEDDING_DIMENSION);
+				expect(result.data.at(2)).toHaveLength(EMBEDDING_DIMENSION);
+			}
 		});
 
 		it('should return normalised vectors', async () => {
 			const texts = ['hello', 'world'];
-			const embeddings = await embedBatch(texts);
+			const result = await embedBatch(texts);
 
-			for (const embedding of embeddings) {
-				const magnitude = Math.sqrt(
-					embedding.reduce((sum, val) => sum + val * val, 0)
-				);
-				expect(magnitude).toBeCloseTo(NORMALISED_MAGNITUDE, MAGNITUDE_PRECISION);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				for (const embedding of result.data) {
+					const magnitude = Math.sqrt(
+						embedding.reduce((sum, val) => sum + val * val, 0)
+					);
+					expect(magnitude).toBeCloseTo(
+						NORMALISED_MAGNITUDE,
+						MAGNITUDE_PRECISION
+					);
+				}
 			}
 		});
 
 		it('should match embedText results', async () => {
 			const text = 'test text';
-			const singleEmbedding = await embedText(text);
-			const batchEmbeddings = await embedBatch([text]);
+			const singleResult = await embedText(text);
+			const batchResult = await embedBatch([text]);
 
-			// Results should be very close (may have minor floating point differences)
-			expect(batchEmbeddings).toHaveLength(1);
-			for (let i = 0; i < EMBEDDING_DIMENSION; i++) {
-				expect(batchEmbeddings[0][i]).toBeCloseTo(singleEmbedding[i], EMBEDDING_VALUE_PRECISION);
+			expect(isOk(singleResult)).toBe(true);
+			expect(isOk(batchResult)).toBe(true);
+
+			if (isOk(singleResult) && isOk(batchResult)) {
+				// Results should be very close (may have minor floating point differences)
+				expect(batchResult.data).toHaveLength(1);
+				for (let i = 0; i < EMBEDDING_DIMENSION; i++) {
+					expect(batchResult.data.at(0)?.at(i)).toBeCloseTo(
+						singleResult.data.at(i) ?? 0,
+						EMBEDDING_VALUE_PRECISION
+					);
+				}
 			}
 		});
 
 		it('should handle empty array', async () => {
-			const embeddings = await embedBatch([]);
+			const result = await embedBatch([]);
 
-			expect(embeddings).toHaveLength(0);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(0);
+			}
 		});
 
 		it('should handle single text', async () => {
-			const embeddings = await embedBatch(['single text']);
+			const result = await embedBatch(['single text']);
 
-			expect(embeddings).toHaveLength(1);
-			expect(embeddings[0]).toHaveLength(EMBEDDING_DIMENSION);
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(1);
+				expect(result.data.at(0)).toHaveLength(EMBEDDING_DIMENSION);
+			}
+		});
+
+		it('should handle batches larger than MAX_BATCH_SIZE', async () => {
+			// Create array with more texts than MAX_BATCH_SIZE
+			const texts = Array.from({length: MAX_BATCH_SIZE + 50}, (_, i) => `text ${i}`);
+			const result = await embedBatch(texts);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(texts.length);
+				// All embeddings should be valid
+				for (const embedding of result.data) {
+					expect(embedding).toHaveLength(EMBEDDING_DIMENSION);
+				}
+			}
+		});
+
+		it('should handle batch exactly at MAX_BATCH_SIZE', async () => {
+			const texts = Array.from({length: MAX_BATCH_SIZE}, (_, i) => `text ${i}`);
+			const result = await embedBatch(texts);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(MAX_BATCH_SIZE);
+			}
+		});
+
+		it('should handle batch just over MAX_BATCH_SIZE', async () => {
+			const texts = Array.from({length: MAX_BATCH_SIZE + 1}, (_, i) => `text ${i}`);
+			const result = await embedBatch(texts);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				expect(result.data).toHaveLength(MAX_BATCH_SIZE + 1);
+			}
 		});
 	});
 
 	describe('cleanupEmbedder', () => {
 		it('should reset singleton state', async () => {
 			// Get initial embedder
-			await getEmbedder();
+			const result1 = await getEmbedder();
+			expect(isOk(result1)).toBe(true);
 
 			// Cleanup
 			cleanupEmbedder();
 
 			// Next call should work (creates new instance)
-			const embedding = await embedText('test');
-			expect(embedding).toHaveLength(EMBEDDING_DIMENSION);
+			const result2 = await embedText('test');
+			expect(isOk(result2)).toBe(true);
+			if (isOk(result2)) {
+				expect(result2.data).toHaveLength(EMBEDDING_DIMENSION);
+			}
+		});
+	});
+
+	describe('error handling', () => {
+		it('should handle concurrent initialisation requests', async () => {
+			// Fire multiple requests simultaneously before first completes
+			const promises = Array.from({length: 5}, () => embedText('concurrent test'));
+
+			const results = await Promise.all(promises);
+
+			// All should succeed
+			for (const result of results) {
+				expect(isOk(result)).toBe(true);
+				if (isOk(result)) {
+					expect(result.data).toHaveLength(EMBEDDING_DIMENSION);
+				}
+			}
+		});
+
+		it('should handle rapid successive calls', async () => {
+			// Quick successive calls
+			const result1 = await embedText('call 1');
+			const result2 = await embedText('call 2');
+			const result3 = await embedText('call 3');
+
+			expect(isOk(result1)).toBe(true);
+			expect(isOk(result2)).toBe(true);
+			expect(isOk(result3)).toBe(true);
 		});
 	});
 });
