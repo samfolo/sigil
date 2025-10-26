@@ -369,6 +369,42 @@ const createCancellationError = (
 };
 
 /**
+ * Formatted tool result for Anthropic API
+ */
+interface FormattedToolResult {
+  content: string;
+  is_error?: boolean;
+}
+
+/**
+ * Formats a tool handler result for Anthropic API
+ *
+ * Converts Result<unknown, string> from handlers into the format expected by
+ * Anthropic's tool result API: {content: string, is_error?: boolean}
+ *
+ * @param result - Result from a tool handler (helper or reflection)
+ * @returns Object with string content and optional error flag
+ *
+ * @example
+ * ```typescript
+ * const handlerResult = handler(input);
+ * const toolResult = formatToolResult(handlerResult);
+ * // toolResult = {content: "data", is_error: false} or {content: "error", is_error: true}
+ * ```
+ */
+const formatToolResult = (result: Result<unknown, string>): FormattedToolResult => {
+	if (isErr(result)) {
+		return {
+			content: result.error,
+			is_error: true,
+		};
+	}
+	return {
+		content: String(result.data),
+	};
+};
+
+/**
  * Options for building execution metadata
  */
 interface BuildMetadataOptions {
@@ -745,37 +781,21 @@ export const executeAgent = async <Input, Output>(
 						// Execute reflection handler with exception safety
 						try {
 							const handlerResult = agent.tools.output.reflectionHandler!(lastOutputToolInput);
+							const formatted = formatToolResult(handlerResult);
 
-							if (isErr(handlerResult)) {
-								// Reflection handler returned error
-								const errorContent = handlerResult.error;
-								toolResults.push({
-									type: 'tool_result',
-									tool_use_id: toolUse.id,
-									content: errorContent,
-									is_error: true,
-								});
-								// Fire callback with error result
-								safeInvokeCallback(
-									options.callbacks?.onToolResult,
-									[{...state}, toolUse.name, errorContent],
-									callbackErrors
-								);
-							} else {
-								// Reflection handler returned success
-								const resultContent = handlerResult.data;
-								toolResults.push({
-									type: 'tool_result',
-									tool_use_id: toolUse.id,
-									content: resultContent,
-								});
-								// Fire callback with success result
-								safeInvokeCallback(
-									options.callbacks?.onToolResult,
-									[{...state}, toolUse.name, resultContent],
-									callbackErrors
-								);
-							}
+							toolResults.push({
+								type: 'tool_result',
+								tool_use_id: toolUse.id,
+								content: formatted.content,
+								is_error: formatted.is_error,
+							});
+
+							// Fire callback with result
+							safeInvokeCallback(
+								options.callbacks?.onToolResult,
+								[{...state}, toolUse.name, formatted.content],
+								callbackErrors
+							);
 						} catch (error) {
 							// Reflection handler threw exception (contract violation)
 							const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
@@ -834,37 +854,21 @@ export const executeAgent = async <Input, Output>(
 				// Execute helper tool handler with exception safety
 				try {
 					const handlerResult = handler(toolUse.input);
+					const formatted = formatToolResult(handlerResult);
 
-					if (isErr(handlerResult)) {
-						// Handler returned error
-						const errorContent = handlerResult.error;
-						toolResults.push({
-							type: 'tool_result',
-							tool_use_id: toolUse.id,
-							content: errorContent,
-							is_error: true,
-						});
-						// Fire callback with error result
-						safeInvokeCallback(
-							options.callbacks?.onToolResult,
-							[{...state}, toolUse.name, errorContent],
-							callbackErrors
-						);
-					} else {
-						// Handler returned success
-						const resultContent = String(handlerResult.data);
-						toolResults.push({
-							type: 'tool_result',
-							tool_use_id: toolUse.id,
-							content: resultContent,
-						});
-						// Fire callback with success result
-						safeInvokeCallback(
-							options.callbacks?.onToolResult,
-							[{...state}, toolUse.name, resultContent],
-							callbackErrors
-						);
-					}
+					toolResults.push({
+						type: 'tool_result',
+						tool_use_id: toolUse.id,
+						content: formatted.content,
+						is_error: formatted.is_error,
+					});
+
+					// Fire callback with result
+					safeInvokeCallback(
+						options.callbacks?.onToolResult,
+						[{...state}, toolUse.name, formatted.content],
+						callbackErrors
+					);
 				} catch (error) {
 					// Helper tool handler threw exception (contract violation)
 					const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
@@ -915,6 +919,11 @@ export const executeAgent = async <Input, Output>(
 
 			if (outputFound && !reflectionEnabled) {
 				// Output tool called in non-reflection mode - exit immediately
+				// Note: If the model called multiple tools in this response (e.g., [helper, output, helper]),
+				// all tools were processed above and their results added to toolResults array.
+				// However, we exit here without appending toolResults to conversation history,
+				// effectively discarding them. This is intentional: we're terminating the iteration
+				// loop anyway, and the model already provided its final output via the output tool.
 				output = lastOutputToolInput;
 				break;
 			}
@@ -933,18 +942,21 @@ export const executeAgent = async <Input, Output>(
 			// Continue to next iteration
 		}
 
-		// Check if iteration limit exceeded
-		if (iterationCount >= maxIterations && response?.stop_reason === 'tool_use') {
+		// Check if output tool was ever called
+		// This check takes priority over MAX_ITERATIONS_EXCEEDED because it's more
+		// specific and actionable - it tells exactly what went wrong (protocol violation)
+		// rather than just indicating resource exhaustion.
+		if (!output) {
 			return err({
 				errors: [
 					{
-						code: AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED,
+						code: AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED,
 						severity: 'error',
-						category: 'execution',
+						category: 'model',
 						context: {
 							attempt,
 							iterationCount,
-							maxIterations,
+							expectedTool: agent.tools.output.name,
 						},
 					},
 				],
@@ -958,18 +970,22 @@ export const executeAgent = async <Input, Output>(
 			});
 		}
 
-		// Check if output tool was ever called
-		if (!output) {
+		// Check if iteration limit exceeded
+		// This check happens after the loop exits and verifies that we hit the limit
+		// while the model still wanted to use tools (stop_reason === 'tool_use').
+		// If the model naturally stopped with 'end_turn', we would have exited the loop
+		// earlier without hitting this check.
+		if (iterationCount >= maxIterations && response?.stop_reason === 'tool_use') {
 			return err({
 				errors: [
 					{
-						code: AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED,
+						code: AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED,
 						severity: 'error',
-						category: 'model',
+						category: 'execution',
 						context: {
 							attempt,
 							iterationCount,
-							expectedTool: agent.tools.output.name,
+							maxIterations,
 						},
 					},
 				],

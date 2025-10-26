@@ -109,15 +109,17 @@ describe('executeAgent - Iteration Loop', () => {
 
 			if (isErr(result)) {
 				const error = result.error.errors.at(0);
-				expect(error?.code).toBe(AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED);
-				if (error?.code === AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED) {
-					expect(error.context.maxIterations).toBe(DEFAULT_MAX_ITERATIONS);
+				// Returns OUTPUT_TOOL_NOT_USED because output was never called
+				// (takes priority over MAX_ITERATIONS_EXCEEDED)
+				expect(error?.code).toBe(AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED);
+				if (error?.code === AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED) {
+					// But iterations were exhausted (showing default limit of 15 was used)
 					expect(error.context.iterationCount).toBe(DEFAULT_MAX_ITERATIONS);
 				}
 			}
 		});
 
-		it('should return MAX_ITERATIONS_EXCEEDED when iteration limit reached', async () => {
+		it('should exhaust iteration limit when helper tools called repeatedly', async () => {
 			createMockApiCalls(mockMessagesCreate, [
 				{type: 'helper'},
 			]);
@@ -128,10 +130,12 @@ describe('executeAgent - Iteration Loop', () => {
 
 			if (isErr(result)) {
 				const error = result.error.errors.at(0);
-				expect(error?.code).toBe(AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED);
-				expect(error?.category).toBe('execution');
-				if (error?.code === AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED) {
-					expect(error.context.maxIterations).toBe(DEFAULT_MAX_ITERATIONS);
+				// Returns OUTPUT_TOOL_NOT_USED because output was never called
+				// (takes priority over MAX_ITERATIONS_EXCEEDED)
+				expect(error?.code).toBe(AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED);
+				expect(error?.category).toBe('model');
+				if (error?.code === AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED) {
+					// Iterations were exhausted (hit the limit)
 					expect(error.context.iterationCount).toBe(DEFAULT_MAX_ITERATIONS);
 				}
 			}
@@ -166,6 +170,31 @@ describe('executeAgent - Iteration Loop', () => {
 				expect(error?.category).toBe('model');
 				if (error?.code === AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED) {
 					expect(error.context.iterationCount).toBeGreaterThan(0);
+					expect(error.context.expectedTool).toBe('generate_output');
+				}
+			}
+		});
+
+		it('should prioritise OUTPUT_TOOL_NOT_USED over MAX_ITERATIONS_EXCEEDED', async () => {
+			// Edge case: iterations exhausted while output tool was never called
+			// Both error conditions are true, but OUTPUT_TOOL_NOT_USED should be returned
+			// because it's more specific and actionable (protocol violation vs resource exhaustion)
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'helper'}, // Repeats indefinitely (mock persists last config)
+			]);
+
+			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				// Should get OUTPUT_TOOL_NOT_USED, not MAX_ITERATIONS_EXCEEDED
+				expect(error?.code).toBe(AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED);
+				expect(error?.category).toBe('model');
+				if (error?.code === AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED) {
+					// Should have hit the iteration limit
+					expect(error.context.iterationCount).toBe(DEFAULT_MAX_ITERATIONS);
 					expect(error.context.expectedTool).toBe('generate_output');
 				}
 			}
