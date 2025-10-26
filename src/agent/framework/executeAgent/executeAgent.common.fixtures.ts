@@ -39,6 +39,9 @@ export {
 	AGENT_WITH_REFLECTION,
 	AGENT_WITH_REJECTING_REFLECTION,
 	AGENT_WITH_HELPERS_AND_REFLECTION,
+	AGENT_WITH_THROWING_HELPER,
+	AGENT_WITH_THROWING_REFLECTION,
+	AGENT_WITH_DEFAULT_ITERATION_LIMIT,
 } from '../defineAgent/defineAgent.fixtures';
 
 /**
@@ -56,12 +59,13 @@ export {
 	createSubmitToolResponse,
 	createOutputThenSubmitResponse,
 	createSubmitBeforeOutputResponse,
+	createMixedToolResponse,
 } from './executeAgent.fixtures';
 
 /**
- * Re-export executeAgent function
+ * Re-export executeAgent function and constants
  */
-export {executeAgent} from './executeAgent';
+export {executeAgent, DEFAULT_MAX_ITERATIONS} from './executeAgent';
 
 /**
  * Re-export error codes and Result utilities

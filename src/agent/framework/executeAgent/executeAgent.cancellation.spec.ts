@@ -119,6 +119,9 @@ describe('executeAgent - Cancellation', () => {
 			if (isErr(result)) {
 				const error = result.error.errors.at(0);
 				expect(error?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+				if (error?.code === AGENT_ERROR_CODES.EXECUTION_CANCELLED) {
+					expect(error.context.phase).toBe('iteration');
+				}
 			}
 		});
 	});

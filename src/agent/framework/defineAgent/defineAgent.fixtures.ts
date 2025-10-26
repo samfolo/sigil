@@ -936,3 +936,169 @@ export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutp
 		trackTokens: true,
 	},
 };
+
+/**
+ * Mock helper tool handler that throws exception
+ *
+ * Simulates a helper tool that violates the Result contract by throwing.
+ * Used to test exception safety in executeAgent.
+ */
+export const mockThrowingHandler = (_input: unknown): Result<unknown, string> => {
+	throw new Error('Handler threw exception');
+};
+
+/**
+ * Mock reflection handler that throws exception
+ *
+ * Simulates a reflection handler that violates the Result contract by throwing.
+ * Used to test exception safety in executeAgent.
+ */
+export const mockThrowingReflectionHandler = (_output: TestOutput): Result<string, string> => {
+	throw new Error('Reflection handler threw exception');
+};
+
+/**
+ * 19. Agent with throwing helper tool handler
+ *
+ * Demonstrates exception safety when a helper tool violates the Result contract
+ * by throwing an exception instead of returning err().
+ */
+export const AGENT_WITH_THROWING_HELPER: AgentDefinition<string, TestOutput> = {
+	name: 'ThrowingHelperAgent',
+	description: 'Agent with helper tool that throws exceptions',
+	model: {
+		provider: 'anthropic',
+		name: 'claude-sonnet-4-5-20250929',
+		temperature: 0.7,
+		maxTokens: 1024,
+	},
+	prompts: {
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
+			`You are a test agent with helper tools. Processing: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) =>
+			`Please process this input: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
+			`Attempt ${state.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the test output result',
+		},
+		helpers: [
+			{
+				name: 'throwing_tool',
+				description: 'A tool that throws exceptions',
+				inputSchema: z.object({query: z.string()}),
+				handler: mockThrowingHandler,
+			},
+		],
+	},
+	validation: {
+		outputSchema: TEST_OUTPUT_SCHEMA,
+		customValidators: [],
+		maxAttempts: 3,
+		maxIterationsPerAttempt: 15,
+	},
+	observability: {
+		trackCost: true,
+		trackLatency: true,
+		trackAttempts: true,
+		trackTokens: true,
+	},
+};
+
+/**
+ * 20. Agent with throwing reflection handler
+ *
+ * Demonstrates exception safety when a reflection handler violates the Result contract
+ * by throwing an exception instead of returning err().
+ */
+export const AGENT_WITH_THROWING_REFLECTION: AgentDefinition<string, TestOutput> = {
+	name: 'ThrowingReflectionAgent',
+	description: 'Agent with reflection handler that throws exceptions',
+	model: {
+		provider: 'anthropic',
+		name: 'claude-sonnet-4-5-20250929',
+		temperature: 0.7,
+		maxTokens: 1024,
+	},
+	prompts: {
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
+			`You are a test agent with reflection mode. Processing: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) =>
+			`Please process this input: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
+			`Attempt ${state.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the test output result',
+			reflectionHandler: mockThrowingReflectionHandler,
+		},
+	},
+	validation: {
+		outputSchema: TEST_OUTPUT_SCHEMA,
+		customValidators: [],
+		maxAttempts: 3,
+		maxIterationsPerAttempt: 15,
+	},
+	observability: {
+		trackCost: true,
+		trackLatency: true,
+		trackAttempts: true,
+		trackTokens: true,
+	},
+};
+
+/**
+ * 21. Agent with helper tools but no iteration limit specified
+ *
+ * Demonstrates default iteration limit behaviour when maxIterationsPerAttempt is not configured.
+ * Should default to 15 iterations per attempt.
+ */
+export const AGENT_WITH_DEFAULT_ITERATION_LIMIT: AgentDefinition<string, TestOutput> = {
+	name: 'DefaultIterationLimitAgent',
+	description: 'Agent without explicit iteration limit configuration',
+	model: {
+		provider: 'anthropic',
+		name: 'claude-sonnet-4-5-20250929',
+		temperature: 0.7,
+		maxTokens: 1024,
+	},
+	prompts: {
+		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
+			`You are a test agent with helper tools. Processing: ${input}`,
+		user: async (input: string, _signal?: AbortSignal) =>
+			`Please process this input: ${input}`,
+		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
+			`Attempt ${state.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
+	},
+	tools: {
+		output: {
+			name: 'generate_output',
+			description: 'Generate the test output result',
+		},
+		helpers: [
+			{
+				name: 'query_data',
+				description: 'Query test data',
+				inputSchema: z.object({query: z.string()}),
+				handler: mockDataQueryHandler,
+			},
+		],
+	},
+	validation: {
+		outputSchema: TEST_OUTPUT_SCHEMA,
+		customValidators: [],
+		maxAttempts: 3,
+		// maxIterationsPerAttempt intentionally omitted to test default
+	},
+	observability: {
+		trackCost: true,
+		trackLatency: true,
+		trackAttempts: true,
+		trackTokens: true,
+	},
+};

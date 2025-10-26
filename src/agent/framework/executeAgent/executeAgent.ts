@@ -22,7 +22,7 @@ import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/commo
  * Prevents runaway tool-calling loops that consume excessive tokens.
  * Can be overridden via ValidationConfig.maxIterationsPerAttempt.
  */
-const DEFAULT_MAX_ITERATIONS = 15;
+export const DEFAULT_MAX_ITERATIONS = 15;
 
 /**
  * Default submit tool definition for reflection mode
@@ -749,12 +749,43 @@ export const executeAgent = async <Input, Output>(
 					);
 
 					if (reflectionEnabled) {
-						// Execute reflection handler
-						const handlerResult = agent.tools.output.reflectionHandler!(lastOutputToolInput);
+						// Execute reflection handler with exception safety
+						try {
+							const handlerResult = agent.tools.output.reflectionHandler!(lastOutputToolInput);
 
-						if (isErr(handlerResult)) {
-							// Reflection handler returned error
-							const errorContent = handlerResult.error;
+							if (isErr(handlerResult)) {
+								// Reflection handler returned error
+								const errorContent = handlerResult.error;
+								toolResults.push({
+									type: 'tool_result',
+									tool_use_id: toolUse.id,
+									content: errorContent,
+									is_error: true,
+								});
+								// Fire callback with error result
+								safeInvokeCallback(
+									options.callbacks?.onToolResult,
+									[{...state}, toolUse.name, errorContent],
+									callbackErrors
+								);
+							} else {
+								// Reflection handler returned success
+								const resultContent = handlerResult.data;
+								toolResults.push({
+									type: 'tool_result',
+									tool_use_id: toolUse.id,
+									content: resultContent,
+								});
+								// Fire callback with success result
+								safeInvokeCallback(
+									options.callbacks?.onToolResult,
+									[{...state}, toolUse.name, resultContent],
+									callbackErrors
+								);
+							}
+						} catch (error) {
+							// Reflection handler threw exception (contract violation)
+							const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
 							toolResults.push({
 								type: 'tool_result',
 								tool_use_id: toolUse.id,
@@ -765,20 +796,6 @@ export const executeAgent = async <Input, Output>(
 							safeInvokeCallback(
 								options.callbacks?.onToolResult,
 								[{...state}, toolUse.name, errorContent],
-								callbackErrors
-							);
-						} else {
-							// Reflection handler returned success
-							const resultContent = handlerResult.data;
-							toolResults.push({
-								type: 'tool_result',
-								tool_use_id: toolUse.id,
-								content: resultContent,
-							});
-							// Fire callback with success result
-							safeInvokeCallback(
-								options.callbacks?.onToolResult,
-								[{...state}, toolUse.name, resultContent],
 								callbackErrors
 							);
 						}
@@ -821,12 +838,43 @@ export const executeAgent = async <Input, Output>(
 					callbackErrors
 				);
 
-				// Execute helper tool handler
-				const handlerResult = handler(toolUse.input);
+				// Execute helper tool handler with exception safety
+				try {
+					const handlerResult = handler(toolUse.input);
 
-				if (isErr(handlerResult)) {
-					// Handler returned error
-					const errorContent = handlerResult.error;
+					if (isErr(handlerResult)) {
+						// Handler returned error
+						const errorContent = handlerResult.error;
+						toolResults.push({
+							type: 'tool_result',
+							tool_use_id: toolUse.id,
+							content: errorContent,
+							is_error: true,
+						});
+						// Fire callback with error result
+						safeInvokeCallback(
+							options.callbacks?.onToolResult,
+							[{...state}, toolUse.name, errorContent],
+							callbackErrors
+						);
+					} else {
+						// Handler returned success
+						const resultContent = String(handlerResult.data);
+						toolResults.push({
+							type: 'tool_result',
+							tool_use_id: toolUse.id,
+							content: resultContent,
+						});
+						// Fire callback with success result
+						safeInvokeCallback(
+							options.callbacks?.onToolResult,
+							[{...state}, toolUse.name, resultContent],
+							callbackErrors
+						);
+					}
+				} catch (error) {
+					// Helper tool handler threw exception (contract violation)
+					const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
 					toolResults.push({
 						type: 'tool_result',
 						tool_use_id: toolUse.id,
@@ -837,20 +885,6 @@ export const executeAgent = async <Input, Output>(
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
 						[{...state}, toolUse.name, errorContent],
-						callbackErrors
-					);
-				} else {
-					// Handler returned success
-					const resultContent = String(handlerResult.data);
-					toolResults.push({
-						type: 'tool_result',
-						tool_use_id: toolUse.id,
-						content: resultContent,
-					});
-					// Fire callback with success result
-					safeInvokeCallback(
-						options.callbacks?.onToolResult,
-						[{...state}, toolUse.name, resultContent],
 						callbackErrors
 					);
 				}

@@ -13,11 +13,16 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 import {
 	executeAgent,
 	setupExecuteAgentMocks,
+	DEFAULT_MAX_ITERATIONS,
 	VALID_MINIMAL_AGENT,
 	VALID_COMPLETE_AGENT,
 	AGENT_WITH_HELPER_TOOLS,
+	AGENT_WITH_THROWING_HELPER,
+	AGENT_WITH_DEFAULT_ITERATION_LIMIT,
 	VALID_EXECUTE_OPTIONS,
 	createMockApiCalls,
+	createExecuteOptionsWithCallbackTracking,
+	createMixedToolResponse,
 	isOk,
 	isErr,
 	AGENT_ERROR_CODES,
@@ -93,6 +98,25 @@ describe('executeAgent - Iteration Loop', () => {
 	});
 
 	describe('Error Cases', () => {
+		it('should use default iteration limit of 15 when not specified', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'helper'},
+			]);
+
+			const result = await executeAgent(AGENT_WITH_DEFAULT_ITERATION_LIMIT, VALID_EXECUTE_OPTIONS);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				expect(error?.code).toBe(AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED);
+				if (error?.code === AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED) {
+					expect(error.context.maxIterations).toBe(DEFAULT_MAX_ITERATIONS);
+					expect(error.context.iterationCount).toBe(DEFAULT_MAX_ITERATIONS);
+				}
+			}
+		});
+
 		it('should return MAX_ITERATIONS_EXCEEDED when iteration limit reached', async () => {
 			createMockApiCalls(mockMessagesCreate, [
 				{type: 'helper'},
@@ -107,8 +131,8 @@ describe('executeAgent - Iteration Loop', () => {
 				expect(error?.code).toBe(AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED);
 				expect(error?.category).toBe('execution');
 				if (error?.code === AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED) {
-					expect(error.context.maxIterations).toBe(15);
-					expect(error.context.iterationCount).toBe(15);
+					expect(error.context.maxIterations).toBe(DEFAULT_MAX_ITERATIONS);
+					expect(error.context.iterationCount).toBe(DEFAULT_MAX_ITERATIONS);
 				}
 			}
 		});
@@ -145,6 +169,182 @@ describe('executeAgent - Iteration Loop', () => {
 					expect(error.context.expectedTool).toBe('generate_output');
 				}
 			}
+		});
+	});
+
+	describe('Handler Exception Safety', () => {
+		it('should handle helper handler that throws exception', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'helper', helperToolName: 'throwing_tool'},
+				{type: 'success'},
+			]);
+
+			const result = await executeAgent(AGENT_WITH_THROWING_HELPER, VALID_EXECUTE_OPTIONS);
+
+			// Should still succeed - exception caught and returned as error tool result
+			expect(isOk(result)).toBe(true);
+		});
+
+		it('should pass error message to model when helper handler throws', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'helper', helperToolName: 'throwing_tool'},
+				{type: 'success'},
+			]);
+
+			await executeAgent(AGENT_WITH_THROWING_HELPER, VALID_EXECUTE_OPTIONS);
+
+			// Check that second API call received error in conversation history
+			const secondCall = mockMessagesCreate.mock.calls.at(1);
+			const messages = secondCall?.at(0)?.messages;
+
+			// Find the user message with tool result
+			const toolResultMessage = messages?.find((m: {role: string; content: unknown}) => {
+				if (m.role !== 'user') {
+					return false;
+				}
+				const content = m.content;
+				return Array.isArray(content) && content.some((block: {type: string}) => block.type === 'tool_result');
+			});
+
+			expect(toolResultMessage).toBeDefined();
+
+			if (toolResultMessage) {
+				const content = toolResultMessage.content;
+				const toolResult = Array.isArray(content)
+					? content.find((block: {type: string}) => block.type === 'tool_result')
+					: null;
+
+				if (toolResult && typeof toolResult === 'object' && 'content' in toolResult) {
+					expect(toolResult.content).toContain('Error:');
+					expect(toolResult.content).toContain('Handler threw exception');
+				}
+			}
+		});
+
+		it('should mark tool result as error when helper handler throws', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'helper', helperToolName: 'throwing_tool'},
+				{type: 'success'},
+			]);
+
+			await executeAgent(AGENT_WITH_THROWING_HELPER, VALID_EXECUTE_OPTIONS);
+
+			// Check that second API call received is_error: true
+			const secondCall = mockMessagesCreate.mock.calls.at(1);
+			const messages = secondCall?.at(0)?.messages;
+
+			const toolResultMessage = messages?.find((m: {role: string; content: unknown}) => {
+				if (m.role !== 'user') {
+					return false;
+				}
+				const content = m.content;
+				return Array.isArray(content) && content.some((block: {type: string}) => block.type === 'tool_result');
+			});
+
+			if (toolResultMessage) {
+				const content = toolResultMessage.content;
+				const toolResult = Array.isArray(content)
+					? content.find((block: {type: string}) => block.type === 'tool_result')
+					: null;
+
+				if (toolResult && typeof toolResult === 'object' && 'is_error' in toolResult) {
+					expect(toolResult.is_error).toBe(true);
+				}
+			}
+		});
+
+		it('should invoke onToolResult callback when helper handler throws', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'helper', helperToolName: 'throwing_tool'},
+				{type: 'success'},
+			]);
+
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			await executeAgent(AGENT_WITH_THROWING_HELPER, options);
+
+			// Should have called onToolResult with error
+			const toolResults = invocations.filter((i) => i.type === 'onToolResult');
+			expect(toolResults.length).toBeGreaterThan(0);
+
+			const helperResult = toolResults.find((result) => {
+				if (result.type === 'onToolResult') {
+					return result.toolName === 'throwing_tool';
+				}
+				return false;
+			});
+
+			if (helperResult?.type === 'onToolResult') {
+				expect(helperResult.toolResult).toContain('Error:');
+				expect(helperResult.toolResult).toContain('Handler threw exception');
+			}
+		});
+	});
+
+	describe('Mixed Tool Uses', () => {
+		it('should process helper + output + helper in single response', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'custom', response: createMixedToolResponse('test result')},
+			]);
+
+			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data.output.result).toBe('test result');
+			}
+		});
+
+		it('should execute all tool handlers in mixed response', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'custom', response: createMixedToolResponse('test result')},
+			]);
+
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+
+			// Should have called both helper tools and output tool
+			const toolCalls = invocations.filter((i) => i.type === 'onToolCall');
+
+			const helper1 = toolCalls.find((call) => {
+				if (call.type === 'onToolCall' && call.toolName === 'query_data') {
+					return call.toolInput && typeof call.toolInput === 'object' && 'query' in call.toolInput && call.toolInput.query === 'first query';
+				}
+				return false;
+			});
+
+			const outputCall = toolCalls.find((call) => {
+				if (call.type === 'onToolCall') {
+					return call.toolName === 'generate_output';
+				}
+				return false;
+			});
+
+			const helper2 = toolCalls.find((call) => {
+				if (call.type === 'onToolCall' && call.toolName === 'query_data') {
+					return call.toolInput && typeof call.toolInput === 'object' && 'query' in call.toolInput && call.toolInput.query === 'second query';
+				}
+				return false;
+			});
+
+			expect(helper1).toBeDefined();
+			expect(outputCall).toBeDefined();
+			expect(helper2).toBeDefined();
+		});
+
+		it('should terminate after processing all tools when output is present', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'custom', response: createMixedToolResponse('test result')},
+			]);
+
+			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
+
+			expect(isOk(result)).toBe(true);
+
+			// Should only make one API call - iteration terminates after output tool
+			expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
 		});
 	});
 });

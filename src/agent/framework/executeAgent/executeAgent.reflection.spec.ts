@@ -16,10 +16,12 @@ import {
 	VALID_MINIMAL_AGENT,
 	AGENT_WITH_REFLECTION,
 	AGENT_WITH_REJECTING_REFLECTION,
+	AGENT_WITH_THROWING_REFLECTION,
 	VALID_EXECUTE_OPTIONS,
 	createMockApiCalls,
 	createOutputThenSubmitResponse,
 	createSubmitBeforeOutputResponse,
+	createExecuteOptionsWithCallbackTracking,
 	isOk,
 	isErr,
 	AGENT_ERROR_CODES,
@@ -169,5 +171,114 @@ describe('executeAgent - Reflection Mode', () => {
 
 		expect(tools).toBeDefined();
 		expect(tools?.some((tool: {name: string}) => tool.name === 'submit')).toBe(true);
+	});
+
+	describe('Reflection Handler Exception Safety', () => {
+		it('should handle reflection handler that throws exception', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'success'},
+				{type: 'submit'},
+			]);
+
+			const result = await executeAgent(AGENT_WITH_THROWING_REFLECTION, VALID_EXECUTE_OPTIONS);
+
+			// Should still succeed - exception caught and returned as error tool result
+			expect(isOk(result)).toBe(true);
+		});
+
+		it('should pass error message to model when reflection handler throws', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'success'},
+				{type: 'submit'},
+			]);
+
+			await executeAgent(AGENT_WITH_THROWING_REFLECTION, VALID_EXECUTE_OPTIONS);
+
+			// Check that second API call received error in conversation history
+			const secondCall = mockMessagesCreate.mock.calls.at(1);
+			const messages = secondCall?.at(0)?.messages;
+
+			// Find the user message with tool result
+			const toolResultMessage = messages?.find((m: {role: string; content: unknown}) => {
+				if (m.role !== 'user') {
+					return false;
+				}
+				const content = m.content;
+				return Array.isArray(content) && content.some((block: {type: string}) => block.type === 'tool_result');
+			});
+
+			expect(toolResultMessage).toBeDefined();
+
+			if (toolResultMessage) {
+				const content = toolResultMessage.content;
+				const toolResult = Array.isArray(content)
+					? content.find((block: {type: string}) => block.type === 'tool_result')
+					: null;
+
+				if (toolResult && typeof toolResult === 'object' && 'content' in toolResult) {
+					expect(toolResult.content).toContain('Error:');
+					expect(toolResult.content).toContain('Reflection handler threw exception');
+				}
+			}
+		});
+
+		it('should mark tool result as error when reflection handler throws', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'success'},
+				{type: 'submit'},
+			]);
+
+			await executeAgent(AGENT_WITH_THROWING_REFLECTION, VALID_EXECUTE_OPTIONS);
+
+			// Check that second API call received is_error: true
+			const secondCall = mockMessagesCreate.mock.calls.at(1);
+			const messages = secondCall?.at(0)?.messages;
+
+			const toolResultMessage = messages?.find((m: {role: string; content: unknown}) => {
+				if (m.role !== 'user') {
+					return false;
+				}
+				const content = m.content;
+				return Array.isArray(content) && content.some((block: {type: string}) => block.type === 'tool_result');
+			});
+
+			if (toolResultMessage) {
+				const content = toolResultMessage.content;
+				const toolResult = Array.isArray(content)
+					? content.find((block: {type: string}) => block.type === 'tool_result')
+					: null;
+
+				if (toolResult && typeof toolResult === 'object' && 'is_error' in toolResult) {
+					expect(toolResult.is_error).toBe(true);
+				}
+			}
+		});
+
+		it('should invoke onToolResult callback when reflection handler throws', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'success'},
+				{type: 'submit'},
+			]);
+
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			await executeAgent(AGENT_WITH_THROWING_REFLECTION, options);
+
+			// Should have called onToolResult with error
+			const toolResults = invocations.filter((i) => i.type === 'onToolResult');
+			expect(toolResults.length).toBeGreaterThan(0);
+
+			const outputResult = toolResults.find((result) => {
+				if (result.type === 'onToolResult') {
+					return result.toolName === 'generate_output';
+				}
+				return false;
+			});
+
+			if (outputResult?.type === 'onToolResult') {
+				expect(outputResult.toolResult).toContain('Error:');
+				expect(outputResult.toolResult).toContain('Reflection handler threw exception');
+			}
+		});
 	});
 });

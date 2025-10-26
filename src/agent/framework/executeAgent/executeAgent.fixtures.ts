@@ -750,3 +750,51 @@ export const createSubmitBeforeOutputResponse = (
 		output_tokens: outputTokens,
 	},
 });
+
+/**
+ * Creates API response with multiple tool uses in single response
+ *
+ * Returns a response where the model calls helper + output + helper in one iteration.
+ * Tests that all tools are processed in order and output is correctly extracted.
+ *
+ * @param result - The result value to include in output
+ * @param inputTokens - Number of input tokens consumed
+ * @param outputTokens - Number of output tokens generated
+ * @returns Mock API response object
+ */
+export const createMixedToolResponse = (
+	result: string = 'success result',
+	inputTokens: number = 100,
+	outputTokens: number = 50
+) => ({
+	id: 'msg_mixed_tools',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_helper1',
+			name: 'query_data',
+			input: {query: 'first query'},
+		},
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_output',
+			name: 'generate_output',
+			input: {result},
+		},
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_helper2',
+			name: 'query_data',
+			input: {query: 'second query'},
+		},
+	],
+	stop_reason: 'tool_use' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
