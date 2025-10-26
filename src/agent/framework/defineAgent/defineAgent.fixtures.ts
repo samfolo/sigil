@@ -141,21 +141,29 @@ class AgentDefinitionBuilder<TInput, TOutput> {
 					...this.base.tools.output,
 					...(this.overrides.reflectionHandler !== undefined ? {reflectionHandler: this.overrides.reflectionHandler} : {}),
 				},
-				...(this.overrides.helpers !== undefined
-					? {helpers: this.overrides.helpers}
-					: this.base.tools.helpers !== undefined
-						? {helpers: this.base.tools.helpers}
-						: {}),
+				...(() => {
+					if (this.overrides.helpers !== undefined) {
+						return {helpers: this.overrides.helpers};
+					}
+					if (this.base.tools.helpers !== undefined) {
+						return {helpers: this.base.tools.helpers};
+					}
+					return {};
+				})(),
 			},
 			validation: {
 				outputSchema: 'outputSchema' in this.overrides ? this.overrides.outputSchema! : this.base.validation.outputSchema,
 				customValidators: this.overrides.customValidators ?? this.base.validation.customValidators,
 				maxAttempts: this.overrides.maxAttempts ?? this.base.validation.maxAttempts,
-				...(this.overrides.maxIterationsPerAttempt !== undefined
-					? {maxIterationsPerAttempt: this.overrides.maxIterationsPerAttempt}
-					: this.base.validation.maxIterationsPerAttempt !== undefined
-						? {maxIterationsPerAttempt: this.base.validation.maxIterationsPerAttempt}
-						: {}),
+				...(() => {
+					if (this.overrides.maxIterationsPerAttempt !== undefined) {
+						return {maxIterationsPerAttempt: this.overrides.maxIterationsPerAttempt};
+					}
+					if (this.base.validation.maxIterationsPerAttempt !== undefined) {
+						return {maxIterationsPerAttempt: this.base.validation.maxIterationsPerAttempt};
+					}
+					return {};
+				})(),
 			},
 			observability: {
 				...this.base.observability,

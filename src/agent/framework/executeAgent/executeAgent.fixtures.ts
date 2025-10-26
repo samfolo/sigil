@@ -14,8 +14,8 @@ import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
 } from '@sigil/src/agent/framework/validation';
-import type {AgentError, Result} from '@sigil/src/common/errors';
-import {AGENT_ERROR_CODES, ok, err} from '@sigil/src/common/errors';
+import type {AgentError} from '@sigil/src/common/errors';
+import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 
 import type {

@@ -180,7 +180,7 @@ export const asSystemPromptFunction = <Input>(
  */
 export const asUserPromptFunction = <Input>(
 	template: TemplateFunction<Input>
-): UserPromptFunction<Input> => async (input: Input): Promise<string> => template(input, {attempt: 1, maxAttempts: 1});
+): UserPromptFunction<Input> => async (input: Input): Promise<string> => template(input, {attempt: 1, maxAttempts: 1, iteration: 1, maxIterations: 1});
 
 /**
  * Converts a TemplateFunction to an ErrorPromptFunction

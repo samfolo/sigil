@@ -21,16 +21,22 @@ export interface ListData {
 export const FIRST_ATTEMPT_STATE: AgentExecutionState = {
 	attempt: 1,
 	maxAttempts: 3,
+	iteration: 1,
+	maxIterations: 10,
 };
 
 export const SECOND_ATTEMPT_STATE: AgentExecutionState = {
 	attempt: 2,
 	maxAttempts: 3,
+	iteration: 1,
+	maxIterations: 10,
 };
 
 export const FINAL_ATTEMPT_STATE: AgentExecutionState = {
 	attempt: 3,
 	maxAttempts: 3,
+	iteration: 1,
+	maxIterations: 10,
 };
 
 /**
