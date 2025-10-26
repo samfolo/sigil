@@ -16,7 +16,11 @@ export type Embedding = number[];
  * Model configuration
  */
 const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
-const EMBEDDING_DIMENSION = 384;
+
+/**
+ * Embedding dimension for all-MiniLM-L6-v2 model
+ */
+export const EMBEDDING_DIMENSION = 384;
 
 /**
  * Singleton embedding pipeline instance
@@ -66,8 +70,9 @@ export const embedText = async (text: string): Promise<Embedding> => {
 	});
 
 	// Extract the embedding from the output
-	// Output shape is [1, 384] for single text, we want [384]
-	const tensor = output.data as Float32Array;
+	// Output is a Tensor with shape [1, 384] for single text
+	// Access via ort_tensor.cpuData
+	const tensor = output.ort_tensor.cpuData as Float32Array;
 	return float32ArrayToArray(tensor);
 };
 
@@ -87,6 +92,10 @@ export const embedText = async (text: string): Promise<Embedding> => {
  * ```
  */
 export const embedBatch = async (texts: string[]): Promise<Embedding[]> => {
+	if (texts.length === 0) {
+		return [];
+	}
+
 	const embedder = await getEmbedder();
 
 	const output = await embedder(texts, {
@@ -95,8 +104,8 @@ export const embedBatch = async (texts: string[]): Promise<Embedding[]> => {
 	});
 
 	// Output shape is [N, 384] where N is the number of texts
-	// We need to convert to array of 384-dimensional vectors
-	const tensor = output.data as Float32Array;
+	// Data is flattened in cpuData, so we slice into chunks
+	const tensor = output.ort_tensor.cpuData as Float32Array;
 	const embeddings: Embedding[] = [];
 
 	for (let i = 0; i < texts.length; i++) {
