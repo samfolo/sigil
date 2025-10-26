@@ -34,6 +34,7 @@
     "jsonpath-plus": "^10.3.0",
     "leaflet": "^1.9.4",
     "liquidjs": "^10.22.0",
+    "llm-chunk": "^0.0.1",
     "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",
     "luxon": "^3.7.2",

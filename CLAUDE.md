@@ -81,6 +81,25 @@ export const BASIC_TABLE: TableProps = {...};
 
 Exceptions: React APIs (Context, memo, forwardRef), functions (camelCase), classes and Zod schemas (PascalCase)
 
+No magic numbers, strings, or booleans:
+```typescript
+// Good - extract as named constants
+const MAX_RETRY_COUNT = 3;
+const DEFAULT_TIMEOUT_MS = 5000;
+const INITIAL_OFFSET = 0;
+
+if (retries < MAX_RETRY_COUNT) {
+  setTimeout(retry, DEFAULT_TIMEOUT_MS);
+}
+
+// Bad - magic values
+if (retries < 3) {
+  setTimeout(retry, 5000);
+}
+```
+
+Exception: `0` is acceptable for array indices, counters, and mathematical operations unless it represents a configurable default value or parameter.
+
 No Hungarian notation prefixes:
 ```typescript
 // Good
