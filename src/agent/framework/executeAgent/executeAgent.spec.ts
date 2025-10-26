@@ -593,7 +593,7 @@ describe('executeAgent', () => {
 
 				if (isErr(result)) {
 					const error = result.error.errors.at(0);
-					expect(error?.code).toBe(AGENT_ERROR_CODES.INVALID_RESPONSE);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED);
 					expect(error?.category).toBe('model');
 				}
 			});
@@ -630,7 +630,7 @@ describe('executeAgent', () => {
 
 				if (isErr(result)) {
 					const error = result.error.errors.at(0);
-					expect(error?.code).toBe(AGENT_ERROR_CODES.INVALID_RESPONSE);
+					expect(error?.code).toBe(AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED);
 				}
 			});
 

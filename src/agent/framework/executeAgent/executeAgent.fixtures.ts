@@ -14,8 +14,8 @@ import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
 } from '@sigil/src/agent/framework/validation';
-import type {AgentError} from '@sigil/src/common/errors';
-import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
+import type {AgentError, Result} from '@sigil/src/common/errors';
+import {AGENT_ERROR_CODES, ok, err} from '@sigil/src/common/errors';
 
 
 import type {
@@ -385,7 +385,7 @@ export const createSuccessResponse = (
 			input: {result},
 		},
 	],
-	stop_reason: 'end_turn' as const,
+	stop_reason: 'tool_use' as const,
 	stop_sequence: null,
 	usage: {
 		input_tokens: inputTokens,
@@ -421,7 +421,7 @@ export const createInvalidResponse = (
 			input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
 		},
 	],
-	stop_reason: 'end_turn' as const,
+	stop_reason: 'tool_use' as const,
 	stop_sequence: null,
 	usage: {
 		input_tokens: inputTokens,
@@ -534,3 +534,119 @@ export const createMockApiCalls = (mock: MockFunction, configs: MockCallConfig[]
 		);
 	});
 };
+
+/**
+ * Mock helper tool handler that returns success
+ *
+ * Simulates a helper tool that queries data and returns formatted results.
+ * Always succeeds with a formatted string response.
+ */
+export const mockDataQueryHandler = (input: unknown): Result<unknown, string> => {
+	const query = typeof input === 'object' && input !== null && 'query' in input
+		? String(input.query)
+		: 'default';
+	return ok(`Query results for: ${query}`);
+};
+
+/**
+ * Mock helper tool handler that returns error
+ *
+ * Simulates a helper tool that fails validation or encounters an error.
+ * Always returns an error Result with a descriptive message.
+ */
+export const mockFailingHandler = (_input: unknown): Result<unknown, string> =>
+	err('Handler execution failed: invalid query');
+
+/**
+ * Mock reflection handler that returns success
+ *
+ * Simulates a reflection handler that formats output for model review.
+ * Returns formatted JSON preview with instructions to call submit.
+ */
+export const mockReflectionHandler = (output: TestOutput): Result<string, string> =>
+	ok(`Preview:\n${JSON.stringify(output, null, 2)}\n\nCall submit when ready.`);
+
+/**
+ * Mock reflection handler that returns error
+ *
+ * Simulates a reflection handler that rejects output due to validation issues.
+ * Returns error Result with feedback for the model to fix.
+ */
+export const mockRejectingReflectionHandler = (output: TestOutput): Result<string, string> => {
+	if (output.result.length < 20) {
+		return err('Output too short; must be at least 20 characters');
+	}
+	return ok(`Preview:\n${JSON.stringify(output, null, 2)}`);
+};
+
+/**
+ * Creates API response with helper tool use
+ *
+ * Returns a response where the model calls a helper tool before the output tool.
+ * Used to test helper tool execution in the iteration loop.
+ *
+ * @param helperToolName - Name of the helper tool
+ * @param helperInput - Input object for the helper tool
+ * @param inputTokens - Number of input tokens consumed
+ * @param outputTokens - Number of output tokens generated
+ * @returns Mock API response object
+ */
+export const createHelperToolResponse = (
+	helperToolName: string = 'query_data',
+	helperInput: Record<string, unknown> = {query: 'test'},
+	inputTokens: number = 100,
+	outputTokens: number = 50
+) => ({
+	id: 'msg_helper',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_helper',
+			name: helperToolName,
+			input: helperInput,
+		},
+	],
+	stop_reason: 'tool_use' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
+
+/**
+ * Creates API response with submit tool use
+ *
+ * Returns a response where the model calls the submit tool to finalise output.
+ * Used to test reflection mode termination.
+ *
+ * @param inputTokens - Number of input tokens consumed
+ * @param outputTokens - Number of output tokens generated
+ * @returns Mock API response object
+ */
+export const createSubmitToolResponse = (
+	inputTokens: number = 100,
+	outputTokens: number = 50
+) => ({
+	id: 'msg_submit',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_submit',
+			name: 'submit',
+			input: {},
+		},
+	],
+	stop_reason: 'tool_use' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
