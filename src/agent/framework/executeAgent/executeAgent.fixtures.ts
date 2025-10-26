@@ -93,6 +93,26 @@ interface OnValidationLayerCompleteInvocation {
 }
 
 /**
+ * Callback invocation record for onToolCall
+ */
+interface OnToolCallInvocation {
+  type: 'onToolCall';
+  state: AgentExecutionState;
+  toolName: string;
+  toolInput: unknown;
+}
+
+/**
+ * Callback invocation record for onToolResult
+ */
+interface OnToolResultInvocation {
+  type: 'onToolResult';
+  state: AgentExecutionState;
+  toolName: string;
+  toolResult: string;
+}
+
+/**
  * Discriminated union of all callback invocation types
  *
  * Tracks which callback was invoked and the arguments passed to it.
@@ -105,7 +125,9 @@ export type CallbackInvocation =
   | OnSuccessInvocation
   | OnFailureInvocation
   | OnValidationLayerStartInvocation
-  | OnValidationLayerCompleteInvocation;
+  | OnValidationLayerCompleteInvocation
+  | OnToolCallInvocation
+  | OnToolResultInvocation;
 
 /**
  * Return type for createExecuteOptionsWithCallbackTracking factory
@@ -192,6 +214,22 @@ export const createExecuteOptionsWithCallbackTracking =
   				type: 'onValidationLayerComplete',
   				layer,
   				state,
+  			});
+  		},
+  		onToolCall: (state, toolName, toolInput) => {
+  			invocations.push({
+  				type: 'onToolCall',
+  				state,
+  				toolName,
+  				toolInput,
+  			});
+  		},
+  		onToolResult: (state, toolName, toolResult) => {
+  			invocations.push({
+  				type: 'onToolResult',
+  				state,
+  				toolName,
+  				toolResult,
   			});
   		},
   		onSuccess: (output) => {
@@ -566,50 +604,6 @@ export const createMockApiCalls = (mock: MockFunction, configs: MockCallConfig[]
 };
 
 /**
- * Mock helper tool handler that returns success
- *
- * Simulates a helper tool that queries data and returns formatted results.
- * Always succeeds with a formatted string response.
- */
-export const mockDataQueryHandler = (input: unknown): Result<unknown, string> => {
-	const query = typeof input === 'object' && input !== null && 'query' in input
-		? String(input.query)
-		: 'default';
-	return ok(`Query results for: ${query}`);
-};
-
-/**
- * Mock helper tool handler that returns error
- *
- * Simulates a helper tool that fails validation or encounters an error.
- * Always returns an error Result with a descriptive message.
- */
-export const mockFailingHandler = (_input: unknown): Result<unknown, string> =>
-	err('Handler execution failed: invalid query');
-
-/**
- * Mock reflection handler that returns success
- *
- * Simulates a reflection handler that formats output for model review.
- * Returns formatted JSON preview with instructions to call submit.
- */
-export const mockReflectionHandler = (output: TestOutput): Result<string, string> =>
-	ok(`Preview:\n${JSON.stringify(output, null, 2)}\n\nCall submit when ready.`);
-
-/**
- * Mock reflection handler that returns error
- *
- * Simulates a reflection handler that rejects output due to validation issues.
- * Returns error Result with feedback for the model to fix.
- */
-export const mockRejectingReflectionHandler = (output: TestOutput): Result<string, string> => {
-	if (output.result.length < 20) {
-		return err('Output too short; must be at least 20 characters');
-	}
-	return ok(`Preview:\n${JSON.stringify(output, null, 2)}`);
-};
-
-/**
  * Creates API response with helper tool use
  *
  * Returns a response where the model calls a helper tool before the output tool.
@@ -662,6 +656,82 @@ export const createSubmitToolResponse = (
 	outputTokens: number = 50
 ) => ({
 	id: 'msg_submit',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_submit',
+			name: 'submit',
+			input: {},
+		},
+	],
+	stop_reason: 'tool_use' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
+
+/**
+ * Creates API response with output tool followed by submit tool
+ *
+ * Returns a response where the model calls both output and submit in one iteration.
+ * Used to test reflection mode with immediate submission.
+ *
+ * @param result - The result value to include in output
+ * @param inputTokens - Number of input tokens consumed
+ * @param outputTokens - Number of output tokens generated
+ * @returns Mock API response object
+ */
+export const createOutputThenSubmitResponse = (
+	result: string = 'success result',
+	inputTokens: number = 100,
+	outputTokens: number = 50
+) => ({
+	id: 'msg_output_submit',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_output',
+			name: 'generate_output',
+			input: {result},
+		},
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_submit',
+			name: 'submit',
+			input: {},
+		},
+	],
+	stop_reason: 'tool_use' as const,
+	stop_sequence: null,
+	usage: {
+		input_tokens: inputTokens,
+		output_tokens: outputTokens,
+	},
+});
+
+/**
+ * Creates API response with submit before output
+ *
+ * Returns a response where the model calls submit before ever calling output.
+ * Used to test SUBMIT_BEFORE_OUTPUT error handling.
+ *
+ * @param inputTokens - Number of input tokens consumed
+ * @param outputTokens - Number of output tokens generated
+ * @returns Mock API response object
+ */
+export const createSubmitBeforeOutputResponse = (
+	inputTokens: number = 100,
+	outputTokens: number = 50
+) => ({
+	id: 'msg_submit_before_output',
 	type: 'message' as const,
 	role: 'assistant' as const,
 	model: 'claude-sonnet-4-5-20250929',

@@ -548,10 +548,15 @@ export const executeAgent = async <Input, Output>(
 			));
 		}
 
+		// Determine iteration limit for this attempt
+		const maxIterations = agent.validation.maxIterationsPerAttempt ?? DEFAULT_MAX_ITERATIONS;
+
 		// Create execution state
 		const state: AgentExecutionState = {
 			attempt,
 			maxAttempts,
+			iteration: 0, // Will be incremented before each API call in the loop
+			maxIterations,
 		};
 
 		// Reset failed layer tracking for this attempt
@@ -624,9 +629,6 @@ export const executeAgent = async <Input, Output>(
 			...(reflectionEnabled ? [DEFAULT_SUBMIT_TOOL] : []),
 		];
 
-		// Determine iteration limit for this attempt
-		const maxIterations = agent.validation.maxIterationsPerAttempt ?? DEFAULT_MAX_ITERATIONS;
-
 		// Build helper tool handler map for fast lookup
 		const helperHandlers = new Map<string, (input: unknown) => Result<unknown, string>>();
 		if (agent.tools.helpers) {
@@ -643,7 +645,7 @@ export const executeAgent = async <Input, Output>(
 
 		// Make initial API call
 		while (iterationCount < maxIterations) {
-			iterationCount++;
+			state.iteration = ++iterationCount;
 
 			// Check for cancellation before API call
 			if (options.signal?.aborted) {
@@ -721,7 +723,13 @@ export const executeAgent = async <Input, Output>(
 					// Fire callback for submit tool
 					safeInvokeCallback(
 						options.callbacks?.onToolCall,
-						[state, toolUse.name, toolUse.input],
+						[{...state}, toolUse.name, toolUse.input],
+						callbackErrors
+					);
+					// Fire callback for submit tool result
+					safeInvokeCallback(
+						options.callbacks?.onToolResult,
+						[{...state}, toolUse.name, ''],
 						callbackErrors
 					);
 					// Submit tool has no result (termination signal only)
@@ -736,7 +744,7 @@ export const executeAgent = async <Input, Output>(
 					// Fire callback before execution
 					safeInvokeCallback(
 						options.callbacks?.onToolCall,
-						[state, toolUse.name, toolUse.input],
+						[{...state}, toolUse.name, toolUse.input],
 						callbackErrors
 					);
 
@@ -756,7 +764,7 @@ export const executeAgent = async <Input, Output>(
 							// Fire callback with error result
 							safeInvokeCallback(
 								options.callbacks?.onToolResult,
-								[state, toolUse.name, errorContent],
+								[{...state}, toolUse.name, errorContent],
 								callbackErrors
 							);
 						} else {
@@ -770,7 +778,7 @@ export const executeAgent = async <Input, Output>(
 							// Fire callback with success result
 							safeInvokeCallback(
 								options.callbacks?.onToolResult,
-								[state, toolUse.name, resultContent],
+								[{...state}, toolUse.name, resultContent],
 								callbackErrors
 							);
 						}
@@ -786,7 +794,7 @@ export const executeAgent = async <Input, Output>(
 					// Unknown tool - fire callback then return error result
 					safeInvokeCallback(
 						options.callbacks?.onToolCall,
-						[state, toolUse.name, toolUse.input],
+						[{...state}, toolUse.name, toolUse.input],
 						callbackErrors
 					);
 
@@ -800,7 +808,7 @@ export const executeAgent = async <Input, Output>(
 
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[state, toolUse.name, errorContent],
+						[{...state}, toolUse.name, errorContent],
 						callbackErrors
 					);
 					continue;
@@ -809,7 +817,7 @@ export const executeAgent = async <Input, Output>(
 				// Fire callback before execution
 				safeInvokeCallback(
 					options.callbacks?.onToolCall,
-					[state, toolUse.name, toolUse.input],
+					[{...state}, toolUse.name, toolUse.input],
 					callbackErrors
 				);
 
@@ -828,7 +836,7 @@ export const executeAgent = async <Input, Output>(
 					// Fire callback with error result
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[state, toolUse.name, errorContent],
+						[{...state}, toolUse.name, errorContent],
 						callbackErrors
 					);
 				} else {
@@ -842,7 +850,7 @@ export const executeAgent = async <Input, Output>(
 					// Fire callback with success result
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[state, toolUse.name, resultContent],
+						[{...state}, toolUse.name, resultContent],
 						callbackErrors
 					);
 				}
@@ -969,7 +977,7 @@ export const executeAgent = async <Input, Output>(
 				? (layer: ValidationLayerMetadata) => {
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerStart,
-						[state, layer],
+						[{...state}, layer],
 						callbackErrors
 					);
 				}
@@ -985,7 +993,7 @@ export const executeAgent = async <Input, Output>(
 				if (options.callbacks?.onValidationLayerComplete) {
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerComplete,
-						[state, layer],
+						[{...state}, layer],
 						callbackErrors
 					);
 				}
@@ -1004,7 +1012,7 @@ export const executeAgent = async <Input, Output>(
 			// Invoke onAttemptComplete callback with success
 			safeInvokeCallback(
 				options.callbacks?.onAttemptComplete,
-				[state, true],
+				[{...state}, true],
 				callbackErrors
 			);
 
@@ -1037,14 +1045,14 @@ export const executeAgent = async <Input, Output>(
 		// Invoke onAttemptComplete callback with failure
 		safeInvokeCallback(
 			options.callbacks?.onAttemptComplete,
-			[state, false],
+			[{...state}, false],
 			callbackErrors
 		);
 
 		// Invoke onValidationFailure callback
 		safeInvokeCallback(
 			options.callbacks?.onValidationFailure,
-			[state, validationResult.error],
+			[{...state}, validationResult.error],
 			callbackErrors
 		);
 

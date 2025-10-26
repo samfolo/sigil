@@ -1,0 +1,266 @@
+import {describe, expect, it, beforeEach, vi} from 'vitest';
+
+const mockMessagesCreate = vi.fn();
+
+vi.mock('@sigil/src/agent/clients/anthropic', () => ({
+	createAnthropicClient: vi.fn(() => ({
+		messages: {
+			create: mockMessagesCreate,
+		},
+	})),
+}));
+
+import {
+	executeAgent,
+	setupExecuteAgentMocks,
+	VALID_MINIMAL_AGENT,
+	VALID_COMPLETE_AGENT,
+	AGENT_WITH_HELPER_TOOLS,
+	VALID_EXECUTE_OPTIONS,
+	createMockApiCalls,
+	createInvalidResponse,
+	createHelperToolResponse,
+	isErr,
+	AGENT_ERROR_CODES,
+} from './executeAgent.common.fixtures';
+
+describe('executeAgent - Cancellation', () => {
+	beforeEach(() => {
+		setupExecuteAgentMocks(mockMessagesCreate);
+	});
+
+	describe('AbortSignal Support', () => {
+		it('should accept abort signal in execute options', async () => {
+			const controller = new AbortController();
+
+			const result = await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			expect(result).toBeDefined();
+		});
+
+		it('should abort execution when signal is aborted before execution', async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			const result = await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				expect(error?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+			}
+		});
+
+		it('should abort execution when signal is aborted during API call', async () => {
+			const controller = new AbortController();
+
+			// First call: return invalid response, schedule abort during delay
+			// This ensures abort happens after first attempt but before second
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'custom',
+					response: (() => {
+						// Schedule abort to happen after response returns
+						setTimeout(() => {
+							controller.abort();
+						}, 5);
+						return createInvalidResponse();
+					})(),
+					delay: 10,
+				},
+			]);
+
+			const result = await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				expect(error?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+			}
+		});
+
+		it('should abort during helper tool iteration', async () => {
+			const controller = new AbortController();
+
+			// First call: helper tool, then schedule abort during delay
+			// Second call would be another helper, but abort catches it
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'custom',
+					response: (() => {
+						// Schedule abort to happen after response returns
+						setTimeout(() => {
+							controller.abort();
+						}, 5);
+						return createHelperToolResponse('query_data');
+					})(),
+					delay: 10,
+				},
+			]);
+
+			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				expect(error?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+			}
+		});
+	});
+
+	describe('Abort Error Handling', () => {
+		it('should return EXECUTION_ABORTED error code', async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			const result = await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				expect(error?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+				expect(error?.category).toBe('execution');
+			}
+		});
+
+		it('should include abort reason in error context', async () => {
+			const controller = new AbortController();
+			controller.abort('User cancelled operation');
+
+			const result = await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				if (error?.code === AGENT_ERROR_CODES.EXECUTION_CANCELLED) {
+					expect(error.context.attempt).toBe(0);
+					expect(error.context.phase).toBe('prompt_generation');
+				}
+			}
+		});
+
+		it('should include metadata even when aborted', async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			const result = await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			if (isErr(result)) {
+				expect(result.error.metadata).toBeDefined();
+				expect(result.error.metadata?.latency).toBeTypeOf('number');
+				expect(result.error.metadata?.tokens).toBeDefined();
+			}
+		});
+	});
+
+	describe('Cleanup After Abort', () => {
+		it('should not invoke onFailure callback when aborted', async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			const callbackInvocations: string[] = [];
+
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+				callbacks: {
+					onFailure: () => {
+						callbackInvocations.push('onFailure');
+					},
+				},
+			});
+
+			expect(callbackInvocations).not.toContain('onFailure');
+		});
+
+		it('should not invoke onSuccess callback when aborted', async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			let onSuccessCalled = false;
+
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+				callbacks: {
+					onSuccess: () => {
+						onSuccessCalled = true;
+					},
+				},
+			});
+
+			expect(onSuccessCalled).toBe(false);
+		});
+
+		it('should stop making API calls after abort', async () => {
+			const controller = new AbortController();
+
+			// First call: helper tool, schedule abort during delay
+			// Should not make a second API call
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'custom',
+					response: (() => {
+						// Schedule abort to happen after response returns
+						setTimeout(() => {
+							controller.abort();
+						}, 5);
+						return createHelperToolResponse('query_data');
+					})(),
+					delay: 10,
+				},
+			]);
+
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			// Should have called API only once before abort was caught
+			expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('Signal Without Abort', () => {
+		it('should complete normally when signal is not aborted', async () => {
+			const controller = new AbortController();
+
+			const result = await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+			});
+
+			expect(isErr(result)).toBe(false);
+		});
+
+		it('should work without abort signal', async () => {
+			const result = await executeAgent(VALID_MINIMAL_AGENT, VALID_EXECUTE_OPTIONS);
+
+			expect(result).toBeDefined();
+		});
+	});
+});
