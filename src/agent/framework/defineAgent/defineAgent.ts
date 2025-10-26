@@ -124,6 +124,17 @@ export interface ValidationConfig<Output> {
    * Maximum number of retry attempts when validation fails
    */
   maxAttempts: number;
+
+  /**
+   * Maximum number of iterations per attempt
+   *
+   * Controls how many tool-calling iterations can occur within a single attempt
+   * before returning a MAX_ITERATIONS_EXCEEDED error. Prevents runaway loops
+   * that consume excessive tokens.
+   *
+   * @default 15
+   */
+  maxIterationsPerAttempt?: number;
 }
 
 /**
@@ -524,8 +535,11 @@ export const defineAgent = <Input, Output>(
 
 	// Freeze tools config
 	Object.freeze(definition.tools.output);
-	if (definition.tools.additional) {
-		Object.freeze(definition.tools.additional);
+	if (definition.tools.helpers) {
+		for (const helper of definition.tools.helpers) {
+			Object.freeze(helper);
+		}
+		Object.freeze(definition.tools.helpers);
 	}
 	Object.freeze(definition.tools);
 

@@ -112,6 +112,38 @@ export interface ExecuteCallbacks<Output> {
   ) => void;
 
   /**
+   * Called when a tool is invoked (before execution)
+   *
+   * Fires for helper tools, output tool (in reflection mode), and submit tool.
+   * Use for logging tool invocations or showing "Agent is using tool X" in UI.
+   *
+   * @param state - Execution state containing attempt number and max attempts
+   * @param toolName - Name of the tool being called
+   * @param toolInput - Input provided to the tool by the model
+   */
+  onToolCall?: (
+    state: AgentExecutionState,
+    toolName: string,
+    toolInput: unknown
+  ) => void;
+
+  /**
+   * Called when a tool execution completes (after execution)
+   *
+   * Fires for both successful tool executions and errors. Check the result string
+   * to determine if an error occurred (will contain "Error:" prefix for errors).
+   *
+   * @param state - Execution state containing attempt number and max attempts
+   * @param toolName - Name of the tool that was called
+   * @param toolResult - Result from the tool (or error message if execution failed)
+   */
+  onToolResult?: (
+    state: AgentExecutionState,
+    toolName: string,
+    toolResult: string
+  ) => void;
+
+  /**
    * Called when agent execution succeeds
    *
    * @param output - The validated output from the agent
