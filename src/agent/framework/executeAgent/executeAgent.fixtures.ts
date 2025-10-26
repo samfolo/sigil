@@ -458,6 +458,20 @@ export type MockCallConfig =
       type: 'custom';
       response: unknown;
       delay?: number;
+    }
+  | {
+      type: 'helper';
+      helperToolName?: string;
+      helperInput?: Record<string, unknown>;
+      inputTokens?: number;
+      outputTokens?: number;
+      delay?: number;
+    }
+  | {
+      type: 'submit';
+      inputTokens?: number;
+      outputTokens?: number;
+      delay?: number;
     };
 
 
@@ -521,6 +535,22 @@ export const createMockApiCalls = (mock: MockFunction, configs: MockCallConfig[]
 
 		if (config.type === 'invalid') {
 			return createInvalidResponse(
+				config.inputTokens ?? 100,
+				config.outputTokens ?? 50
+			);
+		}
+
+		if (config.type === 'helper') {
+			return createHelperToolResponse(
+				config.helperToolName,
+				config.helperInput,
+				config.inputTokens ?? 100,
+				config.outputTokens ?? 50
+			);
+		}
+
+		if (config.type === 'submit') {
+			return createSubmitToolResponse(
 				config.inputTokens ?? 100,
 				config.outputTokens ?? 50
 			);
