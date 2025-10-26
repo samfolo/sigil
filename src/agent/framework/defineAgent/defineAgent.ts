@@ -132,7 +132,7 @@ export interface ValidationConfig<Output> {
    * before returning a MAX_ITERATIONS_EXCEEDED error. Prevents runaway loops
    * that consume excessive tokens.
    *
-   * @default 15
+   * If not specified, uses the framework's default limit.
    */
   maxIterationsPerAttempt?: number;
 }

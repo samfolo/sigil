@@ -17,6 +17,30 @@ import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors'
 import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
 /**
+ * Default maximum number of iterations per attempt
+ *
+ * Prevents runaway tool-calling loops that consume excessive tokens.
+ * Can be overridden via ValidationConfig.maxIterationsPerAttempt.
+ */
+const DEFAULT_MAX_ITERATIONS = 15;
+
+/**
+ * Default submit tool definition for reflection mode
+ *
+ * Automatically injected when output tool has a reflection handler.
+ * Signals that the model is satisfied with its output and ready for validation.
+ */
+const DEFAULT_SUBMIT_TOOL: Anthropic.Tool = {
+	name: 'submit',
+	description: 'Submit your final output for validation. Call this when you are satisfied with your output.',
+	input_schema: {
+		type: 'object',
+		properties: {},
+		required: [],
+	},
+};
+
+/**
  * Token usage statistics for an agent execution
  */
 export interface ExecuteMetadataTokenUsageStatistics {
@@ -583,10 +607,20 @@ export const executeAgent = async <Input, Output>(
 			input_schema: z.toJSONSchema(agent.validation.outputSchema) as Anthropic.Tool.InputSchema,
 		};
 
+		// Build helper tools array from configuration
+		const helperTools: Anthropic.Tool[] = (agent.tools.helpers || []).map((helper) => ({
+			name: helper.name,
+			description: helper.description,
+			input_schema: z.toJSONSchema(helper.inputSchema) as Anthropic.Tool.InputSchema,
+		}));
+
 		const tools: Anthropic.Tool[] = [
 			outputTool,
-			...(agent.tools.additional || []),
+			...helperTools,
 		];
+
+		// Determine iteration limit for this attempt
+		const maxIterations = agent.validation.maxIterationsPerAttempt ?? DEFAULT_MAX_ITERATIONS;
 
 		// Check for cancellation before API call
 		if (options.signal?.aborted) {
