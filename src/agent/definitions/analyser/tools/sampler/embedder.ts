@@ -13,6 +13,16 @@ import {pipeline, type FeatureExtractionPipeline} from '@huggingface/transformer
 export type Embedding = number[];
 
 /**
+ * ONNX Runtime tensor interface with CPU data access
+ *
+ * The cpuData property is private in onnxruntime-common but accessible
+ * via the library's internal tensor implementation.
+ */
+interface OnnxTensorWithCpuData {
+	cpuData: Float32Array;
+}
+
+/**
  * Model configuration
  */
 const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
@@ -40,9 +50,18 @@ export const getEmbedder = async (): Promise<FeatureExtractionPipeline> => {
 		return embedderInstance;
 	}
 
-	embedderInstance = await pipeline('feature-extraction', MODEL_NAME);
+	const pipe = await pipeline('feature-extraction', MODEL_NAME);
+	embedderInstance = pipe;
 	return embedderInstance;
 };
+
+/**
+ * Type guard for ONNX Runtime tensor with cpuData property
+ */
+const hasCpuData = (value: unknown): value is OnnxTensorWithCpuData =>
+	typeof value === 'object' &&
+	value !== null &&
+	'cpuData' in value;
 
 /**
  * Converts Float32Array to regular number array
@@ -72,7 +91,11 @@ export const embedText = async (text: string): Promise<Embedding> => {
 	// Extract the embedding from the output
 	// Output is a Tensor with shape [1, 384] for single text
 	// Access via ort_tensor.cpuData
-	const tensor = output.ort_tensor.cpuData as Float32Array;
+	if (!hasCpuData(output.ort_tensor)) {
+		throw new Error('Expected tensor with cpuData property');
+	}
+
+	const tensor = output.ort_tensor.cpuData;
 	return float32ArrayToArray(tensor);
 };
 
@@ -105,7 +128,11 @@ export const embedBatch = async (texts: string[]): Promise<Embedding[]> => {
 
 	// Output shape is [N, 384] where N is the number of texts
 	// Data is flattened in cpuData, so we slice into chunks
-	const tensor = output.ort_tensor.cpuData as Float32Array;
+	if (!hasCpuData(output.ort_tensor)) {
+		throw new Error('Expected tensor with cpuData property');
+	}
+
+	const tensor = output.ort_tensor.cpuData;
 	const embeddings: Embedding[] = [];
 
 	for (let i = 0; i < texts.length; i++) {
