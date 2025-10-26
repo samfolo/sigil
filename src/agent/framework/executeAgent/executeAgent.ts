@@ -614,52 +614,241 @@ export const executeAgent = async <Input, Output>(
 			input_schema: z.toJSONSchema(helper.inputSchema) as Anthropic.Tool.InputSchema,
 		}));
 
+		// Determine if reflection mode is enabled
+		const reflectionEnabled = !!agent.tools.output.reflectionHandler;
+
+		// Build tools array (inject submit tool if reflection enabled)
 		const tools: Anthropic.Tool[] = [
 			outputTool,
 			...helperTools,
+			...(reflectionEnabled ? [DEFAULT_SUBMIT_TOOL] : []),
 		];
 
 		// Determine iteration limit for this attempt
 		const maxIterations = agent.validation.maxIterationsPerAttempt ?? DEFAULT_MAX_ITERATIONS;
 
-		// Check for cancellation before API call
-		if (options.signal?.aborted) {
-			return err(createCancellationError(
-				attempt,
-				'api_call',
-				agent.observability,
-				startTime,
-				totalInputTokens,
-				totalOutputTokens,
-				callbackErrors
-			));
+		// Build helper tool handler map for fast lookup
+		const helperHandlers = new Map<string, (input: unknown) => Result<unknown, string>>();
+		if (agent.tools.helpers) {
+			for (const helper of agent.tools.helpers) {
+				helperHandlers.set(helper.name, helper.handler);
+			}
 		}
 
-		// Call Anthropic API with accumulated conversation history
-		let response: Anthropic.Message;
-		try {
-			response = await anthropic.messages.create({
-				model: agent.model.name,
-				max_tokens: agent.model.maxTokens,
-				temperature: agent.model.temperature,
-				system: systemPromptResult.data,
-				messages: conversationHistory,
-				tools,
-			},
-			{
-				signal: options.signal,
+		// Iteration loop for tool calling
+		let iterationCount = 0;
+		let output: Output | undefined;
+		let response: Anthropic.Message | undefined;
+		let lastOutputToolInput: Output | undefined;
+
+		// Make initial API call
+		while (iterationCount < maxIterations) {
+			iterationCount++;
+
+			// Check for cancellation before API call
+			if (options.signal?.aborted) {
+				return err(createCancellationError(
+					attempt,
+					'iteration',
+					agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors
+				));
 			}
+
+			// Call Anthropic API
+			try {
+				response = await anthropic.messages.create({
+					model: agent.model.name,
+					max_tokens: agent.model.maxTokens,
+					temperature: agent.model.temperature,
+					system: systemPromptResult.data,
+					messages: conversationHistory,
+					tools,
+				},
+				{
+					signal: options.signal,
+				}
+				);
+			} catch (error) {
+				return err({
+					errors: [
+						{
+							code: AGENT_ERROR_CODES.API_ERROR,
+							severity: 'error',
+							category: 'model',
+							context: {
+								attempt,
+								message: error instanceof Error ? error.message : String(error),
+							},
+						},
+					],
+					metadata: buildMetadata({
+						observability: agent.observability,
+						startTime,
+						totalInputTokens,
+						totalOutputTokens,
+						callbackErrors
+					}),
+				});
+			}
+
+			// Accumulate token usage
+			totalInputTokens += response.usage.input_tokens;
+			totalOutputTokens += response.usage.output_tokens;
+
+			// Check stop reason - exit if not tool_use
+			if (response.stop_reason !== 'tool_use') {
+				break;
+			}
+
+			// Find all tool uses in the response
+			const toolUses = response.content.filter(
+				(block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
 			);
-		} catch (error) {
+
+			// Process ALL tools and build tool results
+			const toolResults: Anthropic.ToolResultBlockParam[] = [];
+			let submitFound = false;
+			let outputFound = false;
+
+			for (const toolUse of toolUses) {
+				// Check for submit tool
+				if (toolUse.name === DEFAULT_SUBMIT_TOOL.name) {
+					submitFound = true;
+					// Submit tool has no result (termination signal only)
+					continue;
+				}
+
+				// Check for output tool
+				if (toolUse.name === agent.tools.output.name) {
+					outputFound = true;
+					lastOutputToolInput = toolUse.input as Output;
+
+					if (reflectionEnabled) {
+						// Execute reflection handler
+						const handlerResult = agent.tools.output.reflectionHandler!(lastOutputToolInput);
+
+						if (isErr(handlerResult)) {
+							// Reflection handler returned error
+							toolResults.push({
+								type: 'tool_result',
+								tool_use_id: toolUse.id,
+								content: handlerResult.error,
+								is_error: true,
+							});
+						} else {
+							// Reflection handler returned success
+							toolResults.push({
+								type: 'tool_result',
+								tool_use_id: toolUse.id,
+								content: handlerResult.data,
+							});
+						}
+					}
+					// In non-reflection mode, output tool doesn't produce a result
+					continue;
+				}
+
+				// Handle helper tools
+				const handler = helperHandlers.get(toolUse.name);
+
+				if (!handler) {
+					// Unknown tool - return error result
+					toolResults.push({
+						type: 'tool_result',
+						tool_use_id: toolUse.id,
+						content: `Error: Unknown tool ${toolUse.name}`,
+						is_error: true,
+					});
+					continue;
+				}
+
+				// Execute helper tool handler
+				const handlerResult = handler(toolUse.input);
+
+				if (isErr(handlerResult)) {
+					// Handler returned error
+					toolResults.push({
+						type: 'tool_result',
+						tool_use_id: toolUse.id,
+						content: handlerResult.error,
+						is_error: true,
+					});
+				} else {
+					// Handler returned success
+					toolResults.push({
+						type: 'tool_result',
+						tool_use_id: toolUse.id,
+						content: String(handlerResult.data),
+					});
+				}
+			}
+
+			// Check termination conditions AFTER processing all tools
+			if (submitFound) {
+				// Submit called - check that output was called previously
+				if (!lastOutputToolInput) {
+					return err({
+						errors: [
+							{
+								code: AGENT_ERROR_CODES.SUBMIT_BEFORE_OUTPUT,
+								severity: 'error',
+								category: 'model',
+								context: {
+									attempt,
+									iterationCount,
+								},
+							},
+						],
+						metadata: buildMetadata({
+							observability: agent.observability,
+							startTime,
+							totalInputTokens,
+							totalOutputTokens,
+							callbackErrors
+						}),
+					});
+				}
+				// Use last output tool input and exit loop
+				output = lastOutputToolInput;
+				break;
+			}
+
+			if (outputFound && !reflectionEnabled) {
+				// Output tool called in non-reflection mode - exit immediately
+				output = lastOutputToolInput;
+				break;
+			}
+
+			// Append conversation history
+			conversationHistory.push({
+				role: 'assistant',
+				content: response.content,
+			});
+
+			conversationHistory.push({
+				role: 'user',
+				content: toolResults,
+			});
+
+			// Continue to next iteration
+		}
+
+		// Check if iteration limit exceeded
+		if (iterationCount >= maxIterations && response?.stop_reason === 'tool_use') {
 			return err({
 				errors: [
 					{
-						code: AGENT_ERROR_CODES.API_ERROR,
+						code: AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED,
 						severity: 'error',
-						category: 'model',
+						category: 'execution',
 						context: {
 							attempt,
-							message: error instanceof Error ? error.message : String(error),
+							iterationCount,
+							maxIterations,
 						},
 					},
 				],
@@ -673,76 +862,30 @@ export const executeAgent = async <Input, Output>(
 			});
 		}
 
-		// Accumulate token usage from this attempt
-		totalInputTokens += response.usage.input_tokens;
-		totalOutputTokens += response.usage.output_tokens;
-
-		// Find all tool uses in the response
-		const toolUses = response.content.filter(
-			(block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
-		);
-
-		// Check if the output tool was called (search from end in case model reflected and called it multiple times)
-		const outputToolUse = toolUses.findLast(
-			(toolUse) => toolUse.name === agent.tools.output.name
-		);
-
-		if (!outputToolUse) {
-			// Output tool not called - check what was called instead
-			if (toolUses.length > 0) {
-				// Helper tools called (not yet supported)
-				return err({
-					errors: [
-						{
-							code: AGENT_ERROR_CODES.INVALID_RESPONSE,
-							severity: 'error',
-							category: 'model',
-							context: {
-								attempt,
-								reason: 'Model called helper tools but tool calling loop not yet implemented. Only output tool is currently supported.',
-								calledTools: toolUses.map((t) => t.name),
-								expectedTool: agent.tools.output.name,
-							},
+		// Check if output tool was ever called
+		if (!output) {
+			return err({
+				errors: [
+					{
+						code: AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED,
+						severity: 'error',
+						category: 'model',
+						context: {
+							attempt,
+							iterationCount,
+							expectedTool: agent.tools.output.name,
 						},
-					],
-					metadata: buildMetadata({
-						observability: agent.observability,
-						startTime,
-						totalInputTokens,
-						totalOutputTokens,
-						callbackErrors
-					}),
-				});
-			} else {
-				// No tools called at all
-				return err({
-					errors: [
-						{
-							code: AGENT_ERROR_CODES.INVALID_RESPONSE,
-							severity: 'error',
-							category: 'model',
-							context: {
-								attempt,
-								reason: 'Model did not use any tools',
-								expectedTool: agent.tools.output.name,
-							},
-						},
-					],
-					metadata: buildMetadata({
-						observability: agent.observability,
-						startTime,
-						totalInputTokens,
-						totalOutputTokens,
-						callbackErrors
-					}),
-				});
-			}
+					},
+				],
+				metadata: buildMetadata({
+					observability: agent.observability,
+					startTime,
+					totalInputTokens,
+					totalOutputTokens,
+					callbackErrors
+				}),
+			});
 		}
-
-		// Output tool was called - extract and validate
-		// Type assertion is safe: validateLayers will catch any schema mismatches
-		// The LLM output structure is validated through multi-layer validation below
-		const output = outputToolUse.input as Output;
 
 		// Check for cancellation before validation
 		if (options.signal?.aborted) {

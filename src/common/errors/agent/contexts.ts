@@ -160,6 +160,15 @@ export interface InvalidResponseContext {
 }
 
 /**
+ * Context for OUTPUT_TOOL_NOT_USED error
+ */
+export interface OutputToolNotUsedContext {
+  attempt: number;
+  iterationCount: number;
+  expectedTool: string;
+}
+
+/**
  * Context for SUBMIT_BEFORE_OUTPUT error
  */
 export interface SubmitBeforeOutputContext {

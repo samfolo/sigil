@@ -198,14 +198,14 @@ export interface OutputToolConfig<Output> {
    * to signal when the model is satisfied with its output and ready for validation.
    *
    * @param output - The proposed output from the model
-   * @returns Formatted string representation for model review
+   * @returns Result containing formatted string for model review, or error message string
    *
    * @example
    * ```typescript
-   * reflectionHandler: (output) => `Preview:\n${JSON.stringify(output, null, 2)}\n\nCall submit when ready.`
+   * reflectionHandler: (output) => ok(`Preview:\n${JSON.stringify(output, null, 2)}\n\nCall submit when ready.`)
    * ```
    */
-  reflectionHandler?: (output: Output) => string;
+  reflectionHandler?: (output: Output) => Result<string, string>;
 }
 
 /**
@@ -243,14 +243,14 @@ export interface HelperToolConfig<Input> {
    * Handler function that executes when the model calls this tool
    *
    * @param input - The validated tool input from the model
-   * @returns Result to send back to the model (will be converted to string)
+   * @returns Result containing data to send back to the model (will be converted to string), or error message string
    *
    * @example
    * ```typescript
-   * handler: (input) => database.search(input.query)
+   * handler: (input) => ok(database.search(input.query))
    * ```
    */
-  handler: (input: Input) => unknown;
+  handler: (input: Input) => Result<unknown, string>;
 }
 
 /**

@@ -26,6 +26,7 @@ import type {
 	MaxIterationsExceededContext,
 	MetricsCollectionFailedContext,
 	MissingOutputSchemaContext,
+	OutputToolNotUsedContext,
 	PromptGenerationFailedContext,
 	RateLimitErrorContext,
 	SubmitBeforeOutputContext,
@@ -217,6 +218,15 @@ export interface InvalidResponseError
   category: 'model';
 }
 
+export interface OutputToolNotUsedError
+  extends StructuredError<
+    typeof AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED,
+    AgentErrorCategory,
+    OutputToolNotUsedContext
+  > {
+  category: 'model';
+}
+
 export interface SubmitBeforeOutputError
   extends StructuredError<
     typeof AGENT_ERROR_CODES.SUBMIT_BEFORE_OUTPUT,
@@ -270,6 +280,7 @@ export type AgentError =
   | RateLimitErrorError
   | TokenLimitExceededError
   | InvalidResponseError
+  | OutputToolNotUsedError
   | SubmitBeforeOutputError
   | MetricsCollectionFailedError
   | LoggingFailedError;
