@@ -21,7 +21,8 @@ const EPSILON = 1e-10;
  *
  * @param a - First vector
  * @param b - Second vector
- * @returns Cosine similarity in [-1, 1], or 0 if either vector has zero magnitude
+ * @returns Cosine similarity in [-1, 1], or 0 if vectors have different lengths,
+ *          zero magnitude, or contain invalid values (NaN/Infinity)
  *
  * @example
  * ```typescript
@@ -33,6 +34,11 @@ const EPSILON = 1e-10;
  * ```
  */
 export const cosineSimilarity = (a: number[], b: number[]): number => {
+	// Validate vectors have same length
+	if (a.length !== b.length) {
+		return 0;
+	}
+
 	// Compute dot product
 	let dotProduct = 0;
 	for (let i = 0; i < a.length; i++) {
@@ -52,13 +58,24 @@ export const cosineSimilarity = (a: number[], b: number[]): number => {
 	magnitudeA = Math.sqrt(magnitudeA);
 	magnitudeB = Math.sqrt(magnitudeB);
 
-	// Handle zero-magnitude vectors
-	if (magnitudeA < EPSILON || magnitudeB < EPSILON) {
+	// Handle zero-magnitude vectors or invalid values
+	if (
+		magnitudeA < EPSILON ||
+		magnitudeB < EPSILON ||
+		!isFinite(magnitudeA) ||
+		!isFinite(magnitudeB)
+	) {
 		return 0;
 	}
 
-	// Compute cosine similarity
-	return dotProduct / (magnitudeA * magnitudeB);
+	const similarity = dotProduct / (magnitudeA * magnitudeB);
+
+	// Validate result is finite
+	if (!isFinite(similarity)) {
+		return 0;
+	}
+
+	return similarity;
 };
 
 /**
@@ -87,9 +104,10 @@ const cosineDistance = (a: number[], b: number[]): number =>
  * This greedy approach provides good diversity in practice whilst remaining
  * computationally efficient. Not optimal, but sufficient for sampling.
  *
- * @param embeddings - Array of embedding vectors (each normalised to unit length)
- * @param count - Number of diverse samples to select
- * @returns Array of indices into embeddings array, representing most diverse samples
+ * @param embeddings - Array of embedding vectors
+ * @param count - Number of diverse samples to select (non-integer values are floored)
+ * @returns Array of indices into embeddings array, representing most diverse samples.
+ *          Returns indices in selection order (first index is the random starting point).
  *
  * @example
  * ```typescript
@@ -112,9 +130,12 @@ export const diversitySample = (
 	count: number
 ): number[] => {
 	// Handle edge cases
-	if (embeddings.length === 0 || count === 0) {
+	if (embeddings.length === 0 || count <= 0) {
 		return [];
 	}
+
+	// Handle non-integer counts
+	count = Math.floor(count);
 
 	if (count >= embeddings.length) {
 		// Return all indices

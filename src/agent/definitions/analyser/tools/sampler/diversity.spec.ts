@@ -6,15 +6,14 @@
 
 import {describe, expect, it} from 'vitest';
 
+import {cosineSimilarity, diversitySample} from './diversity';
 import {EMBEDDING_DIMENSION} from './embedder';
 
-import {cosineSimilarity, diversitySample} from './diversity';
 
 /**
  * Test constants
  */
 const SIMILARITY_PRECISION = 10;
-const DISTANCE_PRECISION = 2;
 
 /**
  * Test data sizes
@@ -124,6 +123,44 @@ describe('cosineSimilarity', () => {
 
 		expect(similarityAB).toBeCloseTo(similarityBA, SIMILARITY_PRECISION);
 	});
+
+	it('should return 0 for vectors with different lengths', () => {
+		const vectorA = [1, 2, 3];
+		const vectorB = [1, 2]; // Shorter vector
+
+		const similarity = cosineSimilarity(vectorA, vectorB);
+
+		expect(similarity).toBe(0);
+	});
+
+	it('should return 0 for vectors with NaN values', () => {
+		const vectorA = [1, NaN, 3];
+		const vectorB = [1, 2, 3];
+
+		const similarity = cosineSimilarity(vectorA, vectorB);
+
+		expect(similarity).toBe(0);
+	});
+
+	it('should return 0 for vectors with Infinity values', () => {
+		const vectorA = [1, Infinity, 3];
+		const vectorB = [1, 2, 3];
+
+		const similarity = cosineSimilarity(vectorA, vectorB);
+
+		expect(similarity).toBe(0);
+	});
+
+	it('should handle very small magnitude vectors without numerical instability', () => {
+		const smallValue = 1e-100;
+		const vectorA = [smallValue, smallValue, smallValue];
+		const vectorB = [smallValue, smallValue, smallValue];
+
+		const similarity = cosineSimilarity(vectorA, vectorB);
+
+		// Should either return 1.0 (if computable) or 0 (if below epsilon)
+		expect(similarity === 1.0 || similarity === 0).toBe(true);
+	});
 });
 
 describe('diversitySample', () => {
@@ -174,7 +211,6 @@ describe('diversitySample', () => {
 	describe('diversity verification', () => {
 		it('should select outliers when present', () => {
 			const clusterSize = MEDIUM_SAMPLE_SIZE;
-			const outlierCount = TWO_DIMENSIONAL;
 
 			// Create similar embeddings clustered together
 			const similar = Array.from({length: clusterSize}, () => [1, 0, 0]);
@@ -196,7 +232,6 @@ describe('diversitySample', () => {
 		});
 
 		it('should spread selections across diverse embeddings', () => {
-			const cubeCornerCount = 8;
 			const selectedCount = 4;
 
 			// Create embeddings at corners of a cube
@@ -286,7 +321,6 @@ describe('diversitySample', () => {
 	describe('edge cases', () => {
 		it('should return empty array for empty embeddings', () => {
 			const embeddings: number[][] = [];
-			const zeroCount = 0;
 
 			const indices = diversitySample(embeddings, MEDIUM_SAMPLE_SIZE);
 
@@ -303,6 +337,35 @@ describe('diversitySample', () => {
 			const indices = diversitySample(embeddings, zeroCount);
 
 			expect(indices).toEqual([]);
+		});
+
+		it('should return empty array for negative count', () => {
+			const embeddings = [
+				[1, 0, 0],
+				[0, 1, 0],
+				[0, 0, 1],
+			];
+			const negativeCount = -5;
+
+			const indices = diversitySample(embeddings, negativeCount);
+
+			expect(indices).toEqual([]);
+		});
+
+		it('should floor non-integer count values', () => {
+			const embeddings = [
+				[1, 0, 0],
+				[0, 1, 0],
+				[0, 0, 1],
+				[-1, 0, 0],
+				[0, -1, 0],
+			];
+			const nonIntegerCount = 2.7;
+			const expectedCount = 2; // Should floor to 2
+
+			const indices = diversitySample(embeddings, nonIntegerCount);
+
+			expect(indices).toHaveLength(expectedCount);
 		});
 
 		it('should return single index for count = 1', () => {
