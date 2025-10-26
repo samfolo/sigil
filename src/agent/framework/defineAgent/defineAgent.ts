@@ -156,8 +156,10 @@ export interface ObservabilityConfig {
  *
  * The output tool's input_schema is automatically derived from validation.outputSchema.
  * When this tool is called, executeAgent validates its input and completes execution.
+ *
+ * @template Output - The type of output the agent produces
  */
-export interface OutputToolConfig {
+export interface OutputToolConfig<Output> {
   /**
    * Name of the output tool
    *
@@ -173,6 +175,71 @@ export interface OutputToolConfig {
    * Must be a non-empty string.
    */
   description: string;
+
+  /**
+   * Optional reflection handler for output review mode
+   *
+   * When provided, enables reflection mode where the model can call the output tool
+   * multiple times to refine its output before final submission. The handler receives
+   * the proposed output and returns a formatted string for the model to review.
+   *
+   * Reflection mode requires a submit tool (automatically injected by the framework)
+   * to signal when the model is satisfied with its output and ready for validation.
+   *
+   * @param output - The proposed output from the model
+   * @returns Formatted string representation for model review
+   *
+   * @example
+   * ```typescript
+   * reflectionHandler: (output) => `Preview:\n${JSON.stringify(output, null, 2)}\n\nCall submit when ready.`
+   * ```
+   */
+  reflectionHandler?: (output: Output) => string;
+}
+
+/**
+ * Configuration for a helper tool with execution handler
+ *
+ * Helper tools enable multi-step workflows, data exploration, and context retrieval
+ * within agent execution. Each helper tool requires a name, description, input schema,
+ * and handler for execution.
+ *
+ * @template Input - The type of input this helper tool accepts
+ */
+export interface HelperToolConfig<Input> {
+  /**
+   * Name of the helper tool
+   *
+   * Must be a valid tool name for the LLM to call.
+   */
+  name: string;
+
+  /**
+   * Description of what the helper tool does
+   *
+   * Provides context to the model about when and how to use this tool.
+   */
+  description: string;
+
+  /**
+   * Zod schema for validating and typing the tool input
+   *
+   * Automatically converted to JSON Schema for the Anthropic API.
+   */
+  inputSchema: z.ZodSchema<Input>;
+
+  /**
+   * Handler function that executes when the model calls this tool
+   *
+   * @param input - The validated tool input from the model
+   * @returns Result to send back to the model (will be converted to string)
+   *
+   * @example
+   * ```typescript
+   * handler: (input) => database.search(input.query)
+   * ```
+   */
+  handler: (input: Input) => unknown;
 }
 
 /**
@@ -180,22 +247,25 @@ export interface OutputToolConfig {
  *
  * Supports both the required output tool and optional helper tools for
  * multi-step workflows, data exploration, and context retrieval.
+ *
+ * @template Output - The type of output the agent produces
  */
-export interface ToolsConfig {
+export interface ToolsConfig<Output> {
   /**
    * Output tool configuration (REQUIRED)
    *
    * This tool produces the agent's final validated result. Its input_schema
    * is automatically derived from validation.outputSchema.
    */
-  output: OutputToolConfig;
+  output: OutputToolConfig<Output>;
 
   /**
-   * Additional helper tools (OPTIONAL)
+   * Helper tools for multi-step workflows (OPTIONAL)
    *
-   * Helper tools enable multi-step workflows, data exploration, or context retrieval.
+   * Helper tools enable data exploration, context retrieval, and intermediate
+   * computations before the agent produces its final output.
    */
-  additional?: Tool[];
+  helpers?: HelperToolConfig<unknown>[];
 }
 
 /**
@@ -282,7 +352,7 @@ export interface AgentDefinition<Input, Output> {
   /**
    * Tools configuration
    */
-  tools: ToolsConfig;
+  tools: ToolsConfig<Output>;
 
   /**
    * Output validation configuration
