@@ -1,4 +1,3 @@
-import type {Tool} from '@anthropic-ai/sdk/resources/messages';
 import type {z} from 'zod';
 
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';

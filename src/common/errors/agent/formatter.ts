@@ -25,10 +25,13 @@ import type {
 	InvalidTemperatureContext,
 	LoggingFailedContext,
 	MaxAttemptsExceededContext,
+	MaxIterationsExceededContext,
 	MetricsCollectionFailedContext,
 	MissingOutputSchemaContext,
+	OutputToolNotUsedContext,
 	PromptGenerationFailedContext,
 	RateLimitErrorContext,
+	SubmitBeforeOutputContext,
 	TokenLimitExceededContext,
 	ValidationFailedContext,
 } from './contexts';
@@ -271,6 +274,27 @@ const formatInvalidResponse = (context: InvalidResponseContext): string => {
 };
 
 /**
+ * Formats MAX_ITERATIONS_EXCEEDED error
+ */
+const formatMaxIterationsExceeded = (
+	context: MaxIterationsExceededContext
+): string => `Maximum iterations exceeded; reached ${context.iterationCount} of ${context.maxIterations} allowed`;
+
+/**
+ * Formats OUTPUT_TOOL_NOT_USED error
+ */
+const formatOutputToolNotUsed = (
+	context: OutputToolNotUsedContext
+): string => `Model did not call output tool; expected ${context.expectedTool}`;
+
+/**
+ * Formats SUBMIT_BEFORE_OUTPUT error
+ */
+const formatSubmitBeforeOutput = (
+	_context: SubmitBeforeOutputContext
+): string => `Model called submit before calling output tool`;
+
+/**
  * Formats METRICS_COLLECTION_FAILED error
  */
 const formatMetricsCollectionFailed = (
@@ -367,6 +391,10 @@ export const formatAgentError = (error: AgentError): string => {
 			baseMessage = formatMaxAttemptsExceeded(error.context);
 			break;
 
+		case AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED:
+			baseMessage = formatMaxIterationsExceeded(error.context);
+			break;
+
 		case AGENT_ERROR_CODES.EXECUTION_CANCELLED:
 			baseMessage = formatExecutionCancelled(error.context);
 			break;
@@ -384,6 +412,14 @@ export const formatAgentError = (error: AgentError): string => {
 
 		case AGENT_ERROR_CODES.INVALID_RESPONSE:
 			baseMessage = formatInvalidResponse(error.context);
+			break;
+
+		case AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED:
+			baseMessage = formatOutputToolNotUsed(error.context);
+			break;
+
+		case AGENT_ERROR_CODES.SUBMIT_BEFORE_OUTPUT:
+			baseMessage = formatSubmitBeforeOutput(error.context);
 			break;
 
 		case AGENT_ERROR_CODES.METRICS_COLLECTION_FAILED:

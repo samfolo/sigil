@@ -718,6 +718,12 @@ export const executeAgent = async <Input, Output>(
 				// Check for submit tool
 				if (toolUse.name === DEFAULT_SUBMIT_TOOL.name) {
 					submitFound = true;
+					// Fire callback for submit tool
+					safeInvokeCallback(
+						options.callbacks?.onToolCall,
+						[state, toolUse.name, toolUse.input],
+						callbackErrors
+					);
 					// Submit tool has no result (termination signal only)
 					continue;
 				}
@@ -727,25 +733,46 @@ export const executeAgent = async <Input, Output>(
 					outputFound = true;
 					lastOutputToolInput = toolUse.input as Output;
 
+					// Fire callback before execution
+					safeInvokeCallback(
+						options.callbacks?.onToolCall,
+						[state, toolUse.name, toolUse.input],
+						callbackErrors
+					);
+
 					if (reflectionEnabled) {
 						// Execute reflection handler
 						const handlerResult = agent.tools.output.reflectionHandler!(lastOutputToolInput);
 
 						if (isErr(handlerResult)) {
 							// Reflection handler returned error
+							const errorContent = handlerResult.error;
 							toolResults.push({
 								type: 'tool_result',
 								tool_use_id: toolUse.id,
-								content: handlerResult.error,
+								content: errorContent,
 								is_error: true,
 							});
+							// Fire callback with error result
+							safeInvokeCallback(
+								options.callbacks?.onToolResult,
+								[state, toolUse.name, errorContent],
+								callbackErrors
+							);
 						} else {
 							// Reflection handler returned success
+							const resultContent = handlerResult.data;
 							toolResults.push({
 								type: 'tool_result',
 								tool_use_id: toolUse.id,
-								content: handlerResult.data,
+								content: resultContent,
 							});
+							// Fire callback with success result
+							safeInvokeCallback(
+								options.callbacks?.onToolResult,
+								[state, toolUse.name, resultContent],
+								callbackErrors
+							);
 						}
 					}
 					// In non-reflection mode, output tool doesn't produce a result
@@ -756,34 +783,68 @@ export const executeAgent = async <Input, Output>(
 				const handler = helperHandlers.get(toolUse.name);
 
 				if (!handler) {
-					// Unknown tool - return error result
+					// Unknown tool - fire callback then return error result
+					safeInvokeCallback(
+						options.callbacks?.onToolCall,
+						[state, toolUse.name, toolUse.input],
+						callbackErrors
+					);
+
+					const errorContent = `Error: Unknown tool ${toolUse.name}`;
 					toolResults.push({
 						type: 'tool_result',
 						tool_use_id: toolUse.id,
-						content: `Error: Unknown tool ${toolUse.name}`,
+						content: errorContent,
 						is_error: true,
 					});
+
+					safeInvokeCallback(
+						options.callbacks?.onToolResult,
+						[state, toolUse.name, errorContent],
+						callbackErrors
+					);
 					continue;
 				}
+
+				// Fire callback before execution
+				safeInvokeCallback(
+					options.callbacks?.onToolCall,
+					[state, toolUse.name, toolUse.input],
+					callbackErrors
+				);
 
 				// Execute helper tool handler
 				const handlerResult = handler(toolUse.input);
 
 				if (isErr(handlerResult)) {
 					// Handler returned error
+					const errorContent = handlerResult.error;
 					toolResults.push({
 						type: 'tool_result',
 						tool_use_id: toolUse.id,
-						content: handlerResult.error,
+						content: errorContent,
 						is_error: true,
 					});
+					// Fire callback with error result
+					safeInvokeCallback(
+						options.callbacks?.onToolResult,
+						[state, toolUse.name, errorContent],
+						callbackErrors
+					);
 				} else {
 					// Handler returned success
+					const resultContent = String(handlerResult.data);
 					toolResults.push({
 						type: 'tool_result',
 						tool_use_id: toolUse.id,
-						content: String(handlerResult.data),
+						content: resultContent,
 					});
+					// Fire callback with success result
+					safeInvokeCallback(
+						options.callbacks?.onToolResult,
+						[state, toolUse.name, resultContent],
+						callbackErrors
+					);
 				}
 			}
 
@@ -988,9 +1049,10 @@ export const executeAgent = async <Input, Output>(
 		);
 
 		// Append assistant response to conversation history
+		// response is guaranteed to be defined here because output was extracted from it
 		conversationHistory.push({
 			role: 'assistant',
-			content: response.content,
+			content: response!.content,
 		});
 
 		// Format validation errors for prompt using layer-specific context
