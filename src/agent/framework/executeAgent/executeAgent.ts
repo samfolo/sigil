@@ -2,6 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import * as z from 'zod';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
+import {DEFAULT_MAX_ITERATIONS} from '@sigil/src/agent/framework/common';
 import type {AgentDefinition, ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
 import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
@@ -15,14 +16,6 @@ import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validat
 import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
 import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors';
 import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
-
-/**
- * Default maximum number of iterations per attempt
- *
- * Prevents runaway tool-calling loops that consume excessive tokens.
- * Can be overridden via ValidationConfig.maxIterationsPerAttempt.
- */
-export const DEFAULT_MAX_ITERATIONS = 15;
 
 /**
  * Default submit tool definition for reflection mode

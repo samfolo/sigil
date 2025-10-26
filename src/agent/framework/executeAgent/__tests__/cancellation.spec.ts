@@ -22,7 +22,7 @@ import {
 	createHelperToolResponse,
 	isErr,
 	AGENT_ERROR_CODES,
-} from './executeAgent.common.fixtures';
+} from '../executeAgent.common.fixtures';
 
 describe('executeAgent - Cancellation', () => {
 	beforeEach(() => {

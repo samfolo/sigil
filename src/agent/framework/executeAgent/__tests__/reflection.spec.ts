@@ -25,7 +25,7 @@ import {
 	isOk,
 	isErr,
 	AGENT_ERROR_CODES,
-} from './executeAgent.common.fixtures';
+} from '../executeAgent.common.fixtures';
 
 describe('executeAgent - Reflection Mode', () => {
 	beforeEach(() => {

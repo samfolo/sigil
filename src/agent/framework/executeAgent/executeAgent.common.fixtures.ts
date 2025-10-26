@@ -63,9 +63,14 @@ export {
 } from './executeAgent.fixtures';
 
 /**
- * Re-export executeAgent function and constants
+ * Re-export executeAgent function
  */
-export {executeAgent, DEFAULT_MAX_ITERATIONS} from './executeAgent';
+export {executeAgent} from './executeAgent';
+
+/**
+ * Re-export constants
+ */
+export {DEFAULT_MAX_ITERATIONS} from '../common';
 
 /**
  * Re-export error codes and Result utilities

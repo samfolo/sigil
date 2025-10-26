@@ -20,7 +20,7 @@ import {
 	VALID_EXECUTE_OPTIONS,
 	createMockApiCalls,
 	createOutputThenSubmitResponse,
-} from './executeAgent.common.fixtures';
+} from '../executeAgent.common.fixtures';
 
 describe('executeAgent - Conversation History', () => {
 	beforeEach(() => {

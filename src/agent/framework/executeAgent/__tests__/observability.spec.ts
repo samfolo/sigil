@@ -21,7 +21,7 @@ import {
 	createOutputThenSubmitResponse,
 	isOk,
 	isErr,
-} from './executeAgent.common.fixtures';
+} from '../executeAgent.common.fixtures';
 
 describe('executeAgent - Observability', () => {
 	beforeEach(() => {

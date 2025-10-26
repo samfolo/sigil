@@ -19,7 +19,7 @@ import {
 	createMockApiCalls,
 	createOutputThenSubmitResponse,
 	isOk,
-} from './executeAgent.common.fixtures';
+} from '../executeAgent.common.fixtures';
 
 describe('executeAgent - Callbacks', () => {
 	beforeEach(() => {

@@ -44,7 +44,6 @@ const TEST_OUTPUT_SCHEMA = z.object({
  *
  * const agentWithHelpers = agentBuilder(BASE_MINIMAL_AGENT)
  *   .withHelpers([queryDataTool, fetchContextTool])
- *   .withMaxIterations(15)
  *   .build();
  * ```
  */
@@ -472,7 +471,6 @@ export const AGENT_WITH_HELPER_TOOLS: AgentDefinition<string, TestOutput> = agen
 			handler: mockDataQueryHandler,
 		},
 	])
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -498,7 +496,6 @@ export const AGENT_WITH_FAILING_HELPER: AgentDefinition<string, TestOutput> = ag
 			handler: mockFailingHandler,
 		},
 	])
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -535,7 +532,6 @@ export const AGENT_WITH_MULTIPLE_HELPERS: AgentDefinition<string, TestOutput> = 
 			handler: mockCalculateHandler,
 		},
 	])
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -554,7 +550,6 @@ export const AGENT_WITH_REFLECTION: AgentDefinition<string, TestOutput> = agentB
 	.withName('ReflectionAgent')
 	.withDescription('Agent with reflection mode enabled')
 	.withReflection(mockReflectionHandler)
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -573,7 +568,6 @@ export const AGENT_WITH_REJECTING_REFLECTION: AgentDefinition<string, TestOutput
 	.withName('RejectingReflectionAgent')
 	.withDescription('Agent with reflection handler that validates output')
 	.withReflection(mockRejectingReflectionHandler)
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -607,7 +601,6 @@ export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutp
 		},
 	])
 	.withReflection(mockReflectionHandler)
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -653,7 +646,6 @@ export const AGENT_WITH_THROWING_HELPER: AgentDefinition<string, TestOutput> = a
 			handler: mockThrowingHandler,
 		},
 	])
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -672,7 +664,6 @@ export const AGENT_WITH_THROWING_REFLECTION: AgentDefinition<string, TestOutput>
 	.withName('ThrowingReflectionAgent')
 	.withDescription('Agent with reflection handler that throws exceptions')
 	.withReflection(mockThrowingReflectionHandler)
-	.withMaxIterations(15)
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
