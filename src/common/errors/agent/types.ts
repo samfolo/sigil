@@ -23,10 +23,12 @@ import type {
 	InvalidTemperatureContext,
 	LoggingFailedContext,
 	MaxAttemptsExceededContext,
+	MaxIterationsExceededContext,
 	MetricsCollectionFailedContext,
 	MissingOutputSchemaContext,
 	PromptGenerationFailedContext,
 	RateLimitErrorContext,
+	SubmitBeforeOutputContext,
 	TokenLimitExceededContext,
 	ValidationFailedContext,
 } from './contexts';
@@ -160,6 +162,15 @@ export interface MaxAttemptsExceededError
   category: 'execution';
 }
 
+export interface MaxIterationsExceededError
+  extends StructuredError<
+    typeof AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED,
+    AgentErrorCategory,
+    MaxIterationsExceededContext
+  > {
+  category: 'execution';
+}
+
 export interface ExecutionCancelledError
   extends StructuredError<
     typeof AGENT_ERROR_CODES.EXECUTION_CANCELLED,
@@ -206,6 +217,15 @@ export interface InvalidResponseError
   category: 'model';
 }
 
+export interface SubmitBeforeOutputError
+  extends StructuredError<
+    typeof AGENT_ERROR_CODES.SUBMIT_BEFORE_OUTPUT,
+    AgentErrorCategory,
+    SubmitBeforeOutputContext
+  > {
+  category: 'model';
+}
+
 // Observability errors
 export interface MetricsCollectionFailedError
   extends StructuredError<
@@ -244,10 +264,12 @@ export type AgentError =
   | PromptGenerationFailedError
   | ValidationFailedError
   | MaxAttemptsExceededError
+  | MaxIterationsExceededError
   | ExecutionCancelledError
   | ApiErrorError
   | RateLimitErrorError
   | TokenLimitExceededError
   | InvalidResponseError
+  | SubmitBeforeOutputError
   | MetricsCollectionFailedError
   | LoggingFailedError;

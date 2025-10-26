@@ -103,9 +103,18 @@ export interface MaxAttemptsExceededContext {
 }
 
 /**
+ * Context for MAX_ITERATIONS_EXCEEDED error
+ */
+export interface MaxIterationsExceededContext {
+  attempt: number;
+  iterationCount: number;
+  maxIterations: number;
+}
+
+/**
  * Execution phase where cancellation occurred
  */
-export type ExecutionPhase = 'prompt_generation' | 'validation' | 'api_call';
+export type ExecutionPhase = 'prompt_generation' | 'validation' | 'api_call' | 'iteration';
 
 /**
  * Context for EXECUTION_CANCELLED error
@@ -148,6 +157,14 @@ export interface TokenLimitExceededContext {
 export interface InvalidResponseContext {
   reason?: string;
   responseType?: string;
+}
+
+/**
+ * Context for SUBMIT_BEFORE_OUTPUT error
+ */
+export interface SubmitBeforeOutputContext {
+  attempt: number;
+  iterationCount: number;
 }
 
 /**
