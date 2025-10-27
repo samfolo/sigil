@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest';
 
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
+import type {Chunk} from './chunkText';
 import {chunkText} from './chunkText';
 
 describe('chunkText', () => {
@@ -70,7 +71,7 @@ describe('chunkText', () => {
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(1);
-				expect(result.data.at(0)).toBe('Short text.');
+				expect(result.data.at(0)?.content).toBe('Short text.');
 			}
 		});
 
@@ -80,7 +81,7 @@ describe('chunkText', () => {
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(1);
-				expect(result.data.at(0)).toBe(text);
+				expect(result.data.at(0)?.content).toBe(text);
 			}
 		});
 	});
@@ -95,7 +96,7 @@ describe('chunkText', () => {
 				expect(result.data.length).toBeGreaterThan(1);
 				// Each chunk should be exactly 200 chars except possibly the last
 				for (let i = 0; i < result.data.length - 1; i++) {
-					expect(result.data.at(i)?.length).toBe(200);
+					expect(result.data.at(i)?.content.length).toBe(200);
 				}
 			}
 		});
@@ -122,7 +123,7 @@ describe('chunkText', () => {
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				for (const chunk of result.data) {
-					expect(chunk.length).toBeLessThanOrEqual(150);
+					expect(chunk.content.length).toBeLessThanOrEqual(150);
 				}
 			}
 		});
@@ -135,8 +136,8 @@ describe('chunkText', () => {
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data.length).toBe(2);
-				expect(result.data.at(0)?.length).toBe(200);
-				expect(result.data.at(1)?.length).toBe(200);
+				expect(result.data.at(0)?.content.length).toBe(200);
+				expect(result.data.at(1)?.content.length).toBe(200);
 			}
 		});
 	});
@@ -151,8 +152,8 @@ describe('chunkText', () => {
 			if (isOk(result) && result.data.length > 1) {
 				// Check overlap between consecutive chunks
 				for (let i = 0; i < result.data.length - 1; i++) {
-					const currentChunk = result.data.at(i) ?? '';
-					const nextChunk = result.data.at(i + 1) ?? '';
+					const currentChunk = result.data.at(i)?.content ?? '';
+					const nextChunk = result.data.at(i + 1)?.content ?? '';
 
 					// Last `overlap` chars of current should match first `overlap` chars of next
 					const currentEnd = currentChunk.slice(-overlap);
@@ -173,8 +174,8 @@ describe('chunkText', () => {
 			if (isOk(result)) {
 				expect(result.data.length).toBe(2);
 
-				const firstChunk = result.data.at(0) ?? '';
-				const secondChunk = result.data.at(1) ?? '';
+				const firstChunk = result.data.at(0)?.content ?? '';
+				const secondChunk = result.data.at(1)?.content ?? '';
 
 				// With no overlap, last char of first ≠ first char of second
 				// First chunk ends at index 199, which is pattern[9] = '9'
@@ -191,8 +192,8 @@ describe('chunkText', () => {
 
 			expect(isOk(result)).toBe(true);
 			if (isOk(result) && result.data.length > 1) {
-				const firstChunk = result.data.at(0) ?? '';
-				const secondChunk = result.data.at(1) ?? '';
+				const firstChunk = result.data.at(0)?.content ?? '';
+				const secondChunk = result.data.at(1)?.content ?? '';
 
 				// With overlap 10, last 10 chars of first = first 10 chars of second
 				const overlapFromFirst = firstChunk.slice(-10);
@@ -215,7 +216,7 @@ describe('chunkText', () => {
 				expect(result.data.length).toBeGreaterThan(0);
 				// Character-based: chunks are predictable length
 				for (const chunk of result.data.slice(0, -1)) {
-					expect(chunk.length).toBe(100);
+					expect(chunk.content.length).toBe(100);
 				}
 			}
 		});
@@ -229,7 +230,7 @@ describe('chunkText', () => {
 				expect(result.data.length).toBeGreaterThan(0);
 				// All chunks predictable size (character-based)
 				for (const chunk of result.data.slice(0, -1)) {
-					expect(chunk.length).toBe(150);
+					expect(chunk.content.length).toBe(150);
 				}
 			}
 		});
@@ -266,7 +267,7 @@ describe('chunkText', () => {
 				expect(result.data.length).toBeGreaterThan(0);
 				// All chunks should be meaningful
 				for (const chunk of result.data) {
-					expect(chunk.length).toBeGreaterThan(0);
+					expect(chunk.content.length).toBeGreaterThan(0);
 				}
 			}
 		});
@@ -294,7 +295,7 @@ describe('chunkText', () => {
 				expect(result.data.length).toBeGreaterThan(0);
 				// Character-based: all non-final chunks are exactly 100 chars
 				for (let i = 0; i < result.data.length - 1; i++) {
-					expect(result.data.at(i)?.length).toBe(100);
+					expect(result.data.at(i)?.content.length).toBe(100);
 				}
 			}
 		});
@@ -308,7 +309,7 @@ describe('chunkText', () => {
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				// Each 200-char chunk should contain enough context to identify GeoJSON
-				const firstChunk = result.data.at(0) ?? '';
+				const firstChunk = result.data.at(0)?.content ?? '';
 				expect(firstChunk.length).toBeGreaterThanOrEqual(100);
 				// Should contain recognisable GeoJSON patterns
 				expect(firstChunk).toContain('type');
@@ -325,7 +326,7 @@ describe('chunkText', () => {
 			if (isOk(result)) {
 				// All chunks except last should be 200 chars
 				for (let i = 0; i < result.data.length - 1; i++) {
-					expect(result.data.at(i)?.length).toBe(200);
+					expect(result.data.at(i)?.content.length).toBe(200);
 				}
 			}
 		});
@@ -337,9 +338,97 @@ describe('chunkText', () => {
 			expect(isOk(result)).toBe(true);
 			if (isOk(result) && result.data.length > 1) {
 				// Check first two chunks have 10-char overlap
-				const first = result.data.at(0) ?? '';
-				const second = result.data.at(1) ?? '';
+				const first = result.data.at(0)?.content ?? '';
+				const second = result.data.at(1)?.content ?? '';
 				expect(first.slice(-10)).toBe(second.slice(0, 10));
+			}
+		});
+	});
+
+	describe('position metadata', () => {
+		it('tracks positions correctly in text without leading whitespace', () => {
+			const text = 'abcdefghij'.repeat(40); // 400 chars, no leading whitespace
+			const result = chunkText(text, 100, 0);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				// First chunk should start at 0
+				expect(result.data.at(0)?.start).toBe(0);
+				expect(result.data.at(0)?.end).toBe(100);
+
+				// Second chunk should start at 100
+				expect(result.data.at(1)?.start).toBe(100);
+				expect(result.data.at(1)?.end).toBe(200);
+
+				// Verify content matches position
+				const firstChunk = result.data.at(0);
+				if (firstChunk) {
+					expect(text.slice(firstChunk.start, firstChunk.end)).toBe(
+						firstChunk.content
+					);
+				}
+			}
+		});
+
+		it('tracks positions correctly in text with leading whitespace', () => {
+			const text = '   abcdefghij'.repeat(40); // Leading spaces on first repeat
+			const result = chunkText(text, 100, 0);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				const firstChunk = result.data.at(0);
+				if (firstChunk) {
+					// Position should account for trimmed leading whitespace
+					expect(text.slice(firstChunk.start, firstChunk.end)).toBe(
+						firstChunk.content
+					);
+				}
+			}
+		});
+
+		it('tracks positions correctly with overlap', () => {
+			const text = '0123456789'.repeat(30); // 300 chars
+			const result = chunkText(text, 100, 20);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				// Verify all chunks have correct positions
+				for (const chunk of result.data) {
+					const extracted = text.slice(chunk.start, chunk.end);
+					expect(extracted).toBe(chunk.content);
+				}
+
+				// Verify step size
+				const step = 100 - 20; // 80
+				expect(result.data.at(1)?.start).toBe(step);
+				expect(result.data.at(2)?.start).toBe(step * 2);
+			}
+		});
+
+		it('returns correct positions for single chunk', () => {
+			const text = 'Short';
+			const result = chunkText(text, 200);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				const chunk = result.data.at(0);
+				expect(chunk?.start).toBe(0);
+				expect(chunk?.end).toBe(5);
+				expect(text.slice(chunk?.start ?? 0, chunk?.end ?? 0)).toBe('Short');
+			}
+		});
+
+		it('handles whitespace-only prefix correctly', () => {
+			const text = '     actual content';
+			const result = chunkText(text, 200);
+
+			expect(isOk(result)).toBe(true);
+			if (isOk(result)) {
+				const chunk = result.data.at(0);
+				expect(chunk?.content).toBe('actual content');
+				expect(text.slice(chunk?.start ?? 0, chunk?.end ?? 0)).toBe(
+					'actual content'
+				);
 			}
 		});
 	});

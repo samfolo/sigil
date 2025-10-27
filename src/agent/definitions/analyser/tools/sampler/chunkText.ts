@@ -2,6 +2,26 @@ import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
 /**
+ * Text chunk with position metadata
+ */
+export interface Chunk {
+	/**
+	 * Chunk content (trimmed)
+	 */
+	content: string;
+
+	/**
+	 * Character offset in original text (before trim)
+	 */
+	start: number;
+
+	/**
+	 * Character offset in original text (before trim)
+	 */
+	end: number;
+}
+
+/**
  * Chunks text into overlapping segments for diversity sampling
  *
  * Uses pure character-based chunking to work reliably across all data formats
@@ -11,16 +31,22 @@ import {err, ok} from '@sigil/src/common/errors/result';
  * Character-based approach ensures consistent behaviour regardless of content
  * structure, unlike semantic splitting which can break structured data.
  *
+ * Position metadata (start/end) references the original input text before trimming,
+ * allowing reconstruction of chunk locations in the source data.
+ *
  * @param text - Text to chunk
  * @param chunkSize - Size of each chunk in characters (default: 200)
  * @param overlap - Characters to overlap between chunks (default: 10)
- * @returns Result containing array of text chunks, or error message
+ * @returns Result containing array of chunks with position metadata, or error message
  *
  * @example
  * ```typescript
  * const result = chunkText(csvData, 200, 10);
  * if (isOk(result)) {
- *   // result.data contains chunks suitable for embedding
+ *   for (const chunk of result.data) {
+ *     console.log(chunk.content);  // Trimmed text
+ *     console.log(chunk.start, chunk.end);  // Position in original
+ *   }
  * }
  * ```
  */
@@ -28,7 +54,7 @@ export const chunkText = (
 	text: string,
 	chunkSize = 200,
 	overlap = 10
-): Result<string[], string> => {
+): Result<Chunk[], string> => {
 	// Validate parameters
 	if (chunkSize <= 0) {
 		return err('Chunk size must be greater than 0');
@@ -42,29 +68,42 @@ export const chunkText = (
 		return err('Overlap must be less than chunk size');
 	}
 
-	// Handle empty or whitespace-only text
+	// Calculate trim offset for position tracking
+	const leadingWhitespace = text.length - text.trimStart().length;
 	const trimmed = text.trim();
+
+	// Handle empty or whitespace-only text
 	if (trimmed.length === 0) {
 		return ok([]);
 	}
 
 	// If text is shorter than chunk size, return as single chunk
 	if (trimmed.length <= chunkSize) {
-		return ok([trimmed]);
+		return ok([
+			{
+				content: trimmed,
+				start: leadingWhitespace,
+				end: leadingWhitespace + trimmed.length,
+			},
+		]);
 	}
 
 	// Character-based chunking with overlap
-	const chunks: string[] = [];
+	const chunks: Chunk[] = [];
 	const step = chunkSize - overlap;
 	let position = 0;
 
 	while (position < trimmed.length) {
 		const end = Math.min(position + chunkSize, trimmed.length);
-		const chunk = trimmed.slice(position, end);
+		const content = trimmed.slice(position, end);
 
 		// Only add non-empty chunks
-		if (chunk.length > 0) {
-			chunks.push(chunk);
+		if (content.length > 0) {
+			chunks.push({
+				content,
+				start: leadingWhitespace + position,
+				end: leadingWhitespace + end,
+			});
 		}
 
 		// Move forward by step size
