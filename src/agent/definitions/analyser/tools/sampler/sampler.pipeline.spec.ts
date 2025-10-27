@@ -221,6 +221,51 @@ describe(
 				},
 				{timeout: MODEL_DOWNLOAD_TIMEOUT}
 			);
+
+			it(
+				'requests additional samples without overlap',
+				async () => {
+					const initial = await generateInitialVignettes(
+						NESTED_JSON_DATA,
+						JSON_VIGNETTE_COUNT
+					);
+
+					expect(isOk(initial)).toBe(true);
+
+					if (isOk(initial)) {
+						const {vignettes: firstBatch, state} = initial.data;
+
+						const more = requestMoreSamples(
+							state,
+							ADDITIONAL_SAMPLE_COUNT
+						);
+
+						expect(isOk(more)).toBe(true);
+
+						if (isOk(more)) {
+							const {vignettes: secondBatch} = more.data;
+
+							expect(secondBatch.length).toBeGreaterThan(0);
+							expect(secondBatch.length).toBeLessThanOrEqual(
+								ADDITIONAL_SAMPLE_COUNT
+							);
+
+							// Verify no overlap in positions
+							const firstPositions = new Set(
+								firstBatch.map(
+									(v) => `${v.position.start}-${v.position.end}`
+								)
+							);
+
+							for (const vignette of secondBatch) {
+								const posKey = `${vignette.position.start}-${vignette.position.end}`;
+								expect(firstPositions.has(posKey)).toBe(false);
+							}
+						}
+					}
+				},
+				{timeout: MODEL_DOWNLOAD_TIMEOUT}
+			);
 		});
 
 		describe('GeoJSON data sampling', () => {
@@ -253,6 +298,51 @@ describe(
 								vignette.position.end
 							);
 							expect(extracted).toBe(vignette.content);
+						}
+					}
+				},
+				{timeout: MODEL_DOWNLOAD_TIMEOUT}
+			);
+
+			it(
+				'requests additional samples without overlap',
+				async () => {
+					const initial = await generateInitialVignettes(
+						GEOJSON_DATA,
+						GEOJSON_VIGNETTE_COUNT
+					);
+
+					expect(isOk(initial)).toBe(true);
+
+					if (isOk(initial)) {
+						const {vignettes: firstBatch, state} = initial.data;
+
+						const more = requestMoreSamples(
+							state,
+							ADDITIONAL_SAMPLE_COUNT
+						);
+
+						expect(isOk(more)).toBe(true);
+
+						if (isOk(more)) {
+							const {vignettes: secondBatch} = more.data;
+
+							expect(secondBatch.length).toBeGreaterThan(0);
+							expect(secondBatch.length).toBeLessThanOrEqual(
+								ADDITIONAL_SAMPLE_COUNT
+							);
+
+							// Verify no overlap in positions
+							const firstPositions = new Set(
+								firstBatch.map(
+									(v) => `${v.position.start}-${v.position.end}`
+								)
+							);
+
+							for (const vignette of secondBatch) {
+								const posKey = `${vignette.position.start}-${vignette.position.end}`;
+								expect(firstPositions.has(posKey)).toBe(false);
+							}
 						}
 					}
 				},

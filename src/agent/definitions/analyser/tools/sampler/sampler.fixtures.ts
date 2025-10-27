@@ -1,13 +1,19 @@
 /**
  * Test fixtures for sampler pipeline integration tests
  *
- * Provides realistic test data in various formats (CSV, JSON, GeoJSON) for
+ * Provides realistic test data in various formats (CSV, JSON, GeoJSON, XML, YAML) for
  * comprehensive testing of the entire sampling pipeline.
  *
  * All fixtures use deterministic seeding (seed=42) for reproducible tests.
  */
 
-import {generateCSV, generateGeoJSON, generateJSON} from '@sigil/src/testing';
+import {
+	generateCSV,
+	generateGeoJSON,
+	generateJSON,
+	generateXML,
+	generateYAML,
+} from '@sigil/src/testing';
 
 /**
  * Seed for reproducible test data generation
@@ -43,6 +49,36 @@ const JSON_MAX_BREADTH = 5;
  * Number of GeoJSON features
  */
 const GEOJSON_FEATURES = 30;
+
+/**
+ * XML minimum elements per level
+ */
+const XML_MIN_ELEMENTS = 3;
+
+/**
+ * XML maximum elements per level
+ */
+const XML_MAX_ELEMENTS = 6;
+
+/**
+ * XML nesting depth
+ */
+const XML_DEPTH = 3;
+
+/**
+ * YAML nesting depth
+ */
+const YAML_DEPTH = 3;
+
+/**
+ * YAML minimum keys per object
+ */
+const YAML_MIN_KEYS = 2;
+
+/**
+ * YAML maximum keys per object
+ */
+const YAML_MAX_KEYS = 5;
 
 /**
  * Realistic CSV data with 100 rows
@@ -102,5 +138,33 @@ export const GEOJSON_DATA = generateGeoJSON({
  */
 export const SMALL_CSV_DATA = generateCSV({
 	rows: 3,
+	seed: TEST_SEED,
+});
+
+/**
+ * XML data with nested structure
+ *
+ * Creates XML with 3 levels of nesting and variable elements (3-6 per level).
+ * Includes attributes on elements for realistic structure.
+ */
+export const XML_DATA = generateXML({
+	minElements: XML_MIN_ELEMENTS,
+	maxElements: XML_MAX_ELEMENTS,
+	depth: XML_DEPTH,
+	includeAttributes: true,
+	seed: TEST_SEED,
+});
+
+/**
+ * YAML data with nested structure
+ *
+ * Creates YAML with objects and arrays up to 3 levels deep.
+ * Variable keys (2-5 per object) ensure realistic variety.
+ */
+export const YAML_DATA = generateYAML({
+	depth: YAML_DEPTH,
+	minKeys: YAML_MIN_KEYS,
+	maxKeys: YAML_MAX_KEYS,
+	includeArrays: true,
 	seed: TEST_SEED,
 });
