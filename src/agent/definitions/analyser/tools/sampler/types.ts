@@ -8,6 +8,21 @@
 import type {Chunk} from './chunkText';
 
 /**
+ * Position of a vignette in the original data
+ */
+export interface VignettePosition {
+	/**
+	 * Character offset where content starts
+	 */
+	start: number;
+
+	/**
+	 * Character offset where content ends
+	 */
+	end: number;
+}
+
+/**
  * A vignette is a text snippet with its embedding and position in the original data
  *
  * Used by the Analyser Agent to examine diverse samples of the data without
@@ -22,17 +37,7 @@ export interface Vignette {
 	/**
 	 * Position in the original raw data (before trimming)
 	 */
-	position: {
-		/**
-		 * Character offset where this vignette starts
-		 */
-		start: number;
-
-		/**
-		 * Character offset where this vignette ends
-		 */
-		end: number;
-	};
+	position: VignettePosition;
 
 	/**
 	 * 384-dimensional embedding vector

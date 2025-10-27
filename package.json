@@ -50,10 +50,12 @@
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "^14.2.1",
     "@eslint/eslintrc": "^3",
+    "@faker-js/faker": "^10.1.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@turf/random": "^7.2.0",
     "@types/js-yaml": "^4.0.9",
     "@types/leaflet": "^1.9.20",
     "@types/luxon": "^3.7.1",
