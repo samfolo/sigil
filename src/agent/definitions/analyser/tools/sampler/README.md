@@ -50,7 +50,7 @@ if (isOk(result)) {
 import type {Vignette, SamplerState} from '@sigil/src/agent/definitions/analyser/tools/sampler';
 
 const processVignette = (vignette: Vignette): void => {
-  console.log(vignette.text); // Text snippet
+  console.log(vignette.content); // Text snippet
   console.log(vignette.position); // {start, end} character offsets
   // vignette.embedding available but typically not needed by consumers
 };
