@@ -2,7 +2,6 @@ import {describe, expect, it} from 'vitest';
 
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
-import type {Chunk} from './chunkText';
 import {chunkText} from './chunkText';
 
 describe('chunkText', () => {
