@@ -6,7 +6,7 @@ Guidance for Claude Code when working with this repository. Ordered by decision 
 
 ### Error Handling
 
-MANDATORY: Consult @ERROR_HANDLING.md before writing any error handling code.
+MANDATORY: Consult @docs/ERROR_HANDLING.md before writing any error handling code.
 
 Use `Result<T, E>` from @src/common/errors/result.ts for ALL expected errors.
 
@@ -29,7 +29,7 @@ const parse = (input: string): Result<Data, string> => {
 };
 ```
 
-See @ERROR_HANDLING.md for complete decision flowchart, utility functions (mapResult, chain, all), and type patterns.
+See @docs/ERROR_HANDLING.md for complete decision flowchart, utility functions (mapResult, chain, all), and type patterns.
 
 ### State Management
 
@@ -166,7 +166,7 @@ All documentation must be:
 - Precise: Exact terminology, no ambiguity
 - Effective: Actionable information only
 
-Follow the style of this file and ERROR_HANDLING.md: direct statements, minimal examples, no filler.
+Follow the style of this file and @docs/ERROR_HANDLING.md: direct statements, minimal examples, no filler.
 
 Code examples in documentation (JSDoc, README, .md files) must follow all code style conventions: arrow functions, no spaces in curly braces, no single-line blocks, British spelling, etc.
 
