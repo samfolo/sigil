@@ -11,6 +11,11 @@
 const EPSILON = 1e-10;
 
 /**
+ * Minimum embeddings required for pairwise distance calculation
+ */
+const MIN_EMBEDDINGS_FOR_PAIRWISE = 2;
+
+/**
  * Computes cosine similarity between two vectors
  *
  * Cosine similarity measures the cosine of the angle between two vectors,
