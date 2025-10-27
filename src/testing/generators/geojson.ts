@@ -8,6 +8,7 @@
 import {faker} from '@faker-js/faker/locale/en_GB';
 import {randomLineString, randomPoint, randomPolygon} from '@turf/random';
 
+import {applySeed} from './common';
 import type {GeoJSONGeneratorConfig} from './types';
 
 /**
@@ -120,9 +121,7 @@ const generateProperties = (): Record<string, unknown> => ({
  */
 export const generateGeoJSON = (config: GeoJSONGeneratorConfig): string => {
 	// Set seed for deterministic generation
-	if (config.seed !== undefined) {
-		faker.seed(config.seed);
-	}
+	applySeed(config);
 
 	const geometryTypes = config.geometryTypes ?? ['Point'];
 	const includeProperties = config.includeProperties ?? true;

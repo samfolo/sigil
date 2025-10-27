@@ -8,6 +8,7 @@
 import {faker} from '@faker-js/faker/locale/en_GB';
 import papaparse from 'papaparse';
 
+import {applySeed} from './common';
 import type {CSVColumnDefinition, CSVColumnType, CSVGeneratorConfig} from './types';
 
 /**
@@ -153,9 +154,7 @@ const generateValue = (
  */
 export const generateCSV = (config: CSVGeneratorConfig): string => {
 	// Set seed for deterministic generation
-	if (config.seed !== undefined) {
-		faker.seed(config.seed);
-	}
+	applySeed(config);
 
 	const columns = config.columns ?? DEFAULT_COLUMNS;
 	const includeHeader = config.includeHeader ?? true;

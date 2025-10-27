@@ -7,37 +7,16 @@
 
 import {faker} from '@faker-js/faker/locale/en_GB';
 
+import {
+	ARRAY_PROBABILITY,
+	DEFAULT_MAX_ARRAY_LENGTH,
+	DEFAULT_MIN_ARRAY_LENGTH,
+	NEST_PROBABILITY,
+	applySeed,
+	generatePrimitive,
+	selectUniqueItems,
+} from './common';
 import type {JSONGeneratorConfig} from './types';
-
-/**
- * Probability of generating an array vs object
- */
-const ARRAY_PROBABILITY = 0.3;
-
-/**
- * Probability of nesting deeper vs generating primitive
- */
-const NEST_PROBABILITY = 0.7;
-
-/**
- * Default minimum array length
- */
-const DEFAULT_MIN_ARRAY_LENGTH = 2;
-
-/**
- * Default maximum array length
- */
-const DEFAULT_MAX_ARRAY_LENGTH = 5;
-
-/**
- * Default minimum number range
- */
-const DEFAULT_MIN_NUMBER = 0;
-
-/**
- * Default maximum number range
- */
-const DEFAULT_MAX_NUMBER = 1000;
 
 /**
  * Realistic property names for different contexts
@@ -56,39 +35,6 @@ const PROPERTY_NAMES = {
  * Pool of all property names for random selection
  */
 const ALL_PROPERTY_NAMES = Object.values(PROPERTY_NAMES).flat();
-
-/**
- * Generates a primitive value using faker
- */
-const generatePrimitive = (): string | number | boolean | null => {
-	const type = faker.helpers.arrayElement([
-		'string',
-		'number',
-		'boolean',
-		'date',
-		'null',
-	]);
-
-	switch (type) {
-		case 'string':
-			return faker.lorem.word();
-
-		case 'number':
-			return faker.number.int({min: DEFAULT_MIN_NUMBER, max: DEFAULT_MAX_NUMBER});
-
-		case 'boolean':
-			return faker.datatype.boolean();
-
-		case 'date':
-			return faker.date.past().toISOString();
-
-		case 'null':
-			return null;
-
-		default:
-			return faker.lorem.word();
-	}
-};
 
 /**
  * Generates a nested JSON object or array
@@ -133,18 +79,7 @@ const generateNested = (
 	const obj: Record<string, unknown> = {};
 
 	// Get unique property names for this object
-	const availableNames = [...ALL_PROPERTY_NAMES];
-	const selectedNames: string[] = [];
-
-	for (let i = 0; i < breadth && availableNames.length > 0; i++) {
-		const index = faker.number.int({min: 0, max: availableNames.length - 1});
-		const name = availableNames.at(index);
-
-		if (name) {
-			selectedNames.push(name);
-			availableNames.splice(index, 1);
-		}
-	}
+	const selectedNames = selectUniqueItems(ALL_PROPERTY_NAMES, breadth);
 
 	// Generate values for each property
 	for (const name of selectedNames) {
@@ -190,9 +125,7 @@ const generateNested = (
  */
 export const generateJSON = (config: JSONGeneratorConfig): string => {
 	// Set seed for deterministic generation
-	if (config.seed !== undefined) {
-		faker.seed(config.seed);
-	}
+	applySeed(config);
 
 	const count = config.count ?? 1;
 

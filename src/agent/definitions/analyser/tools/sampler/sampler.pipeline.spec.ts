@@ -11,9 +11,9 @@
  * @vitest-environment node
  */
 
-import {afterEach, beforeAll, describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it} from 'vitest';
 
-import {isErr, isOk} from '@sigil/src/common/errors/result';
+import {isOk} from '@sigil/src/common/errors/result';
 
 import {calculateAveragePairwiseDistance} from './diversity';
 import {cleanupEmbedder} from './embedder';
@@ -84,6 +84,63 @@ const LARGE_DATASET_VIGNETTE_COUNT = 30;
  */
 const EXHAUSTION_REQUEST_COUNT = 10;
 
+/**
+ * Test helper: Verifies vignettes have diverse embeddings
+ */
+const assertDiversity = (vignettes: Array<{embedding: number[]}>): void => {
+	const embeddings = vignettes.map((v) => v.embedding);
+	const avgDistance = calculateAveragePairwiseDistance(embeddings);
+	expect(avgDistance).toBeGreaterThan(DIVERSITY_THRESHOLD);
+};
+
+/**
+ * Test helper: Verifies positions extract correct content from data
+ */
+const assertPositionAccuracy = (
+	vignettes: Array<{position: {start: number; end: number}; content: string}>,
+	sourceData: string
+): void => {
+	for (const vignette of vignettes) {
+		const extracted = sourceData.slice(
+			vignette.position.start,
+			vignette.position.end
+		);
+		expect(extracted).toBe(vignette.content);
+	}
+};
+
+/**
+ * Test helper: Verifies samples cover a minimum spread of the data
+ */
+const assertCoverage = (
+	vignettes: Array<{position: {start: number; end: number}}>,
+	sourceData: string
+): void => {
+	const positions = vignettes
+		.map((v) => v.position.start)
+		.sort((a, b) => a - b);
+	const spread = positions.at(-1)! - positions.at(0)!;
+	const minSpread = sourceData.length * MIN_COVERAGE_PERCENTAGE;
+	expect(spread).toBeGreaterThan(minSpread);
+};
+
+/**
+ * Test helper: Verifies no position overlap between batches
+ */
+const assertNoOverlap = (
+	firstBatch: Array<{position: {start: number; end: number}}>,
+	secondBatch: Array<{position: {start: number; end: number}}>
+): void => {
+	const firstPositions = new Set(
+		firstBatch.map((v) => `${v.position.start}-${v.position.end}`)
+	);
+
+	for (const vignette of secondBatch) {
+		const posKey = `${vignette.position.start}-${vignette.position.end}`;
+		expect(firstPositions.has(posKey)).toBe(false);
+	}
+};
+
 describe(
 	'sampler pipeline integration',
 	() => {
@@ -109,31 +166,10 @@ describe(
 						// Verify correct count
 						expect(vignettes).toHaveLength(CSV_VIGNETTE_COUNT);
 
-						// Verify diversity using average pairwise distance
-						const embeddings = vignettes.map((v) => v.embedding);
-						const avgDistance =
-							calculateAveragePairwiseDistance(embeddings);
-
-						expect(avgDistance).toBeGreaterThan(DIVERSITY_THRESHOLD);
-
-						// Verify position accuracy - positions should extract correct content
-						for (const vignette of vignettes) {
-							const extracted = REALISTIC_CSV_DATA.slice(
-								vignette.position.start,
-								vignette.position.end
-							);
-							expect(extracted).toBe(vignette.content);
-						}
-
-						// Verify coverage - samples should span across data
-						const positions = vignettes
-							.map((v) => v.position.start)
-							.sort((a, b) => a - b);
-						const spread = positions.at(-1)! - positions.at(0)!;
-						const minSpread =
-							REALISTIC_CSV_DATA.length * MIN_COVERAGE_PERCENTAGE;
-
-						expect(spread).toBeGreaterThan(minSpread);
+						// Verify diversity, position accuracy, and coverage
+						assertDiversity(vignettes);
+						assertPositionAccuracy(vignettes, REALISTIC_CSV_DATA);
+						assertCoverage(vignettes, REALISTIC_CSV_DATA);
 					}
 				},
 				{timeout: MODEL_DOWNLOAD_TIMEOUT}
@@ -168,16 +204,7 @@ describe(
 							);
 
 							// Verify no overlap in positions
-							const firstPositions = new Set(
-								firstBatch.map(
-									(v) => `${v.position.start}-${v.position.end}`
-								)
-							);
-
-							for (const vignette of secondBatch) {
-								const posKey = `${vignette.position.start}-${vignette.position.end}`;
-								expect(firstPositions.has(posKey)).toBe(false);
-							}
+							assertNoOverlap(firstBatch, secondBatch);
 						}
 					}
 				},
@@ -201,22 +228,9 @@ describe(
 
 						expect(vignettes).toHaveLength(JSON_VIGNETTE_COUNT);
 
-						// Verify embeddings show diversity
-						const embeddings = vignettes.map((v) => v.embedding);
-						const avgDistance =
-							calculateAveragePairwiseDistance(embeddings);
-
-						expect(avgDistance).toBeGreaterThan(DIVERSITY_THRESHOLD);
-
-						// Verify vignettes capture different structures
-						// (position tracking works through nested JSON)
-						for (const vignette of vignettes) {
-							const extracted = NESTED_JSON_DATA.slice(
-								vignette.position.start,
-								vignette.position.end
-							);
-							expect(extracted).toBe(vignette.content);
-						}
+						// Verify diversity and position accuracy
+						assertDiversity(vignettes);
+						assertPositionAccuracy(vignettes, NESTED_JSON_DATA);
 					}
 				},
 				{timeout: MODEL_DOWNLOAD_TIMEOUT}
@@ -251,16 +265,7 @@ describe(
 							);
 
 							// Verify no overlap in positions
-							const firstPositions = new Set(
-								firstBatch.map(
-									(v) => `${v.position.start}-${v.position.end}`
-								)
-							);
-
-							for (const vignette of secondBatch) {
-								const posKey = `${vignette.position.start}-${vignette.position.end}`;
-								expect(firstPositions.has(posKey)).toBe(false);
-							}
+							assertNoOverlap(firstBatch, secondBatch);
 						}
 					}
 				},
@@ -284,21 +289,9 @@ describe(
 
 						expect(vignettes).toHaveLength(GEOJSON_VIGNETTE_COUNT);
 
-						// Verify diversity
-						const embeddings = vignettes.map((v) => v.embedding);
-						const avgDistance =
-							calculateAveragePairwiseDistance(embeddings);
-
-						expect(avgDistance).toBeGreaterThan(DIVERSITY_THRESHOLD);
-
-						// Verify position tracking through GeoJSON structure
-						for (const vignette of vignettes) {
-							const extracted = GEOJSON_DATA.slice(
-								vignette.position.start,
-								vignette.position.end
-							);
-							expect(extracted).toBe(vignette.content);
-						}
+						// Verify diversity and position accuracy
+						assertDiversity(vignettes);
+						assertPositionAccuracy(vignettes, GEOJSON_DATA);
 					}
 				},
 				{timeout: MODEL_DOWNLOAD_TIMEOUT}
@@ -333,16 +326,7 @@ describe(
 							);
 
 							// Verify no overlap in positions
-							const firstPositions = new Set(
-								firstBatch.map(
-									(v) => `${v.position.start}-${v.position.end}`
-								)
-							);
-
-							for (const vignette of secondBatch) {
-								const posKey = `${vignette.position.start}-${vignette.position.end}`;
-								expect(firstPositions.has(posKey)).toBe(false);
-							}
+							assertNoOverlap(firstBatch, secondBatch);
 						}
 					}
 				},
@@ -386,11 +370,7 @@ describe(
 						);
 
 						// Verify diversity maintained with large dataset
-						const embeddings = vignettes.map((v) => v.embedding);
-						const avgDistance =
-							calculateAveragePairwiseDistance(embeddings);
-
-						expect(avgDistance).toBeGreaterThan(DIVERSITY_THRESHOLD);
+						assertDiversity(vignettes);
 					}
 				},
 				{timeout: MODEL_DOWNLOAD_TIMEOUT}

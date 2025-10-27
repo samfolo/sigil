@@ -8,6 +8,15 @@
 import {faker} from '@faker-js/faker/locale/en_GB';
 import * as yaml from 'js-yaml';
 
+import {
+	ARRAY_PROBABILITY,
+	DEFAULT_MAX_ARRAY_LENGTH,
+	DEFAULT_MIN_ARRAY_LENGTH,
+	NEST_PROBABILITY,
+	applySeed,
+	generatePrimitive,
+	selectUniqueItems,
+} from './common';
 import type {YAMLGeneratorConfig} from './types';
 
 /**
@@ -24,36 +33,6 @@ const DEFAULT_MIN_KEYS = 2;
  * Default maximum keys per object
  */
 const DEFAULT_MAX_KEYS = 5;
-
-/**
- * Default minimum array length
- */
-const DEFAULT_MIN_ARRAY_LENGTH = 2;
-
-/**
- * Default maximum array length
- */
-const DEFAULT_MAX_ARRAY_LENGTH = 5;
-
-/**
- * Probability of generating an array vs object
- */
-const ARRAY_PROBABILITY = 0.3;
-
-/**
- * Probability of nesting deeper vs generating primitive
- */
-const NEST_PROBABILITY = 0.7;
-
-/**
- * Default minimum number
- */
-const DEFAULT_MIN_NUMBER = 0;
-
-/**
- * Default maximum number
- */
-const DEFAULT_MAX_NUMBER = 1000;
 
 /**
  * Realistic configuration keys
@@ -77,35 +56,6 @@ const CONFIG_KEYS = [
 	'plugins',
 	'extensions',
 ];
-
-/**
- * Generates a primitive value
- */
-const generatePrimitive = (): string | number | boolean | null => {
-	const type = faker.helpers.arrayElement([
-		'string',
-		'number',
-		'boolean',
-		'null',
-	]);
-
-	switch (type) {
-		case 'string':
-			return faker.lorem.word();
-
-		case 'number':
-			return faker.number.int({min: DEFAULT_MIN_NUMBER, max: DEFAULT_MAX_NUMBER});
-
-		case 'boolean':
-			return faker.datatype.boolean();
-
-		case 'null':
-			return null;
-
-		default:
-			return faker.lorem.word();
-	}
-};
 
 /**
  * Generates nested YAML structure
@@ -144,18 +94,7 @@ const generateNested = (
 	const obj: Record<string, unknown> = {};
 
 	// Get unique keys for this object
-	const availableKeys = [...CONFIG_KEYS];
-	const selectedKeys: string[] = [];
-
-	for (let i = 0; i < keyCount && availableKeys.length > 0; i++) {
-		const index = faker.number.int({min: 0, max: availableKeys.length - 1});
-		const key = availableKeys.at(index);
-
-		if (key) {
-			selectedKeys.push(key);
-			availableKeys.splice(index, 1);
-		}
-	}
+	const selectedKeys = selectUniqueItems(CONFIG_KEYS, keyCount);
 
 	// Generate values for each key
 	for (const key of selectedKeys) {
@@ -195,9 +134,7 @@ const generateNested = (
  */
 export const generateYAML = (config: YAMLGeneratorConfig): string => {
 	// Set seed for deterministic generation
-	if (config.seed !== undefined) {
-		faker.seed(config.seed);
-	}
+	applySeed(config);
 
 	const maxDepth = config.depth ?? DEFAULT_MAX_DEPTH;
 

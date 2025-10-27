@@ -8,6 +8,7 @@
 import {faker} from '@faker-js/faker/locale/en_GB';
 import {XMLBuilder} from 'fast-xml-parser';
 
+import {applySeed, generatePrimitive, selectUniqueItems} from './common';
 import type {XMLGeneratorConfig} from './types';
 
 /**
@@ -29,16 +30,6 @@ const ATTRIBUTE_PROBABILITY = 0.5;
  * Maximum number of attributes per element
  */
 const MAX_ATTRIBUTES = 3;
-
-/**
- * Default minimum number
- */
-const DEFAULT_MIN_NUMBER = 0;
-
-/**
- * Default maximum number
- */
-const DEFAULT_MAX_NUMBER = 1000;
 
 /**
  * Element names for different contexts
@@ -70,30 +61,6 @@ const ATTRIBUTE_NAMES = [
 ];
 
 /**
- * Generates a primitive value for element content or attribute
- */
-const generatePrimitive = (): string | number | boolean => {
-	const type = faker.helpers.arrayElement(['string', 'number', 'boolean']);
-
-	switch (type) {
-		case 'string':
-			return faker.lorem.words();
-
-		case 'number':
-			return faker.number.int({
-				min: DEFAULT_MIN_NUMBER,
-				max: DEFAULT_MAX_NUMBER,
-			});
-
-		case 'boolean':
-			return faker.datatype.boolean().toString();
-
-		default:
-			return faker.lorem.word();
-	}
-};
-
-/**
  * Generates attributes for an element
  */
 const generateAttributes = (
@@ -114,16 +81,11 @@ const generateAttributes = (
 	const attributeCount = faker.number.int({min: 1, max: MAX_ATTRIBUTES});
 	const attributes: Record<string, string> = {};
 
-	const availableNames = [...ATTRIBUTE_NAMES];
+	const selectedNames = selectUniqueItems(ATTRIBUTE_NAMES, attributeCount);
 
-	for (let i = 0; i < attributeCount && availableNames.length > 0; i++) {
-		const index = faker.number.int({min: 0, max: availableNames.length - 1});
-		const name = availableNames.at(index);
-
-		if (name) {
-			attributes[`@_${name}`] = generatePrimitive().toString();
-			availableNames.splice(index, 1);
-		}
+	for (const name of selectedNames) {
+		const value = generatePrimitive({includeNull: false});
+		attributes[`@_${name}`] = String(value);
 	}
 
 	return attributes;
@@ -139,7 +101,7 @@ const generateNested = (
 ): Record<string, unknown> => {
 	// At max depth, return primitive value
 	if (currentDepth >= maxDepth) {
-		return {'#text': generatePrimitive()};
+		return {'#text': generatePrimitive({includeNull: false})};
 	}
 
 	const includeAttributes = config.includeAttributes ?? true;
@@ -155,16 +117,10 @@ const generateNested = (
 	Object.assign(obj, attributes);
 
 	// Generate child elements
-	const availableNames = [...ELEMENT_NAMES];
+	const selectedNames = selectUniqueItems(ELEMENT_NAMES, elementCount);
 
-	for (let i = 0; i < elementCount && availableNames.length > 0; i++) {
-		const index = faker.number.int({min: 0, max: availableNames.length - 1});
-		const name = availableNames.at(index);
-
-		if (name) {
-			obj[name] = generateNested(currentDepth + 1, maxDepth, config);
-			availableNames.splice(index, 1);
-		}
+	for (const name of selectedNames) {
+		obj[name] = generateNested(currentDepth + 1, maxDepth, config);
 	}
 
 	return obj;
@@ -198,9 +154,7 @@ const generateNested = (
  */
 export const generateXML = (config: XMLGeneratorConfig): string => {
 	// Set seed for deterministic generation
-	if (config.seed !== undefined) {
-		faker.seed(config.seed);
-	}
+	applySeed(config);
 
 	const rootElement = config.rootElement ?? DEFAULT_ROOT_ELEMENT;
 	const maxDepth = config.depth ?? DEFAULT_MAX_DEPTH;
