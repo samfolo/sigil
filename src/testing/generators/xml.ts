@@ -5,7 +5,7 @@
  * Supports variable nesting, attributes, and element counts.
  */
 
-import {Faker} from '@faker-js/faker/locale/en_GB';
+import {faker} from '@faker-js/faker/locale/en_GB';
 import {XMLBuilder} from 'fast-xml-parser';
 
 import type {XMLGeneratorConfig} from './types';
@@ -72,7 +72,7 @@ const ATTRIBUTE_NAMES = [
 /**
  * Generates a primitive value for element content or attribute
  */
-const generatePrimitive = (faker: Faker): string | number | boolean => {
+const generatePrimitive = (): string | number | boolean => {
 	const type = faker.helpers.arrayElement(['string', 'number', 'boolean']);
 
 	switch (type) {
@@ -97,7 +97,6 @@ const generatePrimitive = (faker: Faker): string | number | boolean => {
  * Generates attributes for an element
  */
 const generateAttributes = (
-	faker: Faker,
 	includeAttributes: boolean
 ): Record<string, string> => {
 	if (!includeAttributes) {
@@ -122,7 +121,7 @@ const generateAttributes = (
 		const name = availableNames.at(index);
 
 		if (name) {
-			attributes[`@_${name}`] = generatePrimitive(faker).toString();
+			attributes[`@_${name}`] = generatePrimitive().toString();
 			availableNames.splice(index, 1);
 		}
 	}
@@ -134,14 +133,13 @@ const generateAttributes = (
  * Generates nested XML structure
  */
 const generateNested = (
-	faker: Faker,
 	currentDepth: number,
 	maxDepth: number,
 	config: XMLGeneratorConfig
 ): Record<string, unknown> => {
 	// At max depth, return primitive value
 	if (currentDepth >= maxDepth) {
-		return {'#text': generatePrimitive(faker)};
+		return {'#text': generatePrimitive()};
 	}
 
 	const includeAttributes = config.includeAttributes ?? true;
@@ -153,7 +151,7 @@ const generateNested = (
 	const obj: Record<string, unknown> = {};
 
 	// Add attributes to current element
-	const attributes = generateAttributes(faker, includeAttributes);
+	const attributes = generateAttributes(includeAttributes);
 	Object.assign(obj, attributes);
 
 	// Generate child elements
@@ -164,7 +162,7 @@ const generateNested = (
 		const name = availableNames.at(index);
 
 		if (name) {
-			obj[name] = generateNested(faker, currentDepth + 1, maxDepth, config);
+			obj[name] = generateNested(currentDepth + 1, maxDepth, config);
 			availableNames.splice(index, 1);
 		}
 	}
@@ -199,11 +197,15 @@ const generateNested = (
  * ```
  */
 export const generateXML = (config: XMLGeneratorConfig): string => {
-	const faker = new Faker({randomizer: {seed: config.seed}});
+	// Set seed for deterministic generation
+	if (config.seed !== undefined) {
+		faker.seed(config.seed);
+	}
+
 	const rootElement = config.rootElement ?? DEFAULT_ROOT_ELEMENT;
 	const maxDepth = config.depth ?? DEFAULT_MAX_DEPTH;
 
-	const rootContent = generateNested(faker, 0, maxDepth, config);
+	const rootContent = generateNested(0, maxDepth, config);
 
 	const structure = {
 		'?xml': {

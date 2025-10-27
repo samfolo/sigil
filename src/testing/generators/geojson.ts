@@ -5,7 +5,7 @@
  * Supports mixed geometry types and realistic feature properties.
  */
 
-import {Faker} from '@faker-js/faker/locale/en_GB';
+import {faker} from '@faker-js/faker/locale/en_GB';
 import {randomLineString, randomPoint, randomPolygon} from '@turf/random';
 
 import type {GeoJSONGeneratorConfig} from './types';
@@ -79,7 +79,7 @@ const FEATURE_TYPES = [
 /**
  * Generates realistic properties for a feature
  */
-const generateProperties = (faker: Faker): Record<string, unknown> => ({
+const generateProperties = (): Record<string, unknown> => ({
 	name: faker.location.city(),
 	type: faker.helpers.arrayElement(FEATURE_TYPES),
 	population: faker.number.int({
@@ -119,7 +119,11 @@ const generateProperties = (faker: Faker): Record<string, unknown> => ({
  * ```
  */
 export const generateGeoJSON = (config: GeoJSONGeneratorConfig): string => {
-	const faker = new Faker({randomizer: {seed: config.seed}});
+	// Set seed for deterministic generation
+	if (config.seed !== undefined) {
+		faker.seed(config.seed);
+	}
+
 	const geometryTypes = config.geometryTypes ?? ['Point'];
 	const includeProperties = config.includeProperties ?? true;
 
@@ -169,7 +173,7 @@ export const generateGeoJSON = (config: GeoJSONGeneratorConfig): string => {
 	if (includeProperties) {
 		for (const feature of features) {
 			if (typeof feature === 'object' && feature !== null && 'properties' in feature) {
-				feature.properties = generateProperties(faker);
+				feature.properties = generateProperties();
 			}
 		}
 	}

@@ -5,7 +5,7 @@
  * Supports variable breadth, depth, and nested arrays.
  */
 
-import {Faker} from '@faker-js/faker/locale/en_GB';
+import {faker} from '@faker-js/faker/locale/en_GB';
 
 import type {JSONGeneratorConfig} from './types';
 
@@ -60,7 +60,7 @@ const ALL_PROPERTY_NAMES = Object.values(PROPERTY_NAMES).flat();
 /**
  * Generates a primitive value using faker
  */
-const generatePrimitive = (faker: Faker): string | number | boolean | null => {
+const generatePrimitive = (): string | number | boolean | null => {
 	const type = faker.helpers.arrayElement([
 		'string',
 		'number',
@@ -93,21 +93,19 @@ const generatePrimitive = (faker: Faker): string | number | boolean | null => {
 /**
  * Generates a nested JSON object or array
  *
- * @param faker - Faker instance with seed
  * @param currentDepth - Current depth in the tree
  * @param maxDepth - Maximum allowed depth
  * @param config - Generator configuration
  * @returns Nested object or array structure
  */
 const generateNested = (
-	faker: Faker,
 	currentDepth: number,
 	maxDepth: number,
 	config: JSONGeneratorConfig
 ): unknown => {
 	// At max depth, return primitive
 	if (currentDepth >= maxDepth) {
-		return generatePrimitive(faker);
+		return generatePrimitive();
 	}
 
 	const includeArrays = config.includeArrays ?? true;
@@ -122,7 +120,7 @@ const generateNested = (
 		const length = faker.number.int({min: minLength, max: maxLength});
 
 		return Array.from({length}, () =>
-			generateNested(faker, currentDepth + 1, maxDepth, config)
+			generateNested(currentDepth + 1, maxDepth, config)
 		);
 	}
 
@@ -154,9 +152,9 @@ const generateNested = (
 		const shouldNest = faker.datatype.boolean({probability: NEST_PROBABILITY});
 
 		if (shouldNest && currentDepth < maxDepth) {
-			obj[name] = generateNested(faker, currentDepth + 1, maxDepth, config);
+			obj[name] = generateNested(currentDepth + 1, maxDepth, config);
 		} else {
-			obj[name] = generatePrimitive(faker);
+			obj[name] = generatePrimitive();
 		}
 	}
 
@@ -191,17 +189,21 @@ const generateNested = (
  * ```
  */
 export const generateJSON = (config: JSONGeneratorConfig): string => {
-	const faker = new Faker({randomizer: {seed: config.seed}});
+	// Set seed for deterministic generation
+	if (config.seed !== undefined) {
+		faker.seed(config.seed);
+	}
+
 	const count = config.count ?? 1;
 
 	if (count === 1) {
-		const obj = generateNested(faker, 0, config.depth, config);
+		const obj = generateNested(0, config.depth, config);
 		return JSON.stringify(obj, null, 2);
 	}
 
 	// Generate array of objects
 	const objects = Array.from({length: count}, () =>
-		generateNested(faker, 0, config.depth, config)
+		generateNested(0, config.depth, config)
 	);
 
 	return JSON.stringify(objects, null, 2);

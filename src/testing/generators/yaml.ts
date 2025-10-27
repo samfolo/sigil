@@ -5,7 +5,7 @@
  * Supports variable nesting, keys, and arrays.
  */
 
-import {Faker} from '@faker-js/faker/locale/en_GB';
+import {faker} from '@faker-js/faker/locale/en_GB';
 import * as yaml from 'js-yaml';
 
 import type {YAMLGeneratorConfig} from './types';
@@ -81,7 +81,7 @@ const CONFIG_KEYS = [
 /**
  * Generates a primitive value
  */
-const generatePrimitive = (faker: Faker): string | number | boolean | null => {
+const generatePrimitive = (): string | number | boolean | null => {
 	const type = faker.helpers.arrayElement([
 		'string',
 		'number',
@@ -111,14 +111,13 @@ const generatePrimitive = (faker: Faker): string | number | boolean | null => {
  * Generates nested YAML structure
  */
 const generateNested = (
-	faker: Faker,
 	currentDepth: number,
 	maxDepth: number,
 	config: YAMLGeneratorConfig
 ): unknown => {
 	// At max depth, return primitive
 	if (currentDepth >= maxDepth) {
-		return generatePrimitive(faker);
+		return generatePrimitive();
 	}
 
 	const includeArrays = config.includeArrays ?? true;
@@ -133,7 +132,7 @@ const generateNested = (
 		const length = faker.number.int({min: minLength, max: maxLength});
 
 		return Array.from({length}, () =>
-			generateNested(faker, currentDepth + 1, maxDepth, config)
+			generateNested(currentDepth + 1, maxDepth, config)
 		);
 	}
 
@@ -164,9 +163,9 @@ const generateNested = (
 		const shouldNest = faker.datatype.boolean({probability: NEST_PROBABILITY});
 
 		if (shouldNest && currentDepth < maxDepth) {
-			obj[key] = generateNested(faker, currentDepth + 1, maxDepth, config);
+			obj[key] = generateNested(currentDepth + 1, maxDepth, config);
 		} else {
-			obj[key] = generatePrimitive(faker);
+			obj[key] = generatePrimitive();
 		}
 	}
 
@@ -195,10 +194,14 @@ const generateNested = (
  * ```
  */
 export const generateYAML = (config: YAMLGeneratorConfig): string => {
-	const faker = new Faker({randomizer: {seed: config.seed}});
+	// Set seed for deterministic generation
+	if (config.seed !== undefined) {
+		faker.seed(config.seed);
+	}
+
 	const maxDepth = config.depth ?? DEFAULT_MAX_DEPTH;
 
-	const structure = generateNested(faker, 0, maxDepth, config);
+	const structure = generateNested(0, maxDepth, config);
 
 	return yaml.dump(structure, {
 		indent: 2,

@@ -5,7 +5,7 @@
  * Supports custom column definitions with typed generators.
  */
 
-import {Faker} from '@faker-js/faker/locale/en_GB';
+import {faker} from '@faker-js/faker/locale/en_GB';
 import papaparse from 'papaparse';
 
 import type {CSVColumnDefinition, CSVColumnType, CSVGeneratorConfig} from './types';
@@ -61,7 +61,6 @@ const DEFAULT_COLUMNS: CSVColumnDefinition[] = [
  * Generates a value for a given column type using faker
  */
 const generateValue = (
-	faker: Faker,
 	type: CSVColumnType,
 	index: number,
 	options?: {min?: number; max?: number}
@@ -153,7 +152,11 @@ const generateValue = (
  * ```
  */
 export const generateCSV = (config: CSVGeneratorConfig): string => {
-	const faker = new Faker({randomizer: {seed: config.seed}});
+	// Set seed for deterministic generation
+	if (config.seed !== undefined) {
+		faker.seed(config.seed);
+	}
+
 	const columns = config.columns ?? DEFAULT_COLUMNS;
 	const includeHeader = config.includeHeader ?? true;
 
@@ -162,7 +165,7 @@ export const generateCSV = (config: CSVGeneratorConfig): string => {
 		const row: Record<string, string | number | boolean> = {};
 
 		for (const column of columns) {
-			row[column.name] = generateValue(faker, column.type, index, column.options);
+			row[column.name] = generateValue(column.type, index, column.options);
 		}
 
 		return row;
