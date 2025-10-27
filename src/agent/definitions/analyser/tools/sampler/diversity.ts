@@ -199,3 +199,130 @@ export const diversitySample = (
 
 	return selected;
 };
+
+/**
+ * Calculates average pairwise cosine distance between embeddings
+ *
+ * Distance is (1 - similarity), so higher values indicate more diversity.
+ * For normalised vectors, distance ranges from 0 (identical) to 2 (opposite).
+ *
+ * This metric is useful for testing and validating diversity sampling algorithms.
+ *
+ * @param embeddings - Array of embedding vectors
+ * @returns Average pairwise distance, or 0 if fewer than 2 embeddings
+ *
+ * @example
+ * ```typescript
+ * const vignettes = await generateInitialVignettes(data, 20);
+ * if (isOk(vignettes)) {
+ *   const embeddings = vignettes.data.vignettes.map((v) => v.embedding);
+ *   const avgDistance = calculateAveragePairwiseDistance(embeddings);
+ *   console.log(`Average diversity: ${avgDistance}`);
+ * }
+ * ```
+ */
+export const calculateAveragePairwiseDistance = (
+	embeddings: number[][]
+): number => {
+	if (embeddings.length < MIN_EMBEDDINGS_FOR_PAIRWISE) {
+		return 0;
+	}
+
+	let totalDistance = 0;
+	let count = 0;
+
+	for (let i = 0; i < embeddings.length; i++) {
+		for (let j = i + 1; j < embeddings.length; j++) {
+			const embeddingA = embeddings.at(i);
+			const embeddingB = embeddings.at(j);
+
+			if (embeddingA && embeddingB) {
+				const distance = cosineDistance(embeddingA, embeddingB);
+				totalDistance += distance;
+				count++;
+			}
+		}
+	}
+
+	return count > 0 ? totalDistance / count : 0;
+};
+
+/**
+ * Finds the minimum pairwise distance between embeddings
+ *
+ * Useful for detecting near-duplicate samples in a collection.
+ * Lower values indicate less diversity (some embeddings are very similar).
+ *
+ * @param embeddings - Array of embedding vectors
+ * @returns Minimum pairwise distance, or Infinity if fewer than 2 embeddings
+ *
+ * @example
+ * ```typescript
+ * const minDistance = calculateMinimumPairwiseDistance(embeddings);
+ * if (minDistance < 0.1) {
+ *   console.warn('Found near-duplicate embeddings');
+ * }
+ * ```
+ */
+export const calculateMinimumPairwiseDistance = (
+	embeddings: number[][]
+): number => {
+	if (embeddings.length < MIN_EMBEDDINGS_FOR_PAIRWISE) {
+		return Infinity;
+	}
+
+	let minDistance = Infinity;
+
+	for (let i = 0; i < embeddings.length; i++) {
+		for (let j = i + 1; j < embeddings.length; j++) {
+			const embeddingA = embeddings.at(i);
+			const embeddingB = embeddings.at(j);
+
+			if (embeddingA && embeddingB) {
+				const distance = cosineDistance(embeddingA, embeddingB);
+				minDistance = Math.min(minDistance, distance);
+			}
+		}
+	}
+
+	return minDistance;
+};
+
+/**
+ * Finds the maximum pairwise distance between embeddings
+ *
+ * Indicates the maximum diversity in the sample set.
+ * Higher values suggest the algorithm successfully selected diverse samples.
+ *
+ * @param embeddings - Array of embedding vectors
+ * @returns Maximum pairwise distance, or 0 if fewer than 2 embeddings
+ *
+ * @example
+ * ```typescript
+ * const maxDistance = calculateMaximumPairwiseDistance(embeddings);
+ * console.log(`Maximum diversity: ${maxDistance}`);
+ * ```
+ */
+export const calculateMaximumPairwiseDistance = (
+	embeddings: number[][]
+): number => {
+	if (embeddings.length < MIN_EMBEDDINGS_FOR_PAIRWISE) {
+		return 0;
+	}
+
+	let maxDistance = 0;
+
+	for (let i = 0; i < embeddings.length; i++) {
+		for (let j = i + 1; j < embeddings.length; j++) {
+			const embeddingA = embeddings.at(i);
+			const embeddingB = embeddings.at(j);
+
+			if (embeddingA && embeddingB) {
+				const distance = cosineDistance(embeddingA, embeddingB);
+				maxDistance = Math.max(maxDistance, distance);
+			}
+		}
+	}
+
+	return maxDistance;
+};
