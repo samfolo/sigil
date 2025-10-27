@@ -11,6 +11,35 @@ import papaparse from 'papaparse';
 import type {CSVColumnDefinition, CSVColumnType, CSVGeneratorConfig} from './types';
 
 /**
+ * Default age range for employee data
+ */
+const DEFAULT_MIN_AGE = 22;
+const DEFAULT_MAX_AGE = 65;
+
+/**
+ * Default range for generic numbers
+ */
+const DEFAULT_MIN_NUMBER = 0;
+const DEFAULT_MAX_NUMBER = 1000;
+
+/**
+ * Default salary range
+ */
+const DEFAULT_MIN_SALARY = 30000;
+const DEFAULT_MAX_SALARY = 150000;
+
+/**
+ * Default currency range
+ */
+const DEFAULT_MIN_CURRENCY = 1000;
+const DEFAULT_MAX_CURRENCY = 100000;
+
+/**
+ * Years in past for date generation
+ */
+const DEFAULT_YEARS_PAST = 5;
+
+/**
  * Default columns for employee dataset
  */
 const DEFAULT_COLUMNS: CSVColumnDefinition[] = [
@@ -19,7 +48,11 @@ const DEFAULT_COLUMNS: CSVColumnDefinition[] = [
 	{name: 'email', type: 'email'},
 	{name: 'age', type: 'age'},
 	{name: 'department', type: 'department'},
-	{name: 'salary', type: 'currency', options: {min: 30000, max: 150000}},
+	{
+		name: 'salary',
+		type: 'currency',
+		options: {min: DEFAULT_MIN_SALARY, max: DEFAULT_MAX_SALARY},
+	},
 	{name: 'active', type: 'boolean'},
 	{name: 'joinDate', type: 'date'},
 ];
@@ -45,26 +78,28 @@ const generateValue = (
 
 		case 'age':
 			return faker.number.int({
-				min: options?.min ?? 22,
-				max: options?.max ?? 65,
+				min: options?.min ?? DEFAULT_MIN_AGE,
+				max: options?.max ?? DEFAULT_MAX_AGE,
 			});
 
 		case 'date':
-			return faker.date.past({years: 5}).toISOString().split('T').at(0) ?? '';
+			return (
+				faker.date.past({years: DEFAULT_YEARS_PAST}).toISOString().split('T').at(0) ?? ''
+			);
 
 		case 'boolean':
 			return faker.datatype.boolean();
 
 		case 'number':
 			return faker.number.int({
-				min: options?.min ?? 0,
-				max: options?.max ?? 1000,
+				min: options?.min ?? DEFAULT_MIN_NUMBER,
+				max: options?.max ?? DEFAULT_MAX_NUMBER,
 			});
 
 		case 'currency':
 			return faker.number.int({
-				min: options?.min ?? 1000,
-				max: options?.max ?? 100000,
+				min: options?.min ?? DEFAULT_MIN_CURRENCY,
+				max: options?.max ?? DEFAULT_MAX_CURRENCY,
 			});
 
 		case 'text':

@@ -10,6 +10,36 @@ import {Faker} from '@faker-js/faker/locale/en_GB';
 import type {JSONGeneratorConfig} from './types';
 
 /**
+ * Probability of generating an array vs object
+ */
+const ARRAY_PROBABILITY = 0.3;
+
+/**
+ * Probability of nesting deeper vs generating primitive
+ */
+const NEST_PROBABILITY = 0.7;
+
+/**
+ * Default minimum array length
+ */
+const DEFAULT_MIN_ARRAY_LENGTH = 2;
+
+/**
+ * Default maximum array length
+ */
+const DEFAULT_MAX_ARRAY_LENGTH = 5;
+
+/**
+ * Default minimum number range
+ */
+const DEFAULT_MIN_NUMBER = 0;
+
+/**
+ * Default maximum number range
+ */
+const DEFAULT_MAX_NUMBER = 1000;
+
+/**
  * Realistic property names for different contexts
  */
 const PROPERTY_NAMES = {
@@ -44,7 +74,7 @@ const generatePrimitive = (faker: Faker): string | number | boolean | null => {
 			return faker.lorem.word();
 
 		case 'number':
-			return faker.number.int({min: 0, max: 1000});
+			return faker.number.int({min: DEFAULT_MIN_NUMBER, max: DEFAULT_MAX_NUMBER});
 
 		case 'boolean':
 			return faker.datatype.boolean();
@@ -84,11 +114,11 @@ const generateNested = (
 
 	// Decide whether to create object or array
 	const isArray =
-		includeArrays && faker.datatype.boolean({probability: 0.3});
+		includeArrays && faker.datatype.boolean({probability: ARRAY_PROBABILITY});
 
 	if (isArray) {
-		const minLength = config.minArrayLength ?? 2;
-		const maxLength = config.maxArrayLength ?? 5;
+		const minLength = config.minArrayLength ?? DEFAULT_MIN_ARRAY_LENGTH;
+		const maxLength = config.maxArrayLength ?? DEFAULT_MAX_ARRAY_LENGTH;
 		const length = faker.number.int({min: minLength, max: maxLength});
 
 		return Array.from({length}, () =>
@@ -121,7 +151,7 @@ const generateNested = (
 	// Generate values for each property
 	for (const name of selectedNames) {
 		// 70% chance of nested structure, 30% primitive
-		const shouldNest = faker.datatype.boolean({probability: 0.7});
+		const shouldNest = faker.datatype.boolean({probability: NEST_PROBABILITY});
 
 		if (shouldNest && currentDepth < maxDepth) {
 			obj[name] = generateNested(faker, currentDepth + 1, maxDepth, config);
