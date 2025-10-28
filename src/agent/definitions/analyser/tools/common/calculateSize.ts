@@ -30,6 +30,6 @@ export const calculateSize = (rawData: string): SizeMetrics => {
 	return {
 		bytes: Buffer.byteLength(rawData, 'utf-8'),
 		characters: rawData.length,
-		lines: rawData.split(/\r?\n/).length,
+		lines: rawData.split(/\r\n|\r|\n/).length,
 	};
 };

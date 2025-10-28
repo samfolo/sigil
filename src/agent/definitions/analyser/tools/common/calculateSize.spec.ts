@@ -82,8 +82,8 @@ describe('calculateSize', () => {
 			const result = calculateSize('unix\nwindows\r\nmac\rend');
 
 			expect(result).toEqual({
-				bytes: 23,
-				characters: 23,
+				bytes: 21,
+				characters: 21,
 				lines: 4,
 			});
 		});
@@ -93,7 +93,7 @@ describe('calculateSize', () => {
 		it('calculates bytes correctly for emoji', () => {
 			const result = calculateSize('Hello 👋');
 
-			expect(result.characters).toBe(7);
+			expect(result.characters).toBe(8);
 			expect(result.bytes).toBe(10);
 			expect(result.lines).toBe(1);
 		});
@@ -109,8 +109,8 @@ describe('calculateSize', () => {
 		it('handles emoji with newlines', () => {
 			const result = calculateSize('👋\n🌍\n✨');
 
-			expect(result.characters).toBe(5);
-			expect(result.bytes).toBe(11);
+			expect(result.characters).toBe(7);
+			expect(result.bytes).toBe(13);
 			expect(result.lines).toBe(3);
 		});
 
