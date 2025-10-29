@@ -3,7 +3,7 @@ import {truncateString} from '@sigil/src/agent/definitions/analyser/tools/common
 
 import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_VALUE_LENGTH} from '../../common';
 
-import {ATTRIBUTE_PREFIX, TEXT_NODE_KEY} from '../types';
+import {ATTRIBUTE_PREFIX, TEXT_NODE_KEY} from '../constants';
 
 /**
  * Extracts and processes top-level XML node tags from parsed XML structure

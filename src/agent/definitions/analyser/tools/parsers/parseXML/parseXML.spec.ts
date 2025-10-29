@@ -4,8 +4,8 @@ import {isOk} from '@sigil/src/common/errors';
 
 import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from '../common';
 
+import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL, TEXT_NODE_KEY} from './constants';
 import {parseXML} from './parseXML';
-import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL, TEXT_NODE_KEY} from './types';
 
 /**
  * Helper to create attribute key with proper prefix

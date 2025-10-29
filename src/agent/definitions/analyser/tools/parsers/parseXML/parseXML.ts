@@ -6,8 +6,8 @@ import {calculateDepth, MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/defi
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
+import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL} from './constants';
 import type {ParseXMLResult, XMLMetadata} from './types';
-import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL} from './types';
 import {extractTopLevelTags} from './utils/extractTopLevelTags';
 
 /**

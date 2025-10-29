@@ -1,7 +1,6 @@
 import type {PrecisionValue} from '@sigil/src/agent/definitions/analyser/tools/common';
 
 import type {BaseStructureMetadata} from '../common';
-import {MAX_STRUCTURE_VALUE_LENGTH} from '../common';
 
 /**
  * Result of attempting to parse data as CSV
