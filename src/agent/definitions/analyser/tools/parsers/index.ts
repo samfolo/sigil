@@ -1,12 +1,8 @@
 export {parseJSON, PARSE_JSON_TOOL} from './parseJSON';
-export type {
-	ParseJSONResult,
-	JSONMetadata,
-	JSONArrayMetadata,
-	JSONObjectMetadata,
-	JSONPrimitiveMetadata,
-} from './parseJSON';
-export {MAX_JSON_DEPTH} from './parseJSON';
+export type {ParseJSONResult} from './parseJSON';
+
+export {parseYAML, PARSE_YAML_TOOL} from './parseYAML';
+export type {ParseYAMLResult} from './parseYAML';
 
 export {parseCSV, PARSE_CSV_TOOL} from './parseCSV';
 export type {ParseCSVResult, CSVMetadata} from './parseCSV';
