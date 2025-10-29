@@ -1,9 +1,9 @@
 import {describe, expect, it} from 'vitest';
 
+import {MAX_STRUCTURE_VALUE_LENGTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import {isOk} from '@sigil/src/common/errors';
 
 import {parseCSV} from './parseCSV';
-import {MAX_COLUMN_VALUE_LENGTH} from './types';
 
 describe('parseCSV', () => {
 	describe('invalid CSV', () => {
@@ -264,8 +264,8 @@ describe('parseCSV', () => {
 			expect(metadata.columns.at(1)?.exact).toBe(true);
 		});
 
-		it('truncates values longer than MAX_COLUMN_VALUE_LENGTH', () => {
-			const longValue = 'a'.repeat(150);
+		it('truncates values exceeding maximum length', () => {
+			const longValue = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH + 50);
 			const csv = `${longValue},short\ndata,more`;
 			const result = parseCSV(csv);
 
@@ -281,14 +281,14 @@ describe('parseCSV', () => {
 
 			const {metadata} = result.data;
 			expect(metadata.columns.at(0)?.exact).toBe(false);
-			expect(metadata.columns.at(0)?.value).toHaveLength(MAX_COLUMN_VALUE_LENGTH);
+			expect(metadata.columns.at(0)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
 			expect(metadata.columns.at(0)?.value).toMatch(/^a+\.\.\.$/);
 			expect(metadata.columns.at(1)?.exact).toBe(true);
 			expect(metadata.columns.at(1)?.value).toBe('short');
 		});
 
-		it('does not truncate values with exactly MAX_COLUMN_VALUE_LENGTH', () => {
-			const exactValue = 'a'.repeat(MAX_COLUMN_VALUE_LENGTH);
+		it('does not truncate values at exact maximum length', () => {
+			const exactValue = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH);
 			const csv = `${exactValue},short\ndata,more`;
 			const result = parseCSV(csv);
 

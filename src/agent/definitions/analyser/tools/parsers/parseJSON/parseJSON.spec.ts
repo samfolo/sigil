@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 
-import {MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
+import {MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import {isOk} from '@sigil/src/common/errors';
 
 import {parseJSON} from './parseJSON';
@@ -379,8 +379,8 @@ describe('parseJSON', () => {
 			expect(metadata.topLevelKeys.at(-1)?.value).toBe('key049');
 		});
 
-		it('truncates keys longer than 100 characters', () => {
-			const longKey = 'a'.repeat(150);
+		it('truncates keys exceeding maximum length', () => {
+			const longKey = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH + 50);
 			const result = parseJSON(`{"${longKey}": "value"}`);
 
 			expect(isOk(result)).toBe(true);
@@ -400,12 +400,12 @@ describe('parseJSON', () => {
 
 			expect(metadata.topLevelKeys).toHaveLength(1);
 			expect(metadata.topLevelKeys.at(0)?.exact).toBe(false);
-			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(100);
+			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
 			expect(metadata.topLevelKeys.at(0)?.value).toMatch(/^a+\.\.\.$/);
 		});
 
-		it('does not truncate keys with exactly 100 characters', () => {
-			const exactKey = 'a'.repeat(100);
+		it('does not truncate keys at exact maximum length', () => {
+			const exactKey = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH);
 			const result = parseJSON(`{"${exactKey}": "value"}`);
 
 			expect(isOk(result)).toBe(true);

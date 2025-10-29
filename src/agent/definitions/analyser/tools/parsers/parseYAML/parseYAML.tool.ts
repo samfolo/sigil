@@ -19,7 +19,7 @@ type ParseYAMLInput = z.infer<typeof parseYAMLInputSchema>;
  * Validates YAML format and extracts structure metadata including:
  * - Primitives: type and size
  * - Arrays: element count, depth, size
- * - Objects: top-level keys (first 50, alphabetically sorted), total key count, depth, size
+ * - Objects: top-level keys (alphabetically sorted, capped for performance), total key count, depth, size
  *
  * YAML is a superset of JSON, so valid JSON is also valid YAML.
  * Plain text strings are valid YAML and parse as string primitives.

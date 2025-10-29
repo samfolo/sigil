@@ -1,6 +1,8 @@
 import {describe, expect, it} from 'vitest';
 
-import {ATTRIBUTE_PREFIX, MAX_TAG_NAME_LENGTH, MAX_TOP_LEVEL_TAGS, TEXT_NODE_KEY} from '../types';
+import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_VALUE_LENGTH} from '../../common';
+
+import {ATTRIBUTE_PREFIX, TEXT_NODE_KEY} from '../types';
 
 import {extractTopLevelTags} from './extractTopLevelTags';
 
@@ -116,8 +118,8 @@ describe('extractTopLevelTags', () => {
 	});
 
 	describe('capping', () => {
-		it('returns all keys when fewer than MAX_TOP_LEVEL_TAGS', () => {
-			const count = MAX_TOP_LEVEL_TAGS - 20;
+		it('returns all keys when fewer than MAX_STRUCTURE_EXTRACTED_ITEMS', () => {
+			const count = MAX_STRUCTURE_EXTRACTED_ITEMS - 20;
 			const obj = Object.fromEntries(
 				Array.from({length: count}, (_, i) => [`tag${i}`, {}])
 			);
@@ -126,66 +128,66 @@ describe('extractTopLevelTags', () => {
 			expect(result).toHaveLength(count);
 		});
 
-		it('returns exactly MAX_TOP_LEVEL_TAGS keys when object has exactly MAX_TOP_LEVEL_TAGS keys', () => {
+		it('returns exactly MAX_STRUCTURE_EXTRACTED_ITEMS keys when object has exactly MAX_STRUCTURE_EXTRACTED_ITEMS keys', () => {
 			const obj = Object.fromEntries(
-				Array.from({length: MAX_TOP_LEVEL_TAGS}, (_, i) => [`tag${i}`, {}])
+				Array.from({length: MAX_STRUCTURE_EXTRACTED_ITEMS}, (_, i) => [`tag${i}`, {}])
 			);
 			const result = extractTopLevelTags(obj);
 
-			expect(result).toHaveLength(MAX_TOP_LEVEL_TAGS);
+			expect(result).toHaveLength(MAX_STRUCTURE_EXTRACTED_ITEMS);
 		});
 
-		it('caps at MAX_TOP_LEVEL_TAGS keys when object has more keys', () => {
-			const count = MAX_TOP_LEVEL_TAGS * 2;
+		it('caps at MAX_STRUCTURE_EXTRACTED_ITEMS keys when object has more keys', () => {
+			const count = MAX_STRUCTURE_EXTRACTED_ITEMS * 2;
 			const obj = Object.fromEntries(
 				Array.from({length: count}, (_, i) => [`tag${i.toString().padStart(3, '0')}`, {}])
 			);
 			const result = extractTopLevelTags(obj);
 
-			expect(result).toHaveLength(MAX_TOP_LEVEL_TAGS);
+			expect(result).toHaveLength(MAX_STRUCTURE_EXTRACTED_ITEMS);
 			expect(result.at(0)?.value).toBe('tag000');
-			expect(result.at(-1)?.value).toBe(`tag${(MAX_TOP_LEVEL_TAGS - 1).toString().padStart(3, '0')}`);
+			expect(result.at(-1)?.value).toBe(`tag${(MAX_STRUCTURE_EXTRACTED_ITEMS - 1).toString().padStart(3, '0')}`);
 		});
 
-		it('caps at MAX_TOP_LEVEL_TAGS keys preserving document order', () => {
-			const extraTags = MAX_TOP_LEVEL_TAGS + 45;
+		it('caps at MAX_STRUCTURE_EXTRACTED_ITEMS keys preserving document order', () => {
+			const extraTags = MAX_STRUCTURE_EXTRACTED_ITEMS + 45;
 			const tags = ['z', 'y', 'x', 'w', 'v'].concat(
 				Array.from({length: extraTags}, (_, i) => `tag${i}`)
 			);
 			const obj = Object.fromEntries(tags.map((tag) => [tag, {}]));
 			const result = extractTopLevelTags(obj);
 
-			expect(result).toHaveLength(MAX_TOP_LEVEL_TAGS);
+			expect(result).toHaveLength(MAX_STRUCTURE_EXTRACTED_ITEMS);
 			// First 5 should be z, y, x, w, v in that order
 			expect(result.slice(0, 5).map((k) => k.value)).toEqual(['z', 'y', 'x', 'w', 'v']);
 		});
 	});
 
 	describe('truncation', () => {
-		it('does not truncate keys with exactly MAX_TAG_NAME_LENGTH characters', () => {
-			const exactKey = 'a'.repeat(MAX_TAG_NAME_LENGTH);
+		it('does not truncate keys with exactly MAX_STRUCTURE_VALUE_LENGTH characters', () => {
+			const exactKey = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH);
 			const result = extractTopLevelTags({[exactKey]: {}});
 
 			expect(result).toHaveLength(1);
 			expect(result.at(0)?.exact).toBe(true);
 			expect(result.at(0)?.value).toBe(exactKey);
-			expect(result.at(0)?.value).toHaveLength(MAX_TAG_NAME_LENGTH);
+			expect(result.at(0)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
 		});
 
-		it('truncates keys longer than MAX_TAG_NAME_LENGTH characters', () => {
-			const longKey = 'a'.repeat(MAX_TAG_NAME_LENGTH + 50);
+		it('truncates keys longer than MAX_STRUCTURE_VALUE_LENGTH characters', () => {
+			const longKey = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH + 50);
 			const result = extractTopLevelTags({[longKey]: {}});
 
 			expect(result).toHaveLength(1);
 			expect(result.at(0)?.exact).toBe(false);
-			expect(result.at(0)?.value).toHaveLength(MAX_TAG_NAME_LENGTH);
+			expect(result.at(0)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
 			expect(result.at(0)?.value).toMatch(/^a+\.\.\.$/);
 		});
 
 		it('truncates each key independently', () => {
 			const shortKey = 'short';
-			const exactKey = 'b'.repeat(MAX_TAG_NAME_LENGTH);
-			const longKey = 'c'.repeat(MAX_TAG_NAME_LENGTH + 50);
+			const exactKey = 'b'.repeat(MAX_STRUCTURE_VALUE_LENGTH);
+			const longKey = 'c'.repeat(MAX_STRUCTURE_VALUE_LENGTH + 50);
 
 			const result = extractTopLevelTags({
 				[shortKey]: {},
@@ -199,7 +201,7 @@ describe('extractTopLevelTags', () => {
 			expect(result.at(1)?.exact).toBe(true);
 			expect(result.at(1)?.value).toBe(exactKey);
 			expect(result.at(2)?.exact).toBe(false);
-			expect(result.at(2)?.value).toHaveLength(MAX_TAG_NAME_LENGTH);
+			expect(result.at(2)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
 		});
 	});
 

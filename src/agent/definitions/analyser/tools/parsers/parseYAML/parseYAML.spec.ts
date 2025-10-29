@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 
-import {MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
+import {MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import {isOk} from '@sigil/src/common/errors';
 
 import {parseYAML} from './parseYAML';
@@ -419,8 +419,8 @@ describe('parseYAML', () => {
 			expect(metadata.topLevelKeys.at(-1)?.value).toBe('key049');
 		});
 
-		it('truncates keys longer than 100 characters', () => {
-			const longKey = 'a'.repeat(150);
+		it('truncates keys exceeding maximum length', () => {
+			const longKey = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH + 50);
 			const result = parseYAML(`${longKey}: value`);
 
 			expect(isOk(result)).toBe(true);
@@ -440,7 +440,7 @@ describe('parseYAML', () => {
 
 			expect(metadata.topLevelKeys).toHaveLength(1);
 			expect(metadata.topLevelKeys.at(0)?.exact).toBe(false);
-			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(100);
+			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
 			expect(metadata.topLevelKeys.at(0)?.value).toMatch(/^a+\.\.\.$/);
 		});
 

@@ -18,8 +18,8 @@ type ParseXMLInput = z.infer<typeof parseXMLInputSchema>;
  *
  * Validates XML format and extracts structure metadata including:
  * - Root element name (or fragment sentinel for multiple roots)
- * - Top-level node tags (first 50, preserving document order)
- * - Nesting depth (capped at 20 levels)
+ * - Top-level node tags (preserving document order, capped for performance)
+ * - Nesting depth (capped for performance)
  * - Size metrics
  *
  * Handles XML fragments with multiple root elements.

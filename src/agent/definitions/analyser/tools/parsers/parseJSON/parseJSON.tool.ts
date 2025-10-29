@@ -19,7 +19,7 @@ type ParseJSONInput = z.infer<typeof parseJSONInputSchema>;
  * Validates JSON format and extracts structure metadata including:
  * - Primitives: type and size
  * - Arrays: element count, depth, size
- * - Objects: top-level keys (first 50, alphabetically sorted), total key count, depth, size
+ * - Objects: top-level keys (alphabetically sorted, capped for performance), total key count, depth, size
  *
  * Always succeeds - parsing failures are reported in the result structure.
  */

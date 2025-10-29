@@ -2,8 +2,10 @@ import {describe, expect, it} from 'vitest';
 
 import {isOk} from '@sigil/src/common/errors';
 
+import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from '../common';
+
 import {parseXML} from './parseXML';
-import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL, MAX_DEPTH, MAX_TAG_NAME_LENGTH, MAX_TOP_LEVEL_TAGS, TEXT_NODE_KEY} from './types';
+import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL, TEXT_NODE_KEY} from './types';
 
 /**
  * Helper to create attribute key with proper prefix
@@ -402,9 +404,9 @@ describe('parseXML', () => {
 			expect(metadata.depth.exact).toBe(true);
 		});
 
-		it('sets exact: false when depth exceeds MAX_DEPTH', () => {
-			// Create deeply nested XML exceeding MAX_DEPTH
-			const tags = Array.from({length: MAX_DEPTH + 5}, (_, i) => `level${i}`);
+		it('sets exact: false when depth exceeds MAX_STRUCTURE_PROBING_DEPTH', () => {
+			// Create deeply nested XML exceeding MAX_STRUCTURE_PROBING_DEPTH
+			const tags = Array.from({length: MAX_STRUCTURE_PROBING_DEPTH + 5}, (_, i) => `level${i}`);
 			const opening = tags.map((tag) => `<${tag}>`).join('');
 			const closing = tags.reverse().map((tag) => `</${tag}>`).join('');
 			const xml = opening + closing;
@@ -422,13 +424,13 @@ describe('parseXML', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.depth.value).toBe(MAX_DEPTH);
+			expect(metadata.depth.value).toBe(MAX_STRUCTURE_PROBING_DEPTH);
 			expect(metadata.depth.exact).toBe(false);
 		});
 
-		it('sets exact: true when depth equals MAX_DEPTH', () => {
-			// Create XML with exactly MAX_DEPTH levels
-			const tags = Array.from({length: MAX_DEPTH}, (_, i) => `level${i}`);
+		it('sets exact: true when depth equals MAX_STRUCTURE_PROBING_DEPTH', () => {
+			// Create XML with exactly MAX_STRUCTURE_PROBING_DEPTH levels
+			const tags = Array.from({length: MAX_STRUCTURE_PROBING_DEPTH}, (_, i) => `level${i}`);
 			const opening = tags.map((tag) => `<${tag}>`).join('');
 			const closing = tags.reverse().map((tag) => `</${tag}>`).join('');
 			const xml = opening + closing;
@@ -446,7 +448,7 @@ describe('parseXML', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.depth.value).toBe(MAX_DEPTH);
+			expect(metadata.depth.value).toBe(MAX_STRUCTURE_PROBING_DEPTH);
 			expect(metadata.depth.exact).toBe(true);
 		});
 	});
@@ -495,8 +497,8 @@ describe('parseXML', () => {
 	});
 
 	describe('capping and truncation', () => {
-		it('caps top-level tags at MAX_TOP_LEVEL_TAGS', () => {
-			const tags = Array.from({length: MAX_TOP_LEVEL_TAGS * 2}, (_, i) => `<child${i}/>`);
+		it('caps top-level tags at MAX_STRUCTURE_EXTRACTED_ITEMS', () => {
+			const tags = Array.from({length: MAX_STRUCTURE_EXTRACTED_ITEMS * 2}, (_, i) => `<child${i}/>`);
 			const xml = `<root>${tags.join('')}</root>`;
 
 			const result = parseXML(xml);
@@ -512,11 +514,11 @@ describe('parseXML', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.topLevelNodeTags).toHaveLength(MAX_TOP_LEVEL_TAGS);
+			expect(metadata.topLevelNodeTags).toHaveLength(MAX_STRUCTURE_EXTRACTED_ITEMS);
 		});
 
-		it('truncates tag names longer than MAX_TAG_NAME_LENGTH', () => {
-			const longTag = 'a'.repeat(MAX_TAG_NAME_LENGTH + 50);
+		it('truncates tag names longer than MAX_STRUCTURE_VALUE_LENGTH', () => {
+			const longTag = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH + 50);
 			const xml = `<root><${longTag}/></root>`;
 
 			const result = parseXML(xml);
@@ -534,7 +536,7 @@ describe('parseXML', () => {
 			const {metadata} = result.data;
 			expect(metadata.topLevelNodeTags).toHaveLength(1);
 			expect(metadata.topLevelNodeTags.at(0)?.exact).toBe(false);
-			expect(metadata.topLevelNodeTags.at(0)?.value).toHaveLength(MAX_TAG_NAME_LENGTH);
+			expect(metadata.topLevelNodeTags.at(0)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
 		});
 	});
 

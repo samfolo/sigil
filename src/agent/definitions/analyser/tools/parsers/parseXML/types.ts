@@ -1,21 +1,6 @@
-import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
+import type {PrecisionValue} from '@sigil/src/agent/definitions/analyser/tools/common';
 
-/**
- * Maximum number of top-level node tags to extract
- */
-export const MAX_TOP_LEVEL_TAGS = 50;
-
-/**
- * Maximum length for extracted tag names
- *
- * Longer tag names are truncated with ellipsis.
- */
-export const MAX_TAG_NAME_LENGTH = 100;
-
-/**
- * Maximum depth to probe when calculating nesting depth
- */
-export const MAX_DEPTH = 20;
+import type {DepthAwareStructureMetadata} from '../common';
 
 /**
  * Sentinel value used as rootElement when multiple root elements exist
@@ -34,8 +19,9 @@ export const TEXT_NODE_KEY = '#text';
 
 /**
  * Metadata extracted from successfully parsed XML document
+ * Inherits depth and size from DepthAwareStructureMetadata
  */
-export interface XMLMetadata {
+export interface XMLMetadata extends DepthAwareStructureMetadata {
 	/**
 	 * Name of the root XML element
 	 * Set to FRAGMENT_SENTINEL when multiple root elements exist
@@ -44,21 +30,10 @@ export interface XMLMetadata {
 
 	/**
 	 * Names of immediate child tags under the root element
-	 * Alphabetically sorted, capped at MAX_TOP_LEVEL_TAGS
+	 * Alphabetically sorted, capped for performance
 	 * Excludes special internal keys from the parser
 	 */
 	topLevelNodeTags: PrecisionValue<string>[];
-
-	/**
-	 * Maximum nesting depth of the XML structure
-	 * Capped at MAX_DEPTH for performance
-	 */
-	depth: PrecisionValue<number>;
-
-	/**
-	 * Size metrics of the raw XML data
-	 */
-	size: SizeMetrics;
 }
 
 /**

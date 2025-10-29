@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 
 import {calculateSize} from '@sigil/src/agent/definitions/analyser/tools/common';
-import {buildStructuredMetadata, MAX_STRUCTURE_EXTRACTED_KEY_COUNT, MAX_STRUCTURE_KEY_LENGTH, MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
+import {buildStructuredMetadata, MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
@@ -64,8 +64,8 @@ export const parseYAML = (rawData: string): Result<ParseYAMLResult, string> => {
 
 	// Build metadata based on structure type
 	const metadata = buildStructuredMetadata(parsed, size, {
-		maxKeys: MAX_STRUCTURE_EXTRACTED_KEY_COUNT,
-		maxKeyLength: MAX_STRUCTURE_KEY_LENGTH,
+		maxKeys: MAX_STRUCTURE_EXTRACTED_ITEMS,
+		maxKeyLength: MAX_STRUCTURE_VALUE_LENGTH,
 		maxDepth: MAX_STRUCTURE_PROBING_DEPTH,
 	});
 

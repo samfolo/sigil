@@ -1,3 +1,2 @@
-export {buildStructuredMetadata, MAX_STRUCTURE_EXTRACTED_KEY_COUNT, MAX_STRUCTURE_KEY_LENGTH, MAX_STRUCTURE_PROBING_DEPTH} from './buildStructuredMetadata';
-export type {BuildStructuredMetadataOptions, StructuredArrayMetadata, StructuredMetadata, StructuredObjectMetadata, StructuredPrimitiveMetadata} from './buildStructuredMetadata';
-export {calculateDepth} from './utils/calculateDepth';
+export {buildStructuredMetadata, calculateDepth, MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from './structure';
+export type {ArrayStructureMetadata, BaseStructureMetadata, BuildStructuredMetadataOptions, DepthAwareStructureMetadata, ObjectStructureMetadata, PrimitiveStructureMetadata, StructureMetadata} from './structure';

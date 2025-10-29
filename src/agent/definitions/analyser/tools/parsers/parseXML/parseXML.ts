@@ -2,12 +2,12 @@ import {XMLParser} from 'fast-xml-parser';
 
 import type {PrecisionValue} from '@sigil/src/agent/definitions/analyser/tools/common';
 import {calculateSize} from '@sigil/src/agent/definitions/analyser/tools/common';
-import {calculateDepth} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
+import {calculateDepth, MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
 import type {ParseXMLResult, XMLMetadata} from './types';
-import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL, MAX_DEPTH} from './types';
+import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL} from './types';
 import {extractTopLevelTags} from './utils/extractTopLevelTags';
 
 /**
@@ -87,10 +87,10 @@ export const parseXML = (rawData: string): Result<ParseXMLResult, string> => {
 	}
 
 	// Calculate depth
-	const depthValue = calculateDepth(parsed, MAX_DEPTH);
+	const depthValue = calculateDepth(parsed, MAX_STRUCTURE_PROBING_DEPTH);
 	const depth: PrecisionValue<number> =
-		depthValue > MAX_DEPTH
-			? {value: MAX_DEPTH, exact: false}
+		depthValue > MAX_STRUCTURE_PROBING_DEPTH
+			? {value: MAX_STRUCTURE_PROBING_DEPTH, exact: false}
 			: {value: depthValue, exact: true};
 
 	// Build metadata

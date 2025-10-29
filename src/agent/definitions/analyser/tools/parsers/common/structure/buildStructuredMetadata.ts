@@ -2,24 +2,8 @@ import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/ana
 import {truncateString} from '@sigil/src/agent/definitions/analyser/tools/common';
 
 import {calculateDepth} from './calculateDepth';
-
+import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from './constants';
 import type {StructureMetadata} from './types';
-
-/**
- * Maximum number of keys to extract from objects
- */
-export const MAX_STRUCTURE_EXTRACTED_KEY_COUNT = 50;
-
-/**
- * Maximum length for extracted keys (truncated with ellipsis)
- */
-export const MAX_STRUCTURE_KEY_LENGTH = 100;
-
-/**
- * Maximum depth to probe structured data
- * Depth calculation is capped at this value to prevent excessive recursion
- */
-export const MAX_STRUCTURE_PROBING_DEPTH = 20;
 
 /**
  * Options for configuring metadata extraction
@@ -27,17 +11,17 @@ export const MAX_STRUCTURE_PROBING_DEPTH = 20;
 export interface BuildStructuredMetadataOptions {
 	/**
 	 * Maximum number of keys to extract from objects
-	 * @default MAX_STRUCTURE_EXTRACTED_KEY_COUNT (50)
+	 * @default MAX_STRUCTURE_EXTRACTED_ITEMS
 	 */
 	maxKeys?: number;
 	/**
 	 * Maximum length for extracted keys (truncated with ellipsis)
-	 * @default MAX_STRUCTURE_KEY_LENGTH (100)
+	 * @default MAX_STRUCTURE_VALUE_LENGTH
 	 */
 	maxKeyLength?: number;
 	/**
 	 * Maximum depth to probe structured data
-	 * @default MAX_STRUCTURE_PROBING_DEPTH (20)
+	 * @default MAX_STRUCTURE_PROBING_DEPTH
 	 */
 	maxDepth?: number;
 }
@@ -66,8 +50,8 @@ export const buildStructuredMetadata = (
 	size: SizeMetrics,
 	options?: BuildStructuredMetadataOptions
 ): StructureMetadata => {
-	const maxKeys = options?.maxKeys ?? MAX_STRUCTURE_EXTRACTED_KEY_COUNT;
-	const maxKeyLength = options?.maxKeyLength ?? MAX_STRUCTURE_KEY_LENGTH;
+	const maxKeys = options?.maxKeys ?? MAX_STRUCTURE_EXTRACTED_ITEMS;
+	const maxKeyLength = options?.maxKeyLength ?? MAX_STRUCTURE_VALUE_LENGTH;
 	const maxDepth = options?.maxDepth ?? MAX_STRUCTURE_PROBING_DEPTH;
 
 	// Handle null explicitly

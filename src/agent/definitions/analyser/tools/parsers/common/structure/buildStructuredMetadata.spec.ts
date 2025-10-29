@@ -2,7 +2,8 @@ import {describe, expect, it} from 'vitest';
 
 import type {SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 
-import {buildStructuredMetadata, MAX_STRUCTURE_EXTRACTED_KEY_COUNT, MAX_STRUCTURE_KEY_LENGTH, MAX_STRUCTURE_PROBING_DEPTH} from './buildStructuredMetadata';
+import {buildStructuredMetadata} from './buildStructuredMetadata';
+import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from './constants';
 
 const MOCK_SIZE: SizeMetrics = {
 	bytes: 100,
@@ -97,21 +98,24 @@ describe('buildStructuredMetadata', () => {
 		});
 
 		it('respects custom maxDepth option', () => {
-			// Create array nested 10 levels
+			const customDepth = 10;
+			const customMaxDepth = 5;
+
+			// Create array nested customDepth levels
 			let nested: unknown = 'value';
-			for (let i = 0; i < 10; i++) {
+			for (let i = 0; i < customDepth; i++) {
 				nested = [nested];
 			}
 
 			const metadata = buildStructuredMetadata(nested, MOCK_SIZE, {
-				maxDepth: 5,
+				maxDepth: customMaxDepth,
 			});
 
 			if (metadata.structure !== 'array') {
 				throw new Error('Expected array structure');
 			}
 
-			expect(metadata.depth.value).toBe(5);
+			expect(metadata.depth.value).toBe(customMaxDepth);
 			expect(metadata.depth.exact).toBe(false);
 		});
 	});
@@ -168,27 +172,32 @@ describe('buildStructuredMetadata', () => {
 		});
 
 		it('returns first N keys when configured', () => {
-			const keys = Array.from({length: 100}, (_, i) =>
+			const totalKeyCount = 100;
+			const customMaxKeys = 10;
+
+			const keys = Array.from({length: totalKeyCount}, (_, i) =>
 				`key${i.toString().padStart(3, '0')}`
 			);
 			const obj = Object.fromEntries(keys.map((k) => [k, 'value']));
 
 			const metadata = buildStructuredMetadata(obj, MOCK_SIZE, {
-				maxKeys: 10,
+				maxKeys: customMaxKeys,
 			});
 
 			if (metadata.structure !== 'object') {
 				throw new Error('Expected object structure');
 			}
 
-			expect(metadata.topLevelKeys).toHaveLength(10);
-			expect(metadata.totalKeyCount).toBe(100);
+			expect(metadata.topLevelKeys).toHaveLength(customMaxKeys);
+			expect(metadata.totalKeyCount).toBe(totalKeyCount);
 			expect(metadata.topLevelKeys.at(0)?.value).toBe('key000');
 			expect(metadata.topLevelKeys.at(-1)?.value).toBe('key009');
 		});
 
-		it('returns default 50 keys when not configured', () => {
-			const keys = Array.from({length: 100}, (_, i) =>
+		it('returns default maximum keys when not configured', () => {
+			const totalKeyCount = 100;
+
+			const keys = Array.from({length: totalKeyCount}, (_, i) =>
 				`key${i.toString().padStart(3, '0')}`
 			);
 			const obj = Object.fromEntries(keys.map((k) => [k, 'value']));
@@ -200,13 +209,13 @@ describe('buildStructuredMetadata', () => {
 			}
 
 			expect(metadata.topLevelKeys).toHaveLength(
-				MAX_STRUCTURE_EXTRACTED_KEY_COUNT
+				MAX_STRUCTURE_EXTRACTED_ITEMS
 			);
-			expect(metadata.totalKeyCount).toBe(100);
+			expect(metadata.totalKeyCount).toBe(totalKeyCount);
 		});
 
 		it('truncates long keys', () => {
-			const longKey = 'a'.repeat(150);
+			const longKey = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH + 50);
 			const metadata = buildStructuredMetadata({[longKey]: 'value'}, MOCK_SIZE);
 
 			if (metadata.structure !== 'object') {
@@ -216,17 +225,19 @@ describe('buildStructuredMetadata', () => {
 			expect(metadata.topLevelKeys).toHaveLength(1);
 			expect(metadata.topLevelKeys.at(0)?.exact).toBe(false);
 			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(
-				MAX_STRUCTURE_KEY_LENGTH
+				MAX_STRUCTURE_VALUE_LENGTH
 			);
 			expect(metadata.topLevelKeys.at(0)?.value).toMatch(/^a+\.\.\.$/);
 		});
 
 		it('respects custom maxKeyLength option', () => {
-			const longKey = 'a'.repeat(50);
+			const customKeyLength = 50;
+			const customMaxKeyLength = 20;
+			const longKey = 'a'.repeat(customKeyLength);
 			const metadata = buildStructuredMetadata(
 				{[longKey]: 'value'},
 				MOCK_SIZE,
-				{maxKeyLength: 20}
+				{maxKeyLength: customMaxKeyLength}
 			);
 
 			if (metadata.structure !== 'object') {
@@ -234,12 +245,12 @@ describe('buildStructuredMetadata', () => {
 			}
 
 			expect(metadata.topLevelKeys.at(0)?.exact).toBe(false);
-			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(20);
+			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(customMaxKeyLength);
 			expect(metadata.topLevelKeys.at(0)?.value).toMatch(/^a+\.\.\.$/);
 		});
 
 		it('does not truncate keys at exact maxKeyLength', () => {
-			const exactKey = 'a'.repeat(MAX_STRUCTURE_KEY_LENGTH);
+			const exactKey = 'a'.repeat(MAX_STRUCTURE_VALUE_LENGTH);
 			const metadata = buildStructuredMetadata({[exactKey]: 'value'}, MOCK_SIZE);
 
 			if (metadata.structure !== 'object') {
@@ -361,10 +372,10 @@ describe('buildStructuredMetadata', () => {
 			}
 
 			expect(metadata.topLevelKeys).toHaveLength(
-				MAX_STRUCTURE_EXTRACTED_KEY_COUNT
+				MAX_STRUCTURE_EXTRACTED_ITEMS
 			);
 			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(
-				MAX_STRUCTURE_KEY_LENGTH
+				MAX_STRUCTURE_VALUE_LENGTH
 			);
 		});
 	});
