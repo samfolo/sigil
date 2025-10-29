@@ -7,3 +7,6 @@ export type {ParseYAMLResult} from './parseYAML';
 export {parseCSV, PARSE_CSV_TOOL} from './parseCSV';
 export type {ParseCSVResult, CSVMetadata} from './parseCSV';
 export {MAX_COLUMN_VALUE_LENGTH} from './parseCSV';
+
+export {parseXML, PARSE_XML_TOOL} from './parseXML';
+export type {ParseXMLResult} from './parseXML';
