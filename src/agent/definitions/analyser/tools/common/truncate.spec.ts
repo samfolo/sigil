@@ -11,7 +11,7 @@ describe('truncateString', () => {
 
 			expect(result).toEqual({
 				value: 'hello',
-				truncated: false,
+				exact: true,
 			});
 		});
 
@@ -21,7 +21,7 @@ describe('truncateString', () => {
 
 			expect(result).toEqual({
 				value: exactLength,
-				truncated: false,
+				exact: true,
 			});
 		});
 
@@ -30,7 +30,7 @@ describe('truncateString', () => {
 
 			expect(result).toEqual({
 				value: '',
-				truncated: false,
+				exact: true,
 			});
 		});
 
@@ -39,7 +39,7 @@ describe('truncateString', () => {
 
 			expect(result).toEqual({
 				value: 'a',
-				truncated: false,
+				exact: true,
 			});
 		});
 	});
@@ -49,7 +49,7 @@ describe('truncateString', () => {
 			const longString = 'a'.repeat(150);
 			const result = truncateString(longString, DEFAULT_MAX_LENGTH);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value).toBe('a'.repeat(97) + '...');
 			expect(result.value.length).toBe(DEFAULT_MAX_LENGTH);
 		});
@@ -57,7 +57,7 @@ describe('truncateString', () => {
 		it('truncates string one character over max length', () => {
 			const result = truncateString('a'.repeat(101), DEFAULT_MAX_LENGTH);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value).toBe('a'.repeat(97) + '...');
 			expect(result.value.length).toBe(DEFAULT_MAX_LENGTH);
 		});
@@ -75,7 +75,7 @@ describe('truncateString', () => {
 
 			expect(result).toEqual({
 				value: 'hello...',
-				truncated: true,
+				exact: false,
 			});
 			expect(result.value.length).toBe(8);
 		});
@@ -85,7 +85,7 @@ describe('truncateString', () => {
 
 			expect(result).toEqual({
 				value: 'hello',
-				truncated: false,
+				exact: true,
 			});
 		});
 
@@ -94,7 +94,7 @@ describe('truncateString', () => {
 
 			expect(result).toEqual({
 				value: '...',
-				truncated: true,
+				exact: false,
 			});
 			expect(result.value.length).toBe(3);
 		});
@@ -112,7 +112,7 @@ describe('truncateString', () => {
 			const emojiString = '👋'.repeat(60);
 			const result = truncateString(emojiString, 50);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.length).toBe(50);
 			expect(result.value.endsWith('...')).toBe(true);
 		});
@@ -121,7 +121,7 @@ describe('truncateString', () => {
 			const japaneseString = '日本語'.repeat(50);
 			const result = truncateString(japaneseString, 100);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.length).toBe(100);
 			expect(result.value.endsWith('...')).toBe(true);
 		});
@@ -130,7 +130,7 @@ describe('truncateString', () => {
 			const mixedString = 'Hello 👋 世界'.repeat(20);
 			const result = truncateString(mixedString, 50);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.length).toBe(50);
 		});
 	});
@@ -140,7 +140,7 @@ describe('truncateString', () => {
 			const multilineString = 'line1\nline2\nline3\n'.repeat(10);
 			const result = truncateString(multilineString, 50);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.length).toBe(50);
 		});
 
@@ -148,7 +148,7 @@ describe('truncateString', () => {
 			const tabbedString = 'col1\tcol2\tcol3\t'.repeat(10);
 			const result = truncateString(tabbedString, 50);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.length).toBe(50);
 		});
 
@@ -156,7 +156,7 @@ describe('truncateString', () => {
 			const specialString = '!@#$%^&*()'.repeat(15);
 			const result = truncateString(specialString, 50);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.length).toBe(50);
 		});
 	});
@@ -166,14 +166,14 @@ describe('truncateString', () => {
 			const whitespaceString = ' '.repeat(150);
 			const result = truncateString(whitespaceString, DEFAULT_MAX_LENGTH);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value).toBe(' '.repeat(97) + '...');
 		});
 
 		it('preserves content before ellipsis', () => {
 			const result = truncateString('abcdefghij'.repeat(20), 50);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.startsWith('abcdefghij')).toBe(true);
 			expect(result.value.endsWith('...')).toBe(true);
 		});
@@ -182,7 +182,7 @@ describe('truncateString', () => {
 			const hugeString = 'x'.repeat(1000000);
 			const result = truncateString(hugeString, 100);
 
-			expect(result.truncated).toBe(true);
+			expect(result.exact).toBe(false);
 			expect(result.value.length).toBe(100);
 		});
 	});

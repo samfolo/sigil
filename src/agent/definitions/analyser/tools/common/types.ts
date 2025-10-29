@@ -22,19 +22,25 @@ export interface SizeMetrics {
 }
 
 /**
- * A string value that may have been truncated to fit length constraints
+ * A value that may not be complete or precise due to constraints
  *
- * Used when displaying data samples to indicate whether the full value
- * is shown or if it has been shortened with an ellipsis.
+ * Generic type for values that may be capped, truncated, or otherwise limited.
+ * - For strings: truncated to fit length limits (e.g., "long text..." with exact: false)
+ * - For numbers: capped to maximum depth/size (e.g., depth capped at 20 with exact: false)
+ *
+ * @template T - The type of the value (string, number, etc.)
  */
-export interface TruncatedValue {
+export interface PrecisionValue<T> {
 	/**
-	 * The string value (possibly truncated with "..." suffix)
+	 * The value (possibly incomplete)
 	 */
-	value: string;
+	value: T;
 
 	/**
-	 * Whether the value was truncated
+	 * Whether the value is exact/complete
+	 *
+	 * - true: value is complete and precise
+	 * - false: value was capped, truncated, or limited in some way
 	 */
-	truncated: boolean;
+	exact: boolean;
 }

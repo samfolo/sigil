@@ -5,7 +5,6 @@ export type {
 	JSONArrayMetadata,
 	JSONObjectMetadata,
 	JSONPrimitiveMetadata,
-	JSONDepth,
 } from './parseJSON';
 export {MAX_JSON_DEPTH} from './parseJSON';
 

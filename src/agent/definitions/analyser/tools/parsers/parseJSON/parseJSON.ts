@@ -1,9 +1,9 @@
-import type {SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
+import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 import {calculateSize, truncateString} from '@sigil/src/agent/definitions/analyser/tools/common';
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
-import type {JSONMetadata, ParseJSONResult, JSONDepth} from './types';
+import type {JSONMetadata, ParseJSONResult} from './types';
 import {MAX_JSON_DEPTH} from './types';
 import {calculateDepth} from './utils/calculateDepth';
 
@@ -87,6 +87,11 @@ const buildMetadata = (parsed: unknown, size: SizeMetrics): JSONMetadata => {
 	}
 
 	// Handle objects
+	// At this point, must be an object (JSON.parse only returns primitives, arrays, or objects)
+	if (typeof parsed !== 'object' || parsed === null) {
+		throw new Error('Unexpected parsed value type');
+	}
+
 	const allKeys = Object.keys(parsed);
 	const sortedKeys = allKeys.toSorted();
 	const topKeys = sortedKeys.slice(0, MAX_KEYS_TO_RETURN);
@@ -105,12 +110,12 @@ const buildMetadata = (parsed: unknown, size: SizeMetrics): JSONMetadata => {
 };
 
 /**
- * Builds JSONDepth information from calculated depth value
+ * Builds depth information from calculated depth value
  *
  * Determines if depth is exact based on whether it exceeds MAX_JSON_DEPTH.
  * When depth exceeds the cap, exact is set to false.
  */
-const buildJSONDepth = (depthValue: number): JSONDepth => {
+const buildJSONDepth = (depthValue: number): PrecisionValue<number> => {
 	if (depthValue > MAX_JSON_DEPTH) {
 		return {
 			value: MAX_JSON_DEPTH,

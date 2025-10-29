@@ -1,26 +1,10 @@
-import type {SizeMetrics, TruncatedValue} from '@sigil/src/agent/definitions/analyser/tools/common';
+import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 
 /**
  * Maximum depth for JSON structure analysis
  * Depth calculation is capped at this value to prevent excessive recursion
  */
 export const MAX_JSON_DEPTH = 20;
-
-/**
- * Depth information for JSON structures
- */
-export interface JSONDepth {
-	/**
-	 * Maximum nesting depth (capped at MAX_JSON_DEPTH)
-	 */
-	value: number;
-
-	/**
-	 * Whether the depth value is exact
-	 * Set to false when actual depth exceeds MAX_JSON_DEPTH
-	 */
-	exact: boolean;
-}
 
 /**
  * Metadata for JSON array structures
@@ -33,8 +17,9 @@ export interface JSONArrayMetadata {
 	elementCount: number;
 	/**
 	 * Maximum nesting depth of the array structure
+	 * Capped at MAX_JSON_DEPTH with exact: false when exceeded
 	 */
-	depth: JSONDepth;
+	depth: PrecisionValue<number>;
 	/**
 	 * Size metrics for the raw JSON string
 	 */
@@ -49,15 +34,16 @@ export interface JSONObjectMetadata {
 	/**
 	 * First 50 keys alphabetically, each truncated to 100 characters
 	 */
-	topLevelKeys: TruncatedValue[];
+	topLevelKeys: PrecisionValue<string>[];
 	/**
 	 * Total count of keys (could be 10,000+)
 	 */
 	totalKeyCount: number;
 	/**
 	 * Maximum nesting depth of the object structure
+	 * Capped at MAX_JSON_DEPTH with exact: false when exceeded
 	 */
-	depth: JSONDepth;
+	depth: PrecisionValue<number>;
 	/**
 	 * Size metrics for the raw JSON string
 	 */

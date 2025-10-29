@@ -272,8 +272,8 @@ describe('parseJSON', () => {
 			}
 
 			expect(metadata.topLevelKeys).toEqual([
-				{value: 'age', truncated: false},
-				{value: 'name', truncated: false},
+				{value: 'age', exact: true},
+				{value: 'name', exact: true},
 			]);
 			expect(metadata.totalKeyCount).toBe(2);
 			expect(metadata.depth.value).toBe(1);
@@ -399,7 +399,7 @@ describe('parseJSON', () => {
 			}
 
 			expect(metadata.topLevelKeys).toHaveLength(1);
-			expect(metadata.topLevelKeys.at(0)?.truncated).toBe(true);
+			expect(metadata.topLevelKeys.at(0)?.exact).toBe(false);
 			expect(metadata.topLevelKeys.at(0)?.value).toHaveLength(100);
 			expect(metadata.topLevelKeys.at(0)?.value).toMatch(/^a+\.\.\.$/);
 		});
@@ -423,7 +423,7 @@ describe('parseJSON', () => {
 				throw new Error('Expected object structure');
 			}
 
-			expect(metadata.topLevelKeys.at(0)?.truncated).toBe(false);
+			expect(metadata.topLevelKeys.at(0)?.exact).toBe(true);
 			expect(metadata.topLevelKeys.at(0)?.value).toBe(exactKey);
 		});
 

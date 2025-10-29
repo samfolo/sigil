@@ -51,9 +51,9 @@ describe('parseCSV', () => {
 			expect(metadata.columnCount).toBe(2);
 			expect(metadata.columns).toHaveLength(2);
 			expect(metadata.columns.at(0)?.value).toBe('name');
-			expect(metadata.columns.at(0)?.truncated).toBe(false);
+			expect(metadata.columns.at(0)?.exact).toBe(true);
 			expect(metadata.columns.at(1)?.value).toBe('age');
-			expect(metadata.columns.at(1)?.truncated).toBe(false);
+			expect(metadata.columns.at(1)?.exact).toBe(true);
 		});
 
 		it('parses CSV with numbers', () => {
@@ -259,9 +259,9 @@ describe('parseCSV', () => {
 
 			const {metadata} = result.data;
 			expect(metadata.columns.at(0)?.value).toBe('short');
-			expect(metadata.columns.at(0)?.truncated).toBe(false);
+			expect(metadata.columns.at(0)?.exact).toBe(true);
 			expect(metadata.columns.at(1)?.value).toBe('values');
-			expect(metadata.columns.at(1)?.truncated).toBe(false);
+			expect(metadata.columns.at(1)?.exact).toBe(true);
 		});
 
 		it('truncates values longer than MAX_COLUMN_VALUE_LENGTH', () => {
@@ -280,10 +280,10 @@ describe('parseCSV', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.columns.at(0)?.truncated).toBe(true);
+			expect(metadata.columns.at(0)?.exact).toBe(false);
 			expect(metadata.columns.at(0)?.value).toHaveLength(MAX_COLUMN_VALUE_LENGTH);
 			expect(metadata.columns.at(0)?.value).toMatch(/^a+\.\.\.$/);
-			expect(metadata.columns.at(1)?.truncated).toBe(false);
+			expect(metadata.columns.at(1)?.exact).toBe(true);
 			expect(metadata.columns.at(1)?.value).toBe('short');
 		});
 
@@ -303,7 +303,7 @@ describe('parseCSV', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.columns.at(0)?.truncated).toBe(false);
+			expect(metadata.columns.at(0)?.exact).toBe(true);
 			expect(metadata.columns.at(0)?.value).toBe(exactValue);
 		});
 

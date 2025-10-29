@@ -1,6 +1,7 @@
 export type {
 	AgentDefinition,
 	ErrorPromptFunction,
+	HelperToolConfig,
 	ModelConfig,
 	ObservabilityConfig,
 	OutputToolConfig,

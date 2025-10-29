@@ -1,4 +1,4 @@
-import type {SizeMetrics, TruncatedValue} from '@sigil/src/agent/definitions/analyser/tools/common';
+import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 
 /**
  * Maximum length for column values in first row preview
@@ -50,7 +50,7 @@ export interface CSVMetadata {
 	 * Each value truncated to MAX_COLUMN_VALUE_LENGTH characters.
 	 * Helps agent understand the semantics and types of data.
 	 */
-	columns: TruncatedValue[];
+	columns: PrecisionValue<string>[];
 
 	/**
 	 * Size metrics of the raw CSV data
