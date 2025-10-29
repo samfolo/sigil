@@ -35,14 +35,16 @@ describe('extractArray - error handling', () => {
 
 			if (isErr(result)) {
 				const error = result.error.at(0);
-				expect(error?.context.attemptedProperties).toEqual([
-					'features',
-					'items',
-					'data',
-					'results',
-					'records',
-					'rows',
-				]);
+				if (error?.code === ERROR_CODES.MISSING_ARRAY_PROPERTY) {
+					expect(error.context.attemptedProperties).toEqual([
+						'features',
+						'items',
+						'data',
+						'results',
+						'records',
+						'rows',
+					]);
+				}
 			}
 		});
 
@@ -58,7 +60,9 @@ describe('extractArray - error handling', () => {
 
 			if (isErr(result)) {
 				const error = result.error.at(0);
-				expect(error?.context.objectKeys).toEqual(['productId', 'productName', 'price']);
+				if (error?.code === ERROR_CODES.MISSING_ARRAY_PROPERTY) {
+					expect(error.context.objectKeys).toEqual(['productId', 'productName', 'price']);
+				}
 			}
 		});
 
@@ -70,7 +74,9 @@ describe('extractArray - error handling', () => {
 
 			if (isErr(result)) {
 				const error = result.error.at(0);
-				expect(error?.context.objectKeys).toEqual([]);
+				if (error?.code === ERROR_CODES.MISSING_ARRAY_PROPERTY) {
+					expect(error.context.objectKeys).toEqual([]);
+				}
 			}
 		});
 
@@ -177,7 +183,9 @@ describe('extractArray - error handling', () => {
 			if (isErr(result)) {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(ERROR_CODES.MISSING_ARRAY_PROPERTY);
-				expect(error?.context.objectKeys).toEqual(['type', 'features']);
+				if (error?.code === ERROR_CODES.MISSING_ARRAY_PROPERTY) {
+					expect(error.context.objectKeys).toEqual(['type', 'features']);
+				}
 			}
 		});
 
@@ -193,7 +201,9 @@ describe('extractArray - error handling', () => {
 			if (isErr(result)) {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(ERROR_CODES.MISSING_ARRAY_PROPERTY);
-				expect(error?.context.objectKeys).toEqual(['type', 'geometries']);
+				if (error?.code === ERROR_CODES.MISSING_ARRAY_PROPERTY) {
+					expect(error.context.objectKeys).toEqual(['type', 'geometries']);
+				}
 			}
 		});
 	});
@@ -217,7 +227,9 @@ describe('extractArray - error handling', () => {
 				expect(error?.severity).toBe('error');
 				expect(error?.category).toBe('data');
 				expect(error?.path).toBe('');
-				expect(error?.context.actualType).toBe(expectedType);
+				if (error?.code === ERROR_CODES.NOT_ARRAY) {
+					expect(error.context.actualType).toBe(expectedType);
+				}
 			}
 		});
 

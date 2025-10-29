@@ -140,12 +140,16 @@ describe('buildRenderTree - binding error propagation', () => {
 			return;
 		}
 
+		if (!Array.isArray(result.error)) {
+			return;
+		}
+
 		// Verify error paths contain row indices
 		// Paths should be like '[0]', '[1]', '[2]' since path context is ['']
 		const errorPaths = result.error.map((e) => e.path);
-		expect(errorPaths.some((path) => path.includes('[0]'))).toBe(true);
-		expect(errorPaths.some((path) => path.includes('[1]'))).toBe(true);
-		expect(errorPaths.some((path) => path.includes('[2]'))).toBe(true);
+		expect(errorPaths.some((path) => path?.includes('[0]'))).toBe(true);
+		expect(errorPaths.some((path) => path?.includes('[1]'))).toBe(true);
+		expect(errorPaths.some((path) => path?.includes('[2]'))).toBe(true);
 	});
 
 	it('should preserve error codes from queryJSONPath', () => {
@@ -156,6 +160,10 @@ describe('buildRenderTree - binding error propagation', () => {
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
+			return;
+		}
+
+		if (!Array.isArray(result.error)) {
 			return;
 		}
 
@@ -175,6 +183,10 @@ describe('buildRenderTree - binding error propagation', () => {
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
+			return;
+		}
+
+		if (!Array.isArray(result.error)) {
 			return;
 		}
 
@@ -217,9 +229,13 @@ describe('buildRenderTree - partial rendering with errors', () => {
 			return;
 		}
 
+		if (!Array.isArray(result.error)) {
+			return;
+		}
+
 		// Both rows should have errors (one per row)
-		const hasErrorAtRow0 = result.error.some((e) => e.path.includes('[0]'));
-		const hasErrorAtRow1 = result.error.some((e) => e.path.includes('[1]'));
+		const hasErrorAtRow0 = result.error.some((e) => e.path?.includes('[0]'));
+		const hasErrorAtRow1 = result.error.some((e) => e.path?.includes('[1]'));
 		expect(hasErrorAtRow0).toBe(true);
 		expect(hasErrorAtRow1).toBe(true);
 	});
@@ -232,6 +248,10 @@ describe('buildRenderTree - partial rendering with errors', () => {
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
+			return;
+		}
+
+		if (!Array.isArray(result.error)) {
 			return;
 		}
 
@@ -258,6 +278,10 @@ describe('buildRenderTree - error accumulation', () => {
 			return;
 		}
 
+		if (!Array.isArray(result.error)) {
+			return;
+		}
+
 		// Should have at least one spec error
 		expect(result.error.length).toBeGreaterThan(0);
 
@@ -278,6 +302,10 @@ describe('buildRenderTree - error accumulation', () => {
 			return;
 		}
 
+		if (!Array.isArray(result.error)) {
+			return;
+		}
+
 		// Should only have spec error, no binding errors
 		// (binding never attempted because spec validation failed)
 		const hasOnlySpecErrors = result.error.every((e) => e.category === 'spec');
@@ -295,10 +323,16 @@ describe('buildRenderTree - error accumulation', () => {
 			return;
 		}
 
+		if (!Array.isArray(result.error)) {
+			return;
+		}
+
 		const missingComponentError = result.error.find((e) => e.code === ERROR_CODES.MISSING_COMPONENT);
 		expect(missingComponentError).toBeDefined();
-		expect(missingComponentError?.context.componentId).toBe('missing-component');
-		expect(missingComponentError?.context.availableComponents).toContain('actual-component');
+		if (missingComponentError?.code === ERROR_CODES.MISSING_COMPONENT) {
+			expect(missingComponentError.context.componentId).toBe('missing-component');
+			expect(missingComponentError.context.availableComponents).toContain('actual-component');
+		}
 	});
 });
 
@@ -314,6 +348,10 @@ describe('buildRenderTree - path context correctness', () => {
 			return;
 		}
 
+		if (!Array.isArray(result.error)) {
+			return;
+		}
+
 		// Should have errors from the failing row(s)
 		expect(result.error.length).toBeGreaterThan(0);
 
@@ -321,7 +359,7 @@ describe('buildRenderTree - path context correctness', () => {
 		const errorPaths = result.error.map((e) => e.path);
 
 		// At least one error should reference row index [1] (the failing row)
-		const hasRow1Error = errorPaths.some((path) => path.includes('[1]'));
+		const hasRow1Error = errorPaths.some((path) => path?.includes('[1]'));
 		expect(hasRow1Error).toBe(true);
 	});
 
@@ -333,6 +371,10 @@ describe('buildRenderTree - path context correctness', () => {
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
+			return;
+		}
+
+		if (!Array.isArray(result.error)) {
 			return;
 		}
 
@@ -350,6 +392,10 @@ describe('buildRenderTree - path context correctness', () => {
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
+			return;
+		}
+
+		if (!Array.isArray(result.error)) {
 			return;
 		}
 

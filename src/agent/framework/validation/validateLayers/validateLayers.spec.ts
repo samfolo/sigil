@@ -318,17 +318,20 @@ describe('validateLayers', () => {
 
 		it('should work with different error types (Error, custom objects, etc.)', async () => {
 			const customObjectErrorValidator: typeof createConditionalValidator = (
-				name
+				name,
+				_predicate,
+				description = 'Custom object error validator'
 			) => ({
 				name,
+				description,
 				validate: async () => err({code: 'CUSTOM_ERROR', message: 'Custom object error'}),
 			});
 
-			const validator = customObjectErrorValidator('custom-object');
+			const validator = customObjectErrorValidator('custom-object', () => false);
 
 			const result = await validateLayers(VALID_OUTPUT, ValidOutputSchema, [
 				validator,
-			]);
+			], undefined, undefined);
 
 			expect(isErr(result)).toBe(true);
 

@@ -10,7 +10,7 @@ import {render as renderComponent, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
 import {ERROR_CODES, SpecProcessingError} from '@sigil/src/common/errors';
-import type {ComponentType} from '@sigil/src/lib/generated/types/specification';
+import type {ComponentType, DataType} from '@sigil/src/lib/generated/types/specification';
 
 import {render} from './render';
 import {
@@ -186,7 +186,7 @@ describe('render', () => {
 							// Only include name, omit email and status
 							name: {
 								roles: ['label'],
-								data_types: ['string'],
+								data_types: ['string' as DataType],
 							},
 						},
 					},

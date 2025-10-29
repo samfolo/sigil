@@ -4,7 +4,7 @@
 
 import {describe, expect, it} from 'vitest';
 
-import {isErr, isOk, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
+import {isErr, isOk, ok, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 import {defineAgent} from './defineAgent';
 import {
@@ -157,7 +157,7 @@ describe('defineAgent', () => {
 				expect(Object.isFrozen(result.data.model)).toBe(true);
 
 				expect(() => {
-					// @ts-expect-error - Testing immutability at runtime
+					// Testing immutability at runtime
 					result.data.model.temperature = 0.5;
 				}).toThrow();
 			}
@@ -172,7 +172,7 @@ describe('defineAgent', () => {
 				expect(Object.isFrozen(result.data.prompts)).toBe(true);
 
 				expect(() => {
-					// @ts-expect-error - Testing immutability at runtime
+					// Testing immutability at runtime
 					result.data.prompts.system = async () => 'modified';
 				}).toThrow();
 			}
@@ -187,7 +187,7 @@ describe('defineAgent', () => {
 				expect(Object.isFrozen(result.data.validation)).toBe(true);
 
 				expect(() => {
-					// @ts-expect-error - Testing immutability at runtime
+					// Testing immutability at runtime
 					result.data.validation.maxAttempts = 10;
 				}).toThrow();
 			}
@@ -202,7 +202,7 @@ describe('defineAgent', () => {
 				expect(Object.isFrozen(result.data.observability)).toBe(true);
 
 				expect(() => {
-					// @ts-expect-error - Testing immutability at runtime
+					// Testing immutability at runtime
 					result.data.observability.trackCost = true;
 				}).toThrow();
 			}
@@ -221,7 +221,8 @@ describe('defineAgent', () => {
 				expect(() => {
 					result.data.validation.customValidators.push({
 						name: 'new-validator',
-						validate: async () => ({}),
+						description: 'new validator description',
+						validate: async () => ok({result: ''}),
 					});
 				}).toThrow();
 			}
@@ -238,8 +239,8 @@ describe('defineAgent', () => {
 				expect(Object.isFrozen(firstValidator)).toBe(true);
 
 				expect(() => {
-          // @ts-expect-error - Testing immutability at runtime
-          firstValidator!.name = 'modified-name';
+					// Testing immutability at runtime
+					firstValidator!.name = 'modified-name';
 				}).toThrow();
 
 				const secondValidator = result.data.validation.customValidators.at(1);

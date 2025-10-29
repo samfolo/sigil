@@ -89,11 +89,14 @@ describe('buildSystemPrompt', () => {
 				);
 				expect(result.error.at(0)?.severity).toBe('error');
 				expect(result.error.at(0)?.category).toBe('execution');
-				expect(result.error.at(0)?.context.promptType).toBe('system');
-				expect(result.error.at(0)?.context.reason).toBe(
-					'System prompt generation failed'
-				);
-				expect(result.error.at(0)?.context.attempt).toBe(1);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.promptType).toBe('system');
+					expect(firstError.context.reason).toBe(
+						'System prompt generation failed'
+					);
+					expect(firstError.context.attempt).toBe(1);
+				}
 			}
 		});
 
@@ -111,11 +114,14 @@ describe('buildSystemPrompt', () => {
 				expect(result.error.at(0)?.code).toBe(
 					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
 				);
-				expect(result.error.at(0)?.context.promptType).toBe('system');
-				expect(result.error.at(0)?.context.reason).toBe(
-					'System prompt async failure'
-				);
-				expect(result.error.at(0)?.context.attempt).toBe(2);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.promptType).toBe('system');
+					expect(firstError.context.reason).toBe(
+						'System prompt async failure'
+					);
+					expect(firstError.context.attempt).toBe(2);
+				}
 			}
 		});
 
@@ -133,9 +139,12 @@ describe('buildSystemPrompt', () => {
 				expect(result.error.at(0)?.code).toBe(
 					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
 				);
-				expect(result.error.at(0)?.context.reason).toBe(
-					'String error instead of Error object'
-				);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.reason).toBe(
+						'String error instead of Error object'
+					);
+				}
 			}
 		});
 	});
@@ -174,10 +183,13 @@ describe('buildUserPrompt', () => {
 				);
 				expect(result.error.at(0)?.severity).toBe('error');
 				expect(result.error.at(0)?.category).toBe('execution');
-				expect(result.error.at(0)?.context.promptType).toBe('user');
-				expect(result.error.at(0)?.context.reason).toBe(
-					'User prompt generation failed'
-				);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.promptType).toBe('user');
+					expect(firstError.context.reason).toBe(
+						'User prompt generation failed'
+					);
+				}
 			}
 		});
 
@@ -194,10 +206,13 @@ describe('buildUserPrompt', () => {
 				expect(result.error.at(0)?.code).toBe(
 					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
 				);
-				expect(result.error.at(0)?.context.promptType).toBe('user');
-				expect(result.error.at(0)?.context.reason).toBe(
-					'User prompt async failure'
-				);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.promptType).toBe('user');
+					expect(firstError.context.reason).toBe(
+						'User prompt async failure'
+					);
+				}
 			}
 		});
 
@@ -214,9 +229,12 @@ describe('buildUserPrompt', () => {
 				expect(result.error.at(0)?.code).toBe(
 					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
 				);
-				expect(result.error.at(0)?.context.reason).toBe(
-					'String error in user prompt'
-				);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.reason).toBe(
+						'String error in user prompt'
+					);
+				}
 			}
 		});
 	});
@@ -301,11 +319,14 @@ describe('buildErrorPrompt', () => {
 				);
 				expect(result.error.at(0)?.severity).toBe('error');
 				expect(result.error.at(0)?.category).toBe('execution');
-				expect(result.error.at(0)?.context.promptType).toBe('error');
-				expect(result.error.at(0)?.context.reason).toBe(
-					'Error prompt generation failed'
-				);
-				expect(result.error.at(0)?.context.attempt).toBe(1);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.promptType).toBe('error');
+					expect(firstError.context.reason).toBe(
+						'Error prompt generation failed'
+					);
+					expect(firstError.context.attempt).toBe(1);
+				}
 			}
 		});
 
@@ -323,11 +344,14 @@ describe('buildErrorPrompt', () => {
 				expect(result.error.at(0)?.code).toBe(
 					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
 				);
-				expect(result.error.at(0)?.context.promptType).toBe('error');
-				expect(result.error.at(0)?.context.reason).toBe(
-					'Error prompt async failure'
-				);
-				expect(result.error.at(0)?.context.attempt).toBe(2);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.promptType).toBe('error');
+					expect(firstError.context.reason).toBe(
+						'Error prompt async failure'
+					);
+					expect(firstError.context.attempt).toBe(2);
+				}
 			}
 		});
 
@@ -345,9 +369,12 @@ describe('buildErrorPrompt', () => {
 				expect(result.error.at(0)?.code).toBe(
 					AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED
 				);
-				expect(result.error.at(0)?.context.reason).toBe(
-					'String error in error prompt'
-				);
+				const firstError = result.error.at(0);
+				if (firstError?.code === AGENT_ERROR_CODES.PROMPT_GENERATION_FAILED) {
+					expect(firstError.context.reason).toBe(
+						'String error in error prompt'
+					);
+				}
 			}
 		});
 	});

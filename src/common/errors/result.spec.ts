@@ -40,7 +40,7 @@ describe('Result', () => {
 		it('should create a failed Result', () => {
 			const result = err('error message');
 			expect(result.success).toBe(false);
-			if (!result.success) {
+			if (isErr(result)) {
 				expect(result.error).toBe('error message');
 			}
 		});
@@ -49,7 +49,7 @@ describe('Result', () => {
 			const error = new Error('Something went wrong');
 			const result = err(error);
 			expect(result.success).toBe(false);
-			if (!result.success) {
+			if (isErr(result)) {
 				expect(result.error).toBe(error);
 			}
 		});
@@ -58,7 +58,7 @@ describe('Result', () => {
       interface CustomError {code: number; message: string}
       const result: Result<never, CustomError> = err({code: 404, message: 'Not found'});
       expect(result.success).toBe(false);
-      if (!result.success) {
+      if (isErr(result)) {
       	expect(result.error.code).toBe(404);
       }
 		});
@@ -80,7 +80,7 @@ describe('Result', () => {
 			const doubled = mapResult(result, (x) => x * 2);
 
 			expect(doubled.success).toBe(false);
-			if (!doubled.success) {
+			if (isErr(doubled)) {
 				expect(doubled.error).toBe('error');
 			}
 		});
@@ -90,7 +90,7 @@ describe('Result', () => {
 			const mapped = mapResult(result, (x) => x.toString());
 
 			expect(mapped.success).toBe(false);
-			if (!mapped.success) {
+			if (isErr(mapped)) {
 				expect(mapped.error).toBe('error');
 			}
 		});
@@ -102,7 +102,7 @@ describe('Result', () => {
 			const mapped = mapError(result, (e) => new Error(e));
 
 			expect(mapped.success).toBe(false);
-			if (!mapped.success) {
+			if (isErr(mapped)) {
 				expect(mapped.error).toBeInstanceOf(Error);
 				expect(mapped.error.message).toBe('error');
 			}
@@ -128,40 +128,40 @@ describe('Result', () => {
 		};
 
 		it('should chain successful operations', () => {
-			const result = chain(ok(10), (x) => divide(x, 2));
+			const result: Result<number, string> = chain(ok(10), (x) => divide(x, 2));
 
 			expect(result.success).toBe(true);
-			if (result.success) {
+			if (isOk(result)) {
 				expect(result.data).toBe(5);
 			}
 		});
 
 		it('should short-circuit on first error', () => {
-			const result = chain(err<number, string>('initial error'), (x) => divide(x, 2));
+			const result: Result<number, string> = chain(err<number, string>('initial error'), (x) => divide(x, 2));
 
 			expect(result.success).toBe(false);
-			if (!result.success) {
+			if (isErr(result)) {
 				expect(result.error).toBe('initial error');
 			}
 		});
 
 		it('should propagate errors from chained operation', () => {
-			const result = chain(ok(10), (x) => divide(x, 0));
+			const result: Result<number, string> = chain(ok(10), (x) => divide(x, 0));
 
 			expect(result.success).toBe(false);
-			if (!result.success) {
+			if (isErr(result)) {
 				expect(result.error).toBe('Division by zero');
 			}
 		});
 
 		it('should work with multiple chains', () => {
-			const result = chain(
+			const result: Result<number, string> = chain(
 				chain(ok(20), (x) => divide(x, 2)),
 				(x) => divide(x, 5)
 			);
 
 			expect(result.success).toBe(true);
-			if (result.success) {
+			if (isOk(result)) {
 				expect(result.data).toBe(2);
 			}
 		});
@@ -214,7 +214,7 @@ describe('Result', () => {
 			const combined = all(results);
 
 			expect(combined.success).toBe(true);
-			if (combined.success) {
+			if (isOk(combined)) {
 				expect(combined.data).toEqual([1, 2, 3]);
 			}
 		});
@@ -224,7 +224,7 @@ describe('Result', () => {
 			const combined = all(results);
 
 			expect(combined.success).toBe(false);
-			if (!combined.success) {
+			if (isErr(combined)) {
 				expect(combined.error).toBe('error');
 			}
 		});
@@ -234,7 +234,7 @@ describe('Result', () => {
 			const combined = all(results);
 
 			expect(combined.success).toBe(true);
-			if (combined.success) {
+			if (isOk(combined)) {
 				expect(combined.data).toEqual([]);
 			}
 		});
@@ -244,7 +244,7 @@ describe('Result', () => {
 			const combined = all(results);
 
 			expect(combined.success).toBe(true);
-			if (combined.success) {
+			if (isOk(combined)) {
 				expect(combined.data).toEqual([3, 1, 2]);
 			}
 		});
@@ -258,7 +258,7 @@ describe('Result', () => {
 			const combined = all(results);
 
 			expect(combined.success).toBe(false);
-			if (!combined.success) {
+			if (isErr(combined)) {
 				expect(combined.error).toBe('first error');
 			}
 		});

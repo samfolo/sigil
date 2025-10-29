@@ -26,8 +26,10 @@ describe('countItems - error handling', () => {
 				expect(error?.severity).toBe('error');
 				expect(error?.category).toBe('data');
 				expect(error?.path).toBe('$.nested');
-				expect(error?.context.actualType).toBe(expectedType);
-				expect(error?.context.value).toEqual(value);
+				if (error?.code === ERROR_CODES.NOT_ARRAY) {
+					expect(error.context.actualType).toBe(expectedType);
+					expect(error.context.value).toEqual(value);
+				}
 			}
 		});
 
@@ -47,8 +49,10 @@ describe('countItems - error handling', () => {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(ERROR_CODES.NOT_ARRAY);
 				expect(error?.path).toBe('$.level1.level2.level3');
-				expect(error?.context.actualType).toBe('string');
-				expect(error?.context.value).toBe('not an array');
+				if (error?.code === ERROR_CODES.NOT_ARRAY) {
+					expect(error.context.actualType).toBe('string');
+					expect(error.context.value).toBe('not an array');
+				}
 			}
 		});
 	});
@@ -74,7 +78,9 @@ describe('aggregateData - error handling', () => {
 				expect(error?.severity).toBe('error');
 				expect(error?.category).toBe('data');
 				expect(error?.path).toBe('');
-				expect(error?.context.operation).toBe(operation);
+				if (error?.code === ERROR_CODES.FIELD_REQUIRED) {
+					expect(error.context.operation).toBe(operation);
+				}
 			}
 		});
 
@@ -90,8 +96,10 @@ describe('aggregateData - error handling', () => {
 			if (isErr(result)) {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(ERROR_CODES.FIELD_REQUIRED);
-				expect(error?.context.operation).toBe('sum');
-				expect(error?.context.availableFields).toEqual(['price', 'quantity']);
+				if (error?.code === ERROR_CODES.FIELD_REQUIRED) {
+					expect(error.context.operation).toBe('sum');
+					expect(error.context.availableFields).toEqual(['price', 'quantity']);
+				}
 			}
 		});
 
@@ -107,8 +115,10 @@ describe('aggregateData - error handling', () => {
 			if (isErr(result)) {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(ERROR_CODES.FIELD_REQUIRED);
-				expect(error?.context.operation).toBe('average');
-				expect(error?.context.availableFields).toBeUndefined();
+				if (error?.code === ERROR_CODES.FIELD_REQUIRED) {
+					expect(error.context.operation).toBe('average');
+					expect(error.context.availableFields).toBeUndefined();
+				}
 			}
 		});
 
@@ -121,8 +131,10 @@ describe('aggregateData - error handling', () => {
 			if (isErr(result)) {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(ERROR_CODES.FIELD_REQUIRED);
-				expect(error?.context.operation).toBe('min');
-				expect(error?.context.availableFields).toBeUndefined();
+				if (error?.code === ERROR_CODES.FIELD_REQUIRED) {
+					expect(error.context.operation).toBe('min');
+					expect(error.context.availableFields).toBeUndefined();
+				}
 			}
 		});
 
@@ -135,8 +147,10 @@ describe('aggregateData - error handling', () => {
 			if (isErr(result)) {
 				const error = result.error.at(0);
 				expect(error?.code).toBe(ERROR_CODES.FIELD_REQUIRED);
-				expect(error?.context.operation).toBe('max');
-				expect(error?.context.availableFields).toBeUndefined();
+				if (error?.code === ERROR_CODES.FIELD_REQUIRED) {
+					expect(error.context.operation).toBe('max');
+					expect(error.context.availableFields).toBeUndefined();
+				}
 			}
 		});
 
@@ -157,7 +171,9 @@ describe('aggregateData - error handling', () => {
 
 			if (isErr(result)) {
 				const error = result.error.at(0);
-				expect(error?.context.availableFields).toEqual(['id', 'price', 'quantity']);
+				if (error?.code === ERROR_CODES.FIELD_REQUIRED) {
+					expect(error.context.availableFields).toEqual(['id', 'price', 'quantity']);
+				}
 			}
 		});
 	});

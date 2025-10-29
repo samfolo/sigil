@@ -1,3 +1,3 @@
 export {calculateSize} from './calculateSize';
 export {truncateString} from './truncate';
-export type {SizeMetrics, TruncatedValue} from './types';
+export type {PrecisionValue, SizeMetrics} from './types';

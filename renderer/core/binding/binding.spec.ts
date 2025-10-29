@@ -482,8 +482,11 @@ describe('bindData - error scenarios with invalid accessors', () => {
 		if (!isErr(result)) {return;}
 
 		expect(result.error).toHaveLength(1); // One error per row
-		expect(result.error.at(0)?.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
-		expect(result.error.at(0)?.context.accessor).toBe('name');
+		const firstError = result.error.at(0);
+		expect(firstError?.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
+		if (firstError?.code === ERROR_CODES.INVALID_ACCESSOR) {
+			expect(firstError.context.accessor).toBe('name');
+		}
 	});
 
 	it('should accumulate multiple errors across rows for invalid accessor', () => {

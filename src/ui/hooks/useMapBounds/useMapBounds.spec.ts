@@ -26,7 +26,7 @@ describe('useMapBounds', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.mocked(useMap).mockReturnValue(mockMap);
+		vi.mocked(useMap).mockReturnValue(mockMap as unknown as L.Map);
 	});
 
 	it('should fit bounds for GeoJSON data', () => {
@@ -37,7 +37,7 @@ describe('useMapBounds', () => {
 			getBounds: vi.fn().mockReturnValue(mockBounds)
 		};
 
-		vi.mocked(L.geoJSON).mockReturnValue(mockGeoJSONLayer as L.GeoJSON);
+		vi.mocked(L.geoJSON).mockReturnValue(mockGeoJSONLayer as unknown as L.GeoJSON);
 
 		const geojsonData = {
 			type: 'FeatureCollection',
@@ -60,7 +60,7 @@ describe('useMapBounds', () => {
 			getBounds: vi.fn().mockReturnValue(mockBounds)
 		};
 
-		vi.mocked(L.geoJSON).mockReturnValue(mockGeoJSONLayer as L.GeoJSON);
+		vi.mocked(L.geoJSON).mockReturnValue(mockGeoJSONLayer as unknown as L.GeoJSON);
 
 		const geojsonData = {
 			type: 'FeatureCollection',
@@ -74,7 +74,7 @@ describe('useMapBounds', () => {
 
 	it('should fit bounds for lat/lon points', () => {
 		const mockBounds = {};
-		vi.mocked(L.latLngBounds).mockReturnValue(mockBounds as L.LatLngBounds);
+		vi.mocked(L.latLngBounds).mockReturnValue(mockBounds as unknown as L.LatLngBounds);
 
 		const points = [
 			{lat: 51.505, lng: -0.09},
