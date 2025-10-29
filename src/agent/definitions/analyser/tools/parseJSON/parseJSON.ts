@@ -1,7 +1,7 @@
-import type {Result} from '@sigil/src/common/errors';
-import {ok} from '@sigil/src/common/errors';
 import type {SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 import {calculateSize, truncateString} from '@sigil/src/agent/definitions/analyser/tools/common';
+import type {Result} from '@sigil/src/common/errors';
+import {ok} from '@sigil/src/common/errors';
 
 import type {JSONMetadata, ParseJSONResult, JSONDepth} from './types';
 import {MAX_JSON_DEPTH} from './types';

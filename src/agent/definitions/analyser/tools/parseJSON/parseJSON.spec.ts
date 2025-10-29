@@ -2,8 +2,8 @@ import {describe, expect, it} from 'vitest';
 
 import {isOk} from '@sigil/src/common/errors';
 
-import {MAX_JSON_DEPTH} from './types';
 import {parseJSON} from './parseJSON';
+import {MAX_JSON_DEPTH} from './types';
 
 describe('parseJSON', () => {
 	describe('invalid JSON', () => {
