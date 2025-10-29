@@ -15,7 +15,7 @@ export interface XMLMetadata extends DepthAwareStructureMetadata {
 
 	/**
 	 * Names of immediate child tags under the root element
-	 * Alphabetically sorted, capped for performance
+	 * Preserves document order, capped for performance
 	 * Excludes special internal keys from the parser
 	 */
 	topLevelNodeTags: PrecisionValue<string>[];

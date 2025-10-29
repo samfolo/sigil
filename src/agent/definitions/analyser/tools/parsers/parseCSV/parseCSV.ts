@@ -1,11 +1,11 @@
 import Papa from 'papaparse';
 
 import {calculateSize, truncateString} from '@sigil/src/agent/definitions/analyser/tools/common';
+import {MAX_STRUCTURE_VALUE_LENGTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
 import type {ParseCSVResult} from './types';
-import {MAX_STRUCTURE_VALUE_LENGTH} from './types';
 
 /**
  * Type guard to check if parsed data is an array of arrays

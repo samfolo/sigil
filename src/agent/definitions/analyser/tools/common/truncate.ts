@@ -21,7 +21,7 @@ const ELLIPSIS_LENGTH = 3;
  * // {value: 'short', exact: true}
  *
  * truncateString('a'.repeat(150), 100);
- * // {value: 'aaa...aaa...', exact: false} (97 chars + '...')
+ * // {value: 'aaa...', exact: false} (97 'a' characters followed by '...')
  * ```
  */
 export const truncateString = (

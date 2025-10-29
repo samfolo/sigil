@@ -1,4 +1,4 @@
-import type {StructuredMetadata} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
+import type {StructureMetadata} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 
 /**
  * Result of YAML parsing operation
@@ -6,4 +6,4 @@ import type {StructuredMetadata} from '@sigil/src/agent/definitions/analyser/too
  */
 export type ParseYAMLResult =
 	| {valid: false; error: string}
-	| {valid: true; metadata: StructuredMetadata};
+	| {valid: true; metadata: StructureMetadata};

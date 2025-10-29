@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import yaml, {JSON_SCHEMA} from 'js-yaml';
 
 import {calculateSize} from '@sigil/src/agent/definitions/analyser/tools/common';
 import {buildStructuredMetadata, MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
@@ -47,10 +47,10 @@ export const parseYAML = (rawData: string): Result<ParseYAMLResult, string> => {
 	// Calculate size from raw input
 	const size = calculateSize(rawData);
 
-	// Attempt to parse YAML
+	// Attempt to parse YAML with safe schema (prevents code execution)
 	let parsed: unknown;
 	try {
-		parsed = yaml.load(rawData);
+		parsed = yaml.load(rawData, {schema: JSON_SCHEMA});
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown parsing error';
