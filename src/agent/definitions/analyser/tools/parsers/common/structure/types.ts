@@ -1,24 +1,30 @@
 import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 
 /**
- * Base metadata shared by array and object structures
+ * Base metadata shared across all structure analysis implementations
  */
-interface BaseStructuredMetadata {
+export interface BaseStructureMetadata {
 	/**
-	 * Maximum nesting depth of the structure
-	 * Capped at maxDepth with exact: false when exceeded
-	 */
-	depth: PrecisionValue<number>;
-	/**
-	 * Size metrics for the raw input string
+	 * Size metrics of the raw input data
 	 */
 	size: SizeMetrics;
 }
 
 /**
+ * Base metadata for structures that calculate nesting depth
+ */
+export interface DepthAwareStructureMetadata extends BaseStructureMetadata {
+	/**
+	 * Maximum nesting depth of the structure
+	 * Capped at maximum depth with exact: false when exceeded
+	 */
+	depth: PrecisionValue<number>;
+}
+
+/**
  * Metadata for array structures (JSON, YAML)
  */
-export interface StructuredArrayMetadata extends BaseStructuredMetadata {
+export interface ArrayStructureMetadata extends DepthAwareStructureMetadata {
 	structure: 'array';
 	/**
 	 * Number of elements in the array
@@ -29,10 +35,10 @@ export interface StructuredArrayMetadata extends BaseStructuredMetadata {
 /**
  * Metadata for object structures (JSON, YAML)
  */
-export interface StructuredObjectMetadata extends BaseStructuredMetadata {
+export interface ObjectStructureMetadata extends DepthAwareStructureMetadata {
 	structure: 'object';
 	/**
-	 * First N keys alphabetically (default 50), each truncated to M characters (default 100)
+	 * First N keys alphabetically, each truncated to maximum length
 	 * Configured via buildStructuredMetadata options
 	 */
 	topLevelKeys: PrecisionValue<string>[];
@@ -45,7 +51,7 @@ export interface StructuredObjectMetadata extends BaseStructuredMetadata {
 /**
  * Metadata for primitive values (JSON, YAML)
  */
-export type StructuredPrimitiveMetadata =
+export type PrimitiveStructureMetadata =
 	| {structure: 'string'; size: SizeMetrics}
 	| {structure: 'number'; size: SizeMetrics}
 	| {structure: 'boolean'; size: SizeMetrics}
@@ -55,7 +61,7 @@ export type StructuredPrimitiveMetadata =
  * Metadata for structured data (JSON, YAML)
  * Discriminated union on 'structure' field
  */
-export type StructuredMetadata =
-	| StructuredArrayMetadata
-	| StructuredObjectMetadata
-	| StructuredPrimitiveMetadata;
+export type StructureMetadata =
+	| ArrayStructureMetadata
+	| ObjectStructureMetadata
+	| PrimitiveStructureMetadata;

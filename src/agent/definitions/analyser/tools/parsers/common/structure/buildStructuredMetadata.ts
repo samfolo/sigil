@@ -1,9 +1,9 @@
 import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 import {truncateString} from '@sigil/src/agent/definitions/analyser/tools/common';
 
-import {calculateDepth} from '../utils/calculateDepth';
+import {calculateDepth} from './calculateDepth';
 
-import type {StructuredMetadata} from './types';
+import type {StructureMetadata} from './types';
 
 /**
  * Maximum number of keys to extract from objects
@@ -65,7 +65,7 @@ export const buildStructuredMetadata = (
 	parsed: unknown,
 	size: SizeMetrics,
 	options?: BuildStructuredMetadataOptions
-): StructuredMetadata => {
+): StructureMetadata => {
 	const maxKeys = options?.maxKeys ?? MAX_STRUCTURE_EXTRACTED_KEY_COUNT;
 	const maxKeyLength = options?.maxKeyLength ?? MAX_STRUCTURE_KEY_LENGTH;
 	const maxDepth = options?.maxDepth ?? MAX_STRUCTURE_PROBING_DEPTH;
