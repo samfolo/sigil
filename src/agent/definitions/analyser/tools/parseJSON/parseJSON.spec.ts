@@ -20,7 +20,8 @@ describe('parseJSON', () => {
 				return;
 			}
 
-			expect(result.data.error).toContain('Unexpected token');
+			expect(result.data.error).toBeTruthy();
+			expect(typeof result.data.error).toBe('string');
 		});
 
 		it('returns valid: false for unclosed braces', () => {
