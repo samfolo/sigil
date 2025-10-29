@@ -1,14 +1,9 @@
-import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
-import {calculateSize, truncateString} from '@sigil/src/agent/definitions/analyser/tools/common';
+import {calculateSize} from '@sigil/src/agent/definitions/analyser/tools/common';
+import {buildStructuredMetadata, MAX_STRUCTURE_EXTRACTED_KEY_COUNT, MAX_STRUCTURE_KEY_LENGTH, MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
-import type {JSONMetadata, ParseJSONResult} from './types';
-import {MAX_JSON_DEPTH} from './types';
-import {calculateDepth} from './utils/calculateDepth';
-
-const MAX_KEYS_TO_RETURN = 50;
-const MAX_KEY_LENGTH = 100;
+import type {ParseJSONResult} from './types';
 
 /**
  * Parses raw data as JSON and extracts metadata
@@ -48,83 +43,11 @@ export const parseJSON = (rawData: string): Result<ParseJSONResult, string> => {
 	}
 
 	// Build metadata based on structure type
-	const metadata = buildMetadata(parsed, size);
+	const metadata = buildStructuredMetadata(parsed, size, {
+		maxKeys: MAX_STRUCTURE_EXTRACTED_KEY_COUNT,
+		maxKeyLength: MAX_STRUCTURE_KEY_LENGTH,
+		maxDepth: MAX_STRUCTURE_PROBING_DEPTH,
+	});
 
 	return ok({valid: true, metadata});
-};
-
-/**
- * Builds appropriate metadata based on the parsed value's structure
- */
-const buildMetadata = (parsed: unknown, size: SizeMetrics): JSONMetadata => {
-	// Handle null explicitly
-	if (parsed === null) {
-		return {structure: 'null', size};
-	}
-
-	// Handle primitives
-	if (typeof parsed === 'string') {
-		return {structure: 'string', size};
-	}
-	if (typeof parsed === 'number') {
-		return {structure: 'number', size};
-	}
-	if (typeof parsed === 'boolean') {
-		return {structure: 'boolean', size};
-	}
-
-	// Handle arrays
-	if (Array.isArray(parsed)) {
-		const depthValue = calculateDepth(parsed);
-		const depth = buildJSONDepth(depthValue);
-
-		return {
-			structure: 'array',
-			elementCount: parsed.length,
-			depth,
-			size,
-		};
-	}
-
-	// Handle objects
-	// At this point, must be an object (JSON.parse only returns primitives, arrays, or objects)
-	if (typeof parsed !== 'object' || parsed === null) {
-		throw new Error('Unexpected parsed value type');
-	}
-
-	const allKeys = Object.keys(parsed);
-	const sortedKeys = allKeys.toSorted();
-	const topKeys = sortedKeys.slice(0, MAX_KEYS_TO_RETURN);
-	const topLevelKeys = topKeys.map((key) => truncateString(key, MAX_KEY_LENGTH));
-
-	const depthValue = calculateDepth(parsed);
-	const depth = buildJSONDepth(depthValue);
-
-	return {
-		structure: 'object',
-		topLevelKeys,
-		totalKeyCount: allKeys.length,
-		depth,
-		size,
-	};
-};
-
-/**
- * Builds depth information from calculated depth value
- *
- * Determines if depth is exact based on whether it exceeds MAX_JSON_DEPTH.
- * When depth exceeds the cap, exact is set to false.
- */
-const buildJSONDepth = (depthValue: number): PrecisionValue<number> => {
-	if (depthValue > MAX_JSON_DEPTH) {
-		return {
-			value: MAX_JSON_DEPTH,
-			exact: false,
-		};
-	}
-
-	return {
-		value: depthValue,
-		exact: true,
-	};
 };

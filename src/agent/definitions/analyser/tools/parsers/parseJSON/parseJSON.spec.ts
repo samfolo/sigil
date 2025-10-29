@@ -1,9 +1,9 @@
 import {describe, expect, it} from 'vitest';
 
+import {MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import {isOk} from '@sigil/src/common/errors';
 
 import {parseJSON} from './parseJSON';
-import {MAX_JSON_DEPTH} from './types';
 
 describe('parseJSON', () => {
 	describe('invalid JSON', () => {
@@ -495,7 +495,7 @@ describe('parseJSON', () => {
 			expect(metadata.depth.exact).toBe(true);
 		});
 
-		it('sets exact: false when depth exceeds MAX_JSON_DEPTH', () => {
+		it('sets exact: false when depth exceeds MAX_STRUCTURE_PROBING_DEPTH', () => {
 			// Create deeply nested structure (25 levels)
 			let nested: unknown = 'value';
 			for (let i = 0; i < 25; i++) {
@@ -518,14 +518,14 @@ describe('parseJSON', () => {
 				throw new Error('Expected array structure');
 			}
 
-			expect(metadata.depth.value).toBe(MAX_JSON_DEPTH);
+			expect(metadata.depth.value).toBe(MAX_STRUCTURE_PROBING_DEPTH);
 			expect(metadata.depth.exact).toBe(false);
 		});
 
-		it('sets exact: true when depth equals MAX_JSON_DEPTH', () => {
-			// Create structure with exactly MAX_JSON_DEPTH levels
+		it('sets exact: true when depth equals MAX_STRUCTURE_PROBING_DEPTH', () => {
+			// Create structure with exactly MAX_STRUCTURE_PROBING_DEPTH levels
 			let nested: unknown = 'value';
-			for (let i = 0; i < MAX_JSON_DEPTH; i++) {
+			for (let i = 0; i < MAX_STRUCTURE_PROBING_DEPTH; i++) {
 				nested = [nested];
 			}
 			const result = parseJSON(JSON.stringify(nested));
@@ -545,7 +545,7 @@ describe('parseJSON', () => {
 				throw new Error('Expected array structure');
 			}
 
-			expect(metadata.depth.value).toBe(MAX_JSON_DEPTH);
+			expect(metadata.depth.value).toBe(MAX_STRUCTURE_PROBING_DEPTH);
 			expect(metadata.depth.exact).toBe(true);
 		});
 	});
