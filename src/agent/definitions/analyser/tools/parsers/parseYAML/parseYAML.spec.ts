@@ -3,12 +3,28 @@ import {describe, expect, it} from 'vitest';
 import {MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import {isOk} from '@sigil/src/common/errors';
 
-import {parseJSON} from './parseJSON';
+import {parseYAML} from './parseYAML';
 
-describe('parseJSON', () => {
-	describe('invalid JSON', () => {
+describe('parseYAML', () => {
+	describe('invalid YAML', () => {
+		it('returns valid: false for empty string', () => {
+			const result = parseYAML('');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(false);
+			if (result.data.valid) {
+				return;
+			}
+
+			expect(result.data.error).toBe('No document found');
+		});
+
 		it('returns valid: false for syntax errors', () => {
-			const result = parseJSON('{invalid}');
+			const result = parseYAML('invalid: yaml: syntax:');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -24,19 +40,9 @@ describe('parseJSON', () => {
 			expect(typeof result.data.error).toBe('string');
 		});
 
-		it('returns valid: false for unclosed braces', () => {
-			const result = parseJSON('{"name": "Alice"');
-
-			expect(isOk(result)).toBe(true);
-			if (!isOk(result)) {
-				return;
-			}
-
-			expect(result.data.valid).toBe(false);
-		});
-
-		it('returns valid: false for trailing commas', () => {
-			const result = parseJSON('{"name": "Alice",}');
+		it('returns valid: false for invalid structure', () => {
+			// Tabs are invalid in YAML
+			const result = parseYAML('key:\n\tvalue');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -49,7 +55,7 @@ describe('parseJSON', () => {
 
 	describe('primitives', () => {
 		it('parses string primitive', () => {
-			const result = parseJSON('"hello"');
+			const result = parseYAML('hello');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -63,11 +69,28 @@ describe('parseJSON', () => {
 
 			const {metadata} = result.data;
 			expect(metadata.structure).toBe('string');
-			expect(metadata.size.characters).toBe(7);
+			expect(metadata.size.characters).toBe(5);
+		});
+
+		it('parses quoted string', () => {
+			const result = parseYAML('"hello world"');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			expect(metadata.structure).toBe('string');
 		});
 
 		it('parses number primitive', () => {
-			const result = parseJSON('42');
+			const result = parseYAML('42');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -84,8 +107,8 @@ describe('parseJSON', () => {
 			expect(metadata.size.characters).toBe(2);
 		});
 
-		it('parses boolean primitive', () => {
-			const result = parseJSON('true');
+		it('parses boolean primitive (true)', () => {
+			const result = parseYAML('true');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -99,11 +122,27 @@ describe('parseJSON', () => {
 
 			const {metadata} = result.data;
 			expect(metadata.structure).toBe('boolean');
-			expect(metadata.size.characters).toBe(4);
+		});
+
+		it('parses boolean primitive (false)', () => {
+			const result = parseYAML('false');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			expect(metadata.structure).toBe('boolean');
 		});
 
 		it('parses null primitive', () => {
-			const result = parseJSON('null');
+			const result = parseYAML('null');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -117,11 +156,10 @@ describe('parseJSON', () => {
 
 			const {metadata} = result.data;
 			expect(metadata.structure).toBe('null');
-			expect(metadata.size.characters).toBe(4);
 		});
 
-		it('primitives do not have depth field', () => {
-			const result = parseJSON('"test"');
+		it('parses tilde as null', () => {
+			const result = parseYAML('~');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -134,14 +172,13 @@ describe('parseJSON', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.structure).toBe('string');
-			expect('depth' in metadata).toBe(false);
+			expect(metadata.structure).toBe('null');
 		});
 	});
 
 	describe('arrays', () => {
 		it('parses empty array', () => {
-			const result = parseJSON('[]');
+			const result = parseYAML('[]');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -163,8 +200,31 @@ describe('parseJSON', () => {
 			expect(metadata.depth.exact).toBe(true);
 		});
 
-		it('parses flat array', () => {
-			const result = parseJSON('[1, 2, 3]');
+		it('parses flat array (flow style)', () => {
+			const result = parseYAML('[1, 2, 3]');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'array') {
+				throw new Error('Expected array structure');
+			}
+
+			expect(metadata.elementCount).toBe(3);
+			expect(metadata.depth.value).toBe(1);
+			expect(metadata.depth.exact).toBe(true);
+		});
+
+		it('parses flat array (block style)', () => {
+			const result = parseYAML('- item1\n- item2\n- item3');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -187,7 +247,7 @@ describe('parseJSON', () => {
 		});
 
 		it('parses nested array', () => {
-			const result = parseJSON('[[1, 2], [3, 4]]');
+			const result = parseYAML('[[1, 2], [3, 4]]');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -210,8 +270,8 @@ describe('parseJSON', () => {
 		});
 
 		it('calculates size from raw input string', () => {
-			const rawData = '[1, 2, 3]';
-			const result = parseJSON(rawData);
+			const rawData = '- item1\n- item2';
+			const result = parseYAML(rawData);
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -225,12 +285,13 @@ describe('parseJSON', () => {
 
 			const {metadata} = result.data;
 			expect(metadata.size.characters).toBe(rawData.length);
+			expect(metadata.size.lines).toBe(2);
 		});
 	});
 
 	describe('objects', () => {
 		it('parses empty object', () => {
-			const result = parseJSON('{}');
+			const result = parseYAML('{}');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -253,8 +314,8 @@ describe('parseJSON', () => {
 			expect(metadata.depth.exact).toBe(true);
 		});
 
-		it('parses flat object', () => {
-			const result = parseJSON('{"name": "Alice", "age": 30}');
+		it('parses flat object (flow style)', () => {
+			const result = parseYAML('{name: Alice, age: 30}');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -280,8 +341,33 @@ describe('parseJSON', () => {
 			expect(metadata.depth.exact).toBe(true);
 		});
 
+		it('parses flat object (block style)', () => {
+			const result = parseYAML('name: Alice\nage: 30');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'object') {
+				throw new Error('Expected object structure');
+			}
+
+			expect(metadata.topLevelKeys).toEqual([
+				{value: 'age', exact: true},
+				{value: 'name', exact: true},
+			]);
+			expect(metadata.totalKeyCount).toBe(2);
+		});
+
 		it('sorts keys alphabetically', () => {
-			const result = parseJSON('{"zebra": 1, "apple": 2, "monkey": 3}');
+			const result = parseYAML('zebra: 1\napple: 2\nmonkey: 3');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -305,58 +391,12 @@ describe('parseJSON', () => {
 			]);
 		});
 
-		it('returns first 50 keys when object has fewer than 50 keys', () => {
-			const keys = Array.from({length: 30}, (_, i) => `key${i}`);
-			const obj = Object.fromEntries(keys.map((k) => [k, 'value']));
-			const result = parseJSON(JSON.stringify(obj));
-
-			expect(isOk(result)).toBe(true);
-			if (!isOk(result)) {
-				return;
-			}
-
-			expect(result.data.valid).toBe(true);
-			if (!result.data.valid) {
-				return;
-			}
-
-			const {metadata} = result.data;
-			if (metadata.structure !== 'object') {
-				throw new Error('Expected object structure');
-			}
-
-			expect(metadata.topLevelKeys).toHaveLength(30);
-			expect(metadata.totalKeyCount).toBe(30);
-		});
-
-		it('returns exactly 50 keys when object has exactly 50 keys', () => {
-			const keys = Array.from({length: 50}, (_, i) => `key${i}`);
-			const obj = Object.fromEntries(keys.map((k) => [k, 'value']));
-			const result = parseJSON(JSON.stringify(obj));
-
-			expect(isOk(result)).toBe(true);
-			if (!isOk(result)) {
-				return;
-			}
-
-			expect(result.data.valid).toBe(true);
-			if (!result.data.valid) {
-				return;
-			}
-
-			const {metadata} = result.data;
-			if (metadata.structure !== 'object') {
-				throw new Error('Expected object structure');
-			}
-
-			expect(metadata.topLevelKeys).toHaveLength(50);
-			expect(metadata.totalKeyCount).toBe(50);
-		});
-
-		it('returns first 50 keys alphabetically when object has more than 50 keys', () => {
-			const keys = Array.from({length: 100}, (_, i) => `key${i.toString().padStart(3, '0')}`);
-			const obj = Object.fromEntries(keys.map((k) => [k, 'value']));
-			const result = parseJSON(JSON.stringify(obj));
+		it('returns first 50 keys for large objects', () => {
+			const keys = Array.from({length: 100}, (_, i) =>
+				`key${i.toString().padStart(3, '0')}`
+			);
+			const yamlLines = keys.map((k) => `${k}: value`);
+			const result = parseYAML(yamlLines.join('\n'));
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -381,7 +421,7 @@ describe('parseJSON', () => {
 
 		it('truncates keys longer than 100 characters', () => {
 			const longKey = 'a'.repeat(150);
-			const result = parseJSON(`{"${longKey}": "value"}`);
+			const result = parseYAML(`${longKey}: value`);
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -404,31 +444,8 @@ describe('parseJSON', () => {
 			expect(metadata.topLevelKeys.at(0)?.value).toMatch(/^a+\.\.\.$/);
 		});
 
-		it('does not truncate keys with exactly 100 characters', () => {
-			const exactKey = 'a'.repeat(100);
-			const result = parseJSON(`{"${exactKey}": "value"}`);
-
-			expect(isOk(result)).toBe(true);
-			if (!isOk(result)) {
-				return;
-			}
-
-			expect(result.data.valid).toBe(true);
-			if (!result.data.valid) {
-				return;
-			}
-
-			const {metadata} = result.data;
-			if (metadata.structure !== 'object') {
-				throw new Error('Expected object structure');
-			}
-
-			expect(metadata.topLevelKeys.at(0)?.exact).toBe(true);
-			expect(metadata.topLevelKeys.at(0)?.value).toBe(exactKey);
-		});
-
 		it('parses nested object', () => {
-			const result = parseJSON('{"user": {"name": "Alice"}}');
+			const result = parseYAML('user:\n  name: Alice');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -452,7 +469,7 @@ describe('parseJSON', () => {
 
 	describe('depth calculation', () => {
 		it('calculates depth for nested arrays', () => {
-			const result = parseJSON('[[[1]]]');
+			const result = parseYAML('[[[1]]]');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -474,7 +491,7 @@ describe('parseJSON', () => {
 		});
 
 		it('calculates depth for nested objects', () => {
-			const result = parseJSON('{"a": {"b": {"c": 1}}}');
+			const result = parseYAML('a:\n  b:\n    c: 1');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -501,7 +518,7 @@ describe('parseJSON', () => {
 			for (let i = 0; i < MAX_STRUCTURE_PROBING_DEPTH + 5; i++) {
 				nested = [nested];
 			}
-			const result = parseJSON(JSON.stringify(nested));
+			const result = parseYAML(JSON.stringify(nested));
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -521,14 +538,33 @@ describe('parseJSON', () => {
 			expect(metadata.depth.value).toBe(MAX_STRUCTURE_PROBING_DEPTH);
 			expect(metadata.depth.exact).toBe(false);
 		});
+	});
 
-		it('sets exact: true when depth equals MAX_STRUCTURE_PROBING_DEPTH', () => {
-			// Create structure with exactly MAX_STRUCTURE_PROBING_DEPTH levels
-			let nested: unknown = 'value';
-			for (let i = 0; i < MAX_STRUCTURE_PROBING_DEPTH; i++) {
-				nested = [nested];
+	describe('mixed structures', () => {
+		it('handles arrays within objects', () => {
+			const result = parseYAML('items:\n  - 1\n  - 2\n  - 3');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
 			}
-			const result = parseJSON(JSON.stringify(nested));
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'object') {
+				throw new Error('Expected object structure');
+			}
+
+			expect(metadata.depth.value).toBe(2);
+			expect(metadata.depth.exact).toBe(true);
+		});
+
+		it('handles objects within arrays', () => {
+			const result = parseYAML('- a: 1\n- b: 2');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -545,15 +581,38 @@ describe('parseJSON', () => {
 				throw new Error('Expected array structure');
 			}
 
-			expect(metadata.depth.value).toBe(MAX_STRUCTURE_PROBING_DEPTH);
+			expect(metadata.depth.value).toBe(2);
+			expect(metadata.depth.exact).toBe(true);
+		});
+
+		it('handles complex nested structures', () => {
+			const result = parseYAML(
+				'users:\n  - name: Alice\n    tags:\n      - admin\n      - user\n  - name: Bob\n    tags:\n      - user'
+			);
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'object') {
+				throw new Error('Expected object structure');
+			}
+
+			expect(metadata.depth.value).toBe(4);
 			expect(metadata.depth.exact).toBe(true);
 		});
 	});
 
-	describe('size calculation', () => {
-		it('calculates size from original raw string for objects', () => {
-			const rawData = '{"name": "Alice"}';
-			const result = parseJSON(rawData);
+	describe('plain text', () => {
+		it('parses plain text as string', () => {
+			const result = parseYAML('hello world');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -566,14 +625,11 @@ describe('parseJSON', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.size.characters).toBe(rawData.length);
-			expect(metadata.size.bytes).toBeGreaterThan(0);
-			expect(metadata.size.lines).toBe(1);
+			expect(metadata.structure).toBe('string');
 		});
 
-		it('calculates size from original raw string for primitives', () => {
-			const rawData = '"hello"';
-			const result = parseJSON(rawData);
+		it('parses text with spaces as string', () => {
+			const result = parseYAML('This is a plain text string');
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -586,7 +642,154 @@ describe('parseJSON', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.size.characters).toBe(7);
+			expect(metadata.structure).toBe('string');
+		});
+	});
+
+	describe('JSON compatibility', () => {
+		it('parses valid JSON object', () => {
+			const result = parseYAML('{"name": "Alice", "age": 30}');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'object') {
+				throw new Error('Expected object structure');
+			}
+
+			expect(metadata.topLevelKeys.map((k) => k.value)).toEqual([
+				'age',
+				'name',
+			]);
+		});
+
+		it('parses valid JSON array', () => {
+			const result = parseYAML('[1, 2, 3]');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'array') {
+				throw new Error('Expected array structure');
+			}
+
+			expect(metadata.elementCount).toBe(3);
+		});
+
+		it('parses JSON string', () => {
+			const result = parseYAML('"hello"');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			expect(metadata.structure).toBe('string');
+		});
+	});
+
+	describe('edge cases', () => {
+		it('handles array with single element', () => {
+			const result = parseYAML('- 42');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'array') {
+				throw new Error('Expected array structure');
+			}
+
+			expect(metadata.elementCount).toBe(1);
+			expect(metadata.depth.value).toBe(1);
+		});
+
+		it('handles object with single property', () => {
+			const result = parseYAML('key: value');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			if (metadata.structure !== 'object') {
+				throw new Error('Expected object structure');
+			}
+
+			expect(metadata.topLevelKeys).toHaveLength(1);
+			expect(metadata.depth.value).toBe(1);
+		});
+
+		it('handles multiline strings', () => {
+			const result = parseYAML('|\n  This is\n  a multiline\n  string');
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			expect(result.data.valid).toBe(true);
+			if (!result.data.valid) {
+				return;
+			}
+
+			const {metadata} = result.data;
+			expect(metadata.structure).toBe('string');
+		});
+	});
+
+	describe('always returns Ok', () => {
+		it('never returns Err for invalid input', () => {
+			const result = parseYAML('invalid: yaml: syntax:');
+
+			expect(isOk(result)).toBe(true);
+		});
+
+		it('never returns Err for empty input', () => {
+			const result = parseYAML('');
+
+			expect(isOk(result)).toBe(true);
+		});
+
+		it('never returns Err for valid input', () => {
+			const result = parseYAML('key: value');
+
+			expect(isOk(result)).toBe(true);
 		});
 	});
 });

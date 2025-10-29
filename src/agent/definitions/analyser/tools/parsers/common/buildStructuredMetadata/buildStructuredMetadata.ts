@@ -1,8 +1,9 @@
 import type {PrecisionValue, SizeMetrics} from '@sigil/src/agent/definitions/analyser/tools/common';
 import {truncateString} from '@sigil/src/agent/definitions/analyser/tools/common';
 
-import type {StructuredMetadata} from './types';
 import {calculateDepth} from '../utils/calculateDepth';
+
+import type {StructuredMetadata} from './types';
 
 /**
  * Maximum number of keys to extract from objects
