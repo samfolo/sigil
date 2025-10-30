@@ -1,11 +1,19 @@
 import {z} from 'zod';
 
+import type {BaseParserStructureMetadata, ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {HelperToolConfig, ToolReducerHandler} from '@sigil/src/agent/framework/defineAgent';
-import type {ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
-import type {Result} from '@sigil/src/common/errors';
 import {err, isErr, ok} from '@sigil/src/common/errors';
 
 import {parseCSV} from './parseCSV';
+import type {ParseCSVResult} from './types';
+
+/**
+ * Structure metadata from parse_csv tool
+ */
+export interface ParseCSVStructureMetadata extends BaseParserStructureMetadata {
+	tool: 'parse_csv';
+	details: ParseCSVResult;
+}
 
 /**
  * Input schema for the parse_csv tool
@@ -46,9 +54,9 @@ export const PARSE_CSV_TOOL: HelperToolConfig<ParseCSVInput> = {
 /**
  * Reducer handler for parse_csv tool
  *
- * Reads from state.raw, writes to state.parsed on success.
+ * Reads from state.raw, writes to state.structureMetadata on success.
  */
-export const parseCSVReducerHandler: ToolReducerHandler<ParserState> = (state, toolInput) => {
+export const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMetadata>> = (state, toolInput) => {
 	// Validate input against schema
 	const parsed = parseCSVInputSchema.safeParse(toolInput);
 	if (!parsed.success) {
@@ -63,7 +71,13 @@ export const parseCSVReducerHandler: ToolReducerHandler<ParserState> = (state, t
 	}
 
 	return ok({
-		newState: {...state, parsed: result.data},
+		newState: {
+			...state,
+			structureMetadata: {
+				tool: 'parse_csv',
+				details: result.data,
+			},
+		},
 		toolResult: result.data,
 	});
 };

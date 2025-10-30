@@ -1,10 +1,19 @@
 import {z} from 'zod';
 
+import type {BaseParserStructureMetadata, ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {HelperToolConfig, ToolReducerHandler} from '@sigil/src/agent/framework/defineAgent';
-import type {ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import {err, isErr, ok} from '@sigil/src/common/errors';
 
 import {parseJSON} from './parseJSON';
+import type {ParseJSONResult} from './types';
+
+/**
+ * Structure metadata from parse_json tool
+ */
+export interface ParseJSONStructureMetadata extends BaseParserStructureMetadata {
+	tool: 'parse_json';
+	details: ParseJSONResult;
+}
 
 /**
  * Input schema for the parse_json tool
@@ -35,9 +44,9 @@ export const PARSE_JSON_TOOL: HelperToolConfig<ParseJSONInput> = {
 /**
  * Reducer handler for parse_json tool
  *
- * Reads from state.raw, writes to state.parsed on success.
+ * Reads from state.raw, writes to state.structureMetadata on success.
  */
-export const parseJSONReducerHandler: ToolReducerHandler<ParserState> = (state, toolInput) => {
+export const parseJSONReducerHandler: ToolReducerHandler<ParserState<ParseJSONStructureMetadata>> = (state, toolInput) => {
 	// Validate input against schema
 	const parsed = parseJSONInputSchema.safeParse(toolInput);
 	if (!parsed.success) {
@@ -52,7 +61,13 @@ export const parseJSONReducerHandler: ToolReducerHandler<ParserState> = (state, 
 	}
 
 	return ok({
-		newState: {...state, parsed: result.data},
+		newState: {
+			...state,
+			structureMetadata: {
+				tool: 'parse_json',
+				details: result.data,
+			},
+		},
 		toolResult: result.data,
 	});
 };

@@ -385,21 +385,6 @@ interface FormattedToolResult {
 }
 
 /**
- * Formats a reducer result for Anthropic API
- */
-const formatToolResult = (result: Result<{newState: unknown; toolResult: unknown}, string>): FormattedToolResult => {
-	if (isErr(result)) {
-		return {
-			content: result.error,
-			is_error: true,
-		};
-	}
-	return {
-		content: String(result.data.toolResult),
-	};
-};
-
-/**
  * Formats a reflection handler result for Anthropic API
  */
 const formatReflectionHandlerResult = (result: Result<string, string>): FormattedToolResult => {
