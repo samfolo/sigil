@@ -51,11 +51,6 @@ export interface EmptyOutputToolDescriptionContext {
 export type MissingOutputSchemaContext = Record<string, never>;
 
 /**
- * Context for MISSING_REDUCER error
- */
-export type MissingReducerContext = Record<string, never>;
-
-/**
  * Context for INVALID_MAX_ATTEMPTS error
  */
 export interface InvalidMaxAttemptsContext {

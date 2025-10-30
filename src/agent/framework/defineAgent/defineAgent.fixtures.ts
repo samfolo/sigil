@@ -15,7 +15,6 @@ import type {Result} from '@sigil/src/common/errors';
 import {err, ok} from '@sigil/src/common/errors';
 
 import type {AgentDefinition} from './defineAgent';
-import type {ToolReducer} from './types';
 
 /**
  * Simple output interface used across all test fixtures for consistency
@@ -180,7 +179,7 @@ class AgentDefinitionBuilder<Input, Output, State = Input> {
  * @param base - Base agent definition to extend
  * @returns Builder instance with chainable methods
  */
-const agentBuilder = <Input, Output, State = Input>(
+export const agentBuilder = <Input, Output, State = Input>(
 	base: AgentDefinition<Input, Output, State>
 ): AgentDefinitionBuilder<Input, Output, State> => new AgentDefinitionBuilder(base);
 

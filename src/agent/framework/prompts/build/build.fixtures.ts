@@ -11,9 +11,7 @@
 import {z} from 'zod';
 
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent/defineAgent';
-import type {ToolReducer} from '@sigil/src/agent/framework/defineAgent/types';
 import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
-import {err} from '@sigil/src/common/errors';
 
 /**
  * Simple input interface for test agents
@@ -35,12 +33,6 @@ interface TestOutput {
 const TEST_OUTPUT_SCHEMA = z.object({
 	result: z.string(),
 });
-
-/**
- * Simple reducer for test fixtures
- */
-const TEST_REDUCER: ToolReducer<TestInput> = (context) =>
-	err(`Unknown tool: ${context.toolName}`);
 
 /**
  * Default tools config for test fixtures
@@ -126,7 +118,6 @@ export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -162,7 +153,6 @@ export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -198,7 +188,6 @@ export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -234,7 +223,6 @@ export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -269,7 +257,6 @@ export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -304,7 +291,6 @@ export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -339,7 +325,6 @@ export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -375,7 +360,6 @@ export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -411,7 +395,6 @@ export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> 
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };
 
 /**
@@ -447,5 +430,4 @@ export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput>
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: TEST_REDUCER,
 };

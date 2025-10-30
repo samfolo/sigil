@@ -28,7 +28,6 @@ import type {
 	MaxIterationsExceededContext,
 	MetricsCollectionFailedContext,
 	MissingOutputSchemaContext,
-	MissingReducerContext,
 	OutputToolNotUsedContext,
 	PromptGenerationFailedContext,
 	RateLimitErrorContext,
@@ -332,12 +331,6 @@ const formatLoggingFailed = (context: LoggingFailedContext): string => {
 };
 
 /**
- * Formats MISSING_REDUCER error
- */
-const formatMissingReducer = (_context: MissingReducerContext): string =>
-	'Agent definition must include a reducer function';
-
-/**
  * Formats a single agent error into a human-readable message
  *
  * Uses templated messages for each error code with contextual information.
@@ -435,10 +428,6 @@ export const formatAgentError = (error: AgentError): string => {
 
 		case AGENT_ERROR_CODES.LOGGING_FAILED:
 			baseMessage = formatLoggingFailed(error.context);
-			break;
-
-		case AGENT_ERROR_CODES.MISSING_REDUCER:
-			baseMessage = formatMissingReducer(error.context);
 			break;
 	}
 

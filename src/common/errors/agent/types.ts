@@ -26,7 +26,6 @@ import type {
 	MaxIterationsExceededContext,
 	MetricsCollectionFailedContext,
 	MissingOutputSchemaContext,
-	MissingReducerContext,
 	OutputToolNotUsedContext,
 	PromptGenerationFailedContext,
 	RateLimitErrorContext,
@@ -105,15 +104,6 @@ export interface MissingOutputSchemaError
     typeof AGENT_ERROR_CODES.MISSING_OUTPUT_SCHEMA,
     AgentErrorCategory,
     MissingOutputSchemaContext
-  > {
-  category: 'validation';
-}
-
-export interface MissingReducerError
-  extends StructuredError<
-    typeof AGENT_ERROR_CODES.MISSING_REDUCER,
-    AgentErrorCategory,
-    MissingReducerContext
   > {
   category: 'validation';
 }
@@ -278,7 +268,6 @@ export type AgentError =
   | EmptyOutputToolNameError
   | EmptyOutputToolDescriptionError
   | MissingOutputSchemaError
-  | MissingReducerError
   | InvalidMaxAttemptsError
   | InvalidTemperatureError
   | InvalidMaxTokensError
