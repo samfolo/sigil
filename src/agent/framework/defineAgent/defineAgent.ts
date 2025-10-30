@@ -5,6 +5,8 @@ import type {ValidationLayer} from '@sigil/src/agent/framework/validation';
 import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
 
+import type {ToolReducer} from './types';
+
 /**
  * Configuration for the LLM model used by the agent
  */
@@ -208,11 +210,11 @@ export interface OutputToolConfig<Output> {
 }
 
 /**
- * Configuration for a helper tool with execution handler
+ * Configuration for a helper tool
  *
  * Helper tools enable multi-step workflows, data exploration, and context retrieval
- * within agent execution. Each helper tool requires a name, description, input schema,
- * and handler for execution.
+ * within agent execution. Each helper tool requires a name, description, and input schema.
+ * Tool execution is handled by the agent's reducer function.
  *
  * @template Input - The type of input this helper tool accepts
  */
@@ -237,19 +239,6 @@ export interface HelperToolConfig<Input> {
    * Automatically converted to JSON Schema for the Anthropic API.
    */
   inputSchema: z.ZodSchema<Input>;
-
-  /**
-   * Handler function that executes when the model calls this tool
-   *
-   * @param input - The validated tool input from the model
-   * @returns Result containing data to send back to the model (will be converted to string), or error message string
-   *
-   * @example
-   * ```typescript
-   * handler: (input) => ok(database.search(input.query))
-   * ```
-   */
-  handler: (input: Input) => Result<unknown, string>;
 }
 
 /**
@@ -337,8 +326,9 @@ export interface PromptsConfig<Input> {
  *
  * @template Input - The type of input the agent accepts
  * @template Output - The type of output the agent produces
+ * @template State - The type of state maintained during execution (defaults to Input)
  */
-export interface AgentDefinition<Input, Output> {
+export interface AgentDefinition<Input, Output, State = Input> {
   /**
    * Unique name for the agent
    */
@@ -373,6 +363,32 @@ export interface AgentDefinition<Input, Output> {
    * Observability tracking configuration
    */
   observability: ObservabilityConfig;
+
+  /**
+   * Reducer function for handling all helper tool executions
+   *
+   * This is the sole execution path for helper tools. The reducer receives the current state,
+   * tool name, and tool input, and returns a new state along with the tool result.
+   *
+   * REQUIRED: All agents must provide a reducer function.
+   */
+  reducer: ToolReducer<State>;
+
+  /**
+   * Optional function to initialise state from input
+   *
+   * If not provided, the input is used directly as the initial state (State must equal Input).
+   * Use this when State needs to be derived or transformed from Input.
+   *
+   * @param input - The agent input
+   * @returns Initial state for execution
+   *
+   * @example
+   * ```typescript
+   * initialState: (input) => ({items: [], data: input})
+   * ```
+   */
+  initialState?: (input: Input) => State;
 }
 
 /**
@@ -425,9 +441,9 @@ export interface AgentDefinition<Input, Output> {
  * const agent = result.data;
  * ```
  */
-export const defineAgent = <Input, Output>(
-	definition: AgentDefinition<Input, Output>
-): Result<Readonly<AgentDefinition<Input, Output>>, AgentError[]> => {
+export const defineAgent = <Input, Output, State = Input>(
+	definition: AgentDefinition<Input, Output, State>
+): Result<Readonly<AgentDefinition<Input, Output, State>>, AgentError[]> => {
 	const errors: AgentError[] = [];
 
 	// Validate name
@@ -517,6 +533,17 @@ export const defineAgent = <Input, Output>(
 				providedValue: definition.validation.maxAttempts,
 				minimumValue: AGENT_VALIDATION_CONSTRAINTS.MIN_MAX_ATTEMPTS,
 			},
+		});
+	}
+
+	// Validate reducer is provided
+	if (!definition.reducer) {
+		errors.push({
+			code: AGENT_ERROR_CODES.MISSING_REDUCER,
+			severity: 'error',
+			category: 'validation',
+			path: '$.reducer',
+			context: {},
 		});
 	}
 

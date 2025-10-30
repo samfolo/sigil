@@ -12,3 +12,9 @@ export type {
 	ValidationConfig,
 } from './defineAgent';
 export {defineAgent} from './defineAgent';
+
+export type {
+	ToolExecutionContext,
+	ToolReducer,
+	ToolReducerHandler,
+} from './types';

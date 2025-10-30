@@ -34,6 +34,14 @@ const DEFAULT_SUBMIT_TOOL: Anthropic.Tool = {
 };
 
 /**
+ * Default state initialiser that uses input as the initial state
+ *
+ * Used when no custom initialState function is provided in the agent definition.
+ * Assumes State type equals Input type.
+ */
+const DEFAULT_STATE_INITIALISER = <Input, State>(input: Input): State => input as unknown as State;
+
+/**
  * Token usage statistics for an agent execution
  */
 export interface ExecuteMetadataTokenUsageStatistics {
@@ -377,22 +385,9 @@ interface FormattedToolResult {
 }
 
 /**
- * Formats a tool handler result for Anthropic API
- *
- * Converts Result<unknown, string> from handlers into the format expected by
- * Anthropic's tool result API: {content: string, is_error?: boolean}
- *
- * @param result - Result from a tool handler (helper or reflection)
- * @returns Object with string content and optional error flag
- *
- * @example
- * ```typescript
- * const handlerResult = handler(input);
- * const toolResult = formatToolResult(handlerResult);
- * // toolResult = {content: "data", is_error: false} or {content: "error", is_error: true}
- * ```
+ * Formats a reducer result for Anthropic API
  */
-const formatToolResult = (result: Result<unknown, string>): FormattedToolResult => {
+const formatToolResult = (result: Result<{newState: unknown; toolResult: unknown}, string>): FormattedToolResult => {
 	if (isErr(result)) {
 		return {
 			content: result.error,
@@ -400,7 +395,22 @@ const formatToolResult = (result: Result<unknown, string>): FormattedToolResult 
 		};
 	}
 	return {
-		content: String(result.data),
+		content: String(result.data.toolResult),
+	};
+};
+
+/**
+ * Formats a reflection handler result for Anthropic API
+ */
+const formatReflectionHandlerResult = (result: Result<string, string>): FormattedToolResult => {
+	if (isErr(result)) {
+		return {
+			content: result.error,
+			is_error: true,
+		};
+	}
+	return {
+		content: result.data,
 	};
 };
 
@@ -496,8 +506,8 @@ const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata => {
 	return metadata;
 };
 
-export const executeAgent = async <Input, Output>(
-	agent: AgentDefinition<Input, Output>,
+export const executeAgent = async <Input, Output, State = Input>(
+	agent: AgentDefinition<Input, Output, State>,
 	options: ExecuteOptions<Input, Output>
 ): Promise<Result<ExecuteSuccess<Output>, ExecuteFailure>> => {
 	// Track execution start time for latency calculation
@@ -522,6 +532,10 @@ export const executeAgent = async <Input, Output>(
 		name: 'validation',
 		description: 'No description provided for validation layer',
 	};
+
+	// Initialise state for execution
+	const stateInitialiser = agent.initialState ?? DEFAULT_STATE_INITIALISER<Input, State>;
+	let currentState: State = stateInitialiser(options.input);
 
 	// Check for cancellation before building user prompt
 	if (options.signal?.aborted) {
@@ -658,14 +672,6 @@ export const executeAgent = async <Input, Output>(
 			...(reflectionEnabled ? [DEFAULT_SUBMIT_TOOL] : []),
 		];
 
-		// Build helper tool handler map for fast lookup
-		const helperHandlers = new Map<string, (input: unknown) => Result<unknown, string>>();
-		if (agent.tools.helpers) {
-			for (const helper of agent.tools.helpers) {
-				helperHandlers.set(helper.name, helper.handler);
-			}
-		}
-
 		// Iteration loop for tool calling
 		let iterationCount = 0;
 		let output: Output | undefined;
@@ -781,7 +787,7 @@ export const executeAgent = async <Input, Output>(
 						// Execute reflection handler with exception safety
 						try {
 							const handlerResult = agent.tools.output.reflectionHandler!(lastOutputToolInput);
-							const formatted = formatToolResult(handlerResult);
+							const formatted = formatReflectionHandlerResult(handlerResult);
 
 							toolResults.push({
 								type: 'tool_result',
@@ -817,33 +823,7 @@ export const executeAgent = async <Input, Output>(
 					continue;
 				}
 
-				// Handle helper tools
-				const handler = helperHandlers.get(toolUse.name);
-
-				if (!handler) {
-					// Unknown tool - fire callback then return error result
-					safeInvokeCallback(
-						options.callbacks?.onToolCall,
-						[{...state}, toolUse.name, toolUse.input],
-						callbackErrors
-					);
-
-					const errorContent = `Error: Unknown tool ${toolUse.name}`;
-					toolResults.push({
-						type: 'tool_result',
-						tool_use_id: toolUse.id,
-						content: errorContent,
-						is_error: true,
-					});
-
-					safeInvokeCallback(
-						options.callbacks?.onToolResult,
-						[{...state}, toolUse.name, errorContent],
-						callbackErrors
-					);
-					continue;
-				}
-
+				// Handle helper tools via reducer
 				// Fire callback before execution
 				safeInvokeCallback(
 					options.callbacks?.onToolCall,
@@ -851,26 +831,44 @@ export const executeAgent = async <Input, Output>(
 					callbackErrors
 				);
 
-				// Execute helper tool handler with exception safety
+				// Execute reducer with exception safety
 				try {
-					const handlerResult = handler(toolUse.input);
-					const formatted = formatToolResult(handlerResult);
-
-					toolResults.push({
-						type: 'tool_result',
-						tool_use_id: toolUse.id,
-						content: formatted.content,
-						is_error: formatted.is_error,
+					const reducerResult = agent.reducer({
+						state: currentState,
+						toolName: toolUse.name,
+						toolInput: toolUse.input,
 					});
 
-					// Fire callback with result
-					safeInvokeCallback(
-						options.callbacks?.onToolResult,
-						[{...state}, toolUse.name, formatted.content],
-						callbackErrors
-					);
+					if (isErr(reducerResult)) {
+						const errorContent = reducerResult.error;
+						toolResults.push({
+							type: 'tool_result',
+							tool_use_id: toolUse.id,
+							content: errorContent,
+							is_error: true,
+						});
+						safeInvokeCallback(
+							options.callbacks?.onToolResult,
+							[{...state}, toolUse.name, errorContent],
+							callbackErrors
+						);
+					} else {
+						currentState = reducerResult.data.newState;
+						const formattedResult = String(reducerResult.data.toolResult);
+						toolResults.push({
+							type: 'tool_result',
+							tool_use_id: toolUse.id,
+							content: formattedResult,
+							is_error: false,
+						});
+						safeInvokeCallback(
+							options.callbacks?.onToolResult,
+							[{...state}, toolUse.name, formattedResult],
+							callbackErrors
+						);
+					}
 				} catch (error) {
-					// Helper tool handler threw exception (contract violation)
+					// Reducer threw exception (contract violation)
 					const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
 					toolResults.push({
 						type: 'tool_result',
@@ -878,7 +876,6 @@ export const executeAgent = async <Input, Output>(
 						content: errorContent,
 						is_error: true,
 					});
-					// Fire callback with error result
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
 						[{...state}, toolUse.name, errorContent],
