@@ -62,7 +62,6 @@ class AgentDefinitionBuilder<Input, Output, State = Input> {
 		modelName?: string;
 		temperature?: number;
 		maxTokens?: number;
-		reducer?: ToolReducer<State>;
 	} = {};
 
 	constructor(private base: AgentDefinition<Input, Output, State>) {}
@@ -127,11 +126,6 @@ class AgentDefinitionBuilder<Input, Output, State = Input> {
 		return this;
 	}
 
-	withReducer(reducer: ToolReducer<State>): this {
-		this.overrides.reducer = reducer;
-		return this;
-	}
-
 	build(): AgentDefinition<Input, Output, State> {
 		return {
 			name: this.overrides.name ?? this.base.name,
@@ -176,7 +170,6 @@ class AgentDefinitionBuilder<Input, Output, State = Input> {
 				...this.base.observability,
 				...this.overrides.observability,
 			},
-			reducer: this.overrides.reducer ?? this.base.reducer,
 		};
 	}
 }
@@ -272,34 +265,7 @@ export const mockThrowingHandler = (_input: unknown): Result<unknown, string> =>
 	throw new Error('Handler threw exception');
 };
 
-/**
- * Simple reducer for agents without helper tools
- * Only handles the output tool (which is handled separately in executeAgent)
- */
-const createSimpleReducer = <State>(): ToolReducer<State> => (context) =>
-	err(`Unknown tool: ${context.toolName}`);
 
-/**
- * Creates a reducer that routes tool calls to appropriate handlers
- */
-const createReducerWithHandlers = <State>(
-	handlers: Record<string, (input: unknown) => Result<unknown, string>>
-): ToolReducer<State> => (context) => {
-		const handler = handlers[context.toolName];
-		if (!handler) {
-			return err(`Unknown tool: ${context.toolName}`);
-		}
-
-		const handlerResult = handler(context.toolInput);
-		if (!handlerResult.success) {
-			return err(handlerResult.error);
-		}
-
-		return ok({
-			newState: context.state,
-			toolResult: handlerResult.data,
-		});
-	};
 
 /**
  * Base minimal agent - simplest valid configuration
@@ -341,7 +307,6 @@ const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	reducer: createSimpleReducer<string>(),
 };
 
 /**
@@ -529,16 +494,23 @@ export const mockThrowingReflectionHandler = (_output: TestOutput): Result<strin
 export const AGENT_WITH_HELPER_TOOLS: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('HelperToolsAgent')
 	.withDescription('Agent with helper tools for data querying')
-	.withHelpers([
-		{
+	.withHelpers({
+		query_data: {
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockDataQueryHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-	])
-	.withReducer(createReducerWithHandlers<string>({
-		query_data: mockDataQueryHandler,
-	}))
+	})
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -556,16 +528,23 @@ export const AGENT_WITH_HELPER_TOOLS: AgentDefinition<string, TestOutput> = agen
 export const AGENT_WITH_FAILING_HELPER: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('FailingHelperAgent')
 	.withDescription('Agent with helper tool that fails')
-	.withHelpers([
-		{
+	.withHelpers({
+		failing_tool: {
 			name: 'failing_tool',
 			description: 'A tool that always fails',
 			inputSchema: z.object({query: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockFailingHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-	])
-	.withReducer(createReducerWithHandlers<string>({
-		failing_tool: mockFailingHandler,
-	}))
+	})
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -582,28 +561,53 @@ export const AGENT_WITH_FAILING_HELPER: AgentDefinition<string, TestOutput> = ag
 export const AGENT_WITH_MULTIPLE_HELPERS: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('MultipleHelpersAgent')
 	.withDescription('Agent with multiple helper tools')
-	.withHelpers([
-		{
+	.withHelpers({
+		query_data: {
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockDataQueryHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-		{
+		fetch_context: {
 			name: 'fetch_context',
 			description: 'Fetch additional context',
 			inputSchema: z.object({id: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockFetchContextHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-		{
+		calculate: {
 			name: 'calculate',
 			description: 'Perform calculations',
 			inputSchema: z.object({operation: z.string(), values: z.array(z.number())}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockCalculateHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-	])
-	.withReducer(createReducerWithHandlers<string>({
-		query_data: mockDataQueryHandler,
-		fetch_context: mockFetchContextHandler,
-		calculate: mockCalculateHandler,
-	}))
+	})
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -658,22 +662,38 @@ export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutp
 	.withName('HelpersAndReflectionAgent')
 	.withDescription('Agent with both helper tools and reflection mode')
 	.withMaxTokens(2048)
-	.withHelpers([
-		{
+	.withHelpers({
+		query_data: {
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockDataQueryHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-		{
+		fetch_context: {
 			name: 'fetch_context',
 			description: 'Fetch additional context',
 			inputSchema: z.object({id: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockFetchContextHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-	])
-	.withReducer(createReducerWithHandlers<string>({
-		query_data: mockDataQueryHandler,
-		fetch_context: mockFetchContextHandler,
-	}))
+	})
 	.withReflection(mockReflectionHandler)
 	.withObservability({
 		trackCost: true,
@@ -692,16 +712,23 @@ export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutp
 export const AGENT_WITH_THROWING_HELPER: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('ThrowingHelperAgent')
 	.withDescription('Agent with helper tool that throws exceptions')
-	.withHelpers([
-		{
+	.withHelpers({
+		throwing_tool: {
 			name: 'throwing_tool',
 			description: 'A tool that throws exceptions',
 			inputSchema: z.object({query: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockThrowingHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-	])
-	.withReducer(createReducerWithHandlers<string>({
-		throwing_tool: mockThrowingHandler,
-	}))
+	})
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -737,16 +764,23 @@ export const AGENT_WITH_THROWING_REFLECTION: AgentDefinition<string, TestOutput>
 export const AGENT_WITH_DEFAULT_ITERATION_LIMIT: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('DefaultIterationLimitAgent')
 	.withDescription('Agent without explicit iteration limit configuration')
-	.withHelpers([
-		{
+	.withHelpers({
+		query_data: {
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
+			handler: (state, toolInput) => {
+				const handlerResult = mockDataQueryHandler(toolInput);
+				if (!handlerResult.success) {
+					return err(handlerResult.error);
+				}
+				return ok({
+					newState: state,
+					toolResult: handlerResult.data,
+				});
+			},
 		},
-	])
-	.withReducer(createReducerWithHandlers<string>({
-		query_data: mockDataQueryHandler,
-	}))
+	})
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
