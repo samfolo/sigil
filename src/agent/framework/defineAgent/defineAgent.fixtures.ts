@@ -15,6 +15,7 @@ import type {Result} from '@sigil/src/common/errors';
 import {err, ok} from '@sigil/src/common/errors';
 
 import type {AgentDefinition} from './defineAgent';
+import type {ToolReducer} from './types';
 
 /**
  * Simple output interface used across all test fixtures for consistency
@@ -47,23 +48,24 @@ const TEST_OUTPUT_SCHEMA = z.object({
  *   .build();
  * ```
  */
-class AgentDefinitionBuilder<TInput, TOutput> {
+class AgentDefinitionBuilder<Input, Output, State = Input> {
 	private overrides: {
 		name?: string;
 		description?: string;
 		maxAttempts?: number;
 		maxIterationsPerAttempt?: number;
-		helpers?: AgentDefinition<TInput, TOutput>['tools']['helpers'];
-		reflectionHandler?: AgentDefinition<TInput, TOutput>['tools']['output']['reflectionHandler'];
-		customValidators?: AgentDefinition<TInput, TOutput>['validation']['customValidators'];
-		observability?: Partial<AgentDefinition<TInput, TOutput>['observability']>;
-		outputSchema?: z.ZodSchema<TOutput>;
+		helpers?: AgentDefinition<Input, Output, State>['tools']['helpers'];
+		reflectionHandler?: AgentDefinition<Input, Output, State>['tools']['output']['reflectionHandler'];
+		customValidators?: AgentDefinition<Input, Output, State>['validation']['customValidators'];
+		observability?: Partial<AgentDefinition<Input, Output, State>['observability']>;
+		outputSchema?: z.ZodSchema<Output>;
 		modelName?: string;
 		temperature?: number;
 		maxTokens?: number;
+		reducer?: ToolReducer<State>;
 	} = {};
 
-	constructor(private base: AgentDefinition<TInput, TOutput>) {}
+	constructor(private base: AgentDefinition<Input, Output, State>) {}
 
 	withName(name: string): this {
 		this.overrides.name = name;
@@ -85,27 +87,27 @@ class AgentDefinitionBuilder<TInput, TOutput> {
 		return this;
 	}
 
-	withHelpers(helpers: AgentDefinition<TInput, TOutput>['tools']['helpers']): this {
+	withHelpers(helpers: AgentDefinition<Input, Output, State>['tools']['helpers']): this {
 		this.overrides.helpers = helpers;
 		return this;
 	}
 
-	withReflection(handler: AgentDefinition<TInput, TOutput>['tools']['output']['reflectionHandler']): this {
+	withReflection(handler: AgentDefinition<Input, Output, State>['tools']['output']['reflectionHandler']): this {
 		this.overrides.reflectionHandler = handler;
 		return this;
 	}
 
-	withCustomValidators(validators: AgentDefinition<TInput, TOutput>['validation']['customValidators']): this {
+	withCustomValidators(validators: AgentDefinition<Input, Output, State>['validation']['customValidators']): this {
 		this.overrides.customValidators = validators;
 		return this;
 	}
 
-	withObservability(observability: Partial<AgentDefinition<TInput, TOutput>['observability']>): this {
+	withObservability(observability: Partial<AgentDefinition<Input, Output, State>['observability']>): this {
 		this.overrides.observability = observability;
 		return this;
 	}
 
-	withOutputSchema(schema: z.ZodSchema<TOutput>): this {
+	withOutputSchema(schema: z.ZodSchema<Output>): this {
 		this.overrides.outputSchema = schema;
 		return this;
 	}
@@ -125,7 +127,12 @@ class AgentDefinitionBuilder<TInput, TOutput> {
 		return this;
 	}
 
-	build(): AgentDefinition<TInput, TOutput> {
+	withReducer(reducer: ToolReducer<State>): this {
+		this.overrides.reducer = reducer;
+		return this;
+	}
+
+	build(): AgentDefinition<Input, Output, State> {
 		return {
 			name: this.overrides.name ?? this.base.name,
 			description: this.overrides.description ?? this.base.description,
@@ -169,6 +176,7 @@ class AgentDefinitionBuilder<TInput, TOutput> {
 				...this.base.observability,
 				...this.overrides.observability,
 			},
+			reducer: this.overrides.reducer ?? this.base.reducer,
 		};
 	}
 }
@@ -179,9 +187,119 @@ class AgentDefinitionBuilder<TInput, TOutput> {
  * @param base - Base agent definition to extend
  * @returns Builder instance with chainable methods
  */
-const agentBuilder = <TInput, TOutput>(
-	base: AgentDefinition<TInput, TOutput>
-): AgentDefinitionBuilder<TInput, TOutput> => new AgentDefinitionBuilder(base);
+const agentBuilder = <Input, Output, State = Input>(
+	base: AgentDefinition<Input, Output, State>
+): AgentDefinitionBuilder<Input, Output, State> => new AgentDefinitionBuilder(base);
+
+/**
+ * Helper tool handlers for testing
+ */
+
+/**
+ * Mock helper tool handler that returns success
+ *
+ * Simulates a helper tool that queries data and returns formatted results.
+ * Always succeeds with a formatted string response.
+ */
+export const mockDataQueryHandler = (input: unknown): Result<unknown, string> => {
+	const query = typeof input === 'object' && input !== null && 'query' in input
+		? String(input.query)
+		: 'default';
+	return ok(`Query results for: ${query}`);
+};
+
+/**
+ * Mock helper tool handler that returns error
+ *
+ * Simulates a helper tool that fails validation or encounters an error.
+ * Always returns an error Result with a descriptive message.
+ */
+export const mockFailingHandler = (_input: unknown): Result<unknown, string> =>
+	err('Handler execution failed: invalid query');
+
+/**
+ * Mock helper tool handler for fetching context
+ *
+ * Simulates fetching additional context by ID.
+ */
+export const mockFetchContextHandler = (input: unknown): Result<unknown, string> => {
+	const id = typeof input === 'object' && input !== null && 'id' in input
+		? String(input.id)
+		: 'unknown';
+	return ok(`Context for ID: ${id}`);
+};
+
+/**
+ * Mock helper tool handler for calculations
+ *
+ * Simulates performing calculations on arrays of numbers.
+ */
+export const mockCalculateHandler = (input: unknown): Result<unknown, string> => {
+	if (typeof input !== 'object' || input === null) {
+		return err('Invalid calculation input');
+	}
+
+	if (!('operation' in input) || !('values' in input)) {
+		return err('Invalid calculation input');
+	}
+
+	const op = String(input.operation);
+	const values = input.values;
+
+	if (!Array.isArray(values)) {
+		return err('Invalid calculation input');
+	}
+
+	// Type guard: check all values are numbers
+	if (!values.every((v) => typeof v === 'number')) {
+		return err('Invalid calculation input');
+	}
+
+	if (op === 'sum') {
+		return ok(values.reduce((a: number, b: number) => a + b, 0));
+	}
+
+	return err('Invalid calculation input');
+};
+
+/**
+ * Mock helper tool handler that throws exception
+ *
+ * Simulates a helper tool that violates the Result contract by throwing.
+ * Used to test exception safety in executeAgent.
+ */
+export const mockThrowingHandler = (_input: unknown): Result<unknown, string> => {
+	throw new Error('Handler threw exception');
+};
+
+/**
+ * Simple reducer for agents without helper tools
+ * Only handles the output tool (which is handled separately in executeAgent)
+ */
+const createSimpleReducer = <State>(): ToolReducer<State> => (context) =>
+	err(`Unknown tool: ${context.toolName}`);
+
+/**
+ * Creates a reducer that routes tool calls to appropriate handlers
+ */
+const createReducerWithHandlers = <State>(
+	handlers: Record<string, (input: unknown) => Result<unknown, string>>
+): ToolReducer<State> => (context) => {
+		const handler = handlers[context.toolName];
+		if (!handler) {
+			return err(`Unknown tool: ${context.toolName}`);
+		}
+
+		const handlerResult = handler(context.toolInput);
+		if (!handlerResult.success) {
+			return err(handlerResult.error);
+		}
+
+		return ok({
+			newState: context.state,
+			toolResult: handlerResult.data,
+		});
+	};
 
 /**
  * Base minimal agent - simplest valid configuration
@@ -223,6 +341,7 @@ const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
 		trackAttempts: false,
 		trackTokens: false,
 	},
+	reducer: createSimpleReducer<string>(),
 };
 
 /**
@@ -370,32 +489,6 @@ export const INVALID_MULTIPLE_ERRORS: AgentDefinition<string, TestOutput> = agen
 	.build();
 
 /**
- * Helper tool handlers for testing
- */
-
-/**
- * Mock helper tool handler that returns success
- *
- * Simulates a helper tool that queries data and returns formatted results.
- * Always succeeds with a formatted string response.
- */
-export const mockDataQueryHandler = (input: unknown): Result<unknown, string> => {
-	const query = typeof input === 'object' && input !== null && 'query' in input
-		? String(input.query)
-		: 'default';
-	return ok(`Query results for: ${query}`);
-};
-
-/**
- * Mock helper tool handler that returns error
- *
- * Simulates a helper tool that fails validation or encounters an error.
- * Always returns an error Result with a descriptive message.
- */
-export const mockFailingHandler = (_input: unknown): Result<unknown, string> =>
-	err('Handler execution failed: invalid query');
-
-/**
  * Mock reflection handler that returns success
  *
  * Simulates a reflection handler that formats output for model review.
@@ -418,48 +511,13 @@ export const mockRejectingReflectionHandler = (output: TestOutput): Result<strin
 };
 
 /**
- * Mock helper tool handler for fetching context
+ * Mock reflection handler that throws exception
  *
- * Simulates fetching additional context by ID.
+ * Simulates a reflection handler that violates the Result contract by throwing.
+ * Used to test exception safety in executeAgent.
  */
-export const mockFetchContextHandler = (input: unknown): Result<unknown, string> => {
-	const id = typeof input === 'object' && input !== null && 'id' in input
-		? String(input.id)
-		: 'unknown';
-	return ok(`Context for ID: ${id}`);
-};
-
-/**
- * Mock helper tool handler for calculations
- *
- * Simulates performing calculations on arrays of numbers.
- */
-export const mockCalculateHandler = (input: unknown): Result<unknown, string> => {
-	if (typeof input !== 'object' || input === null) {
-		return err('Invalid calculation input');
-	}
-
-	if (!('operation' in input) || !('values' in input)) {
-		return err('Invalid calculation input');
-	}
-
-	const op = String(input.operation);
-	const values = input.values;
-
-	if (!Array.isArray(values)) {
-		return err('Invalid calculation input');
-	}
-
-	// Type guard: check all values are numbers
-	if (!values.every((v) => typeof v === 'number')) {
-		return err('Invalid calculation input');
-	}
-
-	if (op === 'sum') {
-		return ok(values.reduce((a: number, b: number) => a + b, 0));
-	}
-
-	return err('Invalid calculation input');
+export const mockThrowingReflectionHandler = (_output: TestOutput): Result<string, string> => {
+	throw new Error('Reflection handler threw exception');
 };
 
 /**
@@ -476,9 +534,11 @@ export const AGENT_WITH_HELPER_TOOLS: AgentDefinition<string, TestOutput> = agen
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
-			handler: mockDataQueryHandler,
 		},
 	])
+	.withReducer(createReducerWithHandlers<string>({
+		query_data: mockDataQueryHandler,
+	}))
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -501,9 +561,11 @@ export const AGENT_WITH_FAILING_HELPER: AgentDefinition<string, TestOutput> = ag
 			name: 'failing_tool',
 			description: 'A tool that always fails',
 			inputSchema: z.object({query: z.string()}),
-			handler: mockFailingHandler,
 		},
 	])
+	.withReducer(createReducerWithHandlers<string>({
+		failing_tool: mockFailingHandler,
+	}))
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -525,21 +587,23 @@ export const AGENT_WITH_MULTIPLE_HELPERS: AgentDefinition<string, TestOutput> = 
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
-			handler: mockDataQueryHandler,
 		},
 		{
 			name: 'fetch_context',
 			description: 'Fetch additional context',
 			inputSchema: z.object({id: z.string()}),
-			handler: mockFetchContextHandler,
 		},
 		{
 			name: 'calculate',
 			description: 'Perform calculations',
 			inputSchema: z.object({operation: z.string(), values: z.array(z.number())}),
-			handler: mockCalculateHandler,
 		},
 	])
+	.withReducer(createReducerWithHandlers<string>({
+		query_data: mockDataQueryHandler,
+		fetch_context: mockFetchContextHandler,
+		calculate: mockCalculateHandler,
+	}))
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -599,15 +663,17 @@ export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutp
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
-			handler: mockDataQueryHandler,
 		},
 		{
 			name: 'fetch_context',
 			description: 'Fetch additional context',
 			inputSchema: z.object({id: z.string()}),
-			handler: mockFetchContextHandler,
 		},
 	])
+	.withReducer(createReducerWithHandlers<string>({
+		query_data: mockDataQueryHandler,
+		fetch_context: mockFetchContextHandler,
+	}))
 	.withReflection(mockReflectionHandler)
 	.withObservability({
 		trackCost: true,
@@ -616,26 +682,6 @@ export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutp
 		trackTokens: true,
 	})
 	.build();
-
-/**
- * Mock helper tool handler that throws exception
- *
- * Simulates a helper tool that violates the Result contract by throwing.
- * Used to test exception safety in executeAgent.
- */
-export const mockThrowingHandler = (_input: unknown): Result<unknown, string> => {
-	throw new Error('Handler threw exception');
-};
-
-/**
- * Mock reflection handler that throws exception
- *
- * Simulates a reflection handler that violates the Result contract by throwing.
- * Used to test exception safety in executeAgent.
- */
-export const mockThrowingReflectionHandler = (_output: TestOutput): Result<string, string> => {
-	throw new Error('Reflection handler threw exception');
-};
 
 /**
  * 19. Agent with throwing helper tool handler
@@ -651,9 +697,11 @@ export const AGENT_WITH_THROWING_HELPER: AgentDefinition<string, TestOutput> = a
 			name: 'throwing_tool',
 			description: 'A tool that throws exceptions',
 			inputSchema: z.object({query: z.string()}),
-			handler: mockThrowingHandler,
 		},
 	])
+	.withReducer(createReducerWithHandlers<string>({
+		throwing_tool: mockThrowingHandler,
+	}))
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,
@@ -694,9 +742,11 @@ export const AGENT_WITH_DEFAULT_ITERATION_LIMIT: AgentDefinition<string, TestOut
 			name: 'query_data',
 			description: 'Query test data',
 			inputSchema: z.object({query: z.string()}),
-			handler: mockDataQueryHandler,
 		},
 	])
+	.withReducer(createReducerWithHandlers<string>({
+		query_data: mockDataQueryHandler,
+	}))
 	.withObservability({
 		trackCost: true,
 		trackLatency: true,

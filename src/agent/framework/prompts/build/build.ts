@@ -16,8 +16,8 @@ import {ok, err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
  * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
-export const buildSystemPrompt = async <Input, Output>(
-	agent: AgentDefinition<Input, Output>,
+export const buildSystemPrompt = async <Input, Output, State = Input>(
+	agent: AgentDefinition<Input, Output, State>,
 	input: Input,
 	state: AgentExecutionState,
 	signal?: AbortSignal
@@ -51,8 +51,8 @@ export const buildSystemPrompt = async <Input, Output>(
  * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
-export const buildUserPrompt = async <Input, Output>(
-	agent: AgentDefinition<Input, Output>,
+export const buildUserPrompt = async <Input, Output, State = Input>(
+	agent: AgentDefinition<Input, Output, State>,
 	input: Input,
 	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
@@ -80,8 +80,8 @@ export const buildUserPrompt = async <Input, Output>(
  * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
-export const buildErrorPrompt = async <Input, Output>(
-	agent: AgentDefinition<Input, Output>,
+export const buildErrorPrompt = async <Input, Output, State = Input>(
+	agent: AgentDefinition<Input, Output, State>,
 	formattedError: string,
 	state: AgentExecutionState,
 	signal?: AbortSignal
