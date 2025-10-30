@@ -5,7 +5,7 @@ import type {ValidationLayer} from '@sigil/src/agent/framework/validation';
 import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
 
-import type {ToolReducer} from './types';
+import type {ToolReducerHandler} from './types';
 
 /**
  * Configuration for the LLM model used by the agent
@@ -210,21 +210,26 @@ export interface OutputToolConfig<Output> {
 }
 
 /**
- * Configuration for a helper tool
+ * Configuration for a helper tool with embedded handler
  *
  * Helper tools enable multi-step workflows, data exploration, and context retrieval
- * within agent execution. Each helper tool requires a name, description, and input schema.
- * Tool execution is handled by the agent's reducer function.
+ * within agent execution. Each helper tool contains its name, description, input schema,
+ * and handler function, ensuring compile-time safety and automatic tool-to-handler mapping.
  *
- * @template Input - The type of input this helper tool accepts
+ * The Name generic enforces that the tool name matches its object key when used in
+ * the helpers object, providing compile-time verification of tool name consistency.
+ *
+ * @template Name - The tool name (must match object key in helpers)
+ * @template State - The state type maintained during agent execution
+ * @template ToolInput - The type of input this helper tool accepts
  */
-export interface HelperToolConfig<Input> {
+export interface HelperToolConfig<Name extends string, State, ToolInput> {
   /**
    * Name of the helper tool
    *
-   * Must be a valid tool name for the LLM to call.
+   * Must match the object key in the helpers configuration.
    */
-  name: string;
+  name: Name;
 
   /**
    * Description of what the helper tool does
@@ -238,7 +243,15 @@ export interface HelperToolConfig<Input> {
    *
    * Automatically converted to JSON Schema for the Anthropic API.
    */
-  inputSchema: z.ZodSchema<Input>;
+  inputSchema: z.ZodSchema<ToolInput>;
+
+  /**
+   * Handler function for executing this tool
+   *
+   * Receives current state and tool input, returns new state and tool result.
+   * Must follow immutable update patterns.
+   */
+  handler: ToolReducerHandler<State>;
 }
 
 /**
@@ -248,8 +261,9 @@ export interface HelperToolConfig<Input> {
  * multi-step workflows, data exploration, and context retrieval.
  *
  * @template Output - The type of output the agent produces
+ * @template State - The state type maintained during agent execution
  */
-export interface ToolsConfig<Output> {
+export interface ToolsConfig<Output, State> {
   /**
    * Output tool configuration (REQUIRED)
    *
@@ -261,10 +275,34 @@ export interface ToolsConfig<Output> {
   /**
    * Helper tools for multi-step workflows (OPTIONAL)
    *
-   * Helper tools enable data exploration, context retrieval, and intermediate
-   * computations before the agent produces its final output.
+   * Object mapping tool names to their configurations. Each tool includes
+   * its description, input schema, and handler function. Object keys serve
+   * as tool names, ensuring uniqueness and compile-time tool-to-handler pairing.
+   *
+   * The mapped type enforces that each tool's name field matches its object key,
+   * preventing synchronisation errors.
+   *
+   * @example
+   * ```typescript
+   * helpers: {
+   *   parse_json: {
+   *     name: 'parse_json',  // Must match key
+   *     description: 'Parse JSON data',
+   *     inputSchema: z.object({data: z.string()}),
+   *     handler: parseJSONHandler,
+   *   },
+   *   parse_csv: {
+   *     name: 'parse_csv',  // Must match key
+   *     description: 'Parse CSV data',
+   *     inputSchema: z.object({data: z.string()}),
+   *     handler: parseCSVHandler,
+   *   },
+   * }
+   * ```
    */
-  helpers?: HelperToolConfig<unknown>[];
+  helpers?: {
+    [K in string]: HelperToolConfig<K, State, unknown>;
+  };
 }
 
 /**
@@ -351,8 +389,11 @@ export interface AgentDefinition<Input, Output, State = Input> {
 
   /**
    * Tools configuration
+   *
+   * Each helper tool includes its own handler function, ensuring compile-time
+   * safety and eliminating the need for a separate reducer.
    */
-  tools: ToolsConfig<Output>;
+  tools: ToolsConfig<Output, State>;
 
   /**
    * Output validation configuration
@@ -363,16 +404,6 @@ export interface AgentDefinition<Input, Output, State = Input> {
    * Observability tracking configuration
    */
   observability: ObservabilityConfig;
-
-  /**
-   * Reducer function for handling all helper tool executions
-   *
-   * This is the sole execution path for helper tools. The reducer receives the current state,
-   * tool name, and tool input, and returns a new state along with the tool result.
-   *
-   * REQUIRED: All agents must provide a reducer function.
-   */
-  reducer: ToolReducer<State>;
 
   /**
    * Optional function to initialise state from input
@@ -536,17 +567,6 @@ export const defineAgent = <Input, Output, State = Input>(
 		});
 	}
 
-	// Validate reducer is provided
-	if (!definition.reducer) {
-		errors.push({
-			code: AGENT_ERROR_CODES.MISSING_REDUCER,
-			severity: 'error',
-			category: 'validation',
-			path: '$.reducer',
-			context: {},
-		});
-	}
-
 	// Return early if validation failed
 	if (errors.length > 0) {
 		return err(errors);
@@ -562,8 +582,8 @@ export const defineAgent = <Input, Output, State = Input>(
 	// Freeze tools config
 	Object.freeze(definition.tools.output);
 	if (definition.tools.helpers) {
-		for (const helper of definition.tools.helpers) {
-			Object.freeze(helper);
+		for (const toolName in definition.tools.helpers) {
+			Object.freeze(definition.tools.helpers[toolName]);
 		}
 		Object.freeze(definition.tools.helpers);
 	}

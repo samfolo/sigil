@@ -641,11 +641,13 @@ export const executeAgent = async <Input, Output, State = Input>(
 		};
 
 		// Build helper tools array from configuration
-		const helperTools: Anthropic.Tool[] = (agent.tools.helpers || []).map((helper) => ({
-			name: helper.name,
-			description: helper.description,
-			input_schema: z.toJSONSchema(helper.inputSchema) as Anthropic.Tool.InputSchema,
-		}));
+		const helperTools: Anthropic.Tool[] = agent.tools.helpers
+			? Object.values(agent.tools.helpers).map((helper) => ({
+				name: helper.name,
+				description: helper.description,
+				input_schema: z.toJSONSchema(helper.inputSchema) as Anthropic.Tool.InputSchema,
+			}))
+			: [];
 
 		// Determine if reflection mode is enabled
 		const reflectionEnabled = !!agent.tools.output.reflectionHandler;
@@ -808,7 +810,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 					continue;
 				}
 
-				// Handle helper tools via reducer
+				// Handle helper tools via handler lookup
 				// Fire callback before execution
 				safeInvokeCallback(
 					options.callbacks?.onToolCall,
@@ -816,16 +818,30 @@ export const executeAgent = async <Input, Output, State = Input>(
 					callbackErrors
 				);
 
-				// Execute reducer with exception safety
-				try {
-					const reducerResult = agent.reducer({
-						state: currentState,
-						toolName: toolUse.name,
-						toolInput: toolUse.input,
+				// Look up tool handler
+				const tool = agent.tools.helpers?.[toolUse.name];
+				if (!tool) {
+					const errorContent = `Unknown tool: ${toolUse.name}`;
+					toolResults.push({
+						type: 'tool_result',
+						tool_use_id: toolUse.id,
+						content: errorContent,
+						is_error: true,
 					});
+					safeInvokeCallback(
+						options.callbacks?.onToolResult,
+						[{...state}, toolUse.name, errorContent],
+						callbackErrors
+					);
+					continue;
+				}
 
-					if (isErr(reducerResult)) {
-						const errorContent = reducerResult.error;
+				// Execute handler with exception safety
+				try {
+					const handlerResult = tool.handler(currentState, toolUse.input);
+
+					if (isErr(handlerResult)) {
+						const errorContent = handlerResult.error;
 						toolResults.push({
 							type: 'tool_result',
 							tool_use_id: toolUse.id,
@@ -838,8 +854,8 @@ export const executeAgent = async <Input, Output, State = Input>(
 							callbackErrors
 						);
 					} else {
-						currentState = reducerResult.data.newState;
-						const formattedResult = String(reducerResult.data.toolResult);
+						currentState = handlerResult.data.newState;
+						const formattedResult = String(handlerResult.data.toolResult);
 						toolResults.push({
 							type: 'tool_result',
 							tool_use_id: toolUse.id,
@@ -853,7 +869,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 						);
 					}
 				} catch (error) {
-					// Reducer threw exception (contract violation)
+					// Handler threw exception (contract violation)
 					const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
 					toolResults.push({
 						type: 'tool_result',
