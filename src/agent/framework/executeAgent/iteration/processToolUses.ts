@@ -1,11 +1,47 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
-import type {AgentState, AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {AgentState} from '@sigil/src/agent/framework/defineAgent/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import {isErr} from '@sigil/src/common/errors';
 
-import type {ExecuteCallbacks} from '../executeAgent';
+import type {ExecuteCallbacks} from '../types';
 import {formatReflectionHandlerResult, safeInvokeCallback} from '../util';
+
+/**
+ * State tier for tool processing
+ *
+ * @template Run - The type of run state (persists across attempts)
+ * @template Attempt - The type of attempt state (resets each attempt)
+ */
+export interface ProcessToolUsesState<Run, Attempt> {
+	/**
+	 * Current agent state containing run, attempt, and context tiers
+	 */
+	current: AgentState<Run, Attempt>;
+
+	/**
+	 * Run state reference (mutated via Object.assign for persistence)
+	 */
+	run: Run;
+}
+
+/**
+ * Callbacks for tool processing
+ *
+ * @template Output - The type of validated output the agent produces
+ */
+export interface ProcessToolUsesCallbacks<Output> {
+	/**
+	 * Callback to invoke before tool execution
+	 */
+	onToolCall?: ExecuteCallbacks<Output>['onToolCall'];
+
+	/**
+	 * Callback to invoke after tool execution
+	 */
+	onToolResult?: ExecuteCallbacks<Output>['onToolResult'];
+}
 
 /**
  * Result of processing tool uses from a model response
@@ -94,17 +130,7 @@ export interface ProcessToolUsesParams<Input, Output, Run extends object, Attemp
 	/**
 	 * State tier containing run and attempt state
 	 */
-	state: {
-		/**
-		 * Current agent state containing run, attempt, and context tiers
-		 */
-		current: AgentState<Run, Attempt>;
-
-		/**
-		 * Run state reference (mutated via Object.assign for persistence)
-		 */
-		run: Run;
-	};
+	state: ProcessToolUsesState<Run, Attempt>;
 
 	/**
 	 * Whether reflection mode is enabled (has reflectionHandler)
@@ -124,17 +150,7 @@ export interface ProcessToolUsesParams<Input, Output, Run extends object, Attemp
 	/**
 	 * Callback functions for observability
 	 */
-	callbacks: {
-		/**
-		 * Callback to invoke before tool execution
-		 */
-		onToolCall?: ExecuteCallbacks<Output>['onToolCall'];
-
-		/**
-		 * Callback to invoke after tool execution
-		 */
-		onToolResult?: ExecuteCallbacks<Output>['onToolResult'];
-	};
+	callbacks: ProcessToolUsesCallbacks<Output>;
 
 	/**
 	 * Array to collect callback errors (mutated in place)

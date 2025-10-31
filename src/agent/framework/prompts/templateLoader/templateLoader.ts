@@ -35,7 +35,7 @@ export type TemplateFunction<T> = (
  * The returned function merges the provided data and execution state into the template context,
  * making both available to the template. Templates can access:
  * - All properties from the data parameter via `data.*`
- * - All properties from AgentExecutionState via `state.*`
+ * - All properties from AgentRunState via `state.*`
  *
  * To use the returned template as a specific prompt type (system/user/error), use the
  * adapter functions: asSystemPromptFunction, asUserPromptFunction, asErrorPromptFunction.
@@ -82,7 +82,7 @@ export const loadTemplate = async <T>(
  * The returned function merges the provided data and execution state into the template context,
  * making both available to the template. Templates can access:
  * - All properties from the data parameter via `data.*`
- * - All properties from AgentExecutionState via `state.*`
+ * - All properties from AgentRunState via `state.*`
  *
  * To use the returned template as a specific prompt type (system/user/error), use the
  * adapter functions: asSystemPromptFunction, asUserPromptFunction, asErrorPromptFunction.

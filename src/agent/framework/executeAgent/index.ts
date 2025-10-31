@@ -5,5 +5,5 @@ export type {
 	ExecuteMetadataTokenUsageStatistics,
 	ExecuteOptions,
 	ExecuteSuccess,
-} from './executeAgent';
+} from './types';
 export {executeAgent} from './executeAgent';

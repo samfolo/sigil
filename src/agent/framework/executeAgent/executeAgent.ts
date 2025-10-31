@@ -18,7 +18,13 @@ import {validateLayers} from '@sigil/src/agent/framework/validation/validateLaye
 import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors';
 import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
-import {processToolUses} from './iteration/processToolUses';
+import {buildMetadata} from './iteration/buildMetadata';
+import {runIterationLoop} from './iteration/runIterationLoop';
+import type {
+	ExecuteOptions,
+	ExecuteSuccess,
+	ExecuteFailure,
+} from './types';
 import {safeInvokeCallback} from './util';
 
 /**
@@ -50,236 +56,6 @@ const DEFAULT_RUN_STATE_INITIALISER = <Run>(): Run => ({} as Run);
  * Used when no custom initialAttemptState function is provided in the agent definition.
  */
 const DEFAULT_ATTEMPT_STATE_INITIALISER = <Attempt>(): Attempt => ({} as Attempt);
-
-/**
- * Token usage statistics for an agent execution
- */
-export interface ExecuteMetadataTokenUsageStatistics {
-  /**
-   * Number of input tokens consumed
-   */
-  input: number;
-
-  /**
-   * Number of output tokens generated
-   */
-  output: number;
-}
-
-/**
- * Execution metadata containing resource usage and performance data
- */
-export interface ExecuteMetadata {
-  /**
-   * Total execution latency in milliseconds
-   */
-  latency?: number;
-
-  /**
-   * Token usage statistics
-   */
-  tokens?: ExecuteMetadataTokenUsageStatistics;
-
-  /**
-   * Errors thrown by callbacks during execution
-   *
-   * Callbacks are observability hooks and should not throw errors. However, if they do,
-   * those errors are caught and collected here to prevent callback failures from breaking
-   * agent execution. The presence of callback errors indicates bugs in callback implementations
-   * that should be fixed.
-   */
-  callbackErrors?: Error[];
-}
-
-/**
- * Callback functions for monitoring agent execution progress
- *
- * Callbacks are synchronous, fire-and-forget observability hooks. They should
- * be lightweight operations like logging or metrics collection. For async operations,
- * use non-blocking patterns (e.g., `void asyncOperation().catch(handleError)`).
- *
- * @template Output - The type of validated output the agent produces
- */
-export interface ExecuteCallbacks<Output> {
-  /**
-   * Called when an execution attempt starts
-   *
-   * @param context - Execution context containing attempt number and max attempts
-   */
-  onAttemptStart?: (context: AgentExecutionContext) => void;
-
-  /**
-   * Called when an execution attempt completes
-   *
-   * @param context - Execution context containing attempt number and max attempts
-   * @param success - Whether the attempt succeeded validation
-   */
-  onAttemptComplete?: (context: AgentExecutionContext, success: boolean) => void;
-
-  /**
-   * Called when output validation fails
-   *
-   * @param context - Execution context containing attempt number and max attempts
-   * @param errors - Validation errors from the output schema
-   */
-  onValidationFailure?: (context: AgentExecutionContext, errors: unknown) => void;
-
-  /**
-   * Called when a validation layer starts execution
-   *
-   * @param context - Execution context containing attempt number and max attempts
-   * @param layer - Metadata about the layer being executed
-   */
-  onValidationLayerStart?: (
-    context: AgentExecutionContext,
-    layer: ValidationLayerMetadata
-  ) => void;
-
-  /**
-   * Called when a validation layer completes execution
-   *
-   * @param context - Execution context containing attempt number and max attempts
-   * @param layer - Result of the layer execution (discriminated union)
-   */
-  onValidationLayerComplete?: (
-    context: AgentExecutionContext,
-    layer: ValidationLayerResult
-  ) => void;
-
-  /**
-   * Called when a tool is invoked (before execution)
-   *
-   * Fires for helper tools, output tool (in reflection mode), and submit tool.
-   * Use for logging tool invocations or showing "Agent is using tool X" in UI.
-   *
-   * @param context - Execution context containing attempt number and max attempts
-   * @param toolName - Name of the tool being called
-   * @param toolInput - Input provided to the tool by the model
-   */
-  onToolCall?: (
-    context: AgentExecutionContext,
-    toolName: string,
-    toolInput: unknown
-  ) => void;
-
-  /**
-   * Called when a tool execution completes (after execution)
-   *
-   * Fires for both successful tool executions and errors. Check the result string
-   * to determine if an error occurred (will contain "Error:" prefix for errors).
-   *
-   * @param context - Execution context containing attempt number and max attempts
-   * @param toolName - Name of the tool that was called
-   * @param toolResult - Result from the tool (or error message if execution failed)
-   */
-  onToolResult?: (
-    context: AgentExecutionContext,
-    toolName: string,
-    toolResult: string
-  ) => void;
-
-  /**
-   * Called when agent execution succeeds
-   *
-   * @param output - The validated output from the agent
-   */
-  onSuccess?: (output: Output) => void;
-
-  /**
-   * Called when agent execution fails after all attempts
-   *
-   * @param errors - Array of AgentError describing what went wrong
-   */
-  onFailure?: (errors: AgentError[]) => void;
-}
-
-/**
- * Configuration options for executing an agent
- *
- * @template Input - The type of input data the agent accepts
- * @template Output - The type of validated output the agent produces
- */
-export interface ExecuteOptions<Input, Output> {
-  /**
-   * Input data to pass to the agent
-   */
-  input: Input;
-
-  /**
-   * Override the agent's default maximum number of execution attempts
-   *
-   * If not provided, uses the agent's configured maxAttempts value
-   */
-  maxAttempts?: number;
-
-  /**
-   * Optional callback functions to monitor execution progress
-   */
-  callbacks?: ExecuteCallbacks<Output>;
-
-  /**
-   * Optional AbortSignal to cancel execution mid-flight
-   *
-   * When the signal is aborted, execution will stop at the next cancellation
-   * checkpoint and return an EXECUTION_CANCELLED error. The signal is propagated
-   * to all async operations (prompt generation, validation, API calls) and callbacks.
-   */
-  signal?: AbortSignal;
-}
-
-/**
- * Successful agent execution result data
- *
- * This is the success data structure, not a Result wrapper.
- * Failures are represented by ExecuteFailure in the Result pattern:
- * `Result<ExecuteSuccess<Output>, ExecuteFailure>`
- *
- * @template Output - The type of validated output the agent produces
- */
-export interface ExecuteSuccess<Output> {
-  /**
-   * Validated output from the agent
-   *
-   * Guaranteed to match the agent's output schema
-   */
-  output: Output;
-
-  /**
-   * Number of attempts taken to produce valid output
-   *
-   * Value between 1 and maxAttempts (inclusive)
-   */
-  attempts: number;
-
-  /**
-   * Optional execution metadata
-   *
-   * Contains information about resource usage and performance
-   */
-  metadata?: ExecuteMetadata;
-}
-
-/**
- * Failed agent execution result data
- *
- * This is the failure data structure, not a Result wrapper.
- * Returned in the error case of the Result pattern:
- * `Result<ExecuteSuccess<Output>, ExecuteFailure>`
- */
-export interface ExecuteFailure {
-  /**
-   * Array of errors that occurred during execution
-   */
-  errors: AgentError[];
-
-  /**
-   * Optional execution metadata
-   *
-   * Contains information about resource usage and performance.
-   * Populated even for failed executions to track cost and latency of failures.
-   */
-  metadata?: ExecuteMetadata;
-}
 
 /**
  * Executes an agent with retry logic and multi-layer validation
@@ -390,67 +166,6 @@ const createCancellationError = (
 /**
  * Options for building execution metadata
  */
-interface BuildMetadataOptions {
-  /**
-   * Observability configuration from agent definition
-   */
-  observability: ObservabilityConfig;
-
-  /**
-   * Execution start time from performance.now()
-   */
-  startTime: number;
-
-  /**
-   * Total input tokens consumed across all attempts
-   */
-  totalInputTokens: number;
-
-  /**
-   * Total output tokens generated across all attempts
-   */
-  totalOutputTokens: number;
-
-  /**
-   * Array of callback errors (empty if none occurred)
-   */
-  callbackErrors: Error[];
-}
-
-/**
-/**
- * Builds execution metadata based on observability configuration
- *
- * Respects the agent's observability flags to determine which metrics to include.
- * Always includes callback errors if any occurred, regardless of flags.
- *
- * @param options - Options for building metadata
- * @returns ExecuteMetadata object with fields populated based on observability flags
- */
-const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata => {
-	const endTime = performance.now();
-	const metadata: ExecuteMetadata = {};
-
-	// Include latency if tracking is enabled
-	if (options.observability.trackLatency) {
-		metadata.latency = endTime - options.startTime;
-	}
-
-	// Include token usage if tracking is enabled
-	if (options.observability.trackTokens) {
-		metadata.tokens = {
-			input: options.totalInputTokens,
-			output: options.totalOutputTokens,
-		};
-	}
-
-	// Always include callback errors if any occurred
-	if (options.callbackErrors.length > 0) {
-		metadata.callbackErrors = options.callbackErrors;
-	}
-
-	return metadata;
-};
 
 export const executeAgent = async <Input, Output, Run extends object, Attempt extends object>(
 	agent: AgentDefinition<Input, Output, Run, Attempt>,
@@ -631,234 +346,45 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			...(reflectionEnabled ? [DEFAULT_SUBMIT_TOOL] : []),
 		];
 
-		// Iteration loop for tool calling
-		let iterationCount = 0;
-		let output: Output | undefined;
-		let response: Anthropic.Message | undefined;
-		let lastOutputToolInput: Output | undefined;
+		// Run iteration loop
+		const iterationResult = await runIterationLoop({
+			agent,
+			anthropic,
+			context,
+			state: {
+				current: currentState,
+				run: runState,
+			},
+			conversationHistory,
+			systemPrompt: systemPromptResult.data,
+			tools,
+			submitTool: DEFAULT_SUBMIT_TOOL,
+			isReflectionEnabled: reflectionEnabled,
+			maxIterations,
+			signal: options.signal,
+			callbacks: {
+				onToolCall: options.callbacks?.onToolCall,
+				onToolResult: options.callbacks?.onToolResult,
+			},
+			callbackErrors,
+			durationMetrics: {
+				startTime,
+			},
+			tokenMetrics: {
+				input: totalInputTokens,
+				output: totalOutputTokens,
+			},
+		});
 
-		// Make initial API call
-		while (iterationCount < maxIterations) {
-			iterationCount++;
-
-			// Create new context with updated iteration (immutable update)
-			const iterationContext: AgentExecutionContext = {
-				...context,
-				iteration: iterationCount,
-			};
-
-			// Update currentState with new context
-			currentState = {
-				...currentState,
-				context: iterationContext,
-			};
-
-			// Check for cancellation before API call
-			if (options.signal?.aborted) {
-				return err(createCancellationError(
-					attempt,
-					'iteration',
-					agent.observability,
-					startTime,
-					totalInputTokens,
-					totalOutputTokens,
-					callbackErrors
-				));
-			}
-
-			// Call Anthropic API
-			try {
-				response = await anthropic.messages.create({
-					model: agent.model.name,
-					max_tokens: agent.model.maxTokens,
-					temperature: agent.model.temperature,
-					system: systemPromptResult.data,
-					messages: conversationHistory,
-					tools,
-				},
-				{
-					signal: options.signal,
-				}
-				);
-			} catch (error) {
-				return err({
-					errors: [
-						{
-							code: AGENT_ERROR_CODES.API_ERROR,
-							severity: 'error',
-							category: 'model',
-							context: {
-								attempt,
-								message: error instanceof Error ? error.message : String(error),
-							},
-						},
-					],
-					metadata: buildMetadata({
-						observability: agent.observability,
-						startTime,
-						totalInputTokens,
-						totalOutputTokens,
-						callbackErrors
-					}),
-				});
-			}
-
-			// Accumulate token usage
-			totalInputTokens += response.usage.input_tokens;
-			totalOutputTokens += response.usage.output_tokens;
-
-			// Check stop reason - exit if not tool_use
-			if (response.stop_reason !== 'tool_use') {
-				break;
-			}
-
-			// Find all tool uses in the response
-			const toolUses = response.content.filter(
-				(block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
-			);
-
-			// Process ALL tools and build tool results
-			const processResult = processToolUses({
-				toolUses,
-				agent,
-				context: iterationContext,
-				state: {
-					current: currentState,
-					run: runState,
-				},
-				isReflectionEnabled: reflectionEnabled,
-				lastOutputToolInput,
-				submitTool: DEFAULT_SUBMIT_TOOL,
-				callbacks: {
-					onToolCall: options.callbacks?.onToolCall,
-					onToolResult: options.callbacks?.onToolResult,
-				},
-				callbackErrors,
-			});
-
-			const toolResults = processResult.toolResults;
-			const submitFound = processResult.wasSubmitFound;
-			const outputFound = processResult.wasOutputFound;
-			lastOutputToolInput = processResult.lastOutputToolInput;
-			// Update currentState with processed results
-			currentState = {
-				context: iterationContext,
-				run: processResult.updatedRunState,
-				attempt: processResult.updatedAttemptState,
-			};
-
-
-			// Check termination conditions AFTER processing all tools
-			if (submitFound) {
-				// Submit called - check that output was called previously
-				if (!lastOutputToolInput) {
-					return err({
-						errors: [
-							{
-								code: AGENT_ERROR_CODES.SUBMIT_BEFORE_OUTPUT,
-								severity: 'error',
-								category: 'model',
-								context: {
-									attempt,
-									iterationCount,
-								},
-							},
-						],
-						metadata: buildMetadata({
-							observability: agent.observability,
-							startTime,
-							totalInputTokens,
-							totalOutputTokens,
-							callbackErrors
-						}),
-					});
-				}
-				// Use last output tool input and exit loop
-				output = lastOutputToolInput;
-				break;
-			}
-
-			if (outputFound && !reflectionEnabled) {
-				// Output tool called in non-reflection mode - exit immediately
-				// Note: If the model called multiple tools in this response (e.g., [helper, output, helper]),
-				// all tools were processed above and their results added to toolResults array.
-				// However, we exit here without appending toolResults to conversation history,
-				// effectively discarding them. This is intentional: we're terminating the iteration
-				// loop anyway, and the model already provided its final output via the output tool.
-				output = lastOutputToolInput;
-				break;
-			}
-
-			// Append conversation history
-			conversationHistory.push({
-				role: 'assistant',
-				content: response.content,
-			});
-
-			conversationHistory.push({
-				role: 'user',
-				content: toolResults,
-			});
-
-			// Continue to next iteration
+		if (isErr(iterationResult)) {
+			return iterationResult;
 		}
 
-		// Check if output tool was ever called
-		// This check takes priority over MAX_ITERATIONS_EXCEEDED because it's more
-		// specific and actionable - it tells exactly what went wrong (protocol violation)
-		// rather than just indicating resource exhaustion.
-		if (!output) {
-			return err({
-				errors: [
-					{
-						code: AGENT_ERROR_CODES.OUTPUT_TOOL_NOT_USED,
-						severity: 'error',
-						category: 'model',
-						context: {
-							attempt,
-							iterationCount,
-							expectedTool: agent.tools.output.name,
-						},
-					},
-				],
-				metadata: buildMetadata({
-					observability: agent.observability,
-					startTime,
-					totalInputTokens,
-					totalOutputTokens,
-					callbackErrors
-				}),
-			});
-		}
-
-		// Check if iteration limit exceeded
-		// This check happens after the loop exits and verifies that we hit the limit
-		// while the model still wanted to use tools (stop_reason === 'tool_use').
-		// If the model naturally stopped with 'end_turn', we would have exited the loop
-		// earlier without hitting this check.
-		if (iterationCount >= maxIterations && response?.stop_reason === 'tool_use') {
-			return err({
-				errors: [
-					{
-						code: AGENT_ERROR_CODES.MAX_ITERATIONS_EXCEEDED,
-						severity: 'error',
-						category: 'execution',
-						context: {
-							attempt,
-							iterationCount,
-							maxIterations,
-						},
-					},
-				],
-				metadata: buildMetadata({
-					observability: agent.observability,
-					startTime,
-					totalInputTokens,
-					totalOutputTokens,
-					callbackErrors
-				}),
-			});
-		}
+		// Extract results from iteration loop
+		const {output, lastResponse: response, updatedState} = iterationResult.data;
+		totalInputTokens = iterationResult.data.tokenMetrics.input;
+		totalOutputTokens = iterationResult.data.tokenMetrics.output;
+		currentState = updatedState;
 
 		// Check for cancellation before validation
 		if (options.signal?.aborted) {
