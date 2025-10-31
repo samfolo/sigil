@@ -33,9 +33,9 @@ export const parseJSON = (rawData: string): Result<ParseJSONResult, string> => {
 	const size = calculateSize(rawData);
 
 	// Attempt to parse JSON
-	let parsed: unknown;
+	let data: unknown;
 	try {
-		parsed = JSON.parse(rawData);
+		data = JSON.parse(rawData);
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown parsing error';
@@ -43,11 +43,11 @@ export const parseJSON = (rawData: string): Result<ParseJSONResult, string> => {
 	}
 
 	// Build metadata based on structure type
-	const metadata = buildStructuredMetadata(parsed, size, {
+	const metadata = buildStructuredMetadata(data, size, {
 		maxKeys: MAX_STRUCTURE_EXTRACTED_ITEMS,
 		maxKeyLength: MAX_STRUCTURE_VALUE_LENGTH,
 		maxDepth: MAX_STRUCTURE_PROBING_DEPTH,
 	});
 
-	return ok({valid: true, metadata});
+	return ok({valid: true, parsedData: data, metadata});
 };

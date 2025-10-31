@@ -56,6 +56,7 @@ const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMe
 					tool: 'parse_csv',
 					details: result.data,
 				},
+				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
 			attempt: state.attempt,
 		},

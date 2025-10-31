@@ -50,6 +50,7 @@ const parseJSONReducerHandler: ToolReducerHandler<ParserState<ParseJSONStructure
 					tool: 'parse_json',
 					details: result.data,
 				},
+				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
 			attempt: state.attempt,
 		},

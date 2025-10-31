@@ -52,9 +52,9 @@ export const parseXML = (rawData: string): Result<ParseXMLResult, string> => {
 	});
 
 	// Attempt to parse XML
-	let parsed: unknown;
+	let data: unknown;
 	try {
-		parsed = parser.parse(rawData);
+		data = parser.parse(rawData);
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown parsing error';
@@ -63,31 +63,31 @@ export const parseXML = (rawData: string): Result<ParseXMLResult, string> => {
 
 	// Handle empty result
 	if (
-		typeof parsed !== 'object' ||
-		parsed === null ||
-		Object.keys(parsed).length === 0
+		typeof data !== 'object' ||
+		data === null ||
+		Object.keys(data).length === 0
 	) {
 		return ok({valid: false, error: 'No XML structure found'});
 	}
 
 	// Extract root element and top-level tags
-	const keys = Object.keys(parsed);
+	const keys = Object.keys(data);
 	let rootElement: string;
 	let topLevelNodeTags: PrecisionValue<string>[];
 
 	if (keys.length > 1) {
 		// Multiple roots (fragment)
 		rootElement = FRAGMENT_SENTINEL;
-		topLevelNodeTags = extractTopLevelTags(parsed);
+		topLevelNodeTags = extractTopLevelTags(data);
 	} else {
 		// Single root
 		rootElement = keys.at(0)!;
-		const rootValue = Reflect.get(parsed, rootElement);
+		const rootValue = Reflect.get(data, rootElement);
 		topLevelNodeTags = extractTopLevelTags(rootValue);
 	}
 
 	// Calculate depth
-	const depthValue = calculateDepth(parsed, MAX_STRUCTURE_PROBING_DEPTH);
+	const depthValue = calculateDepth(data, MAX_STRUCTURE_PROBING_DEPTH);
 	const depth: PrecisionValue<number> =
 		depthValue > MAX_STRUCTURE_PROBING_DEPTH
 			? {value: MAX_STRUCTURE_PROBING_DEPTH, exact: false}
@@ -101,5 +101,5 @@ export const parseXML = (rawData: string): Result<ParseXMLResult, string> => {
 		size,
 	};
 
-	return ok({valid: true, metadata});
+	return ok({valid: true, parsedData: data, metadata});
 };

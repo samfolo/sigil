@@ -6,4 +6,4 @@ import type {StructureMetadata} from '@sigil/src/agent/definitions/analyser/tool
  */
 export type ParseJSONResult =
 	| {valid: false; error: string}
-	| {valid: true; metadata: StructureMetadata};
+	| {valid: true; parsedData: unknown; metadata: StructureMetadata};

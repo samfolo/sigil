@@ -42,4 +42,14 @@ export interface ParserState<T extends BaseParserStructureMetadata = BaseParserS
 	 * Metadata about successfully parsed data, including which tool parsed it
 	 */
 	structureMetadata?: T;
+	/**
+	 * Parsed data structure (populated after successful parsing)
+	 *
+	 * Contains the in-memory JavaScript representation of the parsed data:
+	 * - JSON: Result of JSON.parse
+	 * - CSV: Two-dimensional array from Papa.parse
+	 * - YAML: Result from js-yaml load
+	 * - XML: JSON representation from fast-xml-parser
+	 */
+	parsedData?: unknown;
 }

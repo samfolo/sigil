@@ -48,9 +48,9 @@ export const parseYAML = (rawData: string): Result<ParseYAMLResult, string> => {
 	const size = calculateSize(rawData);
 
 	// Attempt to parse YAML with safe schema (prevents code execution)
-	let parsed: unknown;
+	let data: unknown;
 	try {
-		parsed = yaml.load(rawData, {schema: JSON_SCHEMA});
+		data = yaml.load(rawData, {schema: JSON_SCHEMA});
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown parsing error';
@@ -58,16 +58,16 @@ export const parseYAML = (rawData: string): Result<ParseYAMLResult, string> => {
 	}
 
 	// Handle empty/null/undefined results
-	if (parsed === undefined) {
+	if (data === undefined) {
 		return ok({valid: false, error: 'No document found'});
 	}
 
 	// Build metadata based on structure type
-	const metadata = buildStructuredMetadata(parsed, size, {
+	const metadata = buildStructuredMetadata(data, size, {
 		maxKeys: MAX_STRUCTURE_EXTRACTED_ITEMS,
 		maxKeyLength: MAX_STRUCTURE_VALUE_LENGTH,
 		maxDepth: MAX_STRUCTURE_PROBING_DEPTH,
 	});
 
-	return ok({valid: true, metadata});
+	return ok({valid: true, parsedData: data, metadata});
 };

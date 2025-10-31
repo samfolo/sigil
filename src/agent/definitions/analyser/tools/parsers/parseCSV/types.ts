@@ -16,6 +16,7 @@ export type ParseCSVResult =
 	  }
 	| {
 			valid: true;
+			parsedData: unknown;
 			metadata: CSVMetadata;
 	  };
 

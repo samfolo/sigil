@@ -50,6 +50,7 @@ const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructure
 					tool: 'parse_yaml',
 					details: result.data,
 				},
+				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
 			attempt: state.attempt,
 		},

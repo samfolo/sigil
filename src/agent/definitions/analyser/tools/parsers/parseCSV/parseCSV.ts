@@ -101,6 +101,7 @@ export const parseCSV = (
 
 	return ok({
 		valid: true,
+		parsedData: data,
 		metadata: {
 			rowCount: data.length,
 			columnCount,

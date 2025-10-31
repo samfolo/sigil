@@ -27,4 +27,4 @@ export interface XMLMetadata extends DepthAwareStructureMetadata {
  */
 export type ParseXMLResult =
 	| {valid: false; error: string}
-	| {valid: true; metadata: XMLMetadata};
+	| {valid: true; parsedData: unknown; metadata: XMLMetadata};
