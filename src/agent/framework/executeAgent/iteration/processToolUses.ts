@@ -8,6 +8,8 @@ import {isErr} from '@sigil/src/common/errors';
 import type {ExecuteCallbacks} from '../types';
 import {formatReflectionHandlerResult, safeInvokeCallback} from '../util';
 
+import {SUBMIT_TOOL_NAME} from './constants';
+
 /**
  * State tier for tool processing
  *
@@ -143,11 +145,6 @@ export interface ProcessToolUsesParams<Input, Output, Run extends object, Attemp
 	lastOutputToolInput: Output | undefined;
 
 	/**
-	 * Submit tool definition for reflection mode
-	 */
-	submitTool: Anthropic.Tool;
-
-	/**
 	 * Callback functions for observability
 	 */
 	callbacks: ProcessToolUsesCallbacks<Output>;
@@ -186,7 +183,7 @@ export const processToolUses = <Input, Output, Run extends object, Attempt exten
 
 	for (const toolUse of params.toolUses) {
 		// Check for submit tool
-		if (toolUse.name === params.submitTool.name) {
+		if (toolUse.name === SUBMIT_TOOL_NAME) {
 			wasSubmitFound = true;
 			// Fire callback for submit tool
 			safeInvokeCallback(

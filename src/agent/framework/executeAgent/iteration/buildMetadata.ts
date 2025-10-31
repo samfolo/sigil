@@ -2,6 +2,8 @@ import type {ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
 
 import type {ExecuteMetadata} from '../types';
 
+import type {DurationMetrics, TokenMetrics} from './types';
+
 /**
  * Options for building execution metadata
  */
@@ -12,19 +14,14 @@ export interface BuildMetadataOptions {
 	observability: ObservabilityConfig;
 
 	/**
-	 * Execution start time from performance.now()
+	 * Duration metrics
 	 */
-	startTime: number;
+	durationMetrics: DurationMetrics;
 
 	/**
-	 * Total input tokens consumed across all attempts
+	 * Token metrics
 	 */
-	totalInputTokens: number;
-
-	/**
-	 * Total output tokens generated across all attempts
-	 */
-	totalOutputTokens: number;
+	tokenMetrics: TokenMetrics;
 
 	/**
 	 * Array of callback errors (empty if none occurred)
@@ -44,14 +41,14 @@ export const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata =>
 
 	// Include latency if tracking is enabled
 	if (options.observability.trackLatency) {
-		metadata.latency = endTime - options.startTime;
+		metadata.latency = endTime - options.durationMetrics.startTime;
 	}
 
 	// Include token usage if tracking is enabled
 	if (options.observability.trackTokens) {
 		metadata.tokens = {
-			input: options.totalInputTokens,
-			output: options.totalOutputTokens,
+			input: options.tokenMetrics.input,
+			output: options.tokenMetrics.output,
 		};
 	}
 

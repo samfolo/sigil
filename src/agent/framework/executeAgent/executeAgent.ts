@@ -1,11 +1,10 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import * as z from 'zod';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {DEFAULT_MAX_ITERATIONS} from '@sigil/src/agent/framework/common';
 import type {AgentDefinition, ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
 import type {AgentState} from '@sigil/src/agent/framework/defineAgent/types';
-import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
+import {buildSystemPrompt, buildUserPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
@@ -13,12 +12,14 @@ import type {
 	ValidationLayerCallbacks,
 	ValidationLayerIdentity,
 } from '@sigil/src/agent/framework/validation';
-import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validation/format';
 import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
 import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors';
 import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
 import {buildMetadata} from './iteration/buildMetadata';
+import {buildTools} from './iteration/buildTools';
+import {handleValidationFailure} from './iteration/handleValidationFailure';
+import {handleValidationSuccess} from './iteration/handleValidationSuccess';
 import {runIterationLoop} from './iteration/runIterationLoop';
 import type {
 	ExecuteOptions,
@@ -26,22 +27,6 @@ import type {
 	ExecuteFailure,
 } from './types';
 import {safeInvokeCallback} from './util';
-
-/**
- * Default submit tool definition for reflection mode
- *
- * Automatically injected when output tool has a reflection handler.
- * Signals that the model is satisfied with its output and ready for validation.
- */
-const DEFAULT_SUBMIT_TOOL: Anthropic.Tool = {
-	name: 'submit',
-	description: 'Submit your final output for validation. Call this when you are satisfied with your output.',
-	input_schema: {
-		type: 'object',
-		properties: {},
-		required: [],
-	},
-};
 
 /**
  * Default run state initialiser that returns an empty object
@@ -150,9 +135,13 @@ const createCancellationError = (
 
 	const metadata = buildMetadata({
 		observability,
-		startTime,
-		totalInputTokens,
-		totalOutputTokens,
+		durationMetrics: {
+			startTime,
+		},
+		tokenMetrics: {
+			input: totalInputTokens,
+			output: totalOutputTokens,
+		},
 		callbackErrors
 	});
 
@@ -218,9 +207,13 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			errors: userPromptResult.error,
 			metadata: buildMetadata({
 				observability: agent.observability,
-				startTime,
-				totalInputTokens,
-				totalOutputTokens,
+				durationMetrics: {
+					startTime,
+				},
+				tokenMetrics: {
+					input: totalInputTokens,
+					output: totalOutputTokens,
+				},
 				callbackErrors
 			}),
 		});
@@ -310,41 +303,23 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				errors: systemPromptResult.error,
 				metadata: buildMetadata({
 					observability: agent.observability,
-					startTime,
-					totalInputTokens,
-					totalOutputTokens,
+					durationMetrics: {
+						startTime,
+					},
+					tokenMetrics: {
+						input: totalInputTokens,
+						output: totalOutputTokens,
+					},
 					callbackErrors
 				}),
 			});
 		}
 
-		// Build tools array from agent configuration
-		// Convert Zod schema to JSON Schema for Anthropic API
-		// Agent output schemas are always objects, so this cast is safe
-		const outputTool: Anthropic.Tool = {
-			name: agent.tools.output.name,
-			description: agent.tools.output.description,
-			input_schema: z.toJSONSchema(agent.validation.outputSchema) as Anthropic.Tool.InputSchema,
-		};
-
-		// Build helper tools array from configuration
-		const helperTools: Anthropic.Tool[] = agent.tools.helpers
-			? Object.values(agent.tools.helpers).map((helper) => ({
-				name: helper.name,
-				description: helper.description,
-				input_schema: z.toJSONSchema(helper.inputSchema) as Anthropic.Tool.InputSchema,
-			}))
-			: [];
-
 		// Determine if reflection mode is enabled
-		const reflectionEnabled = !!agent.tools.output.reflectionHandler;
+		const isReflectionEnabled = !!agent.tools.output.reflectionHandler;
 
-		// Build tools array (inject submit tool if reflection enabled)
-		const tools: Anthropic.Tool[] = [
-			outputTool,
-			...helperTools,
-			...(reflectionEnabled ? [DEFAULT_SUBMIT_TOOL] : []),
-		];
+		// Build tools array from agent configuration
+		const tools = buildTools(agent, isReflectionEnabled);
 
 		// Run iteration loop
 		const iterationResult = await runIterationLoop({
@@ -358,8 +333,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			conversationHistory,
 			systemPrompt: systemPromptResult.data,
 			tools,
-			submitTool: DEFAULT_SUBMIT_TOOL,
-			isReflectionEnabled: reflectionEnabled,
+			isReflectionEnabled,
 			maxIterations,
 			signal: options.signal,
 			callbacks: {
@@ -439,108 +413,46 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 
 		// Handle validation success
 		if (!isErr(validationResult)) {
-			// Invoke onAttemptComplete callback with success
-			safeInvokeCallback(
-				options.callbacks?.onAttemptComplete,
-				[{...context}, true],
-				callbackErrors
-			);
-
-			// Invoke onSuccess callback
-			safeInvokeCallback(
-				options.callbacks?.onSuccess,
-				[validationResult.data],
-				callbackErrors
-			);
-
-			// Build metadata based on observability configuration
-			const metadata = buildMetadata({
-				observability: agent.observability,
-				startTime,
-				totalInputTokens,
-				totalOutputTokens,
-				callbackErrors
-			});
-
-			return ok({
+			return handleValidationSuccess({
 				output: validationResult.data,
-				attempts: attempt,
-				metadata,
+				context,
+				observability: agent.observability,
+				durationMetrics: {
+					startTime,
+				},
+				tokenMetrics: {
+					input: totalInputTokens,
+					output: totalOutputTokens,
+				},
+				callbackErrors,
+				callbacks: options.callbacks,
 			});
 		}
 
 		// Handle validation failure
 		lastValidationError = validationResult.error;
 
-		// Invoke onAttemptComplete callback with failure
-		safeInvokeCallback(
-			options.callbacks?.onAttemptComplete,
-			[{...context}, false],
-			callbackErrors
-		);
-
-		// Invoke onValidationFailure callback
-		safeInvokeCallback(
-			options.callbacks?.onValidationFailure,
-			[{...context}, validationResult.error],
-			callbackErrors
-		);
-
-		// Append assistant response to conversation history
-		// response is guaranteed to be defined here because output was extracted from it
-		conversationHistory.push({
-			role: 'assistant',
-			content: response!.content,
-		});
-
-		// Format validation errors for prompt using layer-specific context
-		// Falls back to generic context if layer metadata is missing or empty
-		const layerName = lastFailedLayer.name || 'validation';
-		const layerDescription = lastFailedLayer.description || 'No description provided for validation layer';
-		const formattedError = formatValidationErrorForPrompt(
-			validationResult.error,
-			layerName,
-			layerDescription
-		);
-
-		// Check for cancellation before building error prompt
-		if (options.signal?.aborted) {
-			return err(createCancellationError(
-				attempt,
-				'prompt_generation',
-				agent.observability,
-				startTime,
-				totalInputTokens,
-				totalOutputTokens,
-				callbackErrors
-			));
-		}
-
-		// Build error prompt
-		const errorPromptResult = await buildErrorPrompt(
-			agent,
-			formattedError,
+		const failureResult = await handleValidationFailure({
+			validationError: validationResult.error,
 			context,
-		);
-
-		if (isErr(errorPromptResult)) {
-			return err({
-				errors: errorPromptResult.error,
-				metadata: buildMetadata({
-					observability: agent.observability,
-					startTime,
-					totalInputTokens,
-					totalOutputTokens,
-					callbackErrors
-				}),
-			});
-		}
-
-		// Append error prompt to conversation history
-		conversationHistory.push({
-			role: 'user',
-			content: errorPromptResult.data,
+			agent,
+			lastFailedLayer,
+			lastResponse: response!,
+			conversationHistory,
+			durationMetrics: {
+				startTime,
+			},
+			tokenMetrics: {
+				input: totalInputTokens,
+				output: totalOutputTokens,
+			},
+			callbackErrors,
+			callbacks: options.callbacks,
 		});
+
+		if (isErr(failureResult)) {
+			return failureResult;
+		}
 
 		// Continue to next iteration
 	}
@@ -567,9 +479,13 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 	// Build metadata based on observability configuration
 	const metadata = buildMetadata({
 		observability: agent.observability,
-		startTime,
-		totalInputTokens,
-		totalOutputTokens,
+		durationMetrics: {
+			startTime,
+		},
+		tokenMetrics: {
+			input: totalInputTokens,
+			output: totalOutputTokens,
+		},
 		callbackErrors
 	});
 

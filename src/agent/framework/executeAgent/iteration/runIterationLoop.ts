@@ -11,31 +11,7 @@ import type {ExecuteFailure} from '../types';
 import {buildMetadata} from './buildMetadata';
 import type {ProcessToolUsesState, ProcessToolUsesCallbacks} from './processToolUses';
 import {processToolUses} from './processToolUses';
-
-/**
- * Duration metrics for iteration loop
- */
-export interface IterationLoopDurationMetrics {
-	/**
-	 * Execution start time from performance.now()
-	 */
-	startTime: number;
-}
-
-/**
- * Token count tracking for iteration loop
- */
-export interface IterationLoopTokenMetrics {
-	/**
-	 * Total input tokens consumed
-	 */
-	input: number;
-
-	/**
-	 * Total output tokens generated
-	 */
-	output: number;
-}
+import type {DurationMetrics, TokenMetrics} from './types';
 
 /**
  * Parameters for running the iteration loop
@@ -48,14 +24,13 @@ export interface RunIterationLoopParams<Input, Output, Run extends object, Attem
 	conversationHistory: Anthropic.MessageParam[];
 	systemPrompt: string;
 	tools: Anthropic.Tool[];
-	submitTool: Anthropic.Tool;
 	isReflectionEnabled: boolean;
 	maxIterations: number;
 	signal?: AbortSignal;
 	callbacks: ProcessToolUsesCallbacks<Output>;
 	callbackErrors: Error[];
-	durationMetrics: IterationLoopDurationMetrics;
-	tokenMetrics: IterationLoopTokenMetrics;
+	durationMetrics: DurationMetrics;
+	tokenMetrics: TokenMetrics;
 }
 
 /**
@@ -66,7 +41,7 @@ export interface RunIterationLoopResult<Output, Run extends object, Attempt exte
 	iterationCount: number;
 	lastResponse: Anthropic.Message;
 	updatedState: AgentState<Run, Attempt>;
-	tokenMetrics: IterationLoopTokenMetrics;
+	tokenMetrics: TokenMetrics;
 }
 
 /**
@@ -94,9 +69,13 @@ const createCancellationError = (
 	],
 	metadata: buildMetadata({
 		observability,
-		startTime,
-		totalInputTokens,
-		totalOutputTokens,
+		durationMetrics: {
+			startTime,
+		},
+		tokenMetrics: {
+			input: totalInputTokens,
+			output: totalOutputTokens,
+		},
 		callbackErrors,
 	}),
 });
@@ -121,7 +100,6 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 		conversationHistory,
 		systemPrompt,
 		tools,
-		submitTool,
 		isReflectionEnabled,
 		maxIterations,
 		signal,
@@ -196,9 +174,8 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 				],
 				metadata: buildMetadata({
 					observability: agent.observability,
-					startTime: durationMetrics.startTime,
-					totalInputTokens: tokenMetrics.input,
-					totalOutputTokens: tokenMetrics.output,
+					durationMetrics,
+					tokenMetrics,
 					callbackErrors,
 				}),
 			});
@@ -229,7 +206,6 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 			},
 			isReflectionEnabled,
 			lastOutputToolInput,
-			submitTool,
 			callbacks,
 			callbackErrors,
 		});
@@ -264,9 +240,8 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 					],
 					metadata: buildMetadata({
 						observability: agent.observability,
-						startTime: durationMetrics.startTime,
-						totalInputTokens: tokenMetrics.input,
-						totalOutputTokens: tokenMetrics.output,
+						durationMetrics,
+						tokenMetrics,
 						callbackErrors,
 					}),
 				});
@@ -321,9 +296,8 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 			],
 			metadata: buildMetadata({
 				observability: agent.observability,
-				startTime: durationMetrics.startTime,
-				totalInputTokens: tokenMetrics.input,
-				totalOutputTokens: tokenMetrics.output,
+				durationMetrics,
+				tokenMetrics,
 				callbackErrors,
 			}),
 		});
@@ -350,9 +324,8 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 			],
 			metadata: buildMetadata({
 				observability: agent.observability,
-				startTime: durationMetrics.startTime,
-				totalInputTokens: tokenMetrics.input,
-				totalOutputTokens: tokenMetrics.output,
+				durationMetrics,
+				tokenMetrics,
 				callbackErrors,
 			}),
 		});
