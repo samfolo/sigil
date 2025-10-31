@@ -61,19 +61,19 @@ export const LIST_DATA: ListData = {
 export const SIMPLE_TEMPLATE = 'Process: {{ data }}';
 export const SIMPLE_TEMPLATE_FILE = 'simple.liquid';
 
-export const WITH_STATE_TEMPLATE = 'Attempt {{ state.attempt }}/{{ state.maxAttempts }}: {{ data.message }}';
+export const WITH_STATE_TEMPLATE = 'Attempt {{ context.attempt }}/{{ context.maxAttempts }}: {{ data.message }}';
 export const WITH_STATE_TEMPLATE_FILE = 'withState.liquid';
 
-export const ERROR_TEMPLATE = `Attempt {{ state.attempt }}/{{ state.maxAttempts }} failed:
+export const ERROR_TEMPLATE = `Attempt {{ context.attempt }}/{{ context.maxAttempts }} failed:
 
 {{ data }}
 
 Please fix these issues.`;
 
-export const CONDITIONAL_TEMPLATE = `{% if state.attempt == 1 %}
+export const CONDITIONAL_TEMPLATE = `{% if context.attempt == 1 %}
 First attempt: {{ data.query }}
 {% else %}
-Attempt {{ state.attempt }}/{{ state.maxAttempts }}: {{ data.query }}
+Attempt {{ context.attempt }}/{{ context.maxAttempts }}: {{ data.query }}
 {% endif %}`;
 export const CONDITIONAL_TEMPLATE_FILE = 'conditional.liquid';
 

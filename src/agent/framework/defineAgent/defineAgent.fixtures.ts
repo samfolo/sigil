@@ -62,6 +62,8 @@ class AgentDefinitionBuilder<Input, Output, Run extends object = EmptyObject, At
 		modelName?: string;
 		temperature?: number;
 		maxTokens?: number;
+		initialRunState?: AgentDefinition<Input, Output, Run, Attempt>['initialRunState'];
+		initialAttemptState?: AgentDefinition<Input, Output, Run, Attempt>['initialAttemptState'];
 	} = {};
 
 	constructor(private base: AgentDefinition<Input, Output, Run, Attempt>) {}
@@ -126,6 +128,16 @@ class AgentDefinitionBuilder<Input, Output, Run extends object = EmptyObject, At
 		return this;
 	}
 
+	withInitialRunState(initialiser: AgentDefinition<Input, Output, Run, Attempt>['initialRunState']): this {
+		this.overrides.initialRunState = initialiser;
+		return this;
+	}
+
+	withInitialAttemptState(initialiser: AgentDefinition<Input, Output, Run, Attempt>['initialAttemptState']): this {
+		this.overrides.initialAttemptState = initialiser;
+		return this;
+	}
+
 	build(): AgentDefinition<Input, Output, Run, Attempt> {
 		return {
 			name: this.overrides.name ?? this.base.name,
@@ -170,6 +182,24 @@ class AgentDefinitionBuilder<Input, Output, Run extends object = EmptyObject, At
 				...this.base.observability,
 				...this.overrides.observability,
 			},
+			...(() => {
+				if (this.overrides.initialRunState !== undefined) {
+					return {initialRunState: this.overrides.initialRunState};
+				}
+				if (this.base.initialRunState !== undefined) {
+					return {initialRunState: this.base.initialRunState};
+				}
+				return {};
+			})(),
+			...(() => {
+				if (this.overrides.initialAttemptState !== undefined) {
+					return {initialAttemptState: this.overrides.initialAttemptState};
+				}
+				if (this.base.initialAttemptState !== undefined) {
+					return {initialAttemptState: this.base.initialAttemptState};
+				}
+				return {};
+			})(),
 		};
 	}
 }

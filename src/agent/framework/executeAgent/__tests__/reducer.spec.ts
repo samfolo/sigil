@@ -558,18 +558,18 @@ describe('executeAgent - State Reducer Pattern', () => {
 	});
 
 	describe('Custom Initial State', () => {
-		it('should use initialState to pre-populate state fields', async () => {
+		it('should use initialRunState to pre-populate state fields', async () => {
 			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
 
 			const input = {
 				data: 'a, b, c',
 			};
 
-			// Create agent with initialState that pre-populates parsedData
+			// Create agent with initialRunState that pre-populates parsedData
 			const agentWithInitState = {
 				...STATEFUL_AGENT,
-				initialState: (inp: StatefulAgentInput) => ({
-					...inp,
+				initialRunState: (inp: StatefulAgentInput) => ({
+					rawData: inp.data,
 					parsedData: ['pre-populated-item'], // Set parsedData without calling parse_tool
 				}),
 			};
@@ -594,7 +594,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			// Query succeeds WITHOUT parse_tool being called
-			// This proves initialState actually set parsedData
+			// This proves initialRunState actually set parsedData
 			const queryResult = getToolResult(invocations, 'query_tool');
 			expect(queryResult).toMatchObject({
 				query: 'test',

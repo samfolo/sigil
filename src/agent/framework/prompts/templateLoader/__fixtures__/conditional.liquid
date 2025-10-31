@@ -1,5 +1,5 @@
-{% if state.attempt == 1 %}
+{% if context.attempt == 1 %}
 First attempt: {{ data.query }}
 {% else %}
-Attempt {{ state.attempt }}/{{ state.maxAttempts }}: {{ data.query }}
+Attempt {{ context.attempt }}/{{ context.maxAttempts }}: {{ data.query }}
 {% endif %}

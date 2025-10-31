@@ -872,11 +872,16 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 							callbackErrors
 						);
 					} else {
-						currentState = handlerResult.data.newState;
+						// Extract new run state from handler result
+						const newRun = handlerResult.data.newState.run;
 						// Persist run state updates back to outer scope (survives retry attempts)
-						Object.assign(runState, currentState.run);
-						// Update currentState.run to point to the persisted runState for next tool call
-						currentState.run = runState;
+						Object.assign(runState, newRun);
+						// Create fresh currentState without mutating newState
+						currentState = {
+							context: handlerResult.data.newState.context,
+							run: runState,
+							attempt: handlerResult.data.newState.attempt,
+						};
 						const formattedResult = JSON.stringify(handlerResult.data.toolResult);
 						toolResults.push({
 							type: 'tool_result',
