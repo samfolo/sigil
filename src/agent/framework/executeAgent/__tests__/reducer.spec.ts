@@ -28,118 +28,57 @@ import {
 	VALID_MINIMAL_AGENT,
 	createExecuteOptionsWithCallbackTracking,
 	createMockApiCalls,
-	createHelperToolResponse,
 	createSuccessResponse,
 	isOk,
 	isErr,
 } from '../executeAgent.common.fixtures';
+import type {OnAttemptStartInvocation, OnToolCallInvocation, OnToolResultInvocation, CallbackInvocation} from '../executeAgent.fixtures';
 import {
 	STATEFUL_AGENT,
 	mockParseReducerHandler,
 	mockQueryReducerHandler,
 	mockTransformReducerHandler,
+	createStatefulSubmitResponse,
+	MOCK_THROWING_TOOL,
 } from './reducer.fixtures';
 import type {StatefulAgentInput} from './reducer.fixtures';
 
-/**
- * Helper to create stateful agent output response
- */
-const createStatefulSubmitResponse = (result: string = 'success', finalCount: number = 1) => ({
-	id: 'msg_output',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_output',
-			name: 'generate_output',
-			input: {result, finalCount},
-		},
-	],
-	stop_reason: 'tool_use' as const,
-	stop_sequence: null,
-	usage: {input_tokens: 100, output_tokens: 50},
-});
-
 describe('executeAgent - State Reducer Pattern', () => {
+	const INITIAL_CALL_COUNT = 0;
+	const INCREMENTED_ONCE = 1;
+	const QUERY_BEFORE_PARSE_ERROR = 'has not been parsed yet';
+	const UNKNOWN_TOOL_ERROR_PREFIX = 'Unknown tool';
+
+	/**
+	 * Helper to extract tool result from invocations
+	 *
+	 * Tool results are serialised as JSON strings by executeAgent
+	 */
+	const getToolResult = (invocations: CallbackInvocation[], toolName: string): unknown => {
+		const result = invocations.find(
+			(inv) => inv.type === 'onToolResult' && inv.toolName === toolName
+		);
+		expect(result).toBeDefined();
+		expect(result?.type).toBe('onToolResult');
+
+		if (result?.type !== 'onToolResult') {
+			throw new Error('Expected onToolResult but type check failed');
+		}
+
+		return JSON.parse(result.toolResult);
+	};
+
 	beforeEach(() => {
 		setupExecuteAgentMocks(mockMessagesCreate);
 	});
 
 	describe('State Threading', () => {
-		it('should initialise state to input value at execution start', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			const input: StatefulAgentInput = {
-				data: '{"test": "value"}',
-				callCount: 0,
-			};
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
-
-			const result = await executeAgent(STATEFUL_AGENT, {
-				...options,
-				input,
-			});
-
-			expect(isOk(result)).toBe(true);
-
-			// Verify first callback receives initial state
-			const firstCallback = invocations.at(0);
-			if (firstCallback?.type === 'onAttemptStart') {
-				expect(firstCallback.state.attempt).toBe(1);
-			}
-		});
-
-		it('should thread state through first tool call', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			const input: StatefulAgentInput = {
-				data: '{"test": "value"}',
-				callCount: 0,
-			};
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
-
-			const result = await executeAgent(STATEFUL_AGENT, {
-				...options,
-				input,
-			});
-
-			expect(isOk(result)).toBe(true);
-
-			// Verify tool callback receives initial state
-			const toolCallbacks = invocations.filter((inv) => inv.type === 'onToolCall');
-			expect(toolCallbacks.length).toBeGreaterThan(0);
-
-			const firstToolCall = toolCallbacks.at(0);
-			if (firstToolCall?.type === 'onToolCall') {
-				expect(firstToolCall.toolName).toBe('parse_tool');
-			}
-		});
-
 		it('should persist state updates to next tool call', async () => {
 			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
 
 			const input: StatefulAgentInput = {
 				data: 'item1, item2, item3',
-				callCount: 0,
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -172,25 +111,29 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			// First tool should be parse
 			const firstResult = toolResults.at(0);
+			expect(firstResult).toBeDefined();
 			expect(firstResult?.type).toBe('onToolResult');
+
 			if (firstResult?.type === 'onToolResult') {
 				expect(firstResult.toolName).toBe('parse_tool');
 			}
 
 			// Second tool should be query
 			const secondResult = toolResults.at(1);
+			expect(secondResult).toBeDefined();
 			expect(secondResult?.type).toBe('onToolResult');
+
 			if (secondResult?.type === 'onToolResult') {
 				expect(secondResult.toolName).toBe('query_tool');
 			}
 		});
 
-		it('should accumulate state changes across multiple tool calls', async () => {
+		it('should allow dependent tools to access prior tool state', async () => {
 			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
 
 			const input: StatefulAgentInput = {
 				data: 'item1, item2, item3',
-				callCount: 0,
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -226,78 +169,12 @@ describe('executeAgent - State Reducer Pattern', () => {
 			const toolResults = invocations.filter((inv) => inv.type === 'onToolResult');
 			expect(toolResults.length).toBe(3);
 
-			// callCount should have incremented with each call (tracked internally by handlers)
-			// We can't directly inspect state here, but the fact that all tools succeeded
-			// means state was properly threaded (query_tool requires parsedData from parse_tool)
-		});
-
-		it('should allow query tool to read state set by parse tool (dependency pattern)', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			const input: StatefulAgentInput = {
-				data: '{"key": "value"}',
-				callCount: 0,
-			};
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'key'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
-
-			const result = await executeAgent(STATEFUL_AGENT, {
-				...options,
-				input,
+			// Verify query succeeded (proves it accessed parsedData from parse_tool)
+			const queryResult = getToolResult(invocations, 'query_tool');
+			expect(queryResult).toMatchObject({
+				query: 'test',
+				matches: 3,
 			});
-
-			expect(isOk(result)).toBe(true);
-
-			// Verify query succeeded (it would fail if parsedData wasn't set)
-			const queryResult = invocations
-				.find((inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool');
-
-			expect(queryResult).toBeDefined();
-		});
-
-		it('should maintain state type throughout execution', async () => {
-			const {options} = createExecuteOptionsWithCallbackTracking();
-
-			const input: StatefulAgentInput = {
-				data: '{"test": true}',
-				callCount: 0,
-			};
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
-
-			const result = await executeAgent(STATEFUL_AGENT, {
-				...options,
-				input,
-			});
-
-			// Type system ensures state matches StatefulAgentInput
-			// This test verifies compilation succeeds with proper types
-			expect(isOk(result)).toBe(true);
 		});
 	});
 
@@ -305,14 +182,15 @@ describe('executeAgent - State Reducer Pattern', () => {
 		it('should allow testing individual handler in isolation', () => {
 			const state: StatefulAgentInput = {
 				data: '{"key": "value"}',
-				callCount: 0,
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			const result = mockParseReducerHandler(state, {format: 'json'});
 
 			expect(isOk(result)).toBe(true);
+
 			if (isOk(result)) {
-				expect(result.data.newState.callCount).toBe(1);
+				expect(result.data.newState.callCount).toBe(INCREMENTED_ONCE);
 				expect(result.data.newState.parsedData).toEqual({key: 'value'});
 				expect(result.data.toolResult).toEqual({
 					status: 'parsed',
@@ -322,34 +200,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 			}
 		});
 
-		it('should return correct newState and toolResult structure', () => {
-			const state: StatefulAgentInput = {
-				data: 'a, b, c',
-				callCount: 5,
-			};
-
-			const result = mockParseReducerHandler(state, {format: 'csv'});
-
-			expect(isOk(result)).toBe(true);
-			if (isOk(result)) {
-				// Check structure
-				expect(result.data).toHaveProperty('newState');
-				expect(result.data).toHaveProperty('toolResult');
-
-				// Check newState
-				expect(result.data.newState.callCount).toBe(6);
-				expect(result.data.newState.parsedData).toEqual(['a', 'b', 'c']);
-
-				// Check toolResult
-				expect(result.data.toolResult).toHaveProperty('status');
-				expect(result.data.toolResult).toHaveProperty('format');
-			}
-		});
-
 		it('should follow immutability (return new object, not mutate input)', () => {
 			const state: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: 0,
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			const originalCallCount = state.callCount;
@@ -361,9 +215,12 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(state.callCount).toBe(originalCallCount);
 			expect(state.parsedData).toBe(originalParsedData);
 
-			// New state has updates
+			expect(isOk(result)).toBe(true);
+
 			if (isOk(result)) {
-				expect(result.data.newState.callCount).toBe(1);
+				// Verify new object reference (not same object)
+				expect(result.data.newState).not.toBe(state);
+				expect(result.data.newState.callCount).toBe(INCREMENTED_ONCE);
 				expect(result.data.newState.parsedData).toBeDefined();
 			}
 		});
@@ -371,26 +228,26 @@ describe('executeAgent - State Reducer Pattern', () => {
 		it('should return error for invalid state prerequisites', () => {
 			const state: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: 0,
-				// parsedData not set - query should fail
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			const result = mockQueryReducerHandler(state, {query: 'test'});
 
 			expect(isErr(result)).toBe(true);
+
 			if (isErr(result)) {
-				expect(result.error).toContain('has not been parsed yet');
+				expect(result.error).toContain(QUERY_BEFORE_PARSE_ERROR);
 			}
 		});
 	});
 
 	describe('Error Handling', () => {
-		it('should send handler error to model as tool_result', async () => {
+		it('should fire onToolResult callback with handler error', async () => {
 			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: 0,
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -410,88 +267,16 @@ describe('executeAgent - State Reducer Pattern', () => {
 				input,
 			});
 
-			// Execution should continue despite error
 			expect(isOk(result)).toBe(true);
-
-			// onToolResult should have been called with error
-			const toolResults = invocations.filter((inv) => inv.type === 'onToolResult');
-			expect(toolResults.length).toBeGreaterThan(0);
-
-			const errorResult = toolResults.find(
-				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
-			);
-			expect(errorResult).toBeDefined();
-		});
-
-		it('should continue execution after handler error', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			const input: StatefulAgentInput = {
-				data: '{"test": true}',
-				callCount: 0,
-			};
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
-
-			const result = await executeAgent(STATEFUL_AGENT, {
-				...options,
-				input,
-			});
-
-			expect(isOk(result)).toBe(true);
-
-			// Verify all tool calls occurred (query, parse, output)
-			const toolCalls = invocations.filter((inv) => inv.type === 'onToolCall');
-			expect(toolCalls.length).toBe(3);
-		});
-
-		it('should fire onToolResult callback with error content', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			const input: StatefulAgentInput = {
-				data: '{"test": true}',
-				callCount: 0,
-			};
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
-
-			await executeAgent(STATEFUL_AGENT, {
-				...options,
-				input,
-			});
 
 			const errorToolResult = invocations.find(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
 			);
 
 			expect(errorToolResult).toBeDefined();
+			expect(errorToolResult?.type).toBe('onToolResult');
 			if (errorToolResult?.type === 'onToolResult') {
-				expect(errorToolResult.toolResult).toContain('has not been parsed yet');
+				expect(errorToolResult.toolResult).toContain(QUERY_BEFORE_PARSE_ERROR);
 			}
 		});
 
@@ -500,7 +285,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: 'a, b, c',
-				callCount: 0,
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -538,19 +323,25 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			// First query should error
 			const firstQuery = toolResults.at(0);
+			expect(firstQuery).toBeDefined();
+			expect(firstQuery?.type).toBe('onToolResult');
 			if (firstQuery?.type === 'onToolResult') {
 				expect(firstQuery.toolName).toBe('query_tool');
-				expect(firstQuery.toolResult).toContain('has not been parsed yet');
+				expect(firstQuery.toolResult).toContain(QUERY_BEFORE_PARSE_ERROR);
 			}
 
 			// Parse should succeed
 			const parse = toolResults.at(1);
+			expect(parse).toBeDefined();
+			expect(parse?.type).toBe('onToolResult');
 			if (parse?.type === 'onToolResult') {
 				expect(parse.toolName).toBe('parse_tool');
 			}
 
 			// Second query should succeed (parsedData now available)
 			const secondQuery = toolResults.at(2);
+			expect(secondQuery).toBeDefined();
+			expect(secondQuery?.type).toBe('onToolResult');
 			if (secondQuery?.type === 'onToolResult') {
 				expect(secondQuery.toolName).toBe('query_tool');
 			}
@@ -561,7 +352,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: 0,
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -589,15 +380,240 @@ describe('executeAgent - State Reducer Pattern', () => {
 			);
 
 			expect(unknownToolResult).toBeDefined();
+			expect(unknownToolResult?.type).toBe('onToolResult');
 			if (unknownToolResult?.type === 'onToolResult') {
-				expect(unknownToolResult.toolResult).toContain('Unknown tool');
+				expect(unknownToolResult.toolResult).toContain(UNKNOWN_TOOL_ERROR_PREFIX);
 			}
+		});
+
+		it('should preserve state when handler throws exception', async () => {
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			const input: StatefulAgentInput = {
+				data: '{"test": true}',
+				callCount: INITIAL_CALL_COUNT,
+			};
+
+			// Create agent with throwing tool
+			const agentWithThrowingTool = {
+				...STATEFUL_AGENT,
+				tools: {
+					...STATEFUL_AGENT.tools,
+					helpers: {
+						...STATEFUL_AGENT.tools.helpers,
+						throwing_tool: MOCK_THROWING_TOOL,
+					},
+				},
+			};
+
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'helper',
+					helperToolName: 'parse_tool',
+					helperInput: {format: 'json'},
+				},
+				{
+					type: 'helper',
+					helperToolName: 'throwing_tool',
+					helperInput: {shouldThrow: true, errorMessage: 'Tool execution failed'},
+				},
+				{
+					type: 'helper',
+					helperToolName: 'query_tool',
+					helperInput: {query: 'test'},
+				},
+				{
+					type: 'custom',
+					response: createStatefulSubmitResponse(),
+				},
+			]);
+
+			const result = await executeAgent(agentWithThrowingTool, {
+				...options,
+				input,
+			});
+
+			expect(isOk(result)).toBe(true);
+
+			// Verify parse succeeded and updated state
+			const parseResult = getToolResult(invocations, 'parse_tool');
+			expect(parseResult).toMatchObject({
+				status: 'parsed',
+				format: 'json',
+				recordCount: 1,
+			});
+
+			// Verify throwing tool returned error
+			const throwingResult = invocations.find(
+				(inv) => inv.type === 'onToolResult' && inv.toolName === 'throwing_tool'
+			);
+			expect(throwingResult).toBeDefined();
+			expect(throwingResult?.type).toBe('onToolResult');
+			if (throwingResult?.type === 'onToolResult') {
+				expect(throwingResult.toolResult).toContain('Tool execution failed');
+			}
+
+			// Verify query succeeded (proves it sees parse's state despite throwing tool)
+			const queryResult = getToolResult(invocations, 'query_tool');
+			expect(queryResult).toMatchObject({
+				query: 'test',
+				matches: 3,
+			});
+		});
+
+		it('should handle multiple exceptions without corrupting state', async () => {
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			const input: StatefulAgentInput = {
+				data: '{"key": "value"}',
+				callCount: INITIAL_CALL_COUNT,
+			};
+
+			// Create agent with throwing tool
+			const agentWithThrowingTool = {
+				...STATEFUL_AGENT,
+				tools: {
+					...STATEFUL_AGENT.tools,
+					helpers: {
+						...STATEFUL_AGENT.tools.helpers,
+						throwing_tool: MOCK_THROWING_TOOL,
+					},
+				},
+			};
+
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'helper',
+					helperToolName: 'parse_tool',
+					helperInput: {format: 'json'},
+				},
+				{
+					type: 'helper',
+					helperToolName: 'throwing_tool',
+					helperInput: {shouldThrow: true, errorMessage: 'First exception'},
+				},
+				{
+					type: 'helper',
+					helperToolName: 'query_tool',
+					helperInput: {query: 'key'},
+				},
+				{
+					type: 'helper',
+					helperToolName: 'throwing_tool',
+					helperInput: {shouldThrow: true, errorMessage: 'Second exception'},
+				},
+				{
+					type: 'helper',
+					helperToolName: 'query_tool',
+					helperInput: {query: 'key'},
+				},
+				{
+					type: 'custom',
+					response: createStatefulSubmitResponse(),
+				},
+			]);
+
+			const result = await executeAgent(agentWithThrowingTool, {
+				...options,
+				input,
+			});
+
+			expect(isOk(result)).toBe(true);
+
+			// Verify parse succeeded
+			const parseResult = getToolResult(invocations, 'parse_tool');
+			expect(parseResult).toMatchObject({
+				status: 'parsed',
+				format: 'json',
+			});
+
+			// Verify both query calls succeeded (both see parse's state)
+			const queryResults = invocations.filter(
+				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
+			);
+			expect(queryResults.length).toBe(2);
+
+			// Both queries should succeed
+			const firstQueryResult = queryResults.at(0);
+			expect(firstQueryResult).toBeDefined();
+			expect(firstQueryResult?.type).toBe('onToolResult');
+			if (firstQueryResult?.type === 'onToolResult') {
+				const parsed = JSON.parse(firstQueryResult.toolResult);
+				expect(parsed).toMatchObject({
+					query: 'key',
+					matches: 3,
+				});
+			}
+
+			const secondQueryResult = queryResults.at(1);
+			expect(secondQueryResult).toBeDefined();
+			expect(secondQueryResult?.type).toBe('onToolResult');
+			if (secondQueryResult?.type === 'onToolResult') {
+				const parsed = JSON.parse(secondQueryResult.toolResult);
+				expect(parsed).toMatchObject({
+					query: 'key',
+					matches: 3,
+				});
+			}
+		});
+	});
+
+	describe('Custom Initial State', () => {
+		it('should use initialState to pre-populate state fields', async () => {
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			const input = {
+				data: 'a, b, c',
+				callCount: INITIAL_CALL_COUNT,
+			};
+
+			// Create agent with initialState that pre-populates parsedData
+			const agentWithInitState = {
+				...STATEFUL_AGENT,
+				initialState: (inp: StatefulAgentInput) => ({
+					...inp,
+					parsedData: ['pre-populated-item'], // Set parsedData without calling parse_tool
+				}),
+			};
+
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'helper',
+					helperToolName: 'query_tool',
+					helperInput: {query: 'test'},
+				},
+				{
+					type: 'custom',
+					response: createStatefulSubmitResponse(),
+				},
+			]);
+
+			const result = await executeAgent(agentWithInitState, {
+				...options,
+				input,
+			});
+
+			expect(isOk(result)).toBe(true);
+
+			// Query succeeds WITHOUT parse_tool being called
+			// This proves initialState actually set parsedData
+			const queryResult = getToolResult(invocations, 'query_tool');
+			expect(queryResult).toMatchObject({
+				query: 'test',
+				matches: 3,
+			});
+
+			// Verify parse_tool was NOT called
+			const parseToolCalls = invocations.filter(
+				(inv) => inv.type === 'onToolCall' && inv.toolName === 'parse_tool'
+			);
+			expect(parseToolCalls.length).toBe(0);
 		});
 	});
 
 	describe('Backward Compatibility', () => {
 		it('should work with stateless agent (no helpers)', async () => {
-			const {options} = createExecuteOptionsWithCallbackTracking();
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
 
 			createMockApiCalls(mockMessagesCreate, [
 				{type: 'success'},
@@ -610,19 +626,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 				expect(result.data.output).toBeDefined();
 				expect(result.data.attempts).toBe(1);
 			}
-		});
-
-		it('should work with agent that has helpers but uses default behaviour', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success'},
-			]);
-
-			// Use VALID_MINIMAL_AGENT which has no helpers
-			const result = await executeAgent(VALID_MINIMAL_AGENT, options);
-
-			expect(isOk(result)).toBe(true);
 
 			// No helper tool calls should occur
 			const helperToolCalls = invocations.filter(
@@ -651,31 +654,27 @@ describe('executeAgent - State Reducer Pattern', () => {
 	});
 
 	describe('Execution Isolation', () => {
-		it('should create separate state instances for sequential executions', async () => {
-			const input1: StatefulAgentInput = {
-				data: '{"execution": 1}',
-				callCount: 0,
+		it('should reset state between retry attempts', async () => {
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			const input: StatefulAgentInput = {
+				data: '{"test": true}',
+				callCount: INITIAL_CALL_COUNT,
 			};
 
-			const input2: StatefulAgentInput = {
-				data: '{"execution": 2}',
-				callCount: 0,
-			};
-
+			// Attempt 1: parse sets parsedData, then validation fails
+			// Attempt 2: query without parse should fail (proves state reset)
 			createMockApiCalls(mockMessagesCreate, [
 				{
 					type: 'helper',
 					helperToolName: 'parse_tool',
 					helperInput: {format: 'json'},
 				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
+				{type: 'invalid'}, // Validation failure → retry
 				{
 					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
+					helperToolName: 'query_tool',
+					helperInput: {query: 'test'},
 				},
 				{
 					type: 'custom',
@@ -683,65 +682,130 @@ describe('executeAgent - State Reducer Pattern', () => {
 				},
 			]);
 
-			// Execute twice with different inputs
-			const result1 = await executeAgent(STATEFUL_AGENT, {input: input1});
-			const result2 = await executeAgent(STATEFUL_AGENT, {input: input2});
+			const result = await executeAgent(STATEFUL_AGENT, {
+				...options,
+				input,
+			});
 
-			expect(isOk(result1)).toBe(true);
-			expect(isOk(result2)).toBe(true);
+			expect(isOk(result)).toBe(true);
 
-			// Both should succeed independently
-			// If they shared state, the second execution might have unexpected state
+			// Verify attempt 1: parse succeeded
+			const parseToolCalls = invocations.filter(
+				(inv) => inv.type === 'onToolResult' && inv.toolName === 'parse_tool'
+			);
+			expect(parseToolCalls.length).toBe(1);
+
+			const parseResult = parseToolCalls.at(0);
+			expect(parseResult).toBeDefined();
+			expect(parseResult?.type).toBe('onToolResult');
+
+			// Verify attempt 2: query failed (parsedData not available)
+			const queryToolCalls = invocations.filter(
+				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
+			);
+			expect(queryToolCalls.length).toBe(1);
+
+			const queryResult = queryToolCalls.at(0);
+			expect(queryResult).toBeDefined();
+			expect(queryResult?.type).toBe('onToolResult');
+			if (queryResult?.type === 'onToolResult') {
+				// Query should fail because state was reset (parsedData not available)
+				expect(queryResult.toolResult).toContain(QUERY_BEFORE_PARSE_ERROR);
+			}
+
+			// Verify multiple attempts occurred
+			if (isOk(result)) {
+				expect(result.data.attempts).toBeGreaterThan(1);
+			}
 		});
 
-		it('should not allow state modifications from execution 1 to affect execution 2', async () => {
+		it('should not leak state between sequential executions', async () => {
+			const {options: options1, invocations: invocations1} = createExecuteOptionsWithCallbackTracking();
+			const {options: options2, invocations: invocations2} = createExecuteOptionsWithCallbackTracking();
+
 			const input: StatefulAgentInput = {
-				data: 'a, b, c',
-				callCount: 0,
+				data: '{"test": true}',
+				callCount: INITIAL_CALL_COUNT,
 			};
 
+			// First execution: parse then query (should succeed)
 			createMockApiCalls(mockMessagesCreate, [
 				{
 					type: 'helper',
 					helperToolName: 'parse_tool',
-					helperInput: {format: 'csv'},
+					helperInput: {format: 'json'},
 				},
 				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
+					type: 'helper',
+					helperToolName: 'query_tool',
+					helperInput: {query: 'test'},
 				},
-				// Second execution - should start fresh
 				{
 					type: 'custom',
 					response: createStatefulSubmitResponse(),
 				},
 			]);
 
-			// First execution modifies state
-			const result1 = await executeAgent(STATEFUL_AGENT, {input});
+			const result1 = await executeAgent(STATEFUL_AGENT, {
+				...options1,
+				input,
+			});
 
 			expect(isOk(result1)).toBe(true);
 
-			// Second execution should start with fresh state
-			const result2 = await executeAgent(STATEFUL_AGENT, {input});
+			// Verify first execution succeeded - query worked after parse
+			const firstQueryResult = invocations1.find(
+				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
+			);
+			expect(firstQueryResult).toBeDefined();
+			expect(firstQueryResult?.type).toBe('onToolResult');
+			if (firstQueryResult?.type === 'onToolResult') {
+				expect(firstQueryResult.toolResult).not.toContain(QUERY_BEFORE_PARSE_ERROR);
+			}
+
+			// Second execution: query WITHOUT parse (should fail if truly isolated)
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'helper',
+					helperToolName: 'query_tool',
+					helperInput: {query: 'test'},
+				},
+				{
+					type: 'custom',
+					response: createStatefulSubmitResponse(),
+				},
+			]);
+
+			const result2 = await executeAgent(STATEFUL_AGENT, {
+				...options2,
+				input,
+			});
 
 			expect(isOk(result2)).toBe(true);
 
-			// If state leaked, second execution would have parsedData pre-set
-			// Both executions should succeed independently
+			// Verify second execution failed - query requires parse
+			const secondQueryResult = invocations2.find(
+				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
+			);
+			expect(secondQueryResult).toBeDefined();
+			expect(secondQueryResult?.type).toBe('onToolResult');
+			if (secondQueryResult?.type === 'onToolResult') {
+				expect(secondQueryResult.toolResult).toContain(QUERY_BEFORE_PARSE_ERROR);
+			}
 		});
 
 		it('should maintain separate state for concurrent executions', async () => {
 			const input1: StatefulAgentInput = {
-				data: '{"concurrent": 1}',
-				callCount: 0,
+				data: '{"test": 1}',
+				callCount: INITIAL_CALL_COUNT,
 			};
 
 			const input2: StatefulAgentInput = {
-				data: '{"concurrent": 2}',
-				callCount: 0,
+				data: '{"test": 2}',
+				callCount: INITIAL_CALL_COUNT,
 			};
 
+			// Both executions parse their respective data
 			createMockApiCalls(mockMessagesCreate, [
 				{
 					type: 'helper',
@@ -763,16 +827,18 @@ describe('executeAgent - State Reducer Pattern', () => {
 				},
 			]);
 
-			// Execute concurrently
+			// Execute concurrently with different inputs
 			const [result1, result2] = await Promise.all([
 				executeAgent(STATEFUL_AGENT, {input: input1}),
 				executeAgent(STATEFUL_AGENT, {input: input2}),
 			]);
 
+			// Both should complete successfully without crashing or interfering
 			expect(isOk(result1)).toBe(true);
 			expect(isOk(result2)).toBe(true);
 
-			// Both should succeed with isolated state
+			// Sequential test already proves state doesn't leak between executions
+			// This test proves concurrent executions don't crash or deadlock
 		});
 	});
 });

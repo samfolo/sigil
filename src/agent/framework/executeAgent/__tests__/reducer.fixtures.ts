@@ -79,6 +79,16 @@ const TRANSFORM_TOOL_INPUT_SCHEMA = z.object({
 type TransformToolInput = z.infer<typeof TRANSFORM_TOOL_INPUT_SCHEMA>;
 
 /**
+ * Throwing tool input schema
+ */
+const THROWING_TOOL_INPUT_SCHEMA = z.object({
+	shouldThrow: z.boolean().optional(),
+	errorMessage: z.string().optional(),
+});
+
+type ThrowingToolInput = z.infer<typeof THROWING_TOOL_INPUT_SCHEMA>;
+
+/**
  * Mock parse tool handler
  *
  * Simulates parsing raw data and updating state with the parsed result.
@@ -266,6 +276,58 @@ export const MOCK_TRANSFORM_TOOL: HelperToolConfig<'transform_tool', StatefulAge
 };
 
 /**
+ * Mock throwing tool handler
+ *
+ * Simulates a tool that throws an exception during execution.
+ * Used to test exception safety and state preservation.
+ *
+ * @param state - Current agent state
+ * @param toolInput - Tool input (shouldThrow flag and error message)
+ * @returns Never returns on throw, otherwise returns updated state
+ */
+export const mockThrowingReducerHandler = (
+	state: StatefulAgentInput,
+	toolInput: unknown
+): Result<{newState: StatefulAgentInput; toolResult: unknown}, string> => {
+	// Validate input
+	const parsed = THROWING_TOOL_INPUT_SCHEMA.safeParse(toolInput);
+	if (!parsed.success) {
+		return err(`Invalid throwing tool input: ${parsed.error.message}`);
+	}
+
+	const shouldThrow = parsed.data.shouldThrow ?? true;
+	const errorMessage = parsed.data.errorMessage ?? 'Tool execution failed';
+
+	if (shouldThrow) {
+		throw new Error(errorMessage);
+	}
+
+	// If not throwing, just increment call count
+	return ok({
+		newState: {
+			...state,
+			callCount: state.callCount + 1,
+		},
+		toolResult: {
+			status: 'success',
+			didNotThrow: true,
+		},
+	});
+};
+
+/**
+ * Mock throwing tool definition with embedded handler
+ *
+ * Throws an exception during execution to test error handling.
+ */
+export const MOCK_THROWING_TOOL: HelperToolConfig<'throwing_tool', StatefulAgentInput, ThrowingToolInput> = {
+	name: 'throwing_tool',
+	description: 'Tool that throws exceptions for testing',
+	inputSchema: THROWING_TOOL_INPUT_SCHEMA,
+	handler: mockThrowingReducerHandler,
+};
+
+/**
  * Base stateful agent for testing
  */
 const BASE_STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutput, StatefulAgentInput> = {
@@ -323,3 +385,29 @@ export const STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOut
 			transform_tool: MOCK_TRANSFORM_TOOL,
 		})
 		.build();
+
+/**
+ * Helper to create stateful agent output response
+ *
+ * Creates a mock API response for the output tool (generate_output).
+ * Used in tests to simulate successful agent completion.
+ *
+ * @returns Mock message response with output tool use
+ */
+export const createStatefulSubmitResponse = () => ({
+	id: 'msg_output',
+	type: 'message' as const,
+	role: 'assistant' as const,
+	model: 'claude-sonnet-4-5-20250929',
+	content: [
+		{
+			type: 'tool_use' as const,
+			id: 'toolu_output',
+			name: 'generate_output',
+			input: {result: 'success', finalCount: 1},
+		},
+	],
+	stop_reason: 'tool_use' as const,
+	stop_sequence: null,
+	usage: {input_tokens: 100, output_tokens: 50},
+});

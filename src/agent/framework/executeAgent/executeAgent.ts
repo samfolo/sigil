@@ -855,7 +855,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 						);
 					} else {
 						currentState = handlerResult.data.newState;
-						const formattedResult = String(handlerResult.data.toolResult);
+						const formattedResult = JSON.stringify(handlerResult.data.toolResult);
 						toolResults.push({
 							type: 'tool_result',
 							tool_use_id: toolUse.id,
