@@ -18,6 +18,9 @@ import {validateLayers} from '@sigil/src/agent/framework/validation/validateLaye
 import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors';
 import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
+import {processToolUses} from './iteration/processToolUses';
+import {safeInvokeCallback} from './util';
+
 /**
  * Default submit tool definition for reflection mode
  *
@@ -383,28 +386,6 @@ const createCancellationError = (
 	};
 };
 
-/**
- * Formatted tool result for Anthropic API
- */
-interface FormattedToolResult {
-  content: string;
-  is_error?: boolean;
-}
-
-/**
- * Formats a reflection handler result for Anthropic API
- */
-const formatReflectionHandlerResult = (result: Result<string, string>): FormattedToolResult => {
-	if (isErr(result)) {
-		return {
-			content: result.error,
-			is_error: true,
-		};
-	}
-	return {
-		content: result.data,
-	};
-};
 
 /**
  * Options for building execution metadata
@@ -437,33 +418,6 @@ interface BuildMetadataOptions {
 }
 
 /**
- * Helper function to safely invoke callbacks and collect errors
- *
- * Wraps callback invocations in try-catch to prevent callback failures from
- * breaking agent execution. Collects any callback errors for inclusion in metadata.
- *
- * @param callback - The callback function to invoke (may be undefined)
- * @param args - Arguments to pass to the callback
- * @param callbackErrors - Array to collect any errors that occur
- */
-const safeInvokeCallback = <Args extends unknown[]>(
-	callback: ((...args: Args) => void) | undefined,
-	args: Args,
-	callbackErrors: Error[]
-): void => {
-	if (!callback) {
-		return;
-	}
-
-	try {
-		callback(...args);
-	} catch (error) {
-		callbackErrors.push(
-			error instanceof Error ? error : new Error(String(error))
-		);
-	}
-};
-
 /**
  * Builds execution metadata based on observability configuration
  *
@@ -764,188 +718,35 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			);
 
 			// Process ALL tools and build tool results
-			const toolResults: Anthropic.ToolResultBlockParam[] = [];
-			let submitFound = false;
-			let outputFound = false;
+			const processResult = processToolUses({
+				toolUses,
+				agent,
+				context: iterationContext,
+				state: {
+					current: currentState,
+					run: runState,
+				},
+				isReflectionEnabled: reflectionEnabled,
+				lastOutputToolInput,
+				submitTool: DEFAULT_SUBMIT_TOOL,
+				callbacks: {
+					onToolCall: options.callbacks?.onToolCall,
+					onToolResult: options.callbacks?.onToolResult,
+				},
+				callbackErrors,
+			});
 
-			for (const toolUse of toolUses) {
-				// Check for submit tool
-				if (toolUse.name === DEFAULT_SUBMIT_TOOL.name) {
-					submitFound = true;
-					// Fire callback for submit tool
-					safeInvokeCallback(
-						options.callbacks?.onToolCall,
-						[{...iterationContext}, toolUse.name, toolUse.input],
-						callbackErrors
-					);
-					// Fire callback for submit tool result
-					safeInvokeCallback(
-						options.callbacks?.onToolResult,
-						[{...iterationContext}, toolUse.name, ''],
-						callbackErrors
-					);
-					// Submit tool has no result (termination signal only)
-					continue;
-				}
+			const toolResults = processResult.toolResults;
+			const submitFound = processResult.wasSubmitFound;
+			const outputFound = processResult.wasOutputFound;
+			lastOutputToolInput = processResult.lastOutputToolInput;
+			// Update currentState with processed results
+			currentState = {
+				context: iterationContext,
+				run: processResult.updatedRunState,
+				attempt: processResult.updatedAttemptState,
+			};
 
-				// Check for output tool
-				if (toolUse.name === agent.tools.output.name) {
-					outputFound = true;
-					lastOutputToolInput = toolUse.input as Output;
-
-					// Fire callback before execution
-					safeInvokeCallback(
-						options.callbacks?.onToolCall,
-						[{...iterationContext}, toolUse.name, toolUse.input],
-						callbackErrors
-					);
-
-					if (reflectionEnabled) {
-						// Execute reflection handler with exception safety
-						try {
-							const handlerResult = agent.tools.output.reflectionHandler!(lastOutputToolInput);
-							const formatted = formatReflectionHandlerResult(handlerResult);
-
-							toolResults.push({
-								type: 'tool_result',
-								tool_use_id: toolUse.id,
-								content: formatted.content,
-								is_error: formatted.is_error,
-							});
-
-							// Fire callback with result
-							safeInvokeCallback(
-								options.callbacks?.onToolResult,
-								[{...iterationContext}, toolUse.name, formatted.content],
-								callbackErrors
-							);
-						} catch (error) {
-							// Reflection handler threw exception (contract violation)
-							const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
-							toolResults.push({
-								type: 'tool_result',
-								tool_use_id: toolUse.id,
-								content: errorContent,
-								is_error: true,
-							});
-							// Fire callback with error result
-							safeInvokeCallback(
-								options.callbacks?.onToolResult,
-								[{...iterationContext}, toolUse.name, errorContent],
-								callbackErrors
-							);
-						}
-					}
-					// In non-reflection mode, output tool doesn't produce a result
-					continue;
-				}
-
-				// Handle helper tools via handler lookup
-				// Fire callback before execution
-				safeInvokeCallback(
-					options.callbacks?.onToolCall,
-					[{...iterationContext}, toolUse.name, toolUse.input],
-					callbackErrors
-				);
-
-				// Look up tool handler
-				const tool = agent.tools.helpers?.[toolUse.name];
-				if (!tool) {
-					const errorContent = `Unknown tool: ${toolUse.name}`;
-					toolResults.push({
-						type: 'tool_result',
-						tool_use_id: toolUse.id,
-						content: errorContent,
-						is_error: true,
-					});
-					safeInvokeCallback(
-						options.callbacks?.onToolResult,
-						[{...iterationContext}, toolUse.name, errorContent],
-						callbackErrors
-					);
-					continue;
-				}
-
-				// Execute handler with exception safety
-				try {
-					const handlerResult = tool.handler(currentState, toolUse.input);
-
-					if (isErr(handlerResult)) {
-						const errorContent = handlerResult.error;
-						toolResults.push({
-							type: 'tool_result',
-							tool_use_id: toolUse.id,
-							content: errorContent,
-							is_error: true,
-						});
-						safeInvokeCallback(
-							options.callbacks?.onToolResult,
-							[{...iterationContext}, toolUse.name, errorContent],
-							callbackErrors
-						);
-					} else {
-						// Extract new run state from handler result
-						const newRun = handlerResult.data.newState.run;
-
-						/**
-						 * Persist run state updates using Object.assign merge semantics
-						 *
-						 * Object.assign copies enumerable own properties from newRun to runState.
-						 * This creates defensive separation between handler references and framework state:
-						 * - Handlers can add or update properties (merged into runState)
-						 * - Handlers cannot delete properties (deletions in newRun don't affect runState)
-						 * - Property values are copied (shallow), not aliased
-						 * - Subsequent mutations to handler's newRun reference don't affect runState
-						 *
-						 * Example: If handler returns {parsedData: {foo: 'bar'}}, this gets merged into
-						 * runState. If handler later mutates that object, runState remains unchanged because
-						 * we hold the outer runState reference, not the handler's returned reference.
-						 *
-						 * Run state persists across retry attempts (lives outside attempt loop).
-						 */
-						Object.assign(runState, newRun);
-
-						/**
-						 * Create fresh currentState with framework-managed context
-						 *
-						 * Handlers only return {run, attempt} - framework automatically adds context.
-						 * This reduces boilerplate (handlers don't need to pass through context field)
-						 * and prevents handlers from accidentally modifying readonly framework metadata.
-						 */
-						currentState = {
-							context: iterationContext,
-							run: runState,
-							attempt: handlerResult.data.newState.attempt,
-						};
-						const formattedResult = JSON.stringify(handlerResult.data.toolResult);
-						toolResults.push({
-							type: 'tool_result',
-							tool_use_id: toolUse.id,
-							content: formattedResult,
-							is_error: false,
-						});
-						safeInvokeCallback(
-							options.callbacks?.onToolResult,
-							[{...iterationContext}, toolUse.name, formattedResult],
-							callbackErrors
-						);
-					}
-				} catch (error) {
-					// Handler threw exception (contract violation)
-					const errorContent = `Error: ${error instanceof Error ? error.message : String(error)}`;
-					toolResults.push({
-						type: 'tool_result',
-						tool_use_id: toolUse.id,
-						content: errorContent,
-						is_error: true,
-					});
-					safeInvokeCallback(
-						options.callbacks?.onToolResult,
-						[{...iterationContext}, toolUse.name, errorContent],
-						callbackErrors
-					);
-				}
-			}
 
 			// Check termination conditions AFTER processing all tools
 			if (submitFound) {
