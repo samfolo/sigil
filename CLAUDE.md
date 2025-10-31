@@ -111,6 +111,29 @@ type TErrorCode = string;
 interface IUserData {...}
 ```
 
+All interfaces must be flat - avoid nested interface definitions:
+```typescript
+// Good - separate flat interfaces
+interface ResultMetadata {
+  count: number;
+  timestamp: string;
+}
+
+interface Result {
+  data: string;
+  metadata: ResultMetadata;
+}
+
+// Bad - nested interface definition
+interface Result {
+  data: string;
+  metadata: {
+    count: number;
+    timestamp: string;
+  };
+}
+```
+
 ### Modern Syntax
 
 - Array indexing: `.at(0)` instead of `[0]`, `.at(-1)` for last element
@@ -169,6 +192,8 @@ All documentation must be:
 Follow the style of this file and @docs/ERROR_HANDLING.md: direct statements, minimal examples, no filler.
 
 Code examples in documentation (JSDoc, README, .md files) must follow all code style conventions: arrow functions, no spaces in curly braces, no single-line blocks, British spelling, etc.
+
+Never reference explicit values in JSDoc comments - values may change and cause documentation drift.
 
 ## File Organisation
 
