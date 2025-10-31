@@ -26,7 +26,7 @@ type ParseJSONInput = z.infer<typeof parseJSONInputSchema>;
 /**
  * Handler for parse_json tool
  *
- * Reads from state.raw, writes to state.structureMetadata on success.
+ * Reads from state.run.raw, writes to state.run.structureMetadata on success.
  */
 const parseJSONReducerHandler: ToolReducerHandler<ParserState<ParseJSONStructureMetadata>, EmptyObject> = (state, toolInput) => {
 	// Validate input against schema
@@ -67,7 +67,7 @@ const parseJSONReducerHandler: ToolReducerHandler<ParserState<ParseJSONStructure
  *
  * Always succeeds - parsing failures are reported in the result structure.
  *
- * Reads raw data from state.raw, writes parsed result to state.parsed.
+ * Reads raw data from state.run.raw, writes structure metadata to state.run.structureMetadata.
  */
 export const PARSE_JSON_TOOL: HelperToolConfig<
 	'parse_json',
