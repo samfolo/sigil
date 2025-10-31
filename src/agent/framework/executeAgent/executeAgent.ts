@@ -4,8 +4,9 @@ import * as z from 'zod';
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {DEFAULT_MAX_ITERATIONS} from '@sigil/src/agent/framework/common';
 import type {AgentDefinition, ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
+import type {AgentState} from '@sigil/src/agent/framework/defineAgent/types';
 import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
@@ -34,12 +35,18 @@ const DEFAULT_SUBMIT_TOOL: Anthropic.Tool = {
 };
 
 /**
- * Default state initialiser that uses input as the initial state
+ * Default run state initialiser that returns an empty object
  *
- * Used when no custom initialState function is provided in the agent definition.
- * Assumes State type equals Input type.
+ * Used when no custom initialRunState function is provided in the agent definition.
  */
-const DEFAULT_STATE_INITIALISER = <Input, State>(input: Input): State => input as unknown as State;
+const DEFAULT_RUN_STATE_INITIALISER = <Run>(): Run => ({} as Run);
+
+/**
+ * Default attempt state initialiser that returns an empty object
+ *
+ * Used when no custom initialAttemptState function is provided in the agent definition.
+ */
+const DEFAULT_ATTEMPT_STATE_INITIALISER = <Attempt>(): Attempt => ({} as Attempt);
 
 /**
  * Token usage statistics for an agent execution
@@ -94,45 +101,45 @@ export interface ExecuteCallbacks<Output> {
   /**
    * Called when an execution attempt starts
    *
-   * @param state - Execution state containing attempt number and max attempts
+   * @param context - Execution context containing attempt number and max attempts
    */
-  onAttemptStart?: (state: AgentExecutionState) => void;
+  onAttemptStart?: (context: AgentExecutionContext) => void;
 
   /**
    * Called when an execution attempt completes
    *
-   * @param state - Execution state containing attempt number and max attempts
+   * @param context - Execution context containing attempt number and max attempts
    * @param success - Whether the attempt succeeded validation
    */
-  onAttemptComplete?: (state: AgentExecutionState, success: boolean) => void;
+  onAttemptComplete?: (context: AgentExecutionContext, success: boolean) => void;
 
   /**
    * Called when output validation fails
    *
-   * @param state - Execution state containing attempt number and max attempts
+   * @param context - Execution context containing attempt number and max attempts
    * @param errors - Validation errors from the output schema
    */
-  onValidationFailure?: (state: AgentExecutionState, errors: unknown) => void;
+  onValidationFailure?: (context: AgentExecutionContext, errors: unknown) => void;
 
   /**
    * Called when a validation layer starts execution
    *
-   * @param state - Execution state containing attempt number and max attempts
+   * @param context - Execution context containing attempt number and max attempts
    * @param layer - Metadata about the layer being executed
    */
   onValidationLayerStart?: (
-    state: AgentExecutionState,
+    context: AgentExecutionContext,
     layer: ValidationLayerMetadata
   ) => void;
 
   /**
    * Called when a validation layer completes execution
    *
-   * @param state - Execution state containing attempt number and max attempts
+   * @param context - Execution context containing attempt number and max attempts
    * @param layer - Result of the layer execution (discriminated union)
    */
   onValidationLayerComplete?: (
-    state: AgentExecutionState,
+    context: AgentExecutionContext,
     layer: ValidationLayerResult
   ) => void;
 
@@ -142,12 +149,12 @@ export interface ExecuteCallbacks<Output> {
    * Fires for helper tools, output tool (in reflection mode), and submit tool.
    * Use for logging tool invocations or showing "Agent is using tool X" in UI.
    *
-   * @param state - Execution state containing attempt number and max attempts
+   * @param context - Execution context containing attempt number and max attempts
    * @param toolName - Name of the tool being called
    * @param toolInput - Input provided to the tool by the model
    */
   onToolCall?: (
-    state: AgentExecutionState,
+    context: AgentExecutionContext,
     toolName: string,
     toolInput: unknown
   ) => void;
@@ -158,12 +165,12 @@ export interface ExecuteCallbacks<Output> {
    * Fires for both successful tool executions and errors. Check the result string
    * to determine if an error occurred (will contain "Error:" prefix for errors).
    *
-   * @param state - Execution state containing attempt number and max attempts
+   * @param context - Execution context containing attempt number and max attempts
    * @param toolName - Name of the tool that was called
    * @param toolResult - Result from the tool (or error message if execution failed)
    */
   onToolResult?: (
-    state: AgentExecutionState,
+    context: AgentExecutionContext,
     toolName: string,
     toolResult: string
   ) => void;
@@ -491,8 +498,8 @@ const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata => {
 	return metadata;
 };
 
-export const executeAgent = async <Input, Output, State = Input>(
-	agent: AgentDefinition<Input, Output, State>,
+export const executeAgent = async <Input, Output, Run, Attempt>(
+	agent: AgentDefinition<Input, Output, Run, Attempt>,
 	options: ExecuteOptions<Input, Output>
 ): Promise<Result<ExecuteSuccess<Output>, ExecuteFailure>> => {
 	// Track execution start time for latency calculation
@@ -518,9 +525,9 @@ export const executeAgent = async <Input, Output, State = Input>(
 		description: 'No description provided for validation layer',
 	};
 
-	// Initialise state for execution
-	const stateInitialiser = agent.initialState ?? DEFAULT_STATE_INITIALISER<Input, State>;
-	let currentState: State = stateInitialiser(options.input);
+	// Initialise run state once (persists across attempts)
+	const runStateInitialiser = agent.initialRunState ?? DEFAULT_RUN_STATE_INITIALISER<Run>;
+	const runState: Run = runStateInitialiser(options.input);
 
 	// Check for cancellation before building user prompt
 	if (options.signal?.aborted) {
@@ -579,12 +586,23 @@ export const executeAgent = async <Input, Output, State = Input>(
 		// Determine iteration limit for this attempt
 		const maxIterations = agent.validation.maxIterationsPerAttempt ?? DEFAULT_MAX_ITERATIONS;
 
-		// Create execution state
-		const state: AgentExecutionState = {
+		// Create execution context
+		const context: AgentExecutionContext = {
 			attempt,
 			maxAttempts,
 			iteration: 0, // Will be incremented before each API call in the loop
 			maxIterations,
+		};
+
+		// Initialise attempt state (resets each attempt)
+		const attemptStateInitialiser = agent.initialAttemptState ?? DEFAULT_ATTEMPT_STATE_INITIALISER<Attempt>;
+		const attemptState: Attempt = attemptStateInitialiser(options.input, runState, context);
+
+		// Create combined current state with all three tiers
+		let currentState: AgentState<Run, Attempt> = {
+			context,
+			run: runState,
+			attempt: attemptState,
 		};
 
 		// Reset failed layer tracking for this attempt
@@ -594,7 +612,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 		// Invoke onAttemptStart callback
 		safeInvokeCallback(
 			options.callbacks?.onAttemptStart,
-			[state],
+			[context],
 			callbackErrors
 		);
 
@@ -615,7 +633,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 		const systemPromptResult = await buildSystemPrompt(
 			agent,
 			options.input,
-			state,
+			context,
 		);
 
 		if (isErr(systemPromptResult)) {
@@ -667,7 +685,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 
 		// Make initial API call
 		while (iterationCount < maxIterations) {
-			state.iteration = ++iterationCount;
+			context.iteration = ++iterationCount;
 
 			// Check for cancellation before API call
 			if (options.signal?.aborted) {
@@ -745,13 +763,13 @@ export const executeAgent = async <Input, Output, State = Input>(
 					// Fire callback for submit tool
 					safeInvokeCallback(
 						options.callbacks?.onToolCall,
-						[{...state}, toolUse.name, toolUse.input],
+						[{...context}, toolUse.name, toolUse.input],
 						callbackErrors
 					);
 					// Fire callback for submit tool result
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[{...state}, toolUse.name, ''],
+						[{...context}, toolUse.name, ''],
 						callbackErrors
 					);
 					// Submit tool has no result (termination signal only)
@@ -766,7 +784,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 					// Fire callback before execution
 					safeInvokeCallback(
 						options.callbacks?.onToolCall,
-						[{...state}, toolUse.name, toolUse.input],
+						[{...context}, toolUse.name, toolUse.input],
 						callbackErrors
 					);
 
@@ -786,7 +804,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 							// Fire callback with result
 							safeInvokeCallback(
 								options.callbacks?.onToolResult,
-								[{...state}, toolUse.name, formatted.content],
+								[{...context}, toolUse.name, formatted.content],
 								callbackErrors
 							);
 						} catch (error) {
@@ -801,7 +819,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 							// Fire callback with error result
 							safeInvokeCallback(
 								options.callbacks?.onToolResult,
-								[{...state}, toolUse.name, errorContent],
+								[{...context}, toolUse.name, errorContent],
 								callbackErrors
 							);
 						}
@@ -814,7 +832,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 				// Fire callback before execution
 				safeInvokeCallback(
 					options.callbacks?.onToolCall,
-					[{...state}, toolUse.name, toolUse.input],
+					[{...context}, toolUse.name, toolUse.input],
 					callbackErrors
 				);
 
@@ -850,11 +868,13 @@ export const executeAgent = async <Input, Output, State = Input>(
 						});
 						safeInvokeCallback(
 							options.callbacks?.onToolResult,
-							[{...state}, toolUse.name, errorContent],
+							[{...context}, toolUse.name, errorContent],
 							callbackErrors
 						);
 					} else {
 						currentState = handlerResult.data.newState;
+						// Persist run state updates back to outer scope (survives retry attempts)
+						Object.assign(runState, currentState.run);
 						const formattedResult = JSON.stringify(handlerResult.data.toolResult);
 						toolResults.push({
 							type: 'tool_result',
@@ -864,7 +884,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 						});
 						safeInvokeCallback(
 							options.callbacks?.onToolResult,
-							[{...state}, toolUse.name, formattedResult],
+							[{...context}, toolUse.name, formattedResult],
 							callbackErrors
 						);
 					}
@@ -1018,7 +1038,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 				? (layer: ValidationLayerMetadata) => {
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerStart,
-						[{...state}, layer],
+						[{...context}, layer],
 						callbackErrors
 					);
 				}
@@ -1034,7 +1054,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 				if (options.callbacks?.onValidationLayerComplete) {
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerComplete,
-						[{...state}, layer],
+						[{...context}, layer],
 						callbackErrors
 					);
 				}
@@ -1053,7 +1073,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 			// Invoke onAttemptComplete callback with success
 			safeInvokeCallback(
 				options.callbacks?.onAttemptComplete,
-				[{...state}, true],
+				[{...context}, true],
 				callbackErrors
 			);
 
@@ -1086,14 +1106,14 @@ export const executeAgent = async <Input, Output, State = Input>(
 		// Invoke onAttemptComplete callback with failure
 		safeInvokeCallback(
 			options.callbacks?.onAttemptComplete,
-			[{...state}, false],
+			[{...context}, false],
 			callbackErrors
 		);
 
 		// Invoke onValidationFailure callback
 		safeInvokeCallback(
 			options.callbacks?.onValidationFailure,
-			[{...state}, validationResult.error],
+			[{...context}, validationResult.error],
 			callbackErrors
 		);
 
@@ -1131,7 +1151,7 @@ export const executeAgent = async <Input, Output, State = Input>(
 		const errorPromptResult = await buildErrorPrompt(
 			agent,
 			formattedError,
-			state,
+			context,
 		);
 
 		if (isErr(errorPromptResult)) {

@@ -20,18 +20,33 @@ import type {AgentDefinition, HelperToolConfig} from '../../defineAgent/defineAg
 import {agentBuilder} from '../../defineAgent/defineAgent.fixtures';
 
 /**
- * Stateful agent input type for testing state threading
+ * Agent input type for testing state threading
  *
- * This interface represents an agent that processes data through multiple steps:
- * 1. Parse the raw data string
- * 2. Query the parsed data
- * 3. Transform or aggregate results
- *
- * callCount tracks how many tools have been called to verify state accumulation.
+ * This is what tests pass to the agent.
  */
 export interface StatefulAgentInput {
 	data: string;
+}
+
+/**
+ * Execution state type (persists across retry attempts)
+ *
+ * Stores expensive computations that should survive validation failures:
+ * - rawData: Original input data
+ * - parsedData: Parsed data (set by parse_tool, persists across attempts)
+ */
+export interface ExecutionState {
+	rawData: string;
 	parsedData?: unknown;
+}
+
+/**
+ * Attempt state type (resets on validation failure)
+ *
+ * Stores per-attempt working state that resets on each retry:
+ * - callCount: Number of tools called in this attempt
+ */
+export interface AttemptState {
 	callCount: number;
 }
 

@@ -1,7 +1,10 @@
 /**
- * State provided to prompt functions during agent execution
+ * Framework execution context provided to prompt functions and tool handlers
+ *
+ * Read-only tracking of attempt and iteration state. This context is available
+ * throughout execution but cannot be modified by user code.
  */
-export interface AgentExecutionState {
+export interface AgentExecutionContext {
   /**
    * Current attempt number (1-indexed)
    */

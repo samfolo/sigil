@@ -1,6 +1,6 @@
 import type {z} from 'zod';
 
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {ValidationLayer} from '@sigil/src/agent/framework/validation';
 import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
@@ -56,7 +56,7 @@ export interface ModelConfig {
  */
 export type SystemPromptFunction<Input> = (
   input: Input,
-  state: AgentExecutionState,
+  context: AgentExecutionContext,
   signal?: AbortSignal
 ) => Promise<string>;
 
@@ -101,7 +101,7 @@ export type UserPromptFunction<Input> = (
  */
 export type ErrorPromptFunction = (
   formattedError: string,
-  state: AgentExecutionState,
+  context: AgentExecutionContext,
   signal?: AbortSignal
 ) => Promise<string>;
 
@@ -220,10 +220,11 @@ export interface OutputToolConfig<Output> {
  * the helpers object, providing compile-time verification of tool name consistency.
  *
  * @template Name - The tool name (must match object key in helpers)
- * @template State - The state type maintained during agent execution
+ * @template Run - User run state type (persists across attempts)
+ * @template Attempt - User attempt state type (resets on retry)
  * @template ToolInput - The type of input this helper tool accepts
  */
-export interface HelperToolConfig<Name extends string, State, ToolInput> {
+export interface HelperToolConfig<Name extends string, Run, Attempt, ToolInput> {
   /**
    * Name of the helper tool
    *
@@ -251,7 +252,7 @@ export interface HelperToolConfig<Name extends string, State, ToolInput> {
    * Receives current state and tool input, returns new state and tool result.
    * Must follow immutable update patterns.
    */
-  handler: ToolReducerHandler<State>;
+  handler: ToolReducerHandler<Run, Attempt>;
 }
 
 /**
@@ -261,9 +262,10 @@ export interface HelperToolConfig<Name extends string, State, ToolInput> {
  * multi-step workflows, data exploration, and context retrieval.
  *
  * @template Output - The type of output the agent produces
- * @template State - The state type maintained during agent execution
+ * @template Run - User run state type (persists across attempts)
+ * @template Attempt - User attempt state type (resets on retry)
  */
-export interface ToolsConfig<Output, State> {
+export interface ToolsConfig<Output, Run, Attempt> {
   /**
    * Output tool configuration (REQUIRED)
    *
@@ -301,7 +303,7 @@ export interface ToolsConfig<Output, State> {
    * ```
    */
   helpers?: {
-    [K in string]: HelperToolConfig<K, State, unknown>;
+    [K in string]: HelperToolConfig<K, Run, Attempt, unknown>;
   };
 }
 
@@ -364,9 +366,10 @@ export interface PromptsConfig<Input> {
  *
  * @template Input - The type of input the agent accepts
  * @template Output - The type of output the agent produces
- * @template State - The type of state maintained during execution (defaults to Input)
+ * @template Run - User run state type (persists across attempts)
+ * @template Attempt - User attempt state type (resets on retry)
  */
-export interface AgentDefinition<Input, Output, State = Input> {
+export interface AgentDefinition<Input, Output, Run, Attempt> {
   /**
    * Unique name for the agent
    */
@@ -393,7 +396,7 @@ export interface AgentDefinition<Input, Output, State = Input> {
    * Each helper tool includes its own handler function, ensuring compile-time
    * safety and eliminating the need for a separate reducer.
    */
-  tools: ToolsConfig<Output, State>;
+  tools: ToolsConfig<Output, Run, Attempt>;
 
   /**
    * Output validation configuration
@@ -406,20 +409,49 @@ export interface AgentDefinition<Input, Output, State = Input> {
   observability: ObservabilityConfig;
 
   /**
-   * Optional function to initialise state from input
+   * Optional function to initialise run state from input
    *
-   * If not provided, the input is used directly as the initial state (State must equal Input).
-   * Use this when State needs to be derived or transformed from Input.
+   * Run state persists across retry attempts, making it suitable for
+   * expensive computations and metrics that should survive validation failures.
+   *
+   * If not provided, defaults to an empty object {}.
    *
    * @param input - The agent input
-   * @returns Initial state for execution
+   * @returns Initial run state
    *
    * @example
    * ```typescript
-   * initialState: (input) => ({items: [], data: input})
+   * initialRunState: (input) => ({rawData: input.data, parsedData: undefined})
    * ```
    */
-  initialState?: (input: Input) => State;
+  initialRunState?: (input: Input) => Run;
+
+  /**
+   * Optional function to initialise attempt state
+   *
+   * Attempt state resets on validation failures, making it suitable for working
+   * state and disposable resources that should start fresh on each retry.
+   *
+   * Receives immutable snapshots of input, run state, and execution context,
+   * allowing initialization to adapt based on attempt number and other framework state.
+   *
+   * If not provided, defaults to an empty object {}.
+   *
+   * @param input - The agent input
+   * @param run - Current run state (immutable snapshot)
+   * @param context - Execution context with attempt/iteration tracking (immutable)
+   * @returns Initial attempt state for this attempt
+   *
+   * @example
+   * ```typescript
+   * initialAttemptState: (input, run, context) => ({
+   *   callCount: 0,
+   *   retrying: context.attempt > 1,
+   *   maxRetries: context.maxAttempts,
+   * })
+   * ```
+   */
+  initialAttemptState?: (input: Input, run: Run, context: AgentExecutionContext) => Attempt;
 }
 
 /**
@@ -446,10 +478,10 @@ export interface AgentDefinition<Input, Output, State = Input> {
  *     maxTokens: 4096,
  *   },
  *   prompts: {
- *     system: async (input, state) => `Analyse data on attempt ${state.attempt}`,
- *     user: async (input, state) => `Process: ${input}`,
- *     error: async (errorMessage, state) =>
- *       `Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}`,
+ *     system: async (input, context) => `Analyse data on attempt ${context.attempt}`,
+ *     user: async (input) => `Process: ${input}`,
+ *     error: async (errorMessage, context) =>
+ *       `Attempt ${context.attempt}/${context.maxAttempts} failed:\n${errorMessage}`,
  *   },
  *   validation: {
  *     outputSchema: z.object({...}),
@@ -462,6 +494,8 @@ export interface AgentDefinition<Input, Output, State = Input> {
  *     trackAttempts: true,
  *     trackTokens: true,
  *   },
+ *   initialRunState: (input) => ({rawData: input, parsedData: undefined}),
+ *   initialAttemptState: (input, run, context) => ({callCount: 0}),
  * });
  *
  * if (isErr(result)) {
@@ -472,9 +506,9 @@ export interface AgentDefinition<Input, Output, State = Input> {
  * const agent = result.data;
  * ```
  */
-export const defineAgent = <Input, Output, State = Input>(
-	definition: AgentDefinition<Input, Output, State>
-): Result<Readonly<AgentDefinition<Input, Output, State>>, AgentError[]> => {
+export const defineAgent = <Input, Output, Run, Attempt>(
+	definition: AgentDefinition<Input, Output, Run, Attempt>
+): Result<Readonly<AgentDefinition<Input, Output, Run, Attempt>>, AgentError[]> => {
 	const errors: AgentError[] = [];
 
 	// Validate name
