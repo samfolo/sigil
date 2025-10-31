@@ -11,6 +11,7 @@
  * - State immutability
  */
 
+import {expect} from 'vitest';
 import {z} from 'zod';
 
 import type {Result} from '@sigil/src/common/errors';
@@ -65,7 +66,7 @@ export interface ToolReducerResult {
 /**
  * Test output interface for stateful agent
  */
-interface StatefulTestOutput {
+export interface StatefulTestOutput {
 	result: string;
 	finalCount: number;
 }
@@ -461,3 +462,160 @@ export const createStatefulSubmitResponse = () => ({
 	stop_sequence: null,
 	usage: {input_tokens: 100, output_tokens: 50},
 });
+
+/**
+ * Factory to create an attempt tracking validator
+ *
+ * Creates a validator that fails on the first attempt and succeeds on subsequent attempts.
+ * Uses closure to track attempt count across validation calls.
+ *
+ * @returns Validator that tracks attempts
+ */
+export const createAttemptTrackingValidator = () => {
+	let attemptCount = 0;
+
+	return {
+		name: 'attempt_tracker',
+		description: 'Tracks attempts for testing',
+		validate: async (output: StatefulTestOutput): Promise<Result<StatefulTestOutput, string>> => {
+			attemptCount++;
+			if (attemptCount === 1) {
+				return err('First attempt must fail');
+			}
+			return ok(output);
+		},
+	};
+};
+
+/**
+ * Factory to create agent with custom validator
+ *
+ * Creates an agent configuration with a custom validator for testing retry behaviour.
+ *
+ * @param validator - Custom validator to add to the agent
+ * @returns Agent definition with custom validator
+ */
+export const createAgentWithCustomValidator = (
+	validator: {name: string; description: string; validate: (output: StatefulTestOutput) => Promise<Result<StatefulTestOutput, unknown>>}
+): AgentDefinition<StatefulAgentInput, StatefulTestOutput, ExecutionState, AttemptState> => ({
+	...STATEFUL_AGENT,
+	validation: {
+		...STATEFUL_AGENT.validation,
+		customValidators: [validator],
+		maxAttempts: 2,
+	},
+});
+
+/**
+ * Factory to create a mutating handler for testing framework state protection
+ *
+ * Creates a handler that deliberately mutates stored references to test that
+ * the framework properly protects state from handler mutations.
+ *
+ * @returns Mutating handler with closure state
+ */
+export const createMutatingHandler = () => {
+	let callCount = 0;
+	let storedAttemptReference: AttemptState | null = null;
+	let storedRunReference: ExecutionState | null = null;
+
+	return (state: AgentState<ExecutionState, AttemptState>, _toolInput: unknown): Result<ToolReducerResult, string> => {
+		callCount++;
+
+		// First call: return state and keep references
+		if (callCount === 1) {
+			const newRun = {...state.run, parsedData: {test: 'value', firstCall: true}};
+			const newAttempt = {...state.attempt, callCount: 1};
+
+			// Keep references (simulates buggy handler that stores state)
+			storedAttemptReference = newAttempt;
+			storedRunReference = newRun;
+
+			return ok<ToolReducerResult, string>({
+				newState: {
+					run: newRun,
+					attempt: newAttempt,
+				},
+				toolResult: {status: 'first-call'},
+			});
+		}
+
+		// Second call: mutate the stored references BEFORE processing
+		// This simulates a handler that mutates previous state
+		if (storedAttemptReference) {
+			storedAttemptReference.callCount = 9999; // Malicious mutation
+		}
+		if (storedRunReference && typeof storedRunReference.parsedData === 'object') {
+			(storedRunReference.parsedData as Record<string, unknown>).malicious = 'hacked';
+		}
+
+		// Now return new state - if framework used the mutated references, state will be corrupted
+		const newState = {
+			run: {...state.run}, // Pass through run state from framework
+			attempt: {...state.attempt, callCount: 2},
+		};
+
+		// Verify the state received from framework wasn't corrupted by our mutations
+		expect(state.attempt.callCount).not.toBe(9999);
+		if (state.run.parsedData && typeof state.run.parsedData === 'object') {
+			expect((state.run.parsedData as Record<string, unknown>).malicious).toBeUndefined();
+		}
+
+		return ok<ToolReducerResult, string>({
+			newState,
+			toolResult: {status: 'second-call'},
+		});
+	};
+};
+
+/**
+ * Factory to create agent with mutating handler
+ *
+ * Creates an agent with a handler that deliberately mutates state to test framework protection.
+ *
+ * @returns Agent definition with mutating handler
+ */
+export const createAgentWithMutatingHandler = (): AgentDefinition<
+	StatefulAgentInput,
+	StatefulTestOutput,
+	ExecutionState,
+	AttemptState
+> => ({
+	...STATEFUL_AGENT,
+	tools: {
+		...STATEFUL_AGENT.tools,
+		helpers: {
+			mutating_tool: {
+				name: 'mutating_tool',
+				description: 'Tool that mutates previous state',
+				inputSchema: STATEFUL_AGENT.tools.helpers!.parse_tool.inputSchema,
+				handler: createMutatingHandler(),
+			},
+		},
+	},
+});
+
+/**
+ * Agent with throwing tool for testing exception handling
+ */
+export const AGENT_WITH_THROWING_TOOL: AgentDefinition<StatefulAgentInput, StatefulTestOutput, ExecutionState, AttemptState> =
+	agentBuilder(BASE_STATEFUL_AGENT)
+		.withHelpers({
+			parse_tool: MOCK_PARSE_TOOL,
+			query_tool: MOCK_QUERY_TOOL,
+			transform_tool: MOCK_TRANSFORM_TOOL,
+			throwing_tool: MOCK_THROWING_TOOL,
+		})
+		.build();
+
+/**
+ * Agent with custom initial state for testing state pre-population
+ */
+export const AGENT_WITH_INIT_STATE: AgentDefinition<StatefulAgentInput, StatefulTestOutput, ExecutionState, AttemptState> =
+	{
+		...STATEFUL_AGENT,
+		initialRunState: (inp: StatefulAgentInput) => ({
+			rawData: inp.data,
+			parsedData: ['pre-populated-item'], // Set parsedData without calling parse_tool
+		}),
+	};

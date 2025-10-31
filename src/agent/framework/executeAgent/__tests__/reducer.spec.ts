@@ -22,8 +22,6 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 	})),
 }));
 
-import {ok, err} from '@sigil/src/common/errors/result';
-
 import type {AgentState} from '../../defineAgent/types';
 
 import {
@@ -43,7 +41,11 @@ import {
 	mockParseReducerHandler,
 	mockQueryReducerHandler,
 	createStatefulSubmitResponse,
-	MOCK_THROWING_TOOL,
+	createAttemptTrackingValidator,
+	createAgentWithCustomValidator,
+	createAgentWithMutatingHandler,
+	AGENT_WITH_THROWING_TOOL,
+	AGENT_WITH_INIT_STATE,
 } from './reducer.fixtures';
 import type {StatefulAgentInput, ExecutionState, AttemptState} from './reducer.fixtures';
 
@@ -186,29 +188,9 @@ describe('executeAgent - State Reducer Pattern', () => {
 				data: '{"key": "value"}',
 			};
 
-			// Custom validator that fails on first attempt, succeeds on second
-			let attemptCount = 0;
-			const attemptTrackingValidator = {
-				name: 'attempt_tracker',
-				description: 'Tracks attempts for testing',
-				validate: async (output: unknown) => {
-					attemptCount++;
-					if (attemptCount === 1) {
-						return err('First attempt must fail');
-					}
-					return ok(output);
-				},
-			};
-
-			// Create agent with custom validator
-			const agentWithValidator = {
-				...STATEFUL_AGENT,
-				validation: {
-					...STATEFUL_AGENT.validation,
-					customValidators: [attemptTrackingValidator],
-					maxAttempts: 2,
-				},
-			};
+			// Create validator and agent with custom validator
+			const attemptTrackingValidator = createAttemptTrackingValidator();
+			const agentWithValidator = createAgentWithCustomValidator(attemptTrackingValidator);
 
 			// Attempt 1: parse_tool → output (validation fails)
 			// Attempt 2: query_tool → output (validation succeeds)
@@ -371,77 +353,8 @@ describe('executeAgent - State Reducer Pattern', () => {
 				data: '{"test": "value"}',
 			};
 
-			// Simulate a buggy handler that keeps mutable references
-			let callCount = 0;
-			let storedAttemptReference: AttemptState | null = null;
-			let storedRunReference: ExecutionState | null = null;
-
-			const mutatingHandler = (
-				state: AgentState<ExecutionState, AttemptState>,
-				_toolInput: unknown
-			) => {
-				callCount++;
-
-				// First call: return state and keep references
-				if (callCount === 1) {
-					const newRun = {...state.run, parsedData: {test: 'value', firstCall: true}};
-					const newAttempt = {...state.attempt, callCount: 1};
-
-					// Keep references (simulates buggy handler that stores state)
-					storedAttemptReference = newAttempt;
-					storedRunReference = newRun;
-
-					return ok({
-						newState: {
-							run: newRun,
-							attempt: newAttempt,
-						},
-						toolResult: {status: 'first-call'},
-					});
-				}
-
-				// Second call: mutate the stored references BEFORE processing
-				// This simulates a handler that mutates previous state
-				if (storedAttemptReference) {
-					storedAttemptReference.callCount = 9999; // Malicious mutation
-				}
-				if (storedRunReference && typeof storedRunReference.parsedData === 'object') {
-					(storedRunReference.parsedData as Record<string, unknown>).malicious = 'hacked';
-				}
-
-				// Now return new state - if framework used the mutated references, state will be corrupted
-				const newState = {
-					run: {...state.run}, // Pass through run state from framework
-					attempt: {...state.attempt, callCount: 2},
-				};
-
-				// Verify the state received from framework wasn't corrupted by our mutations
-				expect(state.attempt.callCount).not.toBe(9999);
-				if (state.run.parsedData && typeof state.run.parsedData === 'object') {
-					expect((state.run.parsedData as Record<string, unknown>).malicious).toBeUndefined();
-				}
-
-				return ok({
-					newState,
-					toolResult: {status: 'second-call'},
-				});
-			};
-
-			// Create agent with mutating handler
-			const agentWithMutatingHandler = {
-				...STATEFUL_AGENT,
-				tools: {
-					...STATEFUL_AGENT.tools,
-					helpers: {
-						mutating_tool: {
-							name: 'mutating_tool',
-							description: 'Tool that mutates previous state',
-							inputSchema: STATEFUL_AGENT.tools.helpers!.parse_tool.inputSchema,
-							handler: mutatingHandler,
-						},
-					},
-				},
-			};
+			// Create agent with mutating handler from fixtures
+			const agentWithMutatingHandler = createAgentWithMutatingHandler();
 
 			createMockApiCalls(mockMessagesCreate, [
 				{
@@ -636,17 +549,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 				data: '{"test": true}',
 			};
 
-			// Create agent with throwing tool
-			const agentWithThrowingTool = {
-				...STATEFUL_AGENT,
-				tools: {
-					...STATEFUL_AGENT.tools,
-					helpers: {
-						...STATEFUL_AGENT.tools.helpers,
-						throwing_tool: MOCK_THROWING_TOOL,
-					},
-				},
-			};
 
 			createMockApiCalls(mockMessagesCreate, [
 				{
@@ -670,7 +572,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 				},
 			]);
 
-			const result = await executeAgent(agentWithThrowingTool, {
+			const result = await executeAgent(AGENT_WITH_THROWING_TOOL, {
 				...options,
 				input,
 			});
@@ -711,17 +613,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 				data: '{"key": "value"}',
 			};
 
-			// Create agent with throwing tool
-			const agentWithThrowingTool = {
-				...STATEFUL_AGENT,
-				tools: {
-					...STATEFUL_AGENT.tools,
-					helpers: {
-						...STATEFUL_AGENT.tools.helpers,
-						throwing_tool: MOCK_THROWING_TOOL,
-					},
-				},
-			};
 
 			createMockApiCalls(mockMessagesCreate, [
 				{
@@ -755,7 +646,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 				},
 			]);
 
-			const result = await executeAgent(agentWithThrowingTool, {
+			const result = await executeAgent(AGENT_WITH_THROWING_TOOL, {
 				...options,
 				input,
 			});
@@ -811,15 +702,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 				data: 'a, b, c',
 			};
 
-			// Create agent with initialRunState that pre-populates parsedData
-			const agentWithInitState = {
-				...STATEFUL_AGENT,
-				initialRunState: (inp: StatefulAgentInput) => ({
-					rawData: inp.data,
-					parsedData: ['pre-populated-item'], // Set parsedData without calling parse_tool
-				}),
-			};
-
 			createMockApiCalls(mockMessagesCreate, [
 				{
 					type: 'helper',
@@ -832,7 +714,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 				},
 			]);
 
-			const result = await executeAgent(agentWithInitState, {
+			const result = await executeAgent(AGENT_WITH_INIT_STATE, {
 				...options,
 				input,
 			});
