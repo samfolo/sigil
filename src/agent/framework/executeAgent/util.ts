@@ -1,5 +1,8 @@
-import type {Result} from '@sigil/src/common/errors';
-import {isErr} from '@sigil/src/common/errors';
+import type {ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
+import type {AgentError, ExecutionPhase, Result} from '@sigil/src/common/errors';
+import {AGENT_ERROR_CODES, isErr} from '@sigil/src/common/errors';
+
+import type {DurationMetrics, ExecuteFailure, TokenMetrics} from './types';
 
 /**
  * Formatted tool result for Anthropic API
@@ -53,4 +56,83 @@ export const safeInvokeCallback = <Args extends unknown[]>(
 			error instanceof Error ? error : new Error(String(error))
 		);
 	}
+};
+
+/**
+ * Options for creating a cancellation error
+ */
+interface CreateCancellationErrorOptions {
+	/**
+	 * Current attempt number when cancellation occurred
+	 */
+	attempt: number;
+
+	/**
+	 * Execution phase where cancellation was detected
+	 */
+	phase: ExecutionPhase;
+
+	/**
+	 * Observability configuration for metadata tracking
+	 */
+	observability: ObservabilityConfig;
+
+	/**
+	 * Duration metrics for latency tracking
+	 */
+	durationMetrics: DurationMetrics;
+
+	/**
+	 * Token metrics for usage tracking
+	 */
+	tokenMetrics: TokenMetrics;
+
+	/**
+	 * Array of callback errors collected during execution
+	 */
+	callbackErrors: Error[];
+
+	/**
+	 * Function to build execution metadata
+	 */
+	buildMetadata: (options: {
+		observability: ObservabilityConfig;
+		durationMetrics: DurationMetrics;
+		tokenMetrics: TokenMetrics;
+		callbackErrors: Error[];
+	}) => ExecuteFailure['metadata'];
+}
+
+/**
+ * Creates an EXECUTION_CANCELLED error with proper context
+ *
+ * Shared utility for creating cancellation errors with consistent structure
+ * across the execution pipeline. Handles metadata building based on observability
+ * configuration.
+ *
+ * @param options - Cancellation error options
+ * @returns ExecuteFailure with EXECUTION_CANCELLED error
+ */
+export const createCancellationError = (options: CreateCancellationErrorOptions): ExecuteFailure => {
+	const error: AgentError = {
+		code: AGENT_ERROR_CODES.EXECUTION_CANCELLED,
+		severity: 'error',
+		category: 'execution',
+		context: {
+			attempt: options.attempt,
+			phase: options.phase,
+		},
+	};
+
+	const metadata = options.buildMetadata({
+		observability: options.observability,
+		durationMetrics: options.durationMetrics,
+		tokenMetrics: options.tokenMetrics,
+		callbackErrors: options.callbackErrors,
+	});
+
+	return {
+		errors: [error],
+		metadata,
+	};
 };

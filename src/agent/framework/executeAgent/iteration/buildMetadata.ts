@@ -1,8 +1,6 @@
 import type {ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
 
-import type {ExecuteMetadata} from '../types';
-
-import type {DurationMetrics, TokenMetrics} from './types';
+import type {DurationMetrics, ExecuteMetadata, TokenMetrics} from '../types';
 
 /**
  * Options for building execution metadata

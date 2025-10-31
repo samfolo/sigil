@@ -3,11 +3,10 @@ import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
-import type {ExecuteSuccess, ExecuteCallbacks} from '../types';
+import type {DurationMetrics, ExecuteCallbacks, ExecuteSuccess, TokenMetrics} from '../types';
 import {safeInvokeCallback} from '../util';
 
 import {buildMetadata} from './buildMetadata';
-import type {DurationMetrics, TokenMetrics} from './types';
 
 /**
  * Parameters for handling validation success

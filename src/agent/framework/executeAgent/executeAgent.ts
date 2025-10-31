@@ -2,7 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
 import {DEFAULT_MAX_ITERATIONS} from '@sigil/src/agent/framework/common';
-import type {AgentDefinition, ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
+import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
 import type {AgentState} from '@sigil/src/agent/framework/defineAgent/types';
 import {buildSystemPrompt, buildUserPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
@@ -13,20 +13,22 @@ import type {
 	ValidationLayerIdentity,
 } from '@sigil/src/agent/framework/validation';
 import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
-import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors';
+import type {AgentError, Result} from '@sigil/src/common/errors';
 import {err, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
-import {buildMetadata} from './iteration/buildMetadata';
-import {buildTools} from './iteration/buildTools';
-import {handleValidationFailure} from './iteration/handleValidationFailure';
-import {handleValidationSuccess} from './iteration/handleValidationSuccess';
-import {runIterationLoop} from './iteration/runIterationLoop';
+import {
+	buildMetadata,
+	buildTools,
+	handleValidationFailure,
+	handleValidationSuccess,
+	runIterationLoop
+} from './iteration';
 import type {
 	ExecuteOptions,
 	ExecuteSuccess,
 	ExecuteFailure,
 } from './types';
-import {safeInvokeCallback} from './util';
+import {createCancellationError, safeInvokeCallback} from './util';
 
 /**
  * Default run state initialiser that returns an empty object
@@ -108,51 +110,6 @@ const DEFAULT_ATTEMPT_STATE_INITIALISER = <Attempt>(): Attempt => ({} as Attempt
  * ```
  */
 /**
- * Creates an EXECUTION_CANCELLED error with proper context
- *
- * @param attempt - Current attempt number when cancellation occurred
- * @param phase - Execution phase where cancellation was detected
- * @returns ExecuteFailure with EXECUTION_CANCELLED error
- */
-const createCancellationError = (
-	attempt: number,
-	phase: ExecutionPhase,
-	observability: ObservabilityConfig,
-	startTime: number,
-	totalInputTokens: number,
-	totalOutputTokens: number,
-	callbackErrors: Error[]
-): ExecuteFailure => {
-	const error: AgentError = {
-		code: AGENT_ERROR_CODES.EXECUTION_CANCELLED,
-		severity: 'error',
-		category: 'execution',
-		context: {
-			attempt,
-			phase,
-		},
-	};
-
-	const metadata = buildMetadata({
-		observability,
-		durationMetrics: {
-			startTime,
-		},
-		tokenMetrics: {
-			input: totalInputTokens,
-			output: totalOutputTokens,
-		},
-		callbackErrors
-	});
-
-	return {
-		errors: [error],
-		metadata,
-	};
-};
-
-
-/**
  * Options for building execution metadata
  */
 
@@ -189,15 +146,15 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 
 	// Check for cancellation before building user prompt
 	if (options.signal?.aborted) {
-		return err(createCancellationError(
-			0,
-			'prompt_generation',
-			agent.observability,
-			startTime,
-			totalInputTokens,
-			totalOutputTokens,
-			callbackErrors
-		));
+		return err(createCancellationError({
+			attempt: 0,
+			phase: 'prompt_generation',
+			observability: agent.observability,
+			durationMetrics: {startTime},
+			tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
+			callbackErrors,
+			buildMetadata,
+		}));
 	}
 
 	// Build user prompt once (immutable task description)
@@ -234,15 +191,15 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		// Check for cancellation at start of each iteration
 		if (options.signal?.aborted) {
-			return err(createCancellationError(
+			return err(createCancellationError({
 				attempt,
-				'prompt_generation',
-				agent.observability,
-				startTime,
-				totalInputTokens,
-				totalOutputTokens,
-				callbackErrors
-			));
+				phase: 'prompt_generation',
+				observability: agent.observability,
+				durationMetrics: {startTime},
+				tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
+				callbackErrors,
+				buildMetadata,
+			}));
 		}
 
 		// Determine iteration limit for this attempt
@@ -280,15 +237,15 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 
 		// Check for cancellation before building system prompt
 		if (options.signal?.aborted) {
-			return err(createCancellationError(
+			return err(createCancellationError({
 				attempt,
-				'prompt_generation',
-				agent.observability,
-				startTime,
-				totalInputTokens,
-				totalOutputTokens,
-				callbackErrors
-			));
+				phase: 'prompt_generation',
+				observability: agent.observability,
+				durationMetrics: {startTime},
+				tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
+				callbackErrors,
+				buildMetadata,
+			}));
 		}
 
 		// Build system prompt (can adapt based on attempt)
@@ -362,15 +319,15 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 
 		// Check for cancellation before validation
 		if (options.signal?.aborted) {
-			return err(createCancellationError(
+			return err(createCancellationError({
 				attempt,
-				'validation',
-				agent.observability,
-				startTime,
-				totalInputTokens,
-				totalOutputTokens,
-				callbackErrors
-			));
+				phase: 'validation',
+				observability: agent.observability,
+				durationMetrics: {startTime},
+				tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
+				callbackErrors,
+				buildMetadata,
+			}));
 		}
 
 		// Validate output through multi-layer validation

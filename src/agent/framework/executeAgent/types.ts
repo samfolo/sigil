@@ -3,16 +3,26 @@ import type {ValidationLayerMetadata, ValidationLayerResult} from '@sigil/src/ag
 import type {AgentError} from '@sigil/src/common/errors';
 
 /**
- * Token usage statistics for execution metadata
+ * Duration metrics for execution tracking
  */
-export interface ExecuteMetadataTokenUsageStatistics {
+export interface DurationMetrics {
 	/**
-	 * Number of input tokens consumed
+	 * Execution start time from performance.now()
+	 */
+	startTime: number;
+}
+
+/**
+ * Token count tracking
+ */
+export interface TokenMetrics {
+	/**
+	 * Total input tokens consumed
 	 */
 	input: number;
 
 	/**
-	 * Number of output tokens generated
+	 * Total output tokens generated
 	 */
 	output: number;
 }
@@ -29,7 +39,7 @@ export interface ExecuteMetadata {
 	/**
 	 * Token usage statistics
 	 */
-	tokens?: ExecuteMetadataTokenUsageStatistics;
+	tokens?: TokenMetrics;
 
 	/**
 	 * Errors thrown by callbacks during execution

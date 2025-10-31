@@ -8,11 +8,10 @@ import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validat
 import type {Result} from '@sigil/src/common/errors';
 import {err, isErr, ok} from '@sigil/src/common/errors';
 
-import type {ExecuteCallbacks, ExecuteFailure} from '../types';
+import type {DurationMetrics, ExecuteCallbacks, ExecuteFailure, TokenMetrics} from '../types';
 import {safeInvokeCallback} from '../util';
 
 import {buildMetadata} from './buildMetadata';
-import type {DurationMetrics, TokenMetrics} from './types';
 
 /**
  * Parameters for handling validation failure

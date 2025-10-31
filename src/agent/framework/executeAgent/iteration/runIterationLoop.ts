@@ -6,12 +6,12 @@ import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors';
 import {err, ok, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
-import type {ExecuteFailure} from '../types';
+import type {DurationMetrics, ExecuteFailure, TokenMetrics} from '../types';
+import {createCancellationError} from '../util';
 
 import {buildMetadata} from './buildMetadata';
 import type {ProcessToolUsesState, ProcessToolUsesCallbacks} from './processToolUses';
 import {processToolUses} from './processToolUses';
-import type {DurationMetrics, TokenMetrics} from './types';
 
 /**
  * Parameters for running the iteration loop
@@ -43,42 +43,6 @@ export interface RunIterationLoopResult<Output, Run extends object, Attempt exte
 	updatedState: AgentState<Run, Attempt>;
 	tokenMetrics: TokenMetrics;
 }
-
-/**
- * Creates a cancellation error for the iteration loop
- */
-const createCancellationError = (
-	attempt: number,
-	phase: 'iteration' | 'validation',
-	observability: AgentDefinition<unknown, unknown, object, object>['observability'],
-	startTime: number,
-	totalInputTokens: number,
-	totalOutputTokens: number,
-	callbackErrors: Error[]
-): ExecuteFailure => ({
-	errors: [
-		{
-			code: AGENT_ERROR_CODES.EXECUTION_CANCELLED,
-			severity: 'error',
-			category: 'execution',
-			context: {
-				attempt,
-				phase,
-			},
-		},
-	],
-	metadata: buildMetadata({
-		observability,
-		durationMetrics: {
-			startTime,
-		},
-		tokenMetrics: {
-			input: totalInputTokens,
-			output: totalOutputTokens,
-		},
-		callbackErrors,
-	}),
-});
 
 /**
  * Runs the agent iteration loop, calling the API and processing tool uses until
@@ -133,15 +97,15 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 
 		// Check for cancellation before API call
 		if (signal?.aborted) {
-			return err(createCancellationError(
-				context.attempt,
-				'iteration',
-				agent.observability,
-				durationMetrics.startTime,
-				tokenMetrics.input,
-				tokenMetrics.output,
-				callbackErrors
-			));
+			return err(createCancellationError({
+				attempt: context.attempt,
+				phase: 'iteration',
+				observability: agent.observability,
+				durationMetrics,
+				tokenMetrics,
+				callbackErrors,
+				buildMetadata,
+			}));
 		}
 
 		// Call Anthropic API

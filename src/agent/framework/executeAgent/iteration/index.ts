@@ -15,4 +15,3 @@ export type {
 } from './processToolUses';
 export {runIterationLoop} from './runIterationLoop';
 export type {RunIterationLoopParams, RunIterationLoopResult} from './runIterationLoop';
-export type {DurationMetrics, TokenMetrics} from './types';
