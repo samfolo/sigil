@@ -3,6 +3,7 @@ import {z} from 'zod';
 import type {BaseParserStructureMetadata, ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {HelperToolConfig, ToolReducerHandler} from '@sigil/src/agent/framework/defineAgent';
 import {err, isErr, ok} from '@sigil/src/common/errors';
+import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseXML} from './parseXML';
 import type {ParseXMLResult} from './types';
@@ -27,7 +28,7 @@ type ParseXMLInput = z.infer<typeof parseXMLInputSchema>;
  *
  * Reads from state.raw, writes to state.structureMetadata on success.
  */
-const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMetadata>> = (state, toolInput) => {
+const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMetadata>, EmptyObject> = (state, toolInput) => {
 	// Validate input against schema
 	const parsed = parseXMLInputSchema.safeParse(toolInput);
 	if (!parsed.success) {
@@ -35,7 +36,7 @@ const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMe
 	}
 
 	// Call implementation with raw data from state
-	const result = parseXML(state.raw);
+	const result = parseXML(state.run.raw);
 
 	if (isErr(result)) {
 		return err(result.error);
@@ -43,11 +44,15 @@ const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMe
 
 	return ok({
 		newState: {
-			...state,
-			structureMetadata: {
-				tool: 'parse_xml',
-				details: result.data,
+			context: state.context,
+			run: {
+				...state.run,
+				structureMetadata: {
+					tool: 'parse_xml',
+					details: result.data,
+				},
 			},
+			attempt: state.attempt,
 		},
 		toolResult: result.data,
 	});
@@ -72,6 +77,7 @@ const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMe
 export const PARSE_XML_TOOL: HelperToolConfig<
 	'parse_xml',
 	ParserState<ParseXMLStructureMetadata>,
+	EmptyObject,
 	ParseXMLInput
 > = {
 	name: 'parse_xml',

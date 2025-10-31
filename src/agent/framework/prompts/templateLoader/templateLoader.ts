@@ -7,7 +7,7 @@ import type {
 	UserPromptFunction,
 	ErrorPromptFunction,
 } from '@sigil/src/agent/framework/defineAgent';
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors/result';
 import {ok, err} from '@sigil/src/common/errors/result';
 
@@ -26,7 +26,7 @@ const liquidEngine = new Liquid();
  */
 export type TemplateFunction<T> = (
   data: T,
-  state: AgentExecutionState
+  context: AgentExecutionContext
 ) => Promise<string>;
 
 /**
@@ -123,8 +123,8 @@ export const compileTemplate = <T>(
 
 		const templateFunction: TemplateFunction<T> = async (
 			data: T,
-			state: AgentExecutionState
-		): Promise<string> => liquidEngine.render(template, {data, state});
+			context: AgentExecutionContext
+		): Promise<string> => liquidEngine.render(template, {data, context});
 
 		return ok(templateFunction);
 	} catch (error) {
@@ -139,7 +139,7 @@ export const compileTemplate = <T>(
 /**
  * Converts a TemplateFunction to a SystemPromptFunction
  *
- * SystemPromptFunction signature: (input: Input, state: AgentExecutionState) => Promise<string>
+ * SystemPromptFunction signature: (input: Input, context: AgentExecutionContext) => Promise<string>
  * This is a direct pass-through since the signatures match.
  *
  * @template Input - The type of input data the system prompt accepts
@@ -185,7 +185,7 @@ export const asUserPromptFunction = <Input>(
 /**
  * Converts a TemplateFunction to an ErrorPromptFunction
  *
- * ErrorPromptFunction signature: (formattedError: string, state: AgentExecutionState) => Promise<string>
+ * ErrorPromptFunction signature: (formattedError: string, context: AgentExecutionContext) => Promise<string>
  * This is a direct pass-through since the signatures match.
  *
  * @param template - The template function to convert

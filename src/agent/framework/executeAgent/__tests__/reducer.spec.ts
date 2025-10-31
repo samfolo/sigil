@@ -22,6 +22,8 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 	})),
 }));
 
+import type {AgentState} from '../../defineAgent/types';
+
 import {
 	executeAgent,
 	setupExecuteAgentMocks,
@@ -32,19 +34,18 @@ import {
 	isOk,
 	isErr,
 } from '../executeAgent.common.fixtures';
-import type {OnAttemptStartInvocation, OnToolCallInvocation, OnToolResultInvocation, CallbackInvocation} from '../executeAgent.fixtures';
+import type {CallbackInvocation} from '../executeAgent.fixtures';
+
 import {
 	STATEFUL_AGENT,
 	mockParseReducerHandler,
 	mockQueryReducerHandler,
-	mockTransformReducerHandler,
 	createStatefulSubmitResponse,
 	MOCK_THROWING_TOOL,
 } from './reducer.fixtures';
-import type {StatefulAgentInput} from './reducer.fixtures';
+import type {StatefulAgentInput, ExecutionState, AttemptState} from './reducer.fixtures';
 
 describe('executeAgent - State Reducer Pattern', () => {
-	const INITIAL_CALL_COUNT = 0;
 	const INCREMENTED_ONCE = 1;
 	const QUERY_BEFORE_PARSE_ERROR = 'has not been parsed yet';
 	const UNKNOWN_TOOL_ERROR_PREFIX = 'Unknown tool';
@@ -78,7 +79,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: 'item1, item2, item3',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -133,7 +133,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: 'item1, item2, item3',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -180,9 +179,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 	describe('Handler Isolation', () => {
 		it('should allow testing individual handler in isolation', () => {
-			const state: StatefulAgentInput = {
-				data: '{"key": "value"}',
-				callCount: INITIAL_CALL_COUNT,
+			const state: AgentState<ExecutionState, AttemptState> = {
+				context: {attempt: 1, maxAttempts: 3, iteration: 1, maxIterations: 10},
+				run: {rawData: '{"key": "value"}', parsedData: undefined},
+				attempt: {callCount: 0},
 			};
 
 			const result = mockParseReducerHandler(state, {format: 'json'});
@@ -190,8 +190,8 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
-				expect(result.data.newState.callCount).toBe(INCREMENTED_ONCE);
-				expect(result.data.newState.parsedData).toEqual({key: 'value'});
+				expect(result.data.newState.attempt.callCount).toBe(INCREMENTED_ONCE);
+				expect(result.data.newState.run.parsedData).toEqual({key: 'value'});
 				expect(result.data.toolResult).toEqual({
 					status: 'parsed',
 					format: 'json',
@@ -201,34 +201,38 @@ describe('executeAgent - State Reducer Pattern', () => {
 		});
 
 		it('should follow immutability (return new object, not mutate input)', () => {
-			const state: StatefulAgentInput = {
-				data: '{"test": true}',
-				callCount: INITIAL_CALL_COUNT,
+			const state: AgentState<ExecutionState, AttemptState> = {
+				context: {attempt: 1, maxAttempts: 3, iteration: 1, maxIterations: 10},
+				run: {rawData: '{"test": true}', parsedData: undefined},
+				attempt: {callCount: 0},
 			};
 
-			const originalCallCount = state.callCount;
-			const originalParsedData = state.parsedData;
+			const originalRunParsedData = state.run.parsedData;
+			const originalAttemptCallCount = state.attempt.callCount;
 
 			const result = mockParseReducerHandler(state, {format: 'json'});
 
-			// Original state unchanged
-			expect(state.callCount).toBe(originalCallCount);
-			expect(state.parsedData).toBe(originalParsedData);
+			// Original state unchanged (immutability check)
+			expect(state.run.parsedData).toBe(originalRunParsedData);
+			expect(state.attempt.callCount).toBe(originalAttemptCallCount);
 
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
 				// Verify new object reference (not same object)
 				expect(result.data.newState).not.toBe(state);
-				expect(result.data.newState.callCount).toBe(INCREMENTED_ONCE);
-				expect(result.data.newState.parsedData).toBeDefined();
+				expect(result.data.newState.run).not.toBe(state.run);
+				expect(result.data.newState.attempt).not.toBe(state.attempt);
+				expect(result.data.newState.attempt.callCount).toBe(INCREMENTED_ONCE);
+				expect(result.data.newState.run.parsedData).toBeDefined();
 			}
 		});
 
 		it('should return error for invalid state prerequisites', () => {
-			const state: StatefulAgentInput = {
-				data: '{"test": true}',
-				callCount: INITIAL_CALL_COUNT,
+			const state: AgentState<ExecutionState, AttemptState> = {
+				context: {attempt: 1, maxAttempts: 3, iteration: 1, maxIterations: 10},
+				run: {rawData: '{"test": true}', parsedData: undefined},
+				attempt: {callCount: 0},
 			};
 
 			const result = mockQueryReducerHandler(state, {query: 'test'});
@@ -247,7 +251,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -285,7 +288,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: 'a, b, c',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -352,7 +354,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			createMockApiCalls(mockMessagesCreate, [
@@ -391,7 +392,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			// Create agent with throwing tool
@@ -466,7 +466,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input: StatefulAgentInput = {
 				data: '{"key": "value"}',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			// Create agent with throwing tool
@@ -564,7 +563,6 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			const input = {
 				data: 'a, b, c',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			// Create agent with initialState that pre-populates parsedData
@@ -654,78 +652,12 @@ describe('executeAgent - State Reducer Pattern', () => {
 	});
 
 	describe('Execution Isolation', () => {
-		it('should reset state between retry attempts', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			const input: StatefulAgentInput = {
-				data: '{"test": true}',
-				callCount: INITIAL_CALL_COUNT,
-			};
-
-			// Attempt 1: parse sets parsedData, then validation fails
-			// Attempt 2: query without parse should fail (proves state reset)
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{type: 'invalid'}, // Validation failure → retry
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
-
-			const result = await executeAgent(STATEFUL_AGENT, {
-				...options,
-				input,
-			});
-
-			expect(isOk(result)).toBe(true);
-
-			// Verify attempt 1: parse succeeded
-			const parseToolCalls = invocations.filter(
-				(inv) => inv.type === 'onToolResult' && inv.toolName === 'parse_tool'
-			);
-			expect(parseToolCalls.length).toBe(1);
-
-			const parseResult = parseToolCalls.at(0);
-			expect(parseResult).toBeDefined();
-			expect(parseResult?.type).toBe('onToolResult');
-
-			// Verify attempt 2: query failed (parsedData not available)
-			const queryToolCalls = invocations.filter(
-				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
-			);
-			expect(queryToolCalls.length).toBe(1);
-
-			const queryResult = queryToolCalls.at(0);
-			expect(queryResult).toBeDefined();
-			expect(queryResult?.type).toBe('onToolResult');
-			if (queryResult?.type === 'onToolResult') {
-				// Query should fail because state was reset (parsedData not available)
-				expect(queryResult.toolResult).toContain(QUERY_BEFORE_PARSE_ERROR);
-			}
-
-			// Verify multiple attempts occurred
-			if (isOk(result)) {
-				expect(result.data.attempts).toBeGreaterThan(1);
-			}
-		});
-
 		it('should not leak state between sequential executions', async () => {
 			const {options: options1, invocations: invocations1} = createExecuteOptionsWithCallbackTracking();
 			const {options: options2, invocations: invocations2} = createExecuteOptionsWithCallbackTracking();
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			// First execution: parse then query (should succeed)
@@ -797,12 +729,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 		it('should maintain separate state for concurrent executions', async () => {
 			const input1: StatefulAgentInput = {
 				data: '{"test": 1}',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			const input2: StatefulAgentInput = {
 				data: '{"test": 2}',
-				callCount: INITIAL_CALL_COUNT,
 			};
 
 			// Both executions parse their respective data

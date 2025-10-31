@@ -10,9 +10,10 @@
 
 import {z} from 'zod';
 
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors';
 import {err, ok} from '@sigil/src/common/errors';
+import type {EmptyObject} from '@sigil/src/common/types';
 
 import type {AgentDefinition} from './defineAgent';
 
@@ -47,23 +48,23 @@ const TEST_OUTPUT_SCHEMA = z.object({
  *   .build();
  * ```
  */
-class AgentDefinitionBuilder<Input, Output, State = Input> {
+class AgentDefinitionBuilder<Input, Output, Run extends object = EmptyObject, Attempt extends object = EmptyObject> {
 	private overrides: {
 		name?: string;
 		description?: string;
 		maxAttempts?: number;
 		maxIterationsPerAttempt?: number;
-		helpers?: AgentDefinition<Input, Output, State>['tools']['helpers'];
-		reflectionHandler?: AgentDefinition<Input, Output, State>['tools']['output']['reflectionHandler'];
-		customValidators?: AgentDefinition<Input, Output, State>['validation']['customValidators'];
-		observability?: Partial<AgentDefinition<Input, Output, State>['observability']>;
+		helpers?: AgentDefinition<Input, Output, Run, Attempt>['tools']['helpers'];
+		reflectionHandler?: AgentDefinition<Input, Output, Run, Attempt>['tools']['output']['reflectionHandler'];
+		customValidators?: AgentDefinition<Input, Output, Run, Attempt>['validation']['customValidators'];
+		observability?: Partial<AgentDefinition<Input, Output, Run, Attempt>['observability']>;
 		outputSchema?: z.ZodSchema<Output>;
 		modelName?: string;
 		temperature?: number;
 		maxTokens?: number;
 	} = {};
 
-	constructor(private base: AgentDefinition<Input, Output, State>) {}
+	constructor(private base: AgentDefinition<Input, Output, Run, Attempt>) {}
 
 	withName(name: string): this {
 		this.overrides.name = name;
@@ -85,22 +86,22 @@ class AgentDefinitionBuilder<Input, Output, State = Input> {
 		return this;
 	}
 
-	withHelpers(helpers: AgentDefinition<Input, Output, State>['tools']['helpers']): this {
+	withHelpers(helpers: AgentDefinition<Input, Output, Run, Attempt>['tools']['helpers']): this {
 		this.overrides.helpers = helpers;
 		return this;
 	}
 
-	withReflection(handler: AgentDefinition<Input, Output, State>['tools']['output']['reflectionHandler']): this {
+	withReflection(handler: AgentDefinition<Input, Output, Run, Attempt>['tools']['output']['reflectionHandler']): this {
 		this.overrides.reflectionHandler = handler;
 		return this;
 	}
 
-	withCustomValidators(validators: AgentDefinition<Input, Output, State>['validation']['customValidators']): this {
+	withCustomValidators(validators: AgentDefinition<Input, Output, Run, Attempt>['validation']['customValidators']): this {
 		this.overrides.customValidators = validators;
 		return this;
 	}
 
-	withObservability(observability: Partial<AgentDefinition<Input, Output, State>['observability']>): this {
+	withObservability(observability: Partial<AgentDefinition<Input, Output, Run, Attempt>['observability']>): this {
 		this.overrides.observability = observability;
 		return this;
 	}
@@ -125,7 +126,7 @@ class AgentDefinitionBuilder<Input, Output, State = Input> {
 		return this;
 	}
 
-	build(): AgentDefinition<Input, Output, State> {
+	build(): AgentDefinition<Input, Output, Run, Attempt> {
 		return {
 			name: this.overrides.name ?? this.base.name,
 			description: this.overrides.description ?? this.base.description,
@@ -179,9 +180,9 @@ class AgentDefinitionBuilder<Input, Output, State = Input> {
  * @param base - Base agent definition to extend
  * @returns Builder instance with chainable methods
  */
-export const agentBuilder = <Input, Output, State = Input>(
-	base: AgentDefinition<Input, Output, State>
-): AgentDefinitionBuilder<Input, Output, State> => new AgentDefinitionBuilder(base);
+export const agentBuilder = <Input, Output, Run extends object = EmptyObject, Attempt extends object = EmptyObject>(
+	base: AgentDefinition<Input, Output, Run, Attempt>
+): AgentDefinitionBuilder<Input, Output, Run, Attempt> => new AgentDefinitionBuilder(base);
 
 /**
  * Helper tool handlers for testing
@@ -272,7 +273,7 @@ export const mockThrowingHandler = (_input: unknown): Result<unknown, string> =>
  * Used as foundation for most test fixtures. Contains minimal required fields
  * with sensible defaults. Customise using agentBuilder().
  */
-const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
+const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'TestAgent',
 	description: 'A simple test agent for validation',
 	model: {
@@ -282,12 +283,12 @@ const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _state: AgentExecutionState, _signal?: AbortSignal) =>
+		system: async (input: string, _context: AgentExecutionContext, _signal?: AbortSignal) =>
 			`You are a test agent processing: ${input}`,
 		user: async (input: string, _signal?: AbortSignal) =>
 			`Please process this input: ${input}`,
-		error: async (errorMessage: string, state: AgentExecutionState, _signal?: AbortSignal) =>
-			`Attempt ${state.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
+		error: async (errorMessage: string, context: AgentExecutionContext, _signal?: AbortSignal) =>
+			`Attempt ${context.attempt} failed:\n${errorMessage}\n\nPlease try again.`,
 	},
 	tools: {
 		output: {
@@ -311,12 +312,12 @@ const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = {
 /**
  * 1. Minimal valid agent - simplest possible configuration
  */
-export const VALID_MINIMAL_AGENT: AgentDefinition<string, TestOutput> = BASE_MINIMAL_AGENT;
+export const VALID_MINIMAL_AGENT: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = BASE_MINIMAL_AGENT;
 
 /**
  * 2. Complete valid agent - all features enabled with custom validator
  */
-export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('CompleteAgent')
 	.withDescription('Agent with all observability flags and custom validation')
 	.withTemperature(0.5)
@@ -357,7 +358,7 @@ export const VALID_COMPLETE_AGENT: AgentDefinition<string, TestOutput> = agentBu
  *
  * When passed to defineAgent, should return error with code EMPTY_NAME
  */
-export const INVALID_EMPTY_NAME: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_EMPTY_NAME: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('')
 	.build();
 
@@ -366,7 +367,7 @@ export const INVALID_EMPTY_NAME: AgentDefinition<string, TestOutput> = agentBuil
  *
  * When passed to defineAgent, should return error with code EMPTY_NAME
  */
-export const INVALID_WHITESPACE_NAME: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_WHITESPACE_NAME: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('   ')
 	.build();
 
@@ -375,7 +376,7 @@ export const INVALID_WHITESPACE_NAME: AgentDefinition<string, TestOutput> = agen
  *
  * When passed to defineAgent, should return error with code EMPTY_DESCRIPTION
  */
-export const INVALID_EMPTY_DESCRIPTION: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_EMPTY_DESCRIPTION: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withDescription('')
 	.build();
 
@@ -384,7 +385,7 @@ export const INVALID_EMPTY_DESCRIPTION: AgentDefinition<string, TestOutput> = ag
  *
  * When passed to defineAgent, should return error with code EMPTY_DESCRIPTION
  */
-export const INVALID_WHITESPACE_DESCRIPTION: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_WHITESPACE_DESCRIPTION: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withDescription('   ')
 	.build();
 
@@ -393,7 +394,7 @@ export const INVALID_WHITESPACE_DESCRIPTION: AgentDefinition<string, TestOutput>
  *
  * When passed to defineAgent, should return error with code EMPTY_MODEL_NAME
  */
-export const INVALID_EMPTY_MODEL_NAME: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_EMPTY_MODEL_NAME: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withModel('')
 	.build();
 
@@ -402,7 +403,7 @@ export const INVALID_EMPTY_MODEL_NAME: AgentDefinition<string, TestOutput> = age
  *
  * When passed to defineAgent, should return error with code EMPTY_MODEL_NAME
  */
-export const INVALID_WHITESPACE_MODEL_NAME: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_WHITESPACE_MODEL_NAME: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withModel('   ')
 	.build();
 
@@ -411,7 +412,7 @@ export const INVALID_WHITESPACE_MODEL_NAME: AgentDefinition<string, TestOutput> 
  *
  * When passed to defineAgent, should return error with code INVALID_MAX_ATTEMPTS
  */
-export const INVALID_ZERO_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_ZERO_MAX_ATTEMPTS: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withMaxAttempts(0)
 	.build();
 
@@ -420,7 +421,7 @@ export const INVALID_ZERO_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> = ag
  *
  * When passed to defineAgent, should return error with code INVALID_MAX_ATTEMPTS
  */
-export const INVALID_NEGATIVE_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_NEGATIVE_MAX_ATTEMPTS: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withMaxAttempts(-1)
 	.build();
 
@@ -432,7 +433,7 @@ export const INVALID_NEGATIVE_MAX_ATTEMPTS: AgentDefinition<string, TestOutput> 
  * Note: This fixture uses a type assertion to bypass TypeScript checking
  * since we need to test runtime validation of this error case.
  */
-export const INVALID_MISSING_OUTPUT_SCHEMA: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_MISSING_OUTPUT_SCHEMA: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withOutputSchema(undefined as unknown as z.ZodSchema<TestOutput>)
 	.build();
 
@@ -445,7 +446,7 @@ export const INVALID_MISSING_OUTPUT_SCHEMA: AgentDefinition<string, TestOutput> 
  * - EMPTY_MODEL_NAME
  * - INVALID_MAX_ATTEMPTS
  */
-export const INVALID_MULTIPLE_ERRORS: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const INVALID_MULTIPLE_ERRORS: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('')
 	.withDescription('')
 	.withModel('')
@@ -490,7 +491,7 @@ export const mockThrowingReflectionHandler = (_output: TestOutput): Result<strin
  * Demonstrates agent using helper tools for multi-step workflows.
  * Uses mockDataQueryHandler which always succeeds.
  */
-export const AGENT_WITH_HELPER_TOOLS: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_HELPER_TOOLS: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('HelperToolsAgent')
 	.withDescription('Agent with helper tools for data querying')
 	.withHelpers({
@@ -524,7 +525,7 @@ export const AGENT_WITH_HELPER_TOOLS: AgentDefinition<string, TestOutput> = agen
  * Demonstrates error handling for helper tools that return errors.
  * Uses mockFailingHandler which always returns err().
  */
-export const AGENT_WITH_FAILING_HELPER: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_FAILING_HELPER: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('FailingHelperAgent')
 	.withDescription('Agent with helper tool that fails')
 	.withHelpers({
@@ -557,7 +558,7 @@ export const AGENT_WITH_FAILING_HELPER: AgentDefinition<string, TestOutput> = ag
  *
  * Demonstrates agent with multiple helper tools that can be called in sequence.
  */
-export const AGENT_WITH_MULTIPLE_HELPERS: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_MULTIPLE_HELPERS: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('MultipleHelpersAgent')
 	.withDescription('Agent with multiple helper tools')
 	.withHelpers({
@@ -621,7 +622,7 @@ export const AGENT_WITH_MULTIPLE_HELPERS: AgentDefinition<string, TestOutput> = 
  * Demonstrates reflection mode where the agent can call the output tool
  * multiple times to refine its output before final submission.
  */
-export const AGENT_WITH_REFLECTION: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_REFLECTION: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('ReflectionAgent')
 	.withDescription('Agent with reflection mode enabled')
 	.withReflection(mockReflectionHandler)
@@ -639,7 +640,7 @@ export const AGENT_WITH_REFLECTION: AgentDefinition<string, TestOutput> = agentB
  * Demonstrates reflection mode where the handler can reject output
  * and provide feedback for the model to improve.
  */
-export const AGENT_WITH_REJECTING_REFLECTION: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_REJECTING_REFLECTION: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('RejectingReflectionAgent')
 	.withDescription('Agent with reflection handler that validates output')
 	.withReflection(mockRejectingReflectionHandler)
@@ -657,7 +658,7 @@ export const AGENT_WITH_REJECTING_REFLECTION: AgentDefinition<string, TestOutput
  * Demonstrates combining helper tools with reflection mode for
  * complex multi-step workflows with output refinement.
  */
-export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('HelpersAndReflectionAgent')
 	.withDescription('Agent with both helper tools and reflection mode')
 	.withMaxTokens(2048)
@@ -708,7 +709,7 @@ export const AGENT_WITH_HELPERS_AND_REFLECTION: AgentDefinition<string, TestOutp
  * Demonstrates exception safety when a helper tool violates the Result contract
  * by throwing an exception instead of returning err().
  */
-export const AGENT_WITH_THROWING_HELPER: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_THROWING_HELPER: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('ThrowingHelperAgent')
 	.withDescription('Agent with helper tool that throws exceptions')
 	.withHelpers({
@@ -742,7 +743,7 @@ export const AGENT_WITH_THROWING_HELPER: AgentDefinition<string, TestOutput> = a
  * Demonstrates exception safety when a reflection handler violates the Result contract
  * by throwing an exception instead of returning err().
  */
-export const AGENT_WITH_THROWING_REFLECTION: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_THROWING_REFLECTION: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('ThrowingReflectionAgent')
 	.withDescription('Agent with reflection handler that throws exceptions')
 	.withReflection(mockThrowingReflectionHandler)
@@ -760,7 +761,7 @@ export const AGENT_WITH_THROWING_REFLECTION: AgentDefinition<string, TestOutput>
  * Demonstrates default iteration limit behaviour when maxIterationsPerAttempt is not configured.
  * Should default to 15 iterations per attempt.
  */
-export const AGENT_WITH_DEFAULT_ITERATION_LIMIT: AgentDefinition<string, TestOutput> = agentBuilder(BASE_MINIMAL_AGENT)
+export const AGENT_WITH_DEFAULT_ITERATION_LIMIT: AgentDefinition<string, TestOutput, EmptyObject, EmptyObject> = agentBuilder(BASE_MINIMAL_AGENT)
 	.withName('DefaultIterationLimitAgent')
 	.withDescription('Agent without explicit iteration limit configuration')
 	.withHelpers({

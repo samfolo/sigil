@@ -18,9 +18,9 @@ import {
 	NON_ERROR_THROW_AGENT,
 	USER_NON_ERROR_THROW_AGENT,
 	ERROR_NON_ERROR_THROW_AGENT,
-	FIRST_ATTEMPT_STATE,
-	SECOND_ATTEMPT_STATE,
-	FINAL_ATTEMPT_STATE,
+	FIRST_ATTEMPT_CONTEXT,
+	SECOND_ATTEMPT_CONTEXT,
+	FINAL_ATTEMPT_CONTEXT,
 	TEST_INPUT,
 	TEST_ERROR_MESSAGE,
 } from './build.fixtures';
@@ -31,7 +31,7 @@ describe('buildSystemPrompt', () => {
 			const result = await buildSystemPrompt(
 				WORKING_AGENT,
 				TEST_INPUT,
-				FIRST_ATTEMPT_STATE
+				FIRST_ATTEMPT_CONTEXT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -47,7 +47,7 @@ describe('buildSystemPrompt', () => {
 			const result = await buildSystemPrompt(
 				WORKING_AGENT,
 				TEST_INPUT,
-				SECOND_ATTEMPT_STATE
+				SECOND_ATTEMPT_CONTEXT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -61,7 +61,7 @@ describe('buildSystemPrompt', () => {
 			const result = await buildSystemPrompt(
 				WORKING_AGENT,
 				TEST_INPUT,
-				FINAL_ATTEMPT_STATE
+				FINAL_ATTEMPT_CONTEXT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -77,7 +77,7 @@ describe('buildSystemPrompt', () => {
 			const result = await buildSystemPrompt(
 				SYSTEM_THROWS_AGENT,
 				TEST_INPUT,
-				FIRST_ATTEMPT_STATE
+				FIRST_ATTEMPT_CONTEXT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -104,7 +104,7 @@ describe('buildSystemPrompt', () => {
 			const result = await buildSystemPrompt(
 				SYSTEM_REJECTS_AGENT,
 				TEST_INPUT,
-				SECOND_ATTEMPT_STATE
+				SECOND_ATTEMPT_CONTEXT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -129,7 +129,7 @@ describe('buildSystemPrompt', () => {
 			const result = await buildSystemPrompt(
 				NON_ERROR_THROW_AGENT,
 				TEST_INPUT,
-				FIRST_ATTEMPT_STATE
+				FIRST_ATTEMPT_CONTEXT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -246,7 +246,7 @@ describe('buildErrorPrompt', () => {
 			const result = await buildErrorPrompt(
 				WORKING_AGENT,
 				TEST_ERROR_MESSAGE,
-				FIRST_ATTEMPT_STATE
+				FIRST_ATTEMPT_CONTEXT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -262,7 +262,7 @@ describe('buildErrorPrompt', () => {
 			const result = await buildErrorPrompt(
 				WORKING_AGENT,
 				TEST_ERROR_MESSAGE,
-				SECOND_ATTEMPT_STATE
+				SECOND_ATTEMPT_CONTEXT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -276,7 +276,7 @@ describe('buildErrorPrompt', () => {
 			const result = await buildErrorPrompt(
 				WORKING_AGENT,
 				TEST_ERROR_MESSAGE,
-				FINAL_ATTEMPT_STATE
+				FINAL_ATTEMPT_CONTEXT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -291,7 +291,7 @@ describe('buildErrorPrompt', () => {
 			const result = await buildErrorPrompt(
 				WORKING_AGENT,
 				customError,
-				FIRST_ATTEMPT_STATE
+				FIRST_ATTEMPT_CONTEXT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -307,7 +307,7 @@ describe('buildErrorPrompt', () => {
 			const result = await buildErrorPrompt(
 				ERROR_THROWS_AGENT,
 				TEST_ERROR_MESSAGE,
-				FIRST_ATTEMPT_STATE
+				FIRST_ATTEMPT_CONTEXT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -334,7 +334,7 @@ describe('buildErrorPrompt', () => {
 			const result = await buildErrorPrompt(
 				ERROR_REJECTS_AGENT,
 				TEST_ERROR_MESSAGE,
-				SECOND_ATTEMPT_STATE
+				SECOND_ATTEMPT_CONTEXT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -359,7 +359,7 @@ describe('buildErrorPrompt', () => {
 			const result = await buildErrorPrompt(
 				ERROR_NON_ERROR_THROW_AGENT,
 				TEST_ERROR_MESSAGE,
-				FIRST_ATTEMPT_STATE
+				FIRST_ATTEMPT_CONTEXT
 			);
 
 			expect(isErr(result)).toBe(true);

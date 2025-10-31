@@ -339,10 +339,10 @@ describe('executeAgent - Callbacks', () => {
 			const toolCall = invocations.find((i) => i.type === 'onToolCall');
 
 			if (toolCall?.type === 'onToolCall') {
-				expect(toolCall.state.attempt).toBeGreaterThan(0);
-				expect(toolCall.state.maxAttempts).toBeGreaterThan(0);
-				expect(toolCall.state.iteration).toBeGreaterThan(0);
-				expect(toolCall.state.maxIterations).toBeGreaterThan(0);
+				expect(toolCall.context.attempt).toBeGreaterThan(0);
+				expect(toolCall.context.maxAttempts).toBeGreaterThan(0);
+				expect(toolCall.context.iteration).toBeGreaterThan(0);
+				expect(toolCall.context.maxIterations).toBeGreaterThan(0);
 			}
 		});
 
@@ -355,10 +355,10 @@ describe('executeAgent - Callbacks', () => {
 			const toolResult = invocations.find((i) => i.type === 'onToolResult');
 
 			if (toolResult?.type === 'onToolResult') {
-				expect(toolResult.state.attempt).toBeGreaterThan(0);
-				expect(toolResult.state.maxAttempts).toBeGreaterThan(0);
-				expect(toolResult.state.iteration).toBeGreaterThan(0);
-				expect(toolResult.state.maxIterations).toBeGreaterThan(0);
+				expect(toolResult.context.attempt).toBeGreaterThan(0);
+				expect(toolResult.context.maxAttempts).toBeGreaterThan(0);
+				expect(toolResult.context.iteration).toBeGreaterThan(0);
+				expect(toolResult.context.maxIterations).toBeGreaterThan(0);
 			}
 		});
 
@@ -381,7 +381,7 @@ describe('executeAgent - Callbacks', () => {
 			);
 
 			if (helperCall?.type === 'onToolCall' && outputCall?.type === 'onToolCall') {
-				expect(outputCall.state.iteration).toBeGreaterThan(helperCall.state.iteration);
+				expect(outputCall.context.iteration).toBeGreaterThan(helperCall.context.iteration);
 			}
 		});
 	});

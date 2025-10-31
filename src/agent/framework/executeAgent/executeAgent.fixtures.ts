@@ -9,7 +9,7 @@
  * - Error scenarios (max attempts, validation failures, API errors)
  */
 
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
@@ -35,9 +35,9 @@ interface TestOutput {
 /**
  * Callback invocation record for onAttemptStart
  */
-interface OnAttemptStartInvocation {
+export interface OnAttemptStartInvocation {
   type: 'onAttemptStart';
-  state: AgentExecutionState;
+  context: AgentExecutionContext;
 }
 
 /**
@@ -45,7 +45,7 @@ interface OnAttemptStartInvocation {
  */
 interface OnAttemptCompleteInvocation {
   type: 'onAttemptComplete';
-  state: AgentExecutionState;
+  context: AgentExecutionContext;
   success: boolean;
 }
 
@@ -55,7 +55,7 @@ interface OnAttemptCompleteInvocation {
 interface OnValidationFailureInvocation {
   type: 'onValidationFailure';
   errors: unknown;
-  state: AgentExecutionState;
+  context: AgentExecutionContext;
 }
 
 /**
@@ -80,7 +80,7 @@ interface OnFailureInvocation {
 interface OnValidationLayerStartInvocation {
   type: 'onValidationLayerStart';
   layer: ValidationLayerMetadata;
-  state: AgentExecutionState;
+  context: AgentExecutionContext;
 }
 
 /**
@@ -89,15 +89,15 @@ interface OnValidationLayerStartInvocation {
 interface OnValidationLayerCompleteInvocation {
   type: 'onValidationLayerComplete';
   layer: ValidationLayerResult;
-  state: AgentExecutionState;
+  context: AgentExecutionContext;
 }
 
 /**
  * Callback invocation record for onToolCall
  */
-interface OnToolCallInvocation {
+export interface OnToolCallInvocation {
   type: 'onToolCall';
-  state: AgentExecutionState;
+  context: AgentExecutionContext;
   toolName: string;
   toolInput: unknown;
 }
@@ -105,9 +105,9 @@ interface OnToolCallInvocation {
 /**
  * Callback invocation record for onToolResult
  */
-interface OnToolResultInvocation {
+export interface OnToolResultInvocation {
   type: 'onToolResult';
-  state: AgentExecutionState;
+  context: AgentExecutionContext;
   toolName: string;
   toolResult: string;
 }
@@ -182,52 +182,52 @@ export const createExecuteOptionsWithCallbackTracking =
   	const invocations: CallbackInvocation[] = [];
 
   	const callbacks: ExecuteCallbacks<TestOutput> = {
-  		onAttemptStart: (state) => {
+  		onAttemptStart: (context) => {
   			invocations.push({
   				type: 'onAttemptStart',
-  				state,
+  				context,
   			});
   		},
-  		onAttemptComplete: (state, success) => {
+  		onAttemptComplete: (context, success) => {
   			invocations.push({
   				type: 'onAttemptComplete',
-  				state,
+  				context,
   				success,
   			});
   		},
-  		onValidationFailure: (state, errors) => {
+  		onValidationFailure: (context, errors) => {
   			invocations.push({
   				type: 'onValidationFailure',
   				errors,
-  				state,
+  				context,
   			});
   		},
-  		onValidationLayerStart: (state, layer) => {
+  		onValidationLayerStart: (context, layer) => {
   			invocations.push({
   				type: 'onValidationLayerStart',
   				layer,
-  				state,
+  				context,
   			});
   		},
-  		onValidationLayerComplete: (state, layer) => {
+  		onValidationLayerComplete: (context, layer) => {
   			invocations.push({
   				type: 'onValidationLayerComplete',
   				layer,
-  				state,
+  				context,
   			});
   		},
-  		onToolCall: (state, toolName, toolInput) => {
+  		onToolCall: (context, toolName, toolInput) => {
   			invocations.push({
   				type: 'onToolCall',
-  				state,
+  				context,
   				toolName,
   				toolInput,
   			});
   		},
-  		onToolResult: (state, toolName, toolResult) => {
+  		onToolResult: (context, toolName, toolResult) => {
   			invocations.push({
   				type: 'onToolResult',
-  				state,
+  				context,
   				toolName,
   				toolResult,
   			});

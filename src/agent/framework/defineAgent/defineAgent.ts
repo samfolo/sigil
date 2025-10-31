@@ -224,7 +224,7 @@ export interface OutputToolConfig<Output> {
  * @template Attempt - User attempt state type (resets on retry)
  * @template ToolInput - The type of input this helper tool accepts
  */
-export interface HelperToolConfig<Name extends string, Run, Attempt, ToolInput> {
+export interface HelperToolConfig<Name extends string, Run extends object, Attempt extends object, ToolInput> {
   /**
    * Name of the helper tool
    *
@@ -265,7 +265,7 @@ export interface HelperToolConfig<Name extends string, Run, Attempt, ToolInput> 
  * @template Run - User run state type (persists across attempts)
  * @template Attempt - User attempt state type (resets on retry)
  */
-export interface ToolsConfig<Output, Run, Attempt> {
+export interface ToolsConfig<Output, Run extends object, Attempt extends object> {
   /**
    * Output tool configuration (REQUIRED)
    *
@@ -303,7 +303,7 @@ export interface ToolsConfig<Output, Run, Attempt> {
    * ```
    */
   helpers?: {
-    [K in string]: HelperToolConfig<K, Run, Attempt, unknown>;
+    [Name in string]: HelperToolConfig<Name, Run, Attempt, unknown>;
   };
 }
 
@@ -369,7 +369,7 @@ export interface PromptsConfig<Input> {
  * @template Run - User run state type (persists across attempts)
  * @template Attempt - User attempt state type (resets on retry)
  */
-export interface AgentDefinition<Input, Output, Run, Attempt> {
+export interface AgentDefinition<Input, Output, Run extends object, Attempt extends object> {
   /**
    * Unique name for the agent
    */
@@ -506,7 +506,7 @@ export interface AgentDefinition<Input, Output, Run, Attempt> {
  * const agent = result.data;
  * ```
  */
-export const defineAgent = <Input, Output, Run, Attempt>(
+export const defineAgent = <Input, Output, Run extends object, Attempt extends object>(
 	definition: AgentDefinition<Input, Output, Run, Attempt>
 ): Result<Readonly<AgentDefinition<Input, Output, Run, Attempt>>, AgentError[]> => {
 	const errors: AgentError[] = [];

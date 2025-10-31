@@ -6,8 +6,8 @@ import {isOk, isErr} from '@sigil/src/common/errors/result';
 
 import {loadTemplate, compileTemplate} from './templateLoader';
 import {
-	FIRST_ATTEMPT_STATE,
-	SECOND_ATTEMPT_STATE,
+	FIRST_ATTEMPT_CONTEXT,
+	SECOND_ATTEMPT_CONTEXT,
 	SIMPLE_DATA,
 	QUERY_DATA,
 	LIST_DATA,
@@ -35,7 +35,7 @@ describe('compileTemplate', () => {
 		}
 
 		const promptFunction = result.data;
-		const output = await promptFunction('test input', FIRST_ATTEMPT_STATE);
+		const output = await promptFunction('test input', FIRST_ATTEMPT_CONTEXT);
 
 		expect(output).toBe('Process: test input');
 	});
@@ -49,7 +49,7 @@ describe('compileTemplate', () => {
 		}
 
 		const promptFunction = result.data;
-		const output = await promptFunction(SIMPLE_DATA, SECOND_ATTEMPT_STATE);
+		const output = await promptFunction(SIMPLE_DATA, SECOND_ATTEMPT_CONTEXT);
 
 		expect(output).toBe('Attempt 2/3: Hello, world!');
 	});
@@ -65,7 +65,7 @@ describe('compileTemplate', () => {
 		const promptFunction = result.data;
 		const output = await promptFunction(
 			'Validation failed: missing field',
-			SECOND_ATTEMPT_STATE
+			SECOND_ATTEMPT_CONTEXT
 		);
 
 		expect(output).toContain('Attempt 2/3 failed:');
@@ -83,10 +83,10 @@ describe('compileTemplate', () => {
 
 		const promptFunction = result.data;
 
-		const firstAttempt = await promptFunction(QUERY_DATA, FIRST_ATTEMPT_STATE);
+		const firstAttempt = await promptFunction(QUERY_DATA, FIRST_ATTEMPT_CONTEXT);
 		expect(firstAttempt.trim()).toBe('First attempt: Analyse sales data');
 
-		const secondAttempt = await promptFunction(QUERY_DATA, SECOND_ATTEMPT_STATE);
+		const secondAttempt = await promptFunction(QUERY_DATA, SECOND_ATTEMPT_CONTEXT);
 		expect(secondAttempt.trim()).toBe('Attempt 2/3: Analyse sales data');
 	});
 
@@ -99,7 +99,7 @@ describe('compileTemplate', () => {
 		}
 
 		const promptFunction = result.data;
-		const output = await promptFunction(LIST_DATA, FIRST_ATTEMPT_STATE);
+		const output = await promptFunction(LIST_DATA, FIRST_ATTEMPT_CONTEXT);
 
 		expect(output).toContain('Items to process:');
 		expect(output).toContain('- first');
@@ -131,7 +131,7 @@ describe('loadTemplate', () => {
 		}
 
 		const promptFunction = result.data;
-		const output = await promptFunction('test input', FIRST_ATTEMPT_STATE);
+		const output = await promptFunction('test input', FIRST_ATTEMPT_CONTEXT);
 
 		expect(output).toBe('Process: test input');
 	});
@@ -147,7 +147,7 @@ describe('loadTemplate', () => {
 		}
 
 		const promptFunction = result.data;
-		const output = await promptFunction(SIMPLE_DATA, SECOND_ATTEMPT_STATE);
+		const output = await promptFunction(SIMPLE_DATA, SECOND_ATTEMPT_CONTEXT);
 
 		expect(output).toBe('Attempt 2/3: Hello, world!');
 	});
@@ -164,10 +164,10 @@ describe('loadTemplate', () => {
 
 		const promptFunction = result.data;
 
-		const firstAttempt = await promptFunction(QUERY_DATA, FIRST_ATTEMPT_STATE);
+		const firstAttempt = await promptFunction(QUERY_DATA, FIRST_ATTEMPT_CONTEXT);
 		expect(firstAttempt.trim()).toBe('First attempt: Analyse sales data');
 
-		const secondAttempt = await promptFunction(QUERY_DATA, SECOND_ATTEMPT_STATE);
+		const secondAttempt = await promptFunction(QUERY_DATA, SECOND_ATTEMPT_CONTEXT);
 		expect(secondAttempt.trim()).toBe('Attempt 2/3: Analyse sales data');
 	});
 
@@ -182,7 +182,7 @@ describe('loadTemplate', () => {
 		}
 
 		const promptFunction = result.data;
-		const output = await promptFunction(LIST_DATA, FIRST_ATTEMPT_STATE);
+		const output = await promptFunction(LIST_DATA, FIRST_ATTEMPT_CONTEXT);
 
 		expect(output).toContain('Items to process:');
 		expect(output).toContain('- first');
@@ -218,11 +218,11 @@ describe('loadTemplate', () => {
 
 		const loadedOutput = await loadedResult.data(
 			'test input',
-			FIRST_ATTEMPT_STATE
+			FIRST_ATTEMPT_CONTEXT
 		);
 		const compiledOutput = await compiledResult.data(
 			'test input',
-			FIRST_ATTEMPT_STATE
+			FIRST_ATTEMPT_CONTEXT
 		);
 
 		expect(loadedOutput).toBe(compiledOutput);

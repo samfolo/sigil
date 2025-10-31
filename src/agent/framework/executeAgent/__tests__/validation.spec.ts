@@ -83,7 +83,7 @@ describe('executeAgent - Validation', () => {
 			);
 
 			expect(attemptStarts.length).toBeGreaterThan(0);
-			expect(attemptStarts.at(0)?.state.attempt).toBe(1);
+			expect(attemptStarts.at(0)?.context.attempt).toBe(1);
 		});
 
 		it('should invoke onValidationFailure callback', async () => {
@@ -300,8 +300,8 @@ describe('executeAgent - Validation', () => {
 			if (layerStart?.type === 'onValidationLayerStart') {
 				expect(layerStart.layer.name).toBeDefined();
 				expect(layerStart.layer.type).toMatch(/^(zod|custom)$/);
-				expect(layerStart.state.attempt).toBeGreaterThan(0);
-				expect(layerStart.state.maxAttempts).toBeGreaterThan(0);
+				expect(layerStart.context.attempt).toBeGreaterThan(0);
+				expect(layerStart.context.maxAttempts).toBeGreaterThan(0);
 			}
 		});
 

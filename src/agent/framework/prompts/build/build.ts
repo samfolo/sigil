@@ -6,9 +6,10 @@
  */
 
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent/defineAgent';
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
+import type {EmptyObject} from '@sigil/src/common/types';
 
 /**
  * Builds system prompt by calling agent's prompt function
@@ -16,14 +17,14 @@ import {ok, err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
  * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
-export const buildSystemPrompt = async <Input, Output, State = Input>(
-	agent: AgentDefinition<Input, Output, State>,
+export const buildSystemPrompt = async <Input, Output, Run extends object = EmptyObject, Attempt extends object = EmptyObject>(
+	agent: AgentDefinition<Input, Output, Run, Attempt>,
 	input: Input,
-	state: AgentExecutionState,
+	context: AgentExecutionContext,
 	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
 	try {
-		const prompt = await agent.prompts.system(input, state, signal);
+		const prompt = await agent.prompts.system(input, context, signal);
 		return ok(prompt);
 	} catch (error) {
 		return err([
@@ -34,7 +35,7 @@ export const buildSystemPrompt = async <Input, Output, State = Input>(
 				context: {
 					promptType: 'system',
 					reason: error instanceof Error ? error.message : String(error),
-					attempt: state.attempt,
+					attempt: context.attempt,
 				},
 			},
 		]);
@@ -51,8 +52,8 @@ export const buildSystemPrompt = async <Input, Output, State = Input>(
  * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
-export const buildUserPrompt = async <Input, Output, State = Input>(
-	agent: AgentDefinition<Input, Output, State>,
+export const buildUserPrompt = async <Input, Output, Run extends object = EmptyObject, Attempt extends object = EmptyObject>(
+	agent: AgentDefinition<Input, Output, Run, Attempt>,
 	input: Input,
 	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
@@ -80,14 +81,14 @@ export const buildUserPrompt = async <Input, Output, State = Input>(
  * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
-export const buildErrorPrompt = async <Input, Output, State = Input>(
-	agent: AgentDefinition<Input, Output, State>,
+export const buildErrorPrompt = async <Input, Output, Run extends object = EmptyObject, Attempt extends object = EmptyObject>(
+	agent: AgentDefinition<Input, Output, Run, Attempt>,
 	formattedError: string,
-	state: AgentExecutionState,
+	context: AgentExecutionContext,
 	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
 	try {
-		const prompt = await agent.prompts.error(formattedError, state, signal);
+		const prompt = await agent.prompts.error(formattedError, context, signal);
 		return ok(prompt);
 	} catch (error) {
 		return err([
@@ -98,7 +99,7 @@ export const buildErrorPrompt = async <Input, Output, State = Input>(
 				context: {
 					promptType: 'error',
 					reason: error instanceof Error ? error.message : String(error),
-					attempt: state.attempt,
+					attempt: context.attempt,
 				},
 			},
 		]);

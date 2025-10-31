@@ -498,7 +498,7 @@ const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata => {
 	return metadata;
 };
 
-export const executeAgent = async <Input, Output, Run, Attempt>(
+export const executeAgent = async <Input, Output, Run extends object, Attempt extends object>(
 	agent: AgentDefinition<Input, Output, Run, Attempt>,
 	options: ExecuteOptions<Input, Output>
 ): Promise<Result<ExecuteSuccess<Output>, ExecuteFailure>> => {
@@ -848,7 +848,7 @@ export const executeAgent = async <Input, Output, Run, Attempt>(
 					});
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[{...state}, toolUse.name, errorContent],
+						[{...context}, toolUse.name, errorContent],
 						callbackErrors
 					);
 					continue;
@@ -875,6 +875,8 @@ export const executeAgent = async <Input, Output, Run, Attempt>(
 						currentState = handlerResult.data.newState;
 						// Persist run state updates back to outer scope (survives retry attempts)
 						Object.assign(runState, currentState.run);
+						// Update currentState.run to point to the persisted runState for next tool call
+						currentState.run = runState;
 						const formattedResult = JSON.stringify(handlerResult.data.toolResult);
 						toolResults.push({
 							type: 'tool_result',
@@ -899,7 +901,7 @@ export const executeAgent = async <Input, Output, Run, Attempt>(
 					});
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[{...state}, toolUse.name, errorContent],
+						[{...context}, toolUse.name, errorContent],
 						callbackErrors
 					);
 				}

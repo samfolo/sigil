@@ -1,4 +1,4 @@
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 
 /**
  * Sample data types for testing templates
@@ -18,21 +18,21 @@ export interface ListData {
 /**
  * Standard execution states for testing
  */
-export const FIRST_ATTEMPT_STATE: AgentExecutionState = {
+export const FIRST_ATTEMPT_CONTEXT: AgentExecutionContext = {
 	attempt: 1,
 	maxAttempts: 3,
 	iteration: 1,
 	maxIterations: 10,
 };
 
-export const SECOND_ATTEMPT_STATE: AgentExecutionState = {
+export const SECOND_ATTEMPT_CONTEXT: AgentExecutionContext = {
 	attempt: 2,
 	maxAttempts: 3,
 	iteration: 1,
 	maxIterations: 10,
 };
 
-export const FINAL_ATTEMPT_STATE: AgentExecutionState = {
+export const FINAL_ATTEMPT_CONTEXT: AgentExecutionContext = {
 	attempt: 3,
 	maxAttempts: 3,
 	iteration: 1,

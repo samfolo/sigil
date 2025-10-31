@@ -18,6 +18,7 @@ import {err, ok} from '@sigil/src/common/errors';
 
 import type {AgentDefinition, HelperToolConfig} from '../../defineAgent/defineAgent';
 import {agentBuilder} from '../../defineAgent/defineAgent.fixtures';
+import type {AgentState} from '../../defineAgent/types';
 
 /**
  * Agent input type for testing state threading
@@ -48,6 +49,16 @@ export interface ExecutionState {
  */
 export interface AttemptState {
 	callCount: number;
+}
+
+/**
+ * Tool reducer handler result type
+ *
+ * Standard return type for tool reducer handlers that update state.
+ */
+export interface ToolReducerResult {
+	newState: AgentState<ExecutionState, AttemptState>;
+	toolResult: unknown;
 }
 
 /**
@@ -107,16 +118,20 @@ type ThrowingToolInput = z.infer<typeof THROWING_TOOL_INPUT_SCHEMA>;
  * Mock parse tool handler
  *
  * Simulates parsing raw data and updating state with the parsed result.
- * Increments callCount and sets parsedData.
+ * Sets parsedData in run state (persists across attempts).
+ * Increments callCount in attempt state (resets on retry).
+ *
+ * PERSISTENCE: Parsed data stored at RUN level (survives retries).
+ * Call count stored at ATTEMPT level (resets on retry).
  *
  * @param state - Current agent state
  * @param toolInput - Tool input (format option)
  * @returns Result with updated state and tool result
  */
 export const mockParseReducerHandler = (
-	state: StatefulAgentInput,
+	state: AgentState<ExecutionState, AttemptState>,
 	toolInput: unknown
-): Result<{newState: StatefulAgentInput; toolResult: unknown}, string> => {
+): Result<ToolReducerResult, string> => {
 	// Validate input
 	const parsed = PARSE_TOOL_INPUT_SCHEMA.safeParse(toolInput);
 	if (!parsed.success) {
@@ -129,10 +144,10 @@ export const mockParseReducerHandler = (
 
 	try {
 		if (format === 'json') {
-			parsedData = JSON.parse(state.data);
+			parsedData = JSON.parse(state.run.rawData);
 		} else {
 			// Simulate CSV parsing
-			parsedData = state.data.split(',').map((item) => item.trim());
+			parsedData = state.run.rawData.split(',').map((item) => item.trim());
 		}
 	} catch {
 		return err(`Failed to parse data as ${format}`);
@@ -141,9 +156,9 @@ export const mockParseReducerHandler = (
 	// Return new state (immutable update)
 	return ok({
 		newState: {
-			...state,
-			parsedData,
-			callCount: state.callCount + 1,
+			context: state.context,
+			run: {...state.run, parsedData},
+			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
 		toolResult: {
 			status: 'parsed',
@@ -157,16 +172,18 @@ export const mockParseReducerHandler = (
  * Mock query tool handler
  *
  * Simulates querying parsed data. Requires parsedData to be set by parse tool.
- * Increments callCount but doesn't modify other state fields.
+ * Only increments callCount (doesn't modify run state).
+ *
+ * PERSISTENCE: Reads parsedData from RUN level. Only updates ATTEMPT level callCount.
  *
  * @param state - Current agent state
  * @param toolInput - Tool input (query string)
  * @returns Result with updated state and tool result
  */
 export const mockQueryReducerHandler = (
-	state: StatefulAgentInput,
+	state: AgentState<ExecutionState, AttemptState>,
 	toolInput: unknown
-): Result<{newState: StatefulAgentInput; toolResult: unknown}, string> => {
+): Result<ToolReducerResult, string> => {
 	// Validate input
 	const parsed = QUERY_TOOL_INPUT_SCHEMA.safeParse(toolInput);
 	if (!parsed.success) {
@@ -174,7 +191,7 @@ export const mockQueryReducerHandler = (
 	}
 
 	// Check prerequisite: parsedData must exist
-	if (!state.parsedData) {
+	if (!state.run.parsedData) {
 		return err('Cannot query: data has not been parsed yet. Call parse_tool first.');
 	}
 
@@ -188,8 +205,9 @@ export const mockQueryReducerHandler = (
 	// Return new state (only increment callCount)
 	return ok({
 		newState: {
-			...state,
-			callCount: state.callCount + 1,
+			context: state.context,
+			run: state.run,
+			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
 		toolResult: queryResult,
 	});
@@ -199,16 +217,20 @@ export const mockQueryReducerHandler = (
  * Mock transform tool handler
  *
  * Simulates transforming data. Requires parsedData to be set.
- * Increments callCount and optionally modifies parsedData.
+ * Modifies parsedData in run state (persists across attempts).
+ * Increments callCount in attempt state (resets on retry).
+ *
+ * PERSISTENCE: Transformed data updates RUN level parsedData (survives retries).
+ * Call count stored at ATTEMPT level (resets on retry).
  *
  * @param state - Current agent state
  * @param toolInput - Tool input (operation)
  * @returns Result with updated state and tool result
  */
 export const mockTransformReducerHandler = (
-	state: StatefulAgentInput,
+	state: AgentState<ExecutionState, AttemptState>,
 	toolInput: unknown
-): Result<{newState: StatefulAgentInput; toolResult: unknown}, string> => {
+): Result<ToolReducerResult, string> => {
 	// Validate input
 	const parsed = TRANSFORM_TOOL_INPUT_SCHEMA.safeParse(toolInput);
 	if (!parsed.success) {
@@ -216,34 +238,34 @@ export const mockTransformReducerHandler = (
 	}
 
 	// Check prerequisite: parsedData must exist
-	if (!state.parsedData) {
+	if (!state.run.parsedData) {
 		return err('Cannot transform: data has not been parsed yet. Call parse_tool first.');
 	}
 
 	// Simulate transformation
 	const operation = parsed.data.operation;
-	let transformedData: unknown = state.parsedData;
+	let transformedData: unknown = state.run.parsedData;
 
-	if (Array.isArray(state.parsedData)) {
+	if (Array.isArray(state.run.parsedData)) {
 		if (operation === 'uppercase') {
-			transformedData = state.parsedData.map((item) =>
+			transformedData = state.run.parsedData.map((item) =>
 				typeof item === 'string' ? item.toUpperCase() : item
 			);
 		} else if (operation === 'lowercase') {
-			transformedData = state.parsedData.map((item) =>
+			transformedData = state.run.parsedData.map((item) =>
 				typeof item === 'string' ? item.toLowerCase() : item
 			);
 		} else if (operation === 'reverse') {
-			transformedData = state.parsedData.toReversed();
+			transformedData = state.run.parsedData.toReversed();
 		}
 	}
 
 	// Return new state with transformed data
 	return ok({
 		newState: {
-			...state,
-			parsedData: transformedData,
-			callCount: state.callCount + 1,
+			context: state.context,
+			run: {...state.run, parsedData: transformedData},
+			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
 		toolResult: {
 			operation,
@@ -257,10 +279,12 @@ export const mockTransformReducerHandler = (
  *
  * Demonstrates the embedded handler pattern where the handler is colocated
  * with the tool definition.
+ *
+ * PERSISTENCE: Sets parsedData at RUN level (persists across attempts).
  */
-export const MOCK_PARSE_TOOL: HelperToolConfig<'parse_tool', StatefulAgentInput, ParseToolInput> = {
+export const MOCK_PARSE_TOOL: HelperToolConfig<'parse_tool', ExecutionState, AttemptState, ParseToolInput> = {
 	name: 'parse_tool',
-	description: 'Parses raw data into structured format',
+	description: 'Parses raw data into structured format. PERSISTENCE: Parsed data stored at RUN level (survives retries).',
 	inputSchema: PARSE_TOOL_INPUT_SCHEMA,
 	handler: mockParseReducerHandler,
 };
@@ -270,10 +294,12 @@ export const MOCK_PARSE_TOOL: HelperToolConfig<'parse_tool', StatefulAgentInput,
  *
  * Requires parsedData to be set before calling. Returns error if called
  * before parse_tool.
+ *
+ * PERSISTENCE: Reads parsedData from RUN level.
  */
-export const MOCK_QUERY_TOOL: HelperToolConfig<'query_tool', StatefulAgentInput, QueryToolInput> = {
+export const MOCK_QUERY_TOOL: HelperToolConfig<'query_tool', ExecutionState, AttemptState, QueryToolInput> = {
 	name: 'query_tool',
-	description: 'Queries parsed data',
+	description: 'Queries parsed data. PERSISTENCE: Reads parsedData from RUN level.',
 	inputSchema: QUERY_TOOL_INPUT_SCHEMA,
 	handler: mockQueryReducerHandler,
 };
@@ -282,10 +308,12 @@ export const MOCK_QUERY_TOOL: HelperToolConfig<'query_tool', StatefulAgentInput,
  * Mock transform tool definition with embedded handler
  *
  * Transforms parsed data using various operations.
+ *
+ * PERSISTENCE: Updates parsedData at RUN level (persists across attempts).
  */
-export const MOCK_TRANSFORM_TOOL: HelperToolConfig<'transform_tool', StatefulAgentInput, TransformToolInput> = {
+export const MOCK_TRANSFORM_TOOL: HelperToolConfig<'transform_tool', ExecutionState, AttemptState, TransformToolInput> = {
 	name: 'transform_tool',
-	description: 'Transforms parsed data',
+	description: 'Transforms parsed data. PERSISTENCE: Transformed data updates RUN level (survives retries).',
 	inputSchema: TRANSFORM_TOOL_INPUT_SCHEMA,
 	handler: mockTransformReducerHandler,
 };
@@ -296,14 +324,16 @@ export const MOCK_TRANSFORM_TOOL: HelperToolConfig<'transform_tool', StatefulAge
  * Simulates a tool that throws an exception during execution.
  * Used to test exception safety and state preservation.
  *
+ * PERSISTENCE: Only updates ATTEMPT level callCount when not throwing.
+ *
  * @param state - Current agent state
  * @param toolInput - Tool input (shouldThrow flag and error message)
  * @returns Never returns on throw, otherwise returns updated state
  */
 export const mockThrowingReducerHandler = (
-	state: StatefulAgentInput,
+	state: AgentState<ExecutionState, AttemptState>,
 	toolInput: unknown
-): Result<{newState: StatefulAgentInput; toolResult: unknown}, string> => {
+): Result<ToolReducerResult, string> => {
 	// Validate input
 	const parsed = THROWING_TOOL_INPUT_SCHEMA.safeParse(toolInput);
 	if (!parsed.success) {
@@ -320,8 +350,9 @@ export const mockThrowingReducerHandler = (
 	// If not throwing, just increment call count
 	return ok({
 		newState: {
-			...state,
-			callCount: state.callCount + 1,
+			context: state.context,
+			run: state.run,
+			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
 		toolResult: {
 			status: 'success',
@@ -334,10 +365,12 @@ export const mockThrowingReducerHandler = (
  * Mock throwing tool definition with embedded handler
  *
  * Throws an exception during execution to test error handling.
+ *
+ * PERSISTENCE: Only updates ATTEMPT level when not throwing.
  */
-export const MOCK_THROWING_TOOL: HelperToolConfig<'throwing_tool', StatefulAgentInput, ThrowingToolInput> = {
+export const MOCK_THROWING_TOOL: HelperToolConfig<'throwing_tool', ExecutionState, AttemptState, ThrowingToolInput> = {
 	name: 'throwing_tool',
-	description: 'Tool that throws exceptions for testing',
+	description: 'Tool that throws exceptions for testing. PERSISTENCE: Only updates ATTEMPT level.',
 	inputSchema: THROWING_TOOL_INPUT_SCHEMA,
 	handler: mockThrowingReducerHandler,
 };
@@ -345,7 +378,7 @@ export const MOCK_THROWING_TOOL: HelperToolConfig<'throwing_tool', StatefulAgent
 /**
  * Base stateful agent for testing
  */
-const BASE_STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutput, StatefulAgentInput> = {
+const BASE_STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutput, ExecutionState, AttemptState> = {
 	name: 'StatefulTestAgent',
 	description: 'Test agent with stateful helper tools',
 	model: {
@@ -355,32 +388,33 @@ const BASE_STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutpu
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: StatefulAgentInput) =>
-			`You are a test agent processing data: ${input.data}. Use the tools to parse, query, and transform.`,
+		system: async (input: StatefulAgentInput, context) =>
+			`You are a test agent processing data: ${input.data}. Use the tools to parse, query, and transform. Attempt ${context.attempt}/${context.maxAttempts}.`,
 		user: async (input: StatefulAgentInput) =>
 			`Process this data: ${input.data}`,
-		error: async (errorMessage: string) =>
-			`Error occurred: ${errorMessage}. Please retry.`,
+		error: async (errorMessage: string, context) =>
+			`Attempt ${context.attempt}/${context.maxAttempts} failed: ${errorMessage}. Please retry.`,
 	},
 	tools: {
 		output: {
 			name: 'generate_output',
 			description: 'Generate final result',
-			inputSchema: STATEFUL_TEST_OUTPUT_SCHEMA,
 		},
 	},
 	validation: {
 		outputSchema: STATEFUL_TEST_OUTPUT_SCHEMA,
 		customValidators: [],
 		maxAttempts: 3,
+		maxIterationsPerAttempt: 10,
 	},
+	initialRunState: (input) => ({rawData: input.data, parsedData: undefined}),
+	initialAttemptState: (_input, _run, _context) => ({callCount: 0}),
 	observability: {
 		trackCost: false,
 		trackLatency: false,
 		trackAttempts: false,
 		trackTokens: false,
 	},
-	maxIterationsPerAttempt: 10,
 };
 
 /**
@@ -388,11 +422,11 @@ const BASE_STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutpu
  *
  * Demonstrates a complete agent with multiple helper tools that share state.
  * The state threads through tool calls:
- * 1. parse_tool: Sets parsedData and increments callCount
- * 2. query_tool: Reads parsedData, increments callCount
- * 3. transform_tool: Modifies parsedData, increments callCount
+ * 1. parse_tool: Sets parsedData in RUN state (persists across attempts), increments callCount in ATTEMPT state
+ * 2. query_tool: Reads parsedData from RUN state, increments callCount in ATTEMPT state
+ * 3. transform_tool: Modifies parsedData in RUN state (persists across attempts), increments callCount in ATTEMPT state
  */
-export const STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutput, StatefulAgentInput> =
+export const STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutput, ExecutionState, AttemptState> =
 	agentBuilder(BASE_STATEFUL_AGENT)
 		.withHelpers({
 			parse_tool: MOCK_PARSE_TOOL,

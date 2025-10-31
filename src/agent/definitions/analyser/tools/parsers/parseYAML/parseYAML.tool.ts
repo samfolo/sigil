@@ -3,6 +3,7 @@ import {z} from 'zod';
 import type {BaseParserStructureMetadata, ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {HelperToolConfig, ToolReducerHandler} from '@sigil/src/agent/framework/defineAgent';
 import {err, isErr, ok} from '@sigil/src/common/errors';
+import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseYAML} from './parseYAML';
 import type {ParseYAMLResult} from './types';
@@ -27,7 +28,7 @@ type ParseYAMLInput = z.infer<typeof parseYAMLInputSchema>;
  *
  * Reads from state.raw, writes to state.structureMetadata on success.
  */
-const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructureMetadata>> = (state, toolInput) => {
+const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructureMetadata>, EmptyObject> = (state, toolInput) => {
 	// Validate input against schema
 	const parsed = parseYAMLInputSchema.safeParse(toolInput);
 	if (!parsed.success) {
@@ -35,7 +36,7 @@ const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructure
 	}
 
 	// Call implementation with raw data from state
-	const result = parseYAML(state.raw);
+	const result = parseYAML(state.run.raw);
 
 	if (isErr(result)) {
 		return err(result.error);
@@ -43,11 +44,15 @@ const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructure
 
 	return ok({
 		newState: {
-			...state,
-			structureMetadata: {
-				tool: 'parse_yaml',
-				details: result.data,
+			context: state.context,
+			run: {
+				...state.run,
+				structureMetadata: {
+					tool: 'parse_yaml',
+					details: result.data,
+				},
 			},
+			attempt: state.attempt,
 		},
 		toolResult: result.data,
 	});
@@ -71,6 +76,7 @@ const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructure
 export const PARSE_YAML_TOOL: HelperToolConfig<
 	'parse_yaml',
 	ParserState<ParseYAMLStructureMetadata>,
+	EmptyObject,
 	ParseYAMLInput
 > = {
 	name: 'parse_yaml',

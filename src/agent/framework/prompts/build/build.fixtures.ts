@@ -11,7 +11,8 @@
 import {z} from 'zod';
 
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent/defineAgent';
-import type {AgentExecutionState} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {EmptyObject} from '@sigil/src/common/types';
 
 /**
  * Simple input interface for test agents
@@ -47,7 +48,7 @@ const TEST_TOOLS_CONFIG = {
 /**
  * Execution state for first attempt
  */
-export const FIRST_ATTEMPT_STATE: AgentExecutionState = {
+export const FIRST_ATTEMPT_CONTEXT: AgentExecutionContext = {
 	attempt: 1,
 	maxAttempts: 3,
 	iteration: 1,
@@ -57,7 +58,7 @@ export const FIRST_ATTEMPT_STATE: AgentExecutionState = {
 /**
  * Execution state for second attempt (retry)
  */
-export const SECOND_ATTEMPT_STATE: AgentExecutionState = {
+export const SECOND_ATTEMPT_CONTEXT: AgentExecutionContext = {
 	attempt: 2,
 	maxAttempts: 3,
 	iteration: 1,
@@ -67,7 +68,7 @@ export const SECOND_ATTEMPT_STATE: AgentExecutionState = {
 /**
  * Execution state for final attempt
  */
-export const FINAL_ATTEMPT_STATE: AgentExecutionState = {
+export const FINAL_ATTEMPT_CONTEXT: AgentExecutionContext = {
 	attempt: 3,
 	maxAttempts: 3,
 	iteration: 1,
@@ -89,7 +90,7 @@ export const TEST_ERROR_MESSAGE = 'Validation failed: missing required field';
 /**
  * Working agent with all prompt functions functioning correctly
  */
-export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'WorkingAgent',
 	description: 'Agent with working prompt functions',
 	model: {
@@ -99,12 +100,12 @@ export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, state: AgentExecutionState) =>
-			`System prompt for ${input.query} (attempt ${state.attempt}/${state.maxAttempts})`,
+		system: async (input: TestInput, context: AgentExecutionContext) =>
+			`System prompt for ${input.query} (attempt ${context.attempt}/${context.maxAttempts})`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
-		error: async (errorMessage: string, state: AgentExecutionState) =>
-			`Attempt ${state.attempt}/${state.maxAttempts} failed:\n${errorMessage}\n\nPlease fix these issues.`,
+		error: async (errorMessage: string, context: AgentExecutionContext) =>
+			`Attempt ${context.attempt}/${context.maxAttempts} failed:\n${errorMessage}\n\nPlease fix these issues.`,
 	},
 	tools: TEST_TOOLS_CONFIG,
 	validation: {
@@ -123,7 +124,7 @@ export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with system prompt that throws synchronously
  */
-export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'SystemThrowsAgent',
 	description: 'Agent with system prompt that throws',
 	model: {
@@ -133,12 +134,12 @@ export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (_input: TestInput, _state: AgentExecutionState) => {
+		system: async (_input: TestInput, _context: AgentExecutionContext) => {
 			throw new Error('System prompt generation failed');
 		},
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
-		error: async (errorMessage: string, _state: AgentExecutionState) =>
+		error: async (errorMessage: string, _context: AgentExecutionContext) =>
 			`Error: ${errorMessage}`,
 	},
 	tools: TEST_TOOLS_CONFIG,
@@ -158,7 +159,7 @@ export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with user prompt that throws synchronously
  */
-export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'UserThrowsAgent',
 	description: 'Agent with user prompt that throws',
 	model: {
@@ -168,12 +169,12 @@ export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _state: AgentExecutionState) =>
+		system: async (input: TestInput, _context: AgentExecutionContext) =>
 			`System prompt: ${input.query}`,
 		user: async (_input: TestInput) => {
 			throw new Error('User prompt generation failed');
 		},
-		error: async (errorMessage: string, _state: AgentExecutionState) =>
+		error: async (errorMessage: string, _context: AgentExecutionContext) =>
 			`Error: ${errorMessage}`,
 	},
 	tools: TEST_TOOLS_CONFIG,
@@ -193,7 +194,7 @@ export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with error prompt that throws synchronously
  */
-export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'ErrorThrowsAgent',
 	description: 'Agent with error prompt that throws',
 	model: {
@@ -203,11 +204,11 @@ export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _state: AgentExecutionState) =>
+		system: async (input: TestInput, _context: AgentExecutionContext) =>
 			`System prompt: ${input.query}`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
-		error: async (_errorMessage: string, _state: AgentExecutionState) => {
+		error: async (_errorMessage: string, _context: AgentExecutionContext) => {
 			throw new Error('Error prompt generation failed');
 		},
 	},
@@ -228,7 +229,7 @@ export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with system prompt that returns rejecting promise
  */
-export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'SystemRejectsAgent',
 	description: 'Agent with system prompt that rejects',
 	model: {
@@ -238,11 +239,11 @@ export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (_input: TestInput, _state: AgentExecutionState) =>
+		system: async (_input: TestInput, _context: AgentExecutionContext) =>
 			Promise.reject(new Error('System prompt async failure')),
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
-		error: async (errorMessage: string, _state: AgentExecutionState) =>
+		error: async (errorMessage: string, _context: AgentExecutionContext) =>
 			`Error: ${errorMessage}`,
 	},
 	tools: TEST_TOOLS_CONFIG,
@@ -262,7 +263,7 @@ export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with user prompt that returns rejecting promise
  */
-export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'UserRejectsAgent',
 	description: 'Agent with user prompt that rejects',
 	model: {
@@ -272,11 +273,11 @@ export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _state: AgentExecutionState) =>
+		system: async (input: TestInput, _context: AgentExecutionContext) =>
 			`System prompt: ${input.query}`,
 		user: async (_input: TestInput) =>
 			Promise.reject(new Error('User prompt async failure')),
-		error: async (errorMessage: string, _state: AgentExecutionState) =>
+		error: async (errorMessage: string, _context: AgentExecutionContext) =>
 			`Error: ${errorMessage}`,
 	},
 	tools: TEST_TOOLS_CONFIG,
@@ -296,7 +297,7 @@ export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with error prompt that returns rejecting promise
  */
-export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'ErrorRejectsAgent',
 	description: 'Agent with error prompt that rejects',
 	model: {
@@ -306,11 +307,11 @@ export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _state: AgentExecutionState) =>
+		system: async (input: TestInput, _context: AgentExecutionContext) =>
 			`System prompt: ${input.query}`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
-		error: async (_errorMessage: string, _state: AgentExecutionState) =>
+		error: async (_errorMessage: string, _context: AgentExecutionContext) =>
 			Promise.reject(new Error('Error prompt async failure')),
 	},
 	tools: TEST_TOOLS_CONFIG,
@@ -330,7 +331,7 @@ export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with system prompt that throws non-Error value
  */
-export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'NonErrorThrowAgent',
 	description: 'Agent with prompt that throws non-Error value',
 	model: {
@@ -340,12 +341,12 @@ export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (_input: TestInput, _state: AgentExecutionState) => {
+		system: async (_input: TestInput, _context: AgentExecutionContext) => {
 			throw 'String error instead of Error object';
 		},
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
-		error: async (errorMessage: string, _state: AgentExecutionState) =>
+		error: async (errorMessage: string, _context: AgentExecutionContext) =>
 			`Error: ${errorMessage}`,
 	},
 	tools: TEST_TOOLS_CONFIG,
@@ -365,7 +366,7 @@ export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
 /**
  * Agent with user prompt that throws non-Error value
  */
-export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'UserNonErrorThrowAgent',
 	description: 'Agent with user prompt that throws non-Error value',
 	model: {
@@ -375,12 +376,12 @@ export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> 
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _state: AgentExecutionState) =>
+		system: async (input: TestInput, _context: AgentExecutionContext) =>
 			`System prompt: ${input.query}`,
 		user: async (_input: TestInput) => {
 			throw 'String error in user prompt';
 		},
-		error: async (errorMessage: string, _state: AgentExecutionState) =>
+		error: async (errorMessage: string, _context: AgentExecutionContext) =>
 			`Error: ${errorMessage}`,
 	},
 	tools: TEST_TOOLS_CONFIG,
@@ -400,7 +401,7 @@ export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> 
 /**
  * Agent with error prompt that throws non-Error value
  */
-export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput> = {
+export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, EmptyObject> = {
 	name: 'ErrorNonErrorThrowAgent',
 	description: 'Agent with error prompt that throws non-Error value',
 	model: {
@@ -410,11 +411,11 @@ export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput>
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _state: AgentExecutionState) =>
+		system: async (input: TestInput, _context: AgentExecutionContext) =>
 			`System prompt: ${input.query}`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
-		error: async (_errorMessage: string, _state: AgentExecutionState) => {
+		error: async (_errorMessage: string, _context: AgentExecutionContext) => {
 			throw 'String error in error prompt';
 		},
 	},
