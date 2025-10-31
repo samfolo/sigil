@@ -48,12 +48,23 @@ const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMe
 				...state.run,
 				structureMetadata: {
 					tool: 'parse_xml',
-					details: result.data,
+					details: {
+						valid: result.data.valid,
+						...(result.data.valid
+							? {metadata: result.data.metadata}
+							: {error: result.data.error}),
+					},
 				},
+				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
 			attempt: state.attempt,
 		},
-		toolResult: result.data,
+		toolResult: {
+			valid: result.data.valid,
+			...(result.data.valid
+				? {metadata: result.data.metadata}
+				: {error: result.data.error}),
+		},
 	});
 };
 
