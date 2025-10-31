@@ -14,7 +14,7 @@ import type {
 } from '@sigil/src/agent/framework/validation';
 import {validateLayers} from '@sigil/src/agent/framework/validation/validateLayers';
 import type {AgentError, Result, ExecutionPhase} from '@sigil/src/common/errors';
-import {err, ok, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
+import {err, isErr, AGENT_ERROR_CODES, safeStringify} from '@sigil/src/common/errors';
 
 import {buildMetadata} from './iteration/buildMetadata';
 import {buildTools} from './iteration/buildTools';

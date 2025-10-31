@@ -1,17 +1,18 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
-import type {AgentDefinition, ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
+import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
+import {buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {ValidationLayerIdentity} from '@sigil/src/agent/framework/validation';
 import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validation/format';
-import {buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
 import type {Result} from '@sigil/src/common/errors';
 import {err, isErr, ok} from '@sigil/src/common/errors';
 
-import {buildMetadata} from './buildMetadata';
-import type {DurationMetrics, TokenMetrics} from './types';
 import type {ExecuteCallbacks, ExecuteFailure} from '../types';
 import {safeInvokeCallback} from '../util';
+
+import {buildMetadata} from './buildMetadata';
+import type {DurationMetrics, TokenMetrics} from './types';
 
 /**
  * Parameters for handling validation failure
