@@ -13,7 +13,18 @@ import type {Result} from '@sigil/src/common/errors/result';
  * @template Attempt - User attempt state type (resets on retry)
  */
 export interface AgentState<Run, Attempt> {
-	context: AgentExecutionContext;
+	readonly context: AgentExecutionContext;
+	run: Run;
+	attempt: Attempt;
+}
+
+/**
+ * User state update returned by handler (context is managed by framework)
+ *
+ * Handlers only need to return run and attempt state updates.
+ * The framework automatically preserves context.
+ */
+export interface HandlerStateUpdate<Run, Attempt> {
 	run: Run;
 	attempt: Attempt;
 }
@@ -21,15 +32,18 @@ export interface AgentState<Run, Attempt> {
 /**
  * Handler function for a helper tool.
  *
- * IMPORTANT: Must return a new state object, never mutate the input state.
- * Follow immutable update patterns: {...state, field: newValue}
+ * IMPORTANT: Must return new state objects, never mutate the input state.
+ * Follow immutable update patterns: {...state.run, field: newValue}
  *
  * Each tool definition includes its own handler, ensuring compile-time safety
  * and automatic tool-to-handler mapping.
  *
+ * Handlers only return run and attempt state - the framework automatically
+ * manages context (readonly framework metadata like attempt/iteration numbers).
+ *
  * @param state - Current state (must not be mutated)
  * @param toolInput - Input provided by the model for this tool
- * @returns Result containing new state and tool result, or error message
+ * @returns Result containing new run/attempt state and tool result, or error message
  *
  * @example
  * ```typescript
@@ -41,7 +55,7 @@ export interface AgentState<Run, Attempt> {
  *
  *   return ok({
  *     newState: {
- *       context: state.context,  // Pass through unchanged
+ *       // No need to pass through context - framework handles it automatically
  *       run: {...state.run, items: [...state.run.items, parsed.data.item]},
  *       attempt: {...state.attempt, count: state.attempt.count + 1},
  *     },
@@ -53,4 +67,4 @@ export interface AgentState<Run, Attempt> {
 export type ToolReducerHandler<Run, Attempt> = (
 	state: AgentState<Run, Attempt>,
 	toolInput: unknown
-) => Result<{newState: AgentState<Run, Attempt>; toolResult: unknown}, string>;
+) => Result<{newState: HandlerStateUpdate<Run, Attempt>; toolResult: unknown}, string>;

@@ -685,7 +685,19 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 
 		// Make initial API call
 		while (iterationCount < maxIterations) {
-			context.iteration = ++iterationCount;
+			iterationCount++;
+
+			// Create new context with updated iteration (immutable update)
+			const iterationContext: AgentExecutionContext = {
+				...context,
+				iteration: iterationCount,
+			};
+
+			// Update currentState with new context
+			currentState = {
+				...currentState,
+				context: iterationContext,
+			};
 
 			// Check for cancellation before API call
 			if (options.signal?.aborted) {
@@ -763,13 +775,13 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 					// Fire callback for submit tool
 					safeInvokeCallback(
 						options.callbacks?.onToolCall,
-						[{...context}, toolUse.name, toolUse.input],
+						[{...iterationContext}, toolUse.name, toolUse.input],
 						callbackErrors
 					);
 					// Fire callback for submit tool result
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[{...context}, toolUse.name, ''],
+						[{...iterationContext}, toolUse.name, ''],
 						callbackErrors
 					);
 					// Submit tool has no result (termination signal only)
@@ -784,7 +796,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 					// Fire callback before execution
 					safeInvokeCallback(
 						options.callbacks?.onToolCall,
-						[{...context}, toolUse.name, toolUse.input],
+						[{...iterationContext}, toolUse.name, toolUse.input],
 						callbackErrors
 					);
 
@@ -804,7 +816,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 							// Fire callback with result
 							safeInvokeCallback(
 								options.callbacks?.onToolResult,
-								[{...context}, toolUse.name, formatted.content],
+								[{...iterationContext}, toolUse.name, formatted.content],
 								callbackErrors
 							);
 						} catch (error) {
@@ -819,7 +831,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 							// Fire callback with error result
 							safeInvokeCallback(
 								options.callbacks?.onToolResult,
-								[{...context}, toolUse.name, errorContent],
+								[{...iterationContext}, toolUse.name, errorContent],
 								callbackErrors
 							);
 						}
@@ -832,7 +844,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				// Fire callback before execution
 				safeInvokeCallback(
 					options.callbacks?.onToolCall,
-					[{...context}, toolUse.name, toolUse.input],
+					[{...iterationContext}, toolUse.name, toolUse.input],
 					callbackErrors
 				);
 
@@ -848,7 +860,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 					});
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[{...context}, toolUse.name, errorContent],
+						[{...iterationContext}, toolUse.name, errorContent],
 						callbackErrors
 					);
 					continue;
@@ -868,17 +880,40 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 						});
 						safeInvokeCallback(
 							options.callbacks?.onToolResult,
-							[{...context}, toolUse.name, errorContent],
+							[{...iterationContext}, toolUse.name, errorContent],
 							callbackErrors
 						);
 					} else {
 						// Extract new run state from handler result
 						const newRun = handlerResult.data.newState.run;
-						// Persist run state updates back to outer scope (survives retry attempts)
+
+						/**
+						 * Persist run state updates using Object.assign merge semantics
+						 *
+						 * Object.assign copies enumerable own properties from newRun to runState.
+						 * This creates defensive separation between handler references and framework state:
+						 * - Handlers can add or update properties (merged into runState)
+						 * - Handlers cannot delete properties (deletions in newRun don't affect runState)
+						 * - Property values are copied (shallow), not aliased
+						 * - Subsequent mutations to handler's newRun reference don't affect runState
+						 *
+						 * Example: If handler returns {parsedData: {foo: 'bar'}}, this gets merged into
+						 * runState. If handler later mutates that object, runState remains unchanged because
+						 * we hold the outer runState reference, not the handler's returned reference.
+						 *
+						 * Run state persists across retry attempts (lives outside attempt loop).
+						 */
 						Object.assign(runState, newRun);
-						// Create fresh currentState without mutating newState
+
+						/**
+						 * Create fresh currentState with framework-managed context
+						 *
+						 * Handlers only return {run, attempt} - framework automatically adds context.
+						 * This reduces boilerplate (handlers don't need to pass through context field)
+						 * and prevents handlers from accidentally modifying readonly framework metadata.
+						 */
 						currentState = {
-							context: handlerResult.data.newState.context,
+							context: iterationContext,
 							run: runState,
 							attempt: handlerResult.data.newState.attempt,
 						};
@@ -891,7 +926,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 						});
 						safeInvokeCallback(
 							options.callbacks?.onToolResult,
-							[{...context}, toolUse.name, formattedResult],
+							[{...iterationContext}, toolUse.name, formattedResult],
 							callbackErrors
 						);
 					}
@@ -906,7 +941,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 					});
 					safeInvokeCallback(
 						options.callbacks?.onToolResult,
-						[{...context}, toolUse.name, errorContent],
+						[{...iterationContext}, toolUse.name, errorContent],
 						callbackErrors
 					);
 				}
@@ -1045,7 +1080,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				? (layer: ValidationLayerMetadata) => {
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerStart,
-						[{...context}, layer],
+						[{...currentState.context}, layer],
 						callbackErrors
 					);
 				}
@@ -1061,7 +1096,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				if (options.callbacks?.onValidationLayerComplete) {
 					safeInvokeCallback(
 						options.callbacks?.onValidationLayerComplete,
-						[{...context}, layer],
+						[{...currentState.context}, layer],
 						callbackErrors
 					);
 				}

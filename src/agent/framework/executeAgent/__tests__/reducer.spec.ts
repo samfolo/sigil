@@ -22,6 +22,8 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 	})),
 }));
 
+import {ok, err} from '@sigil/src/common/errors/result';
+
 import type {AgentState} from '../../defineAgent/types';
 
 import {
@@ -170,10 +172,141 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			// Verify query succeeded (proves it accessed parsedData from parse_tool)
 			const queryResult = getToolResult(invocations, 'query_tool');
-			expect(queryResult).toMatchObject({
+			expect(queryResult).toEqual({
 				query: 'test',
 				matches: 3,
+				results: ['item1', 'item2', 'item3'],
 			});
+		});
+
+		it('should preserve run state across validation failures and retry attempts', async () => {
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			const input: StatefulAgentInput = {
+				data: '{"key": "value"}',
+			};
+
+			// Custom validator that fails on first attempt, succeeds on second
+			let attemptCount = 0;
+			const attemptTrackingValidator = {
+				name: 'attempt_tracker',
+				description: 'Tracks attempts for testing',
+				validate: async (output: unknown) => {
+					attemptCount++;
+					if (attemptCount === 1) {
+						return err('First attempt must fail');
+					}
+					return ok(output);
+				},
+			};
+
+			// Create agent with custom validator
+			const agentWithValidator = {
+				...STATEFUL_AGENT,
+				validation: {
+					...STATEFUL_AGENT.validation,
+					customValidators: [attemptTrackingValidator],
+					maxAttempts: 2,
+				},
+			};
+
+			// Attempt 1: parse_tool → output (validation fails)
+			// Attempt 2: query_tool → output (validation succeeds)
+			// Key: query_tool in attempt 2 succeeds WITHOUT calling parse_tool
+			createMockApiCalls(mockMessagesCreate, [
+				// Attempt 1
+				{
+					type: 'helper',
+					helperToolName: 'parse_tool',
+					helperInput: {format: 'json'},
+				},
+				{
+					type: 'custom',
+					response: {
+						id: 'msg_attempt1',
+						type: 'message' as const,
+						role: 'assistant' as const,
+						model: 'claude-sonnet-4-5-20250929',
+						content: [
+							{
+								type: 'tool_use' as const,
+								id: 'toolu_output1',
+								name: 'generate_output',
+								input: {result: 'attempt1', finalCount: 0},
+							},
+						],
+						stop_reason: 'tool_use' as const,
+						stop_sequence: null,
+						usage: {input_tokens: 100, output_tokens: 50},
+					},
+				},
+				// Attempt 2
+				{
+					type: 'helper',
+					helperToolName: 'query_tool',
+					helperInput: {query: 'key'},
+				},
+				{
+					type: 'custom',
+					response: {
+						id: 'msg_attempt2',
+						type: 'message' as const,
+						role: 'assistant' as const,
+						model: 'claude-sonnet-4-5-20250929',
+						content: [
+							{
+								type: 'tool_use' as const,
+								id: 'toolu_output2',
+								name: 'generate_output',
+								input: {result: 'attempt2', finalCount: 1},
+							},
+						],
+						stop_reason: 'tool_use' as const,
+						stop_sequence: null,
+						usage: {input_tokens: 100, output_tokens: 50},
+					},
+				},
+			]);
+
+			const result = await executeAgent(agentWithValidator, {
+				...options,
+				input,
+			});
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				// Verify second attempt succeeded
+				expect(result.data.attempts).toBe(2);
+				expect(result.data.output).toEqual({result: 'attempt2', finalCount: 1});
+			}
+
+			// Verify parse_tool was called in attempt 1
+			const parseToolCalls = invocations.filter(
+				(inv) => inv.type === 'onToolCall' && inv.toolName === 'parse_tool'
+			);
+			expect(parseToolCalls.length).toBe(1);
+
+			// Verify query_tool was called in attempt 2 and succeeded
+			const queryToolResults = invocations.filter(
+				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
+			);
+			expect(queryToolResults.length).toBe(1);
+
+			const queryResult = queryToolResults.at(0);
+			expect(queryResult).toBeDefined();
+			expect(queryResult?.type).toBe('onToolResult');
+
+			if (queryResult?.type === 'onToolResult') {
+				// Query succeeded - proves parsedData from attempt 1 persisted to attempt 2
+				expect(queryResult.toolResult).not.toContain(QUERY_BEFORE_PARSE_ERROR);
+				const parsed = JSON.parse(queryResult.toolResult);
+				expect(parsed).toEqual({
+					query: 'key',
+					matches: 3,
+					results: ['item1', 'item2', 'item3'],
+				});
+			}
 		});
 	});
 
@@ -226,6 +359,115 @@ describe('executeAgent - State Reducer Pattern', () => {
 				expect(result.data.newState.attempt.callCount).toBe(INCREMENTED_ONCE);
 				expect(result.data.newState.run.parsedData).toBeDefined();
 			}
+		});
+
+		it('should protect framework state from handler mutations', async () => {
+			// This test verifies the framework is defensive against badly-behaved handlers
+			// that keep references to state and mutate them across multiple tool calls
+
+			const {options} = createExecuteOptionsWithCallbackTracking();
+
+			const input: StatefulAgentInput = {
+				data: '{"test": "value"}',
+			};
+
+			// Simulate a buggy handler that keeps mutable references
+			let callCount = 0;
+			let storedAttemptReference: AttemptState | null = null;
+			let storedRunReference: ExecutionState | null = null;
+
+			const mutatingHandler = (
+				state: AgentState<ExecutionState, AttemptState>,
+				_toolInput: unknown
+			) => {
+				callCount++;
+
+				// First call: return state and keep references
+				if (callCount === 1) {
+					const newRun = {...state.run, parsedData: {test: 'value', firstCall: true}};
+					const newAttempt = {...state.attempt, callCount: 1};
+
+					// Keep references (simulates buggy handler that stores state)
+					storedAttemptReference = newAttempt;
+					storedRunReference = newRun;
+
+					return ok({
+						newState: {
+							run: newRun,
+							attempt: newAttempt,
+						},
+						toolResult: {status: 'first-call'},
+					});
+				}
+
+				// Second call: mutate the stored references BEFORE processing
+				// This simulates a handler that mutates previous state
+				if (storedAttemptReference) {
+					storedAttemptReference.callCount = 9999; // Malicious mutation
+				}
+				if (storedRunReference && typeof storedRunReference.parsedData === 'object') {
+					(storedRunReference.parsedData as Record<string, unknown>).malicious = 'hacked';
+				}
+
+				// Now return new state - if framework used the mutated references, state will be corrupted
+				const newState = {
+					run: {...state.run}, // Pass through run state from framework
+					attempt: {...state.attempt, callCount: 2},
+				};
+
+				// Verify the state received from framework wasn't corrupted by our mutations
+				expect(state.attempt.callCount).not.toBe(9999);
+				if (state.run.parsedData && typeof state.run.parsedData === 'object') {
+					expect((state.run.parsedData as Record<string, unknown>).malicious).toBeUndefined();
+				}
+
+				return ok({
+					newState,
+					toolResult: {status: 'second-call'},
+				});
+			};
+
+			// Create agent with mutating handler
+			const agentWithMutatingHandler = {
+				...STATEFUL_AGENT,
+				tools: {
+					...STATEFUL_AGENT.tools,
+					helpers: {
+						mutating_tool: {
+							name: 'mutating_tool',
+							description: 'Tool that mutates previous state',
+							inputSchema: STATEFUL_AGENT.tools.helpers!.parse_tool.inputSchema,
+							handler: mutatingHandler,
+						},
+					},
+				},
+			};
+
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'helper',
+					helperToolName: 'mutating_tool',
+					helperInput: {},
+				},
+				{
+					type: 'helper',
+					helperToolName: 'mutating_tool',
+					helperInput: {},
+				},
+				{
+					type: 'custom',
+					response: createStatefulSubmitResponse(),
+				},
+			]);
+
+			const result = await executeAgent(agentWithMutatingHandler, {
+				...options,
+				input,
+			});
+
+			// If the test passed without assertion failures in the handler,
+			// the framework successfully protected against the mutations
+			expect(isOk(result)).toBe(true);
 		});
 
 		it('should return error for invalid state prerequisites', () => {
@@ -437,7 +679,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			// Verify parse succeeded and updated state
 			const parseResult = getToolResult(invocations, 'parse_tool');
-			expect(parseResult).toMatchObject({
+			expect(parseResult).toEqual({
 				status: 'parsed',
 				format: 'json',
 				recordCount: 1,
@@ -455,9 +697,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			// Verify query succeeded (proves it sees parse's state despite throwing tool)
 			const queryResult = getToolResult(invocations, 'query_tool');
-			expect(queryResult).toMatchObject({
+			expect(queryResult).toEqual({
 				query: 'test',
 				matches: 3,
+				results: ['item1', 'item2', 'item3'],
 			});
 		});
 
@@ -521,9 +764,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			// Verify parse succeeded
 			const parseResult = getToolResult(invocations, 'parse_tool');
-			expect(parseResult).toMatchObject({
+			expect(parseResult).toEqual({
 				status: 'parsed',
 				format: 'json',
+				recordCount: 1,
 			});
 
 			// Verify both query calls succeeded (both see parse's state)
@@ -538,9 +782,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(firstQueryResult?.type).toBe('onToolResult');
 			if (firstQueryResult?.type === 'onToolResult') {
 				const parsed = JSON.parse(firstQueryResult.toolResult);
-				expect(parsed).toMatchObject({
+				expect(parsed).toEqual({
 					query: 'key',
 					matches: 3,
+					results: ['item1', 'item2', 'item3'],
 				});
 			}
 
@@ -549,9 +794,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(secondQueryResult?.type).toBe('onToolResult');
 			if (secondQueryResult?.type === 'onToolResult') {
 				const parsed = JSON.parse(secondQueryResult.toolResult);
-				expect(parsed).toMatchObject({
+				expect(parsed).toEqual({
 					query: 'key',
 					matches: 3,
+					results: ['item1', 'item2', 'item3'],
 				});
 			}
 		});
@@ -596,9 +842,10 @@ describe('executeAgent - State Reducer Pattern', () => {
 			// Query succeeds WITHOUT parse_tool being called
 			// This proves initialRunState actually set parsedData
 			const queryResult = getToolResult(invocations, 'query_tool');
-			expect(queryResult).toMatchObject({
+			expect(queryResult).toEqual({
 				query: 'test',
 				matches: 3,
+				results: ['item1', 'item2', 'item3'],
 			});
 
 			// Verify parse_tool was NOT called

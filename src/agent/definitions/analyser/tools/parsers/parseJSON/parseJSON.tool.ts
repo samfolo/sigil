@@ -44,7 +44,6 @@ const parseJSONReducerHandler: ToolReducerHandler<ParserState<ParseJSONStructure
 
 	return ok({
 		newState: {
-			context: state.context,
 			run: {
 				...state.run,
 				structureMetadata: {

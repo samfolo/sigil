@@ -50,7 +50,6 @@ const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMe
 
 	return ok({
 		newState: {
-			context: state.context,
 			run: {
 				...state.run,
 				structureMetadata: {

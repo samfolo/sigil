@@ -44,7 +44,6 @@ const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructure
 
 	return ok({
 		newState: {
-			context: state.context,
 			run: {
 				...state.run,
 				structureMetadata: {

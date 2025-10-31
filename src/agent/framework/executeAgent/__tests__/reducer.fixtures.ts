@@ -18,7 +18,7 @@ import {err, ok} from '@sigil/src/common/errors';
 
 import type {AgentDefinition, HelperToolConfig} from '../../defineAgent/defineAgent';
 import {agentBuilder} from '../../defineAgent/defineAgent.fixtures';
-import type {AgentState} from '../../defineAgent/types';
+import type {AgentState, HandlerStateUpdate} from '../../defineAgent/types';
 
 /**
  * Agent input type for testing state threading
@@ -55,9 +55,10 @@ export interface AttemptState {
  * Tool reducer handler result type
  *
  * Standard return type for tool reducer handlers that update state.
+ * Handlers only return run and attempt state - context is automatically managed by framework.
  */
 export interface ToolReducerResult {
-	newState: AgentState<ExecutionState, AttemptState>;
+	newState: HandlerStateUpdate<ExecutionState, AttemptState>;
 	toolResult: unknown;
 }
 
@@ -154,9 +155,9 @@ export const mockParseReducerHandler = (
 	}
 
 	// Return new state (immutable update)
+	// Context is automatically managed by framework
 	return ok({
 		newState: {
-			context: state.context,
 			run: {...state.run, parsedData},
 			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
@@ -203,9 +204,9 @@ export const mockQueryReducerHandler = (
 	};
 
 	// Return new state (only increment callCount)
+	// Context is automatically managed by framework
 	return ok({
 		newState: {
-			context: state.context,
 			run: state.run,
 			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
@@ -261,9 +262,9 @@ export const mockTransformReducerHandler = (
 	}
 
 	// Return new state with transformed data
+	// Context is automatically managed by framework
 	return ok({
 		newState: {
-			context: state.context,
 			run: {...state.run, parsedData: transformedData},
 			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
@@ -348,9 +349,9 @@ export const mockThrowingReducerHandler = (
 	}
 
 	// If not throwing, just increment call count
+	// Context is automatically managed by framework
 	return ok({
 		newState: {
-			context: state.context,
 			run: state.run,
 			attempt: {...state.attempt, callCount: state.attempt.callCount + 1},
 		},
