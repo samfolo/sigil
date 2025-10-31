@@ -2,7 +2,6 @@ export type {
 	ExecuteCallbacks,
 	ExecuteFailure,
 	ExecuteMetadata,
-	ExecuteMetadataTokenUsageStatistics,
 	ExecuteOptions,
 	ExecuteSuccess,
 } from './types';
