@@ -1,0 +1,17 @@
+{% assign penultimate = context.maxAttempts | minus: 1 -%}
+{% if context.attempt == penultimate -%}
+Attempt {{ context.attempt }}/{{ context.maxAttempts }} failed validation - next attempt is your final opportunity
+{% else -%}
+Attempt {{ context.attempt }}/{{ context.maxAttempts }} failed validation
+{% endif -%}
+
+{{ data }}
+
+Correction approach:
+
+- Review all errors systematically before making changes - do not address only the first error
+- Use query_json_path to validate JSONPath expressions return expected results before resubmitting
+- Cross-reference errors against output schema requirements to ensure all required fields are present
+- Verify field data types match observed values from your tool queries
+- When classification errors occur, re-examine parser results to confirm syntactic format matches successful parser
+- Submit complete corrected output via submit_analysis - partial corrections will fail validation again
