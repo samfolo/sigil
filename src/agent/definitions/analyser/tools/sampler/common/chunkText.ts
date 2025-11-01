@@ -1,25 +1,7 @@
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
-/**
- * Text chunk with position metadata
- */
-export interface Chunk {
-	/**
-	 * Chunk content (trimmed)
-	 */
-	content: string;
-
-	/**
-	 * Character offset in original text (before trim)
-	 */
-	start: number;
-
-	/**
-	 * Character offset in original text (before trim)
-	 */
-	end: number;
-}
+import type {Chunk} from './schemas';
 
 /**
  * Chunks text into overlapping segments for diversity sampling
