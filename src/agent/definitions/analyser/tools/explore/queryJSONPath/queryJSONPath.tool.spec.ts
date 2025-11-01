@@ -202,7 +202,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 		it('forwards implementation errors for invalid JSONPath syntax', () => {
 			const state = createState({items: [{id: 1}, {id: 2}]});
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$[[[invalid'});
+			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$..[?('});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {

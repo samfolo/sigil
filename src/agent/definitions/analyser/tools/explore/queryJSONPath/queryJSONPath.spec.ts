@@ -241,7 +241,7 @@ describe('queryJSONPath', () => {
 
 		it('returns error for invalid JSONPath syntax', () => {
 			const data = {user: 'Alice'};
-			const result = queryJSONPath(data, {path: '$[[[invalid'});
+			const result = queryJSONPath(data, {path: '$..[?('});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {

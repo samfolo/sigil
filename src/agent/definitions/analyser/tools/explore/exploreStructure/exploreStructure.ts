@@ -1,5 +1,6 @@
 import {JSONPath} from 'jsonpath-plus';
 
+import {JSONPATH_PREFIX, SPECIAL_CHARS_REGEX} from '@sigil/src/agent/definitions/analyser/tools/explore/common';
 import type {Result} from '@sigil/src/common/errors';
 import {err, ok} from '@sigil/src/common/errors';
 
@@ -38,13 +39,6 @@ interface LeafPath {
 }
 
 /**
- * Regular expression to match keys requiring bracket notation
- *
- * Keys with dots, brackets, quotes, or spaces must use bracket notation
- */
-const SPECIAL_CHARS_REGEX = /[.[\]"\s]/;
-
-/**
  * Constructs JSONPath child path with proper escaping
  *
  * Uses bracket notation for keys with special characters (dots, brackets, quotes, spaces)
@@ -64,7 +58,7 @@ const buildChildPath = (parentPath: string, key: string): string => {
 	}
 
 	// Use simple dot notation for clean keys
-	return parentPath === '$' ? `$.${key}` : `${parentPath}.${key}`;
+	return parentPath === JSONPATH_PREFIX ? `${JSONPATH_PREFIX}.${key}` : `${parentPath}.${key}`;
 };
 
 /**
@@ -110,10 +104,10 @@ export const exploreStructure = (
 
 	// Handle prefix resolution
 	let startData = data;
-	let startPath = '$';
+	let startPath = JSONPATH_PREFIX;
 	let echoedPrefix: string | undefined;
 
-	if (prefix != null && prefix !== '' && prefix !== '$') {
+	if (prefix != null && prefix !== '' && prefix !== JSONPATH_PREFIX) {
 		try {
 			// JSONPath library requires json parameter to be narrower than unknown
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any

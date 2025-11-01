@@ -397,6 +397,22 @@ describe('exploreStructure', () => {
 			expect(result.data.paths.exact).toBe(true);
 			expect(result.data.metadata.totalPathsReturned).toBe(0);
 		});
+
+		it('returns error for malformed JSONPath prefix that throws', () => {
+			const data = {a: 'value'};
+
+			const result = exploreStructure(data, {
+				maxDepth: 2,
+				prefix: '$..[?(',
+			});
+
+			expect(isErr(result)).toBe(true);
+			if (!isErr(result)) {
+				return;
+			}
+
+			expect(result.error).toContain('JSONPath');
+		});
 	});
 
 	describe('leaf detection', () => {
