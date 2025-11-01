@@ -6,7 +6,7 @@ import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseJSON} from './parseJSON';
-import type {ParseJSONStructureMetadataDetails} from './types';
+import type {ParseJSONStructureMetadataDetails} from './schemas';
 
 /**
  * Structure metadata from parse_json tool

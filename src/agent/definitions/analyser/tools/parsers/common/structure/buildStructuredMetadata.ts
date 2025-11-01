@@ -3,7 +3,7 @@ import {truncateString} from '@sigil/src/agent/definitions/analyser/tools/common
 
 import {calculateDepth} from './calculateDepth';
 import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from './constants';
-import type {StructureMetadata} from './types';
+import type {StructureMetadata} from './schemas';
 
 /**
  * Options for configuring metadata extraction

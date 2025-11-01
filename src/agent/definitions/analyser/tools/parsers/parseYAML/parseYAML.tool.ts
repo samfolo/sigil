@@ -6,7 +6,7 @@ import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseYAML} from './parseYAML';
-import type {ParseYAMLStructureMetadataDetails} from './types';
+import type {ParseYAMLStructureMetadataDetails} from './schemas';
 
 /**
  * Structure metadata from parse_yaml tool

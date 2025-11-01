@@ -6,7 +6,7 @@ import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseCSV} from './parseCSV';
-import type {ParseCSVStructureMetadataDetails} from './types';
+import type {ParseCSVStructureMetadataDetails} from './schemas';
 
 /**
  * Structure metadata from parse_csv tool

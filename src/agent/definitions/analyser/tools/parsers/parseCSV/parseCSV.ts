@@ -5,7 +5,7 @@ import {MAX_STRUCTURE_VALUE_LENGTH} from '@sigil/src/agent/definitions/analyser/
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
-import type {ParseCSVResult} from './types';
+import type {ParseCSVResult} from './schemas';
 
 /**
  * Type guard to check if parsed data is an array of arrays

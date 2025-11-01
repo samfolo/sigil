@@ -2,6 +2,8 @@
  * Common types for parser tools
  */
 
+import type {ParserFailure} from './schemas';
+
 /**
  * Base contract for parser structure metadata
  *
@@ -52,23 +54,6 @@ export interface ParserState<Metadata extends BaseParserStructureMetadata = Base
 	 * - XML: JSON representation from fast-xml-parser
 	 */
 	parsedData?: unknown;
-}
-
-/**
- * Indicates failure to parse or validate data
- *
- * Shared failure type used by all parsers
- */
-export interface ParserFailure {
-	/**
-	 * Indicates parsing or validation failure
-	 */
-	valid: false;
-
-	/**
-	 * Error message describing the failure
-	 */
-	error: string;
 }
 
 /**

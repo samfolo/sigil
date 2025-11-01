@@ -5,7 +5,7 @@ import {buildStructuredMetadata, MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PR
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
-import type {ParseYAMLResult} from './types';
+import type {ParseYAMLResult} from './schemas';
 
 /**
  * Parses raw data as YAML and extracts metadata

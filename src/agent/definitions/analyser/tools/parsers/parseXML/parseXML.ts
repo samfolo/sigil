@@ -7,7 +7,7 @@ import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
 import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL} from './constants';
-import type {ParseXMLResult, XMLMetadata} from './types';
+import type {ParseXMLResult, XMLMetadata} from './schemas';
 import {extractTopLevelTags} from './utils/extractTopLevelTags';
 
 /**

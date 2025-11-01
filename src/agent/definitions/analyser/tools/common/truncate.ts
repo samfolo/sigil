@@ -1,4 +1,4 @@
-import type {PrecisionValue} from './types';
+import type {PrecisionValue} from './schemas';
 
 const DEFAULT_MAX_LENGTH = 100;
 const ELLIPSIS = '...';

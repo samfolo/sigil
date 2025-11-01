@@ -1,4 +1,4 @@
-import type {SizeMetrics} from './types';
+import type {SizeMetrics} from './schemas';
 
 /**
  * Calculates size metrics for raw data string

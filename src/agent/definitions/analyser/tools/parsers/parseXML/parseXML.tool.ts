@@ -6,7 +6,7 @@ import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseXML} from './parseXML';
-import type {ParseXMLStructureMetadataDetails} from './types';
+import type {ParseXMLStructureMetadataDetails} from './schemas';
 
 /**
  * Structure metadata from parse_xml tool
