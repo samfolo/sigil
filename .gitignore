@@ -43,3 +43,6 @@ next-env.d.ts
 # generated spec files
 /spec/schema/specification.schema.json
 /src/lib/generated/
+
+# Tickets folder
+/.tickets
