@@ -1,6 +1,6 @@
 import {z} from 'zod';
 
-import type {BaseParserStructureMetadata, ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
+import type {ParserToolMetadata, ParserState} from '@sigil/src/agent/definitions/analyser/tools/parsers/common';
 import type {HelperToolConfig, ToolReducerHandler} from '@sigil/src/agent/framework/defineAgent';
 import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
@@ -11,7 +11,7 @@ import type {ParseXMLStructureMetadataDetails} from './schemas';
 /**
  * Structure metadata from parse_xml tool
  */
-export interface ParseXMLStructureMetadata extends BaseParserStructureMetadata {
+export interface ParseXMLStructureMetadata extends ParserToolMetadata {
 	tool: 'parse_xml';
 	details: ParseXMLStructureMetadataDetails;
 }

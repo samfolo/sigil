@@ -5,11 +5,12 @@
 import type {ParserFailure} from './schemas';
 
 /**
- * Base contract for parser structure metadata
+ * Metadata about which parser tool processed the data
  *
  * All parser-specific metadata types must extend this interface.
+ * Contains tool identifier and parser-specific details.
  */
-export interface BaseParserStructureMetadata {
+export interface ParserToolMetadata {
 	/**
 	 * Tool name that successfully parsed the data
 	 */
@@ -35,7 +36,7 @@ export interface BaseParserStructureMetadata {
  * type MyAgentState = ParserState<MyAgentMetadata>;
  * ```
  */
-export interface ParserState<Metadata extends BaseParserStructureMetadata = BaseParserStructureMetadata> {
+export interface ParserState<Metadata extends ParserToolMetadata = ParserToolMetadata> {
 	/**
 	 * Raw input data to be parsed
 	 */
