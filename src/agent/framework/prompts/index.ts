@@ -1,3 +1,3 @@
 export {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from './build';
 export type {BuiltPrompts} from './build';
-export {loadTemplate, compileTemplate} from './templateLoader';
+export {loadTemplate, compileTemplate, asSystemPromptFunction, asUserPromptFunction, asErrorPromptFunction} from './templateLoader';

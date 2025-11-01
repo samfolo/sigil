@@ -1,1 +1,1 @@
-export {loadTemplate, compileTemplate} from './templateLoader';
+export {loadTemplate, compileTemplate, asSystemPromptFunction, asUserPromptFunction, asErrorPromptFunction} from './templateLoader';

@@ -1,0 +1,8 @@
+The dataset below contains {{ data.initialVignettes.length }} diverse samples ({{ data.rawData.length | divided_by: 1024 | round: 1 }} KB total). These were selected via diversity sampling to show data variety, not sequential content.
+{% for vignette in data.initialVignettes %}
+Sample {{ forloop.index }} (characters {{ vignette.position.start }}-{{ vignette.position.end }}):
+```
+{{ vignette.content }}
+```
+{% endfor %}
+Use your tools to explore the full dataset and submit your analysis via submit_analysis.
