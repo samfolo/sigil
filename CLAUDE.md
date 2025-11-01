@@ -149,7 +149,7 @@ interface Result {
 
 - Array indexing: `.at(0)` instead of `[0]`, `.at(-1)` for last element
 - Type narrowing: `switch` with discriminated unions, not type assertions
-- Type guards: Use `instanceof`, `typeof`, `in`, and custom `is` predicates instead of `as` casting
+- Type guards: Use `instanceof`, `typeof`, `in`, or Zod schemas instead of `as` casting
 - Zod V4: Check https://zod.dev for documentation
 
 Avoid `as` casting wherever possible:
@@ -159,16 +159,25 @@ if (isErr(result) && result.error instanceof Error) {
   console.log(result.error.message);
 }
 
-// Good - define is predicate for custom types
+// Good - use Zod schema for complex runtime type validation
+const customErrorSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+});
+
+if (isErr(result)) {
+  const parsed = customErrorSchema.safeParse(result.error);
+  if (parsed.success) {
+    console.log(parsed.data.code, parsed.data.message);
+  }
+}
+
+// Good - define is predicate for simple cases
 const isCustomError = (value: unknown): value is {code: string; message: string} =>
   typeof value === 'object' &&
   value !== null &&
   'code' in value &&
   'message' in value;
-
-if (isErr(result) && isCustomError(result.error)) {
-  console.log(result.error.code, result.error.message);
-}
 
 // Bad - avoid as casting
 const error = result.error as Error;

@@ -54,6 +54,7 @@ const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMe
 
 	return ok({
 		newState: {
+			...state,
 			run: {
 				...state.run,
 				structureMetadata: {
@@ -62,7 +63,6 @@ const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMe
 				},
 				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
-			attempt: state.attempt,
 		},
 		toolResult: details,
 	});

@@ -14,3 +14,6 @@ export type {
 	InitialVignettesResult,
 	MoreSamplesResult,
 } from './types';
+
+export {REQUEST_MORE_SAMPLES_TOOL} from './requestMoreSamples';
+export type {RequestMoreSamplesResult, SampleRetrieverState} from './requestMoreSamples';

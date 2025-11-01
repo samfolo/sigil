@@ -65,8 +65,8 @@ const exploreStructureReducerHandler: ToolReducerHandler<ParserState, EmptyObjec
 	// Return unchanged state (read-only tool)
 	return ok({
 		newState: {
+			...state,
 			run: state.run,
-			attempt: state.attempt,
 		},
 		toolResult: result.data,
 	});

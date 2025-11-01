@@ -48,6 +48,7 @@ const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMe
 
 	return ok({
 		newState: {
+			...state,
 			run: {
 				...state.run,
 				structureMetadata: {
@@ -56,7 +57,6 @@ const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMe
 				},
 				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
-			attempt: state.attempt,
 		},
 		toolResult: details,
 	});
