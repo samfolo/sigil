@@ -8,17 +8,17 @@ import type {ExploreStructureOptions, ExploreStructureResult} from './types';
 /**
  * Maximum number of object keys to traverse per node
  */
-const MAX_OBJECT_KEYS = 50;
+export const MAX_OBJECT_KEYS = 50;
 
 /**
  * Maximum number of array elements to traverse per node
  */
-const MAX_ARRAY_ELEMENTS = 5;
+export const MAX_ARRAY_ELEMENTS = 5;
 
 /**
  * Maximum total paths to return
  */
-const MAX_TOTAL_PATHS = 100;
+export const MAX_TOTAL_PATHS = 100;
 
 /**
  * Node in BFS queue with path and depth tracking
@@ -45,7 +45,7 @@ interface LeafPath {
  * - Empty collections (empty arrays or empty objects)
  */
 const isLeaf = (value: unknown): boolean => {
-	// Primitives
+	// Primitives (loose equality intentionally catches both null and undefined)
 	if (value == null || typeof value !== 'object') {
 		return true;
 	}
@@ -92,7 +92,7 @@ export const exploreStructure = (
 			});
 
 			if (!Array.isArray(resolved)) {
-				return err('Invalid JSONPath result');
+				return err('JSONPath library returned non-array result (expected wrapped array)');
 			}
 
 			if (resolved.length === 0) {
@@ -175,10 +175,8 @@ export const exploreStructure = (
 	});
 
 	// Cap at maximum and determine if exact
-	// Check both collected paths and remaining queue items
-	const totalAvailable = leafPaths.length + queue.length;
 	const cappedLeafPaths = sortedLeafPaths.slice(0, MAX_TOTAL_PATHS);
-	const exact = totalAvailable <= MAX_TOTAL_PATHS;
+	const exact = queue.length === 0 && leafPaths.length <= MAX_TOTAL_PATHS;
 
 	// Extract just the paths
 	const paths = cappedLeafPaths.map((leaf) => leaf.path);

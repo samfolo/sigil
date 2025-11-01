@@ -10,12 +10,12 @@ import {exploreStructure} from './exploreStructure';
 /**
  * Minimum allowed traversal depth
  */
-const MIN_DEPTH = 1;
+export const MIN_DEPTH = 1;
 
 /**
  * Maximum allowed traversal depth
  */
-const MAX_DEPTH = 20;
+export const MAX_DEPTH = 20;
 
 /**
  * Input schema for the explore_structure tool

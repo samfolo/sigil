@@ -2,9 +2,7 @@ import {describe, expect, it} from 'vitest';
 
 import {isErr, isOk} from '@sigil/src/common/errors';
 
-import {exploreStructure} from './exploreStructure';
-
-const MAX_TOTAL_PATHS = 100;
+import {exploreStructure, MAX_ARRAY_ELEMENTS, MAX_OBJECT_KEYS, MAX_TOTAL_PATHS} from './exploreStructure';
 
 describe('exploreStructure', () => {
 	describe('primitives', () => {
@@ -13,6 +11,7 @@ describe('exploreStructure', () => {
 			{description: 'number primitive', value: 42},
 			{description: 'boolean primitive', value: true},
 			{description: 'null', value: null},
+			{description: 'undefined', value: undefined},
 		])('returns single leaf path for $description', ({value}) => {
 			const result = exploreStructure(value, {maxDepth: 5});
 
@@ -166,6 +165,49 @@ describe('exploreStructure', () => {
 		});
 	});
 
+	describe('traversal limits', () => {
+		it('limits object traversal to MAX_OBJECT_KEYS alphabetically', () => {
+			// Create object exceeding MAX_OBJECT_KEYS
+			const data: Record<string, string> = {};
+			for (let i = 0; i < MAX_OBJECT_KEYS * 2; i++) {
+				data[`key${i.toString().padStart(3, '0')}`] = 'value';
+			}
+
+			const result = exploreStructure(data, {maxDepth: 2});
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			// Only traverses keys within limit, sorted alphabetically
+			expect(result.data.paths.value.length).toBe(MAX_OBJECT_KEYS);
+			expect(result.data.paths.value).toContain('$.key000');
+			expect(result.data.paths.value).toContain(`$.key${(MAX_OBJECT_KEYS - 1).toString().padStart(3, '0')}`);
+			expect(result.data.paths.value).not.toContain(`$.key${MAX_OBJECT_KEYS.toString().padStart(3, '0')}`);
+			expect(result.data.paths.value).not.toContain(`$.key${(MAX_OBJECT_KEYS * 2 - 1).toString().padStart(3, '0')}`);
+		});
+
+		it('limits array traversal to MAX_ARRAY_ELEMENTS', () => {
+			// Create array exceeding MAX_ARRAY_ELEMENTS
+			const data = Array.from({length: MAX_ARRAY_ELEMENTS * 2}, (_, i) => ({id: i}));
+
+			const result = exploreStructure(data, {maxDepth: 3});
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			// Only traverses elements within limit
+			for (let i = 0; i < MAX_ARRAY_ELEMENTS; i++) {
+				expect(result.data.paths.value).toContain(`$[${i}].id`);
+			}
+			expect(result.data.paths.value).not.toContain(`$[${MAX_ARRAY_ELEMENTS}].id`);
+			expect(result.data.paths.value).not.toContain(`$[${MAX_ARRAY_ELEMENTS * 2 - 1}].id`);
+		});
+	});
+
 	describe('capping at maximum paths', () => {
 		it('sets exact false when exceeding maximum paths', () => {
 			// Create structure with more than MAX_TOTAL_PATHS leaf paths
@@ -187,6 +229,31 @@ describe('exploreStructure', () => {
 			}
 
 			expect(result.data.paths.value.length).toBe(MAX_TOTAL_PATHS);
+			expect(result.data.paths.exact).toBe(false);
+		});
+
+		it('sets exact false when queue exits non-empty even if collected paths under limit', () => {
+			// Create structure where we hit MAX_TOTAL_PATHS with queued branch nodes remaining
+			// Each object at depth 1 is a branch node that would expand to multiple leaves
+			const data: Record<string, Record<string, string>> = {};
+			const keysNeeded = Math.ceil(MAX_TOTAL_PATHS / 2);
+			for (let i = 0; i < keysNeeded; i++) {
+				data[`key${i.toString().padStart(3, '0')}`] = {
+					a: 'value',
+					b: 'value',
+				};
+			}
+
+			const result = exploreStructure(data, {maxDepth: 3});
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			// Should hit MAX_TOTAL_PATHS while traversing, leaving queued branch nodes
+			expect(result.data.paths.value.length).toBe(MAX_TOTAL_PATHS);
+			// Queued branch nodes could expand to more leaves, so exact must be false
 			expect(result.data.paths.exact).toBe(false);
 		});
 
@@ -310,6 +377,25 @@ describe('exploreStructure', () => {
 			}
 
 			expect(result.error).toContain('multiple values');
+		});
+
+		it('returns empty result for invalid JSONPath prefix that resolves to nothing', () => {
+			const data = {a: 'value'};
+
+			const result = exploreStructure(data, {
+				maxDepth: 2,
+				prefix: '$[invalid..syntax',
+			});
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			// JSONPath library doesn't throw for this syntax, just returns empty
+			expect(result.data.paths.value).toEqual([]);
+			expect(result.data.paths.exact).toBe(true);
+			expect(result.data.metadata.totalPathsReturned).toBe(0);
 		});
 	});
 
@@ -449,6 +535,33 @@ describe('exploreStructure', () => {
 			// Should NOT traverse beyond maxDepth
 			expect(paths).not.toContain('$.a.b.c.d');
 			expect(paths).not.toContain('$.a.b.c.d.e');
+		});
+	});
+
+	describe('special characters in keys', () => {
+		it('handles object keys with special characters', () => {
+			const data = {
+				'key.with.dots': 'value1',
+				'key[with]brackets': 'value2',
+				'key"with"quotes': 'value3',
+				'key with spaces': 'value4',
+				'key-with-dashes': 'value5',
+			};
+
+			const result = exploreStructure(data, {maxDepth: 2});
+
+			expect(isOk(result)).toBe(true);
+			if (!isOk(result)) {
+				return;
+			}
+
+			const paths = result.data.paths.value;
+			expect(paths).toContain('$.key.with.dots');
+			expect(paths).toContain('$.key[with]brackets');
+			expect(paths).toContain('$.key"with"quotes');
+			expect(paths).toContain('$.key with spaces');
+			expect(paths).toContain('$.key-with-dashes');
+			expect(paths.length).toBe(5);
 		});
 	});
 });
