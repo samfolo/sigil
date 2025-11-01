@@ -16,7 +16,7 @@ import {generateInitialVignettes} from '../generateInitialVignettes';
 import {REALISTIC_CSV_DATA} from '../sampler.fixtures';
 
 import {REQUEST_MORE_SAMPLES_TOOL} from './requestMoreSamples.tool';
-import type {SampleRetrieverState} from './types';
+import type {SampleRetrieverState} from './schemas';
 
 const vignettePositionSchema = z.object({
 	start: z.number(),

@@ -7,7 +7,7 @@ import type {EmptyObject} from '@sigil/src/common/types';
 import type {Vignette} from '../common';
 
 import {requestMoreSamples} from './requestMoreSamples';
-import type {SampleRetrieverState} from './types';
+import type {SampleRetrieverState} from './schemas';
 
 /**
  * Input schema for the request_more_samples tool
