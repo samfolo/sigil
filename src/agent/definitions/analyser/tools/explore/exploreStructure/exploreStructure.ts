@@ -85,9 +85,12 @@ export const exploreStructure = (
 
 	if (prefix != null && prefix !== '' && prefix !== '$') {
 		try {
+			// JSONPath library requires json parameter to be narrower than unknown
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const jsonData: any = data;
 			const resolved = JSONPath({
 				path: prefix,
-				json: data,
+				json: jsonData,
 				wrap: true,
 			});
 

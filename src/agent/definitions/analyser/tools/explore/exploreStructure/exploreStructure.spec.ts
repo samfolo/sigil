@@ -234,13 +234,13 @@ describe('exploreStructure', () => {
 
 		it('sets exact false when queue exits non-empty even if collected paths under limit', () => {
 			// Create structure where we hit MAX_TOTAL_PATHS with queued branch nodes remaining
-			// Each object at depth 1 is a branch node that would expand to multiple leaves
+			// Root has MAX_OBJECT_KEYS keys, each pointing to object with multiple leaves
 			const data: Record<string, Record<string, string>> = {};
-			const keysNeeded = Math.ceil(MAX_TOTAL_PATHS / 2);
-			for (let i = 0; i < keysNeeded; i++) {
+			for (let i = 0; i < MAX_OBJECT_KEYS; i++) {
 				data[`key${i.toString().padStart(3, '0')}`] = {
 					a: 'value',
 					b: 'value',
+					c: 'value',
 				};
 			}
 

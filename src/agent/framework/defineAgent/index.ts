@@ -13,4 +13,4 @@ export type {
 } from './defineAgent';
 export {defineAgent} from './defineAgent';
 
-export type {ToolReducerHandler} from './types';
+export type {AgentState, ToolReducerHandler} from './types';
