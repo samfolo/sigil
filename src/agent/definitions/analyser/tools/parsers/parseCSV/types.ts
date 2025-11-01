@@ -1,6 +1,6 @@
 import type {PrecisionValue} from '@sigil/src/agent/definitions/analyser/tools/common';
 
-import type {BaseStructureMetadata} from '../common';
+import type {BaseStructureMetadata, ParserResult, ParserStructureMetadataDetails} from '../common';
 
 /**
  * Result of attempting to parse data as CSV
@@ -9,16 +9,13 @@ import type {BaseStructureMetadata} from '../common';
  * - `{valid: false}` indicates parsing or validation failure
  * - `{valid: true}` indicates successful parse with metadata
  */
-export type ParseCSVResult =
-	| {
-			valid: false;
-			error: string;
-	  }
-	| {
-			valid: true;
-			parsedData: unknown;
-			metadata: CSVMetadata;
-	  };
+export type ParseCSVStructureMetadataDetails = ParserStructureMetadataDetails<CSVMetadata>;
+
+/**
+ * State update returned by parseCSV implementation
+ * Includes parsedData which is stored in state.run.parsedData
+ */
+export type ParseCSVResult = ParserResult<unknown[][], CSVMetadata>;
 
 /**
  * Metadata extracted from successfully parsed CSV data

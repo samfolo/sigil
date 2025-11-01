@@ -13,8 +13,19 @@ import type {Result} from '@sigil/src/common/errors/result';
  * @template Attempt - User attempt state type (resets on retry)
  */
 export interface AgentState<Run, Attempt> {
+	/**
+	 * Framework execution context (readonly)
+	 */
 	readonly context: AgentExecutionContext;
+
+	/**
+	 * User persistent run state
+	 */
 	run: Run;
+
+	/**
+	 * User per-attempt state
+	 */
 	attempt: Attempt;
 }
 
@@ -25,8 +36,31 @@ export interface AgentState<Run, Attempt> {
  * The framework automatically preserves context.
  */
 export interface HandlerStateUpdate<Run, Attempt> {
+	/**
+	 * Updated run state
+	 */
 	run: Run;
+
+	/**
+	 * Updated attempt state
+	 */
 	attempt: Attempt;
+}
+
+/**
+ * Result returned by a tool reducer handler
+ */
+export interface ToolReducerHandlerResult<Run, Attempt> {
+	/**
+	 * Updated state after handling the tool
+	 * IMPORTANT: Must be new objects, not mutated input state
+	 */
+	newState: HandlerStateUpdate<Run, Attempt>;
+
+	/**
+	 * Result produced by the tool
+	 */
+	toolResult: unknown;
 }
 
 /**
@@ -67,4 +101,4 @@ export interface HandlerStateUpdate<Run, Attempt> {
 export type ToolReducerHandler<Run, Attempt> = (
 	state: AgentState<Run, Attempt>,
 	toolInput: unknown
-) => Result<{newState: HandlerStateUpdate<Run, Attempt>; toolResult: unknown}, string>;
+) => Result<ToolReducerHandlerResult<Run, Attempt>, string>;

@@ -1,6 +1,6 @@
 import type {PrecisionValue} from '@sigil/src/agent/definitions/analyser/tools/common';
 
-import type {DepthAwareStructureMetadata} from '../common';
+import type {DepthAwareStructureMetadata, ParserResult, ParserStructureMetadataDetails} from '../common';
 
 /**
  * Metadata extracted from successfully parsed XML document
@@ -22,9 +22,16 @@ export interface XMLMetadata extends DepthAwareStructureMetadata {
 }
 
 /**
- * Result of XML parsing operation
- * Discriminated union on 'valid' field
+ * Result of attempting to parse data as XML
+ *
+ * Discriminated union on the `valid` field:
+ * - `{valid: false}` indicates parsing or validation failure
+ * - `{valid: true}` indicates successful parse with metadata
  */
-export type ParseXMLResult =
-	| {valid: false; error: string}
-	| {valid: true; parsedData: unknown; metadata: XMLMetadata};
+export type ParseXMLStructureMetadataDetails = ParserStructureMetadataDetails<XMLMetadata>;
+
+/**
+ * State update returned by parseXML implementation
+ * Includes parsedData which is stored in state.run.parsedData
+ */
+export type ParseXMLResult = ParserResult<unknown, XMLMetadata>;

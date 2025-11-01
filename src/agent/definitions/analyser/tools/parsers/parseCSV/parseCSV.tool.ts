@@ -6,14 +6,14 @@ import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseCSV} from './parseCSV';
-import type {ParseCSVResult} from './types';
+import type {ParseCSVStructureMetadataDetails} from './types';
 
 /**
  * Structure metadata from parse_csv tool
  */
 export interface ParseCSVStructureMetadata extends BaseParserStructureMetadata {
 	tool: 'parse_csv';
-	details: ParseCSVResult;
+	details: ParseCSVStructureMetadataDetails;
 }
 
 /**
@@ -48,29 +48,23 @@ const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMe
 		return err(result.error);
 	}
 
+	const details: ParseCSVStructureMetadataDetails = result.data.valid
+		? {valid: true, metadata: result.data.metadata}
+		: {valid: false, error: result.data.error};
+
 	return ok({
 		newState: {
 			run: {
 				...state.run,
 				structureMetadata: {
 					tool: 'parse_csv',
-					details: {
-						valid: result.data.valid,
-						...(result.data.valid
-							? {metadata: result.data.metadata}
-							: {error: result.data.error}),
-					},
+					details,
 				},
 				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
 			attempt: state.attempt,
 		},
-		toolResult: {
-			valid: result.data.valid,
-			...(result.data.valid
-				? {metadata: result.data.metadata}
-				: {error: result.data.error}),
-		},
+		toolResult: details,
 	});
 };
 

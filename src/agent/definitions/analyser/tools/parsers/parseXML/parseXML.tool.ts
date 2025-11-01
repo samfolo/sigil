@@ -6,14 +6,14 @@ import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
 import {parseXML} from './parseXML';
-import type {ParseXMLResult} from './types';
+import type {ParseXMLStructureMetadataDetails} from './types';
 
 /**
  * Structure metadata from parse_xml tool
  */
 export interface ParseXMLStructureMetadata extends BaseParserStructureMetadata {
 	tool: 'parse_xml';
-	details: ParseXMLResult;
+	details: ParseXMLStructureMetadataDetails;
 }
 
 /**
@@ -42,29 +42,23 @@ const parseXMLReducerHandler: ToolReducerHandler<ParserState<ParseXMLStructureMe
 		return err(result.error);
 	}
 
+	const details: ParseXMLStructureMetadataDetails = result.data.valid
+		? {valid: true, metadata: result.data.metadata}
+		: {valid: false, error: result.data.error};
+
 	return ok({
 		newState: {
 			run: {
 				...state.run,
 				structureMetadata: {
 					tool: 'parse_xml',
-					details: {
-						valid: result.data.valid,
-						...(result.data.valid
-							? {metadata: result.data.metadata}
-							: {error: result.data.error}),
-					},
+					details,
 				},
 				parsedData: result.data.valid ? result.data.parsedData : undefined,
 			},
 			attempt: state.attempt,
 		},
-		toolResult: {
-			valid: result.data.valid,
-			...(result.data.valid
-				? {metadata: result.data.metadata}
-				: {error: result.data.error}),
-		},
+		toolResult: details,
 	});
 };
 

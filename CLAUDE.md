@@ -111,6 +111,17 @@ type TErrorCode = string;
 interface IUserData {...}
 ```
 
+Generic type parameters use full descriptive names:
+```typescript
+// Good - full names
+type ParserResult<Data, Metadata> = ...;
+type QueryState<Response, Error> = ...;
+
+// Bad - single letters
+type ParserResult<D, M> = ...;
+type QueryState<R, E> = ...;
+```
+
 All interfaces must be flat - avoid nested interface definitions:
 ```typescript
 // Good - separate flat interfaces
