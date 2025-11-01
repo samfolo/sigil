@@ -556,10 +556,10 @@ describe('exploreStructure', () => {
 			}
 
 			const paths = result.data.paths.value;
-			expect(paths).toContain('$.key.with.dots');
-			expect(paths).toContain('$.key[with]brackets');
-			expect(paths).toContain('$.key"with"quotes');
-			expect(paths).toContain('$.key with spaces');
+			expect(paths).toContain('$["key.with.dots"]');
+			expect(paths).toContain('$["key[with]brackets"]');
+			expect(paths).toContain('$["key\\"with\\"quotes"]');
+			expect(paths).toContain('$["key with spaces"]');
 			expect(paths).toContain('$.key-with-dashes');
 			expect(paths.length).toBe(5);
 		});

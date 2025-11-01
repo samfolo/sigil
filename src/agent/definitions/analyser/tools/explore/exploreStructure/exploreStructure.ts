@@ -38,6 +38,36 @@ interface LeafPath {
 }
 
 /**
+ * Regular expression to match keys requiring bracket notation
+ *
+ * Keys with dots, brackets, quotes, or spaces must use bracket notation
+ */
+const SPECIAL_CHARS_REGEX = /[.[\]"\s]/;
+
+/**
+ * Constructs JSONPath child path with proper escaping
+ *
+ * Uses bracket notation for keys with special characters (dots, brackets, quotes, spaces)
+ * and simple dot notation for alphanumeric keys.
+ *
+ * @param parentPath - Parent JSONPath (e.g., '$' or '$.users')
+ * @param key - Object key to append
+ * @returns Properly formatted JSONPath
+ */
+const buildChildPath = (parentPath: string, key: string): string => {
+	// Check if key contains special characters
+	if (SPECIAL_CHARS_REGEX.test(key)) {
+		// Escape double quotes in the key
+		const escapedKey = key.replace(/"/g, '\\"');
+		// Use bracket notation for special characters
+		return `${parentPath}["${escapedKey}"]`;
+	}
+
+	// Use simple dot notation for clean keys
+	return parentPath === '$' ? `$.${key}` : `${parentPath}.${key}`;
+};
+
+/**
  * Checks if a value is a leaf node
  *
  * Leaf nodes are:
@@ -159,7 +189,7 @@ export const exploreStructure = (
 			const keys = Object.keys(value).sort().slice(0, MAX_OBJECT_KEYS);
 			for (const key of keys) {
 				const childValue = Reflect.get(value, key);
-				const childPath = path === '$' ? `$.${key}` : `${path}.${key}`;
+				const childPath = buildChildPath(path, key);
 				queue.push({
 					value: childValue,
 					path: childPath,
