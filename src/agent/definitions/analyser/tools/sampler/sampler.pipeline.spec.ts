@@ -15,9 +15,9 @@ import {afterEach, describe, expect, it} from 'vitest';
 
 import {isOk} from '@sigil/src/common/errors/result';
 
-import {calculateAveragePairwiseDistance} from './diversity';
-import {cleanupEmbedder} from './embedder';
-import {generateInitialVignettes, requestMoreSamples} from './sampler';
+import {calculateAveragePairwiseDistance, cleanupEmbedder} from './common';
+import {generateInitialVignettes} from './generateInitialVignettes';
+import {requestMoreSamples} from './requestMoreSamples';
 import {
 	GEOJSON_DATA,
 	LARGE_CSV_DATA,

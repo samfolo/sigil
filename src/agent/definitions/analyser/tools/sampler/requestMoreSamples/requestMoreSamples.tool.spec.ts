@@ -11,10 +11,9 @@ import type {AgentState} from '@sigil/src/agent/framework/defineAgent';
 import {isErr, isOk} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
-import {EMBEDDING_DIMENSION} from '../embedder';
-import {generateInitialVignettes} from '../sampler';
+import {EMBEDDING_DIMENSION, type Vignette} from '../common';
+import {generateInitialVignettes} from '../generateInitialVignettes';
 import {REALISTIC_CSV_DATA} from '../sampler.fixtures';
-import type {Vignette} from '../types';
 
 import {REQUEST_MORE_SAMPLES_TOOL} from './requestMoreSamples.tool';
 import type {SampleRetrieverState} from './types';

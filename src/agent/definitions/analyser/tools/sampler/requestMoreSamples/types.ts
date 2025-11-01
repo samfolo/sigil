@@ -1,4 +1,4 @@
-import type {SamplerState} from '../types';
+import type {SamplerState} from '../common';
 
 /**
  * Tool-specific state for sample retriever tools

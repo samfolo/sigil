@@ -4,9 +4,9 @@ import type {HelperToolConfig, ToolReducerHandler} from '@sigil/src/agent/framew
 import {err, isErr, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
-import {requestMoreSamples} from '../sampler';
-import type {Vignette} from '../types';
+import type {Vignette} from '../common';
 
+import {requestMoreSamples} from './requestMoreSamples';
 import type {SampleRetrieverState} from './types';
 
 /**

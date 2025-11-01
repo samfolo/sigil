@@ -1,8 +1,7 @@
 /**
- * Types for the sampler orchestrator
+ * Common types for the sampler
  *
- * The sampler generates diverse vignettes (text snippets with embeddings) from raw data
- * for the Analyser Agent to examine and identify data types.
+ * Shared types used across sampling operations (initial generation and requesting more samples).
  */
 
 import type {Chunk} from './chunkText';
@@ -83,39 +82,4 @@ export interface SamplerState {
 	 * to positions in allChunks and allEmbeddings arrays.
 	 */
 	providedIndices: Set<number>;
-}
-
-/**
- * Result from generating initial vignettes
- */
-export interface InitialVignettesResult {
-	/**
-	 * Generated vignettes
-	 */
-	vignettes: Vignette[];
-
-	/**
-	 * State for future sampling operations
-	 */
-	state: SamplerState;
-}
-
-/**
- * Result from requesting more samples
- */
-export interface MoreSamplesResult {
-	/**
-	 * Additional vignettes
-	 */
-	vignettes: Vignette[];
-
-	/**
-	 * Updated state with new providedIndices
-	 */
-	newState: SamplerState;
-
-	/**
-	 * Whether more samples are available
-	 */
-	hasMore: boolean;
 }
