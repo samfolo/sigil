@@ -18,6 +18,17 @@ import {err, isErr, ok} from '@sigil/src/common/errors/result';
 export type Embedding = number[];
 
 /**
+ * Progress callback for embedding operations
+ *
+ * Reports the number of embeddings completed and the total count.
+ * Invoked after each batch of embeddings completes.
+ *
+ * @param current - Number of embeddings completed so far
+ * @param total - Total number of embeddings to process
+ */
+export type EmbeddingProgressCallback = (current: number, total: number) => void;
+
+/**
  * ONNX Runtime tensor interface with CPU data access
  *
  * The cpuData property is private in onnxruntime-common but accessible
@@ -193,6 +204,7 @@ export const embedText = async (
  * Automatically splits into smaller batches if input exceeds MAX_BATCH_SIZE.
  *
  * @param texts - Array of texts to embed
+ * @param onProgress - Optional callback invoked after each batch completes
  * @returns Result containing array of normalised embedding vectors, or error message
  *
  * @example
@@ -205,7 +217,8 @@ export const embedText = async (
  * ```
  */
 export const embedBatch = async (
-	texts: string[]
+	texts: string[],
+	onProgress?: EmbeddingProgressCallback
 ): Promise<Result<Embedding[], string>> => {
 	if (texts.length === 0) {
 		return ok([]);
@@ -221,6 +234,7 @@ export const embedBatch = async (
 	// Split into smaller batches if necessary
 	if (texts.length > MAX_BATCH_SIZE) {
 		const allEmbeddings: Embedding[] = [];
+		const total = texts.length;
 
 		for (let i = 0; i < texts.length; i += MAX_BATCH_SIZE) {
 			const batch = texts.slice(i, i + MAX_BATCH_SIZE);
@@ -231,6 +245,18 @@ export const embedBatch = async (
 			}
 
 			allEmbeddings.push(...batchResult.data);
+
+			// Report progress after each batch completes
+			if (onProgress) {
+				try {
+					onProgress(allEmbeddings.length, total);
+				} catch (error) {
+					console.error(
+						'Progress callback error:',
+						error instanceof Error ? error.message : 'Unknown error'
+					);
+				}
+			}
 		}
 
 		return ok(allEmbeddings);
@@ -256,6 +282,18 @@ export const embedBatch = async (
 			const end = start + EMBEDDING_DIMENSION;
 			const embedding = float32ArrayToArray(tensor.slice(start, end));
 			embeddings.push(embedding);
+		}
+
+		// Report progress after batch completes
+		if (onProgress) {
+			try {
+				onProgress(embeddings.length, texts.length);
+			} catch (error) {
+				console.error(
+					'Progress callback error:',
+					error instanceof Error ? error.message : 'Unknown error'
+				);
+			}
 		}
 
 		return ok(embeddings);

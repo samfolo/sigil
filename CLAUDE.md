@@ -229,7 +229,7 @@ Next.js special files keep lowercase: `page.tsx`, `layout.tsx`, `route.ts`, `err
 
 Run `npm run lint` to verify compliance.
 
-### Test Structure
+### Testing
 
 Files with tests use directory structure:
 
@@ -239,6 +239,18 @@ functionName/
 ├── functionName.ts            # Implementation
 ├── functionName.spec.ts       # Tests
 └── functionName.fixtures.ts   # Fixtures (optional)
+```
+
+Test limit/capacity values using module constants, not magic numbers:
+
+```typescript
+import {MAX_BATCH_SIZE} from '../embedder';
+
+// Good
+const data = createData(MAX_BATCH_SIZE + 1);
+
+// Bad
+const data = createData(101);
 ```
 
 ### Barrel Files

@@ -9,7 +9,7 @@ import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok} from '@sigil/src/common/errors/result';
 
 import {chunkText, diversitySample, embedBatch} from '../common';
-import type {SamplerState, Vignette} from '../common';
+import type {EmbeddingProgressCallback, SamplerState, Vignette} from '../common';
 
 /**
  * Default chunk size for text splitting (characters)
@@ -37,6 +37,27 @@ export interface InitialVignettesResult {
 }
 
 /**
+ * Callbacks for vignette generation progress
+ */
+export interface VignetteGenerationCallbacks {
+	/**
+	 * Invoked after chunking completes, before embedding begins
+	 *
+	 * @param chunkCount - Number of chunks generated
+	 * @param dataSizeKB - Size of raw data in kilobytes
+	 */
+	onChunkingComplete?: (chunkCount: number, dataSizeKB: string) => void;
+
+	/**
+	 * Invoked during embedding to report progress
+	 *
+	 * @param current - Number of embeddings completed
+	 * @param total - Total number of embeddings to process
+	 */
+	onEmbeddingProgress?: EmbeddingProgressCallback;
+}
+
+/**
  * Generates initial diverse vignettes from raw data
  *
  * Process:
@@ -48,6 +69,7 @@ export interface InitialVignettesResult {
  *
  * @param rawData - Raw input data to sample from
  * @param count - Number of diverse vignettes to generate
+ * @param callbacks - Optional callbacks for progress reporting
  * @returns Result containing vignettes and state, or error message
  *
  * @example
@@ -62,7 +84,8 @@ export interface InitialVignettesResult {
  */
 export const generateInitialVignettes = async (
 	rawData: string,
-	count: number
+	count: number,
+	callbacks?: VignetteGenerationCallbacks
 ): Promise<Result<InitialVignettesResult, string>> => {
 	// Validate input
 	if (!rawData || rawData.trim().length === 0) {
@@ -86,9 +109,22 @@ export const generateInitialVignettes = async (
 		return err('No chunks generated from input data');
 	}
 
+	// Report chunking completion
+	if (callbacks?.onChunkingComplete) {
+		const dataSizeKB = (rawData.length / 1024).toFixed(1);
+		try {
+			callbacks.onChunkingComplete(chunks.length, dataSizeKB);
+		} catch (error) {
+			console.error(
+				'Chunking completion callback error:',
+				error instanceof Error ? error.message : 'Unknown error'
+			);
+		}
+	}
+
 	// Step 2: Embed all chunks
 	const texts = chunks.map((chunk) => chunk.content);
-	const embeddingResult = await embedBatch(texts);
+	const embeddingResult = await embedBatch(texts, callbacks?.onEmbeddingProgress);
 	if (isErr(embeddingResult)) {
 		return embeddingResult;
 	}

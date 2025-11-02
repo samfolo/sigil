@@ -1,2 +1,2 @@
 export {generateInitialVignettes} from './generateInitialVignettes';
-export type {InitialVignettesResult} from './generateInitialVignettes';
+export type {InitialVignettesResult, VignetteGenerationCallbacks} from './generateInitialVignettes';

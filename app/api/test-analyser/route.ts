@@ -67,7 +67,14 @@ export const POST = async (request: NextRequest) => {
 
 		// Preprocessing: Generate initial vignettes
 		console.log('[Analyser] Starting preprocessing...');
-		const vignetteResult = await generateInitialVignettes(rawData, INITIAL_VIGNETTE_COUNT);
+		const vignetteResult = await generateInitialVignettes(rawData, INITIAL_VIGNETTE_COUNT, {
+			onChunkingComplete: (chunkCount, dataSizeKB) => {
+				console.log(`[Vignettes] Chunked ${dataSizeKB} KB of data. Generating embeddings...`);
+			},
+			onEmbeddingProgress: (current, total) => {
+				console.log(`[Vignettes] Embedded ${current}/${total} chunks`);
+			},
+		});
 
 		if (isErr(vignetteResult)) {
 			return NextResponse.json(
@@ -143,7 +150,7 @@ export const POST = async (request: NextRequest) => {
 			return NextResponse.json(
 				{
 					error: 'Analysis failed',
-					details: result.error.errors,
+					details: result.error,
 				},
 				{status: 500}
 			);

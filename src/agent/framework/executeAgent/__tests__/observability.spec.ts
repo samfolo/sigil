@@ -328,4 +328,51 @@ describe('executeAgent - Observability', () => {
 			}
 		});
 	});
+
+	describe('Token Metadata in Error Paths', () => {
+		it('should include token metadata in API error responses', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'helper', inputTokens: 100, outputTokens: 50},
+				{type: 'error', error: new Error('API error')},
+			]);
+
+			const result = await executeAgent(
+				AGENT_WITH_HELPER_TOOLS,
+				VALID_EXECUTE_OPTIONS
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error.metadata).toBeDefined();
+				expect(result.error.metadata?.tokens).toBeDefined();
+				expect(result.error.metadata?.tokens?.input).toBe(100);
+				expect(result.error.metadata?.tokens?.output).toBe(50);
+			}
+		});
+
+		it('should include accumulated tokens when max attempts exceeded', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{type: 'invalid', inputTokens: 100, outputTokens: 50},
+				{type: 'invalid', inputTokens: 120, outputTokens: 60},
+				{type: 'invalid', inputTokens: 150, outputTokens: 75},
+				{type: 'invalid', inputTokens: 140, outputTokens: 70},
+				{type: 'invalid', inputTokens: 160, outputTokens: 80},
+			]);
+
+			const result = await executeAgent(
+				VALID_COMPLETE_AGENT,
+				VALID_EXECUTE_OPTIONS
+			);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error.metadata).toBeDefined();
+				expect(result.error.metadata?.tokens).toBeDefined();
+				expect(result.error.metadata?.tokens?.input).toBe(670);
+				expect(result.error.metadata?.tokens?.output).toBe(335);
+			}
+		});
+	});
 });
