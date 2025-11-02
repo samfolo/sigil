@@ -93,10 +93,13 @@ export const parseCSV = (
 
 	const columnCount = firstRow.length;
 
-	// Extract first row values and truncate each
-	const columns = firstRow.map((value) => {
+	// Extract first row values with indices and truncate each
+	const columns = firstRow.map((value, index) => {
 		const stringValue = value == null ? '' : String(value);
-		return truncateString(stringValue, MAX_STRUCTURE_VALUE_LENGTH);
+		return {
+			index,
+			content: truncateString(stringValue, MAX_STRUCTURE_VALUE_LENGTH),
+		};
 	});
 
 	return ok({

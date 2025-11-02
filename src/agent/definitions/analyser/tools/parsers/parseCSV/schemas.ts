@@ -13,6 +13,26 @@ import {parserResultSchema, parserStructureMetadataDetailsSchema} from '../commo
 import {BaseStructureMetadataSchema} from '../common/structure';
 
 /**
+ * Column metadata from CSV first row
+ *
+ * Contains the column index and content (name or value) from the first row.
+ * Index enables direct mapping to JSONPath queries for array access.
+ */
+export const CSVMetadataColumnSchema = z.object({
+	/**
+	 * Zero-based column index
+	 */
+	index: z.number().int().nonnegative().describe('Zero-based column index'),
+
+	/**
+	 * Column content from first row
+	 */
+	content: precisionValueSchema(z.string()).describe('Column content from first row'),
+});
+
+export type CSVMetadataColumn = z.infer<typeof CSVMetadataColumnSchema>;
+
+/**
  * Metadata extracted from successfully parsed CSV data
  * Inherits size from BaseStructureMetadata
  *
@@ -33,12 +53,12 @@ export const CSVMetadataSchema = BaseStructureMetadataSchema.extend({
 	columnCount: z.number().int().nonnegative().describe('Number of columns'),
 
 	/**
-	 * Values from the first data row to preview content
+	 * Column metadata from first data row
 	 *
-	 * Each value truncated to maximum length for concise metadata.
-	 * Helps agent understand the semantics and types of data.
+	 * Each entry includes zero-based index and content (truncated to maximum length).
+	 * Index enables direct JSONPath construction (e.g., column at index 0 → path $[*][0]).
 	 */
-	columns: z.array(precisionValueSchema(z.string())).describe('Values from the first data row to preview content'),
+	columns: z.array(CSVMetadataColumnSchema).describe('Column metadata from first data row'),
 });
 
 export type CSVMetadata = z.infer<typeof CSVMetadataSchema>;

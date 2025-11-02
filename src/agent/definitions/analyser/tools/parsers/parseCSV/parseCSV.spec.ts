@@ -50,10 +50,12 @@ describe('parseCSV', () => {
 			expect(metadata.rowCount).toBe(3);
 			expect(metadata.columnCount).toBe(2);
 			expect(metadata.columns).toHaveLength(2);
-			expect(metadata.columns.at(0)?.value).toBe('name');
-			expect(metadata.columns.at(0)?.exact).toBe(true);
-			expect(metadata.columns.at(1)?.value).toBe('age');
-			expect(metadata.columns.at(1)?.exact).toBe(true);
+			expect(metadata.columns.at(0)?.index).toBe(0);
+			expect(metadata.columns.at(0)?.content.value).toBe('name');
+			expect(metadata.columns.at(0)?.content.exact).toBe(true);
+			expect(metadata.columns.at(1)?.index).toBe(1);
+			expect(metadata.columns.at(1)?.content.value).toBe('age');
+			expect(metadata.columns.at(1)?.content.exact).toBe(true);
 		});
 
 		it('parses CSV with numbers', () => {
@@ -73,9 +75,9 @@ describe('parseCSV', () => {
 			const {metadata} = result.data;
 			expect(metadata.rowCount).toBe(3);
 			expect(metadata.columnCount).toBe(3);
-			expect(metadata.columns.at(0)?.value).toBe('1');
-			expect(metadata.columns.at(1)?.value).toBe('2');
-			expect(metadata.columns.at(2)?.value).toBe('3');
+			expect(metadata.columns.at(0)?.content.value).toBe('1');
+			expect(metadata.columns.at(1)?.content.value).toBe('2');
+			expect(metadata.columns.at(2)?.content.value).toBe('3');
 		});
 
 		it('parses CSV with booleans', () => {
@@ -114,7 +116,7 @@ describe('parseCSV', () => {
 			const {metadata} = result.data;
 			expect(metadata.rowCount).toBe(3);
 			expect(metadata.columnCount).toBe(3);
-			expect(metadata.columns.at(0)?.value).toBe('name');
+			expect(metadata.columns.at(0)?.content.value).toBe('name');
 		});
 
 		it('parses single row CSV', () => {
@@ -154,7 +156,7 @@ describe('parseCSV', () => {
 			expect(metadata.rowCount).toBe(4);
 			expect(metadata.columnCount).toBe(1);
 			expect(metadata.columns).toHaveLength(1);
-			expect(metadata.columns.at(0)?.value).toBe('name');
+			expect(metadata.columns.at(0)?.content.value).toBe('name');
 		});
 
 		it('calculates size from raw input string', () => {
@@ -196,8 +198,8 @@ describe('parseCSV', () => {
 			const {metadata} = result.data;
 			expect(metadata.rowCount).toBe(3);
 			expect(metadata.columnCount).toBe(2);
-			expect(metadata.columns.at(0)?.value).toBe('name');
-			expect(metadata.columns.at(1)?.value).toBe('age');
+			expect(metadata.columns.at(0)?.content.value).toBe('name');
+			expect(metadata.columns.at(1)?.content.value).toBe('age');
 		});
 
 		it('parses pipe-separated values', () => {
@@ -217,9 +219,9 @@ describe('parseCSV', () => {
 			const {metadata} = result.data;
 			expect(metadata.rowCount).toBe(3);
 			expect(metadata.columnCount).toBe(3);
-			expect(metadata.columns.at(0)?.value).toBe('name');
-			expect(metadata.columns.at(1)?.value).toBe('age');
-			expect(metadata.columns.at(2)?.value).toBe('city');
+			expect(metadata.columns.at(0)?.content.value).toBe('name');
+			expect(metadata.columns.at(1)?.content.value).toBe('age');
+			expect(metadata.columns.at(2)?.content.value).toBe('city');
 		});
 
 		it('parses semicolon-separated values', () => {
@@ -258,10 +260,10 @@ describe('parseCSV', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.columns.at(0)?.value).toBe('short');
-			expect(metadata.columns.at(0)?.exact).toBe(true);
-			expect(metadata.columns.at(1)?.value).toBe('values');
-			expect(metadata.columns.at(1)?.exact).toBe(true);
+			expect(metadata.columns.at(0)?.content.value).toBe('short');
+			expect(metadata.columns.at(0)?.content.exact).toBe(true);
+			expect(metadata.columns.at(1)?.content.value).toBe('values');
+			expect(metadata.columns.at(1)?.content.exact).toBe(true);
 		});
 
 		it('truncates values exceeding maximum length', () => {
@@ -280,11 +282,11 @@ describe('parseCSV', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.columns.at(0)?.exact).toBe(false);
-			expect(metadata.columns.at(0)?.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
-			expect(metadata.columns.at(0)?.value).toMatch(/^a+\.\.\.$/);
-			expect(metadata.columns.at(1)?.exact).toBe(true);
-			expect(metadata.columns.at(1)?.value).toBe('short');
+			expect(metadata.columns.at(0)?.content.exact).toBe(false);
+			expect(metadata.columns.at(0)?.content.value).toHaveLength(MAX_STRUCTURE_VALUE_LENGTH);
+			expect(metadata.columns.at(0)?.content.value).toMatch(/^a+\.\.\.$/);
+			expect(metadata.columns.at(1)?.content.exact).toBe(true);
+			expect(metadata.columns.at(1)?.content.value).toBe('short');
 		});
 
 		it('does not truncate values at exact maximum length', () => {
@@ -303,8 +305,8 @@ describe('parseCSV', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.columns.at(0)?.exact).toBe(true);
-			expect(metadata.columns.at(0)?.value).toBe(exactValue);
+			expect(metadata.columns.at(0)?.content.exact).toBe(true);
+			expect(metadata.columns.at(0)?.content.value).toBe(exactValue);
 		});
 
 		it('handles null values in cells', () => {
@@ -322,8 +324,8 @@ describe('parseCSV', () => {
 			}
 
 			const {metadata} = result.data;
-			expect(metadata.columns.at(0)?.value).toBe('name');
-			expect(metadata.columns.at(1)?.value).toBe('age');
+			expect(metadata.columns.at(0)?.content.value).toBe('name');
+			expect(metadata.columns.at(1)?.content.value).toBe('age');
 		});
 	});
 

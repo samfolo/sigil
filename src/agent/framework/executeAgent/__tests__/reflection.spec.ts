@@ -1,3 +1,4 @@
+import type Anthropic from '@anthropic-ai/sdk';
 import {describe, expect, it, beforeEach, vi} from 'vitest';
 
 const mockMessagesCreate = vi.fn();
@@ -210,7 +211,7 @@ describe('executeAgent - Reflection Mode', () => {
 				: undefined;
 
 			const toolResult = Array.isArray(userMessage?.content)
-				? userMessage.content.find((block) => typeof block === 'object' && block !== null && 'type' in block && block.type === 'tool_result')
+				? userMessage.content.find((block: Anthropic.ContentBlockParam) => typeof block === 'object' && block !== null && 'type' in block && block.type === 'tool_result')
 				: undefined;
 
 			expect(toolResult).toBeDefined();
@@ -247,7 +248,7 @@ describe('executeAgent - Reflection Mode', () => {
 				: undefined;
 
 			const toolResult = Array.isArray(userMessage?.content)
-				? userMessage.content.find((block) => typeof block === 'object' && block !== null && 'type' in block && block.type === 'tool_result')
+				? userMessage.content.find((block: Anthropic.ContentBlockParam) => typeof block === 'object' && block !== null && 'type' in block && block.type === 'tool_result')
 				: undefined;
 
 			if (toolResult && typeof toolResult === 'object' && 'is_error' in toolResult) {
