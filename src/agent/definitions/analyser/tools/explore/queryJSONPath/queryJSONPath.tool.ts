@@ -52,7 +52,7 @@ export const createQueryJSONPathTool = <Run extends ParserState, Attempt extends
 	Attempt,
 	QueryJSONPathInput
 > => {
-	const handler = (state, toolInput) => {
+	const handler: ToolReducerHandler<Run, Attempt> = (state, toolInput) => {
 		// Validate input against schema
 		const parsed = queryJSONPathInputSchema.safeParse(toolInput);
 		if (!parsed.success) {
@@ -78,7 +78,7 @@ export const createQueryJSONPathTool = <Run extends ParserState, Attempt extends
 			newState: state,
 			toolResult: result.data,
 		});
-	} satisfies ToolReducerHandler<Run, Attempt>;
+	};
 
 	return {
 		name: 'query_json_path',

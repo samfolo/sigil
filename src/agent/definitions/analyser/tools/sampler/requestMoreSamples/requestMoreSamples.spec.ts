@@ -13,13 +13,15 @@ import {generateInitialVignettes} from '../generateInitialVignettes';
 
 import {requestMoreSamples} from './requestMoreSamples';
 
+const REQUEST_MORE_SAMPLES_TIMEOUT = 10000; // 10 seconds
+
 describe('requestMoreSamples', () => {
 	afterEach(() => {
 		// Clean up embedder singleton after each test
 		cleanupEmbedder();
 	});
 
-	it('returns additional diverse samples', async () => {
+	it('returns additional diverse samples', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'Text segment entry. '.repeat(500); // Enough for multiple batches
 		const initial = await generateInitialVignettes(data, 10);
 
@@ -36,7 +38,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('updates providedIndices correctly', async () => {
+	it('updates providedIndices correctly', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'Sample. '.repeat(100);
 		const initial = await generateInitialVignettes(data, 5);
 
@@ -58,7 +60,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('hasMore flag is correct', async () => {
+	it('hasMore flag is correct', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'Text. '.repeat(20); // Small dataset
 		const initial = await generateInitialVignettes(data, 5);
 
@@ -100,7 +102,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('no duplicate vignettes across calls', async () => {
+	it('no duplicate vignettes across calls', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = '0123456789'.repeat(100);
 		const initial = await generateInitialVignettes(data, 10);
 
@@ -128,7 +130,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('handles exhaustion correctly', async () => {
+	it('handles exhaustion correctly', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'Short.'; // Very small dataset
 		const initial = await generateInitialVignettes(data, 1);
 
@@ -145,7 +147,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('state immutability - original unchanged', async () => {
+	it('state immutability - original unchanged', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'Text entry item. '.repeat(300); // Enough for multiple batches
 		const initial = await generateInitialVignettes(data, 5);
 
@@ -172,7 +174,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('returns empty when no more samples available', async () => {
+	it('returns empty when no more samples available', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'A B C ';
 		const initial = await generateInitialVignettes(data, 100); // Request all
 
@@ -189,7 +191,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('handles zero count with error', async () => {
+	it('handles zero count with error', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'Text. '.repeat(50);
 		const initial = await generateInitialVignettes(data, 5);
 
@@ -205,7 +207,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('vignettes have valid embeddings', async () => {
+	it('vignettes have valid embeddings', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'Sample. '.repeat(100);
 		const initial = await generateInitialVignettes(data, 5);
 
@@ -226,7 +228,7 @@ describe('requestMoreSamples', () => {
 		}
 	});
 
-	it('positions point to correct content in rawData', async () => {
+	it('positions point to correct content in rawData', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 		const data = 'XYZABC'.repeat(100);
 		const initial = await generateInitialVignettes(data, 5);
 

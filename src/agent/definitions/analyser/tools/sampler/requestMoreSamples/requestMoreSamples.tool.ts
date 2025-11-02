@@ -63,7 +63,7 @@ export const createRequestMoreSamplesTool = <Run extends SampleRetrieverState, A
 	Attempt,
 	RequestMoreSamplesInput
 > => {
-	const handler = (state, toolInput) => {
+	const handler: ToolReducerHandler<Run, Attempt> = (state, toolInput) => {
 		// Validate input against schema
 		const parsed = requestMoreSamplesInputSchema.safeParse(toolInput);
 		if (!parsed.success) {
@@ -96,7 +96,7 @@ export const createRequestMoreSamplesTool = <Run extends SampleRetrieverState, A
 				hasMore: result.data.hasMore,
 			},
 		});
-	} satisfies ToolReducerHandler<Run, Attempt>;
+	};
 
 	return {
 		name: 'request_more_samples',

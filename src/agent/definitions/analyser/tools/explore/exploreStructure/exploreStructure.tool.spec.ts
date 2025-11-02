@@ -5,7 +5,7 @@ import type {AgentState} from '@sigil/src/agent/framework/defineAgent';
 import {isErr, isOk} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
-import {EXPLORE_STRUCTURE_TOOL, MAX_DEPTH, MIN_DEPTH} from './exploreStructure.tool';
+import {createExploreStructureTool, MAX_DEPTH, MIN_DEPTH} from './exploreStructure.tool';
 import type {ExploreStructureResult} from './types';
 
 const isExploreStructureResult = (value: unknown): value is ExploreStructureResult =>
@@ -33,6 +33,8 @@ const createState = (parsedData: unknown): AgentState<ParserState, EmptyObject> 
 });
 
 describe('EXPLORE_STRUCTURE_TOOL', () => {
+	const tool = createExploreStructureTool<ParserState, EmptyObject>();
+
 	describe('handler', () => {
 		it('returns error when parsedData is undefined', () => {
 			const state: AgentState<ParserState, EmptyObject> = {
@@ -48,7 +50,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 				attempt: {},
 			};
 
-			const result = EXPLORE_STRUCTURE_TOOL.handler(state, VALID_INPUT);
+			const result = tool.handler(state, VALID_INPUT);
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -61,7 +63,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 		it('returns error for invalid maxDepth below minimum', () => {
 			const state = createState({a: 'value'});
 
-			const result = EXPLORE_STRUCTURE_TOOL.handler(state, {maxDepth: MIN_DEPTH - 1});
+			const result = tool.handler(state, {maxDepth: MIN_DEPTH - 1});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -74,7 +76,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 		it('returns error for invalid maxDepth above maximum', () => {
 			const state = createState({a: 'value'});
 
-			const result = EXPLORE_STRUCTURE_TOOL.handler(state, {maxDepth: MAX_DEPTH + 1});
+			const result = tool.handler(state, {maxDepth: MAX_DEPTH + 1});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -87,7 +89,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 		it('returns error for non-integer maxDepth', () => {
 			const state = createState({a: 'value'});
 
-			const result = EXPLORE_STRUCTURE_TOOL.handler(state, {maxDepth: 5.5});
+			const result = tool.handler(state, {maxDepth: 5.5});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -106,7 +108,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 			};
 			const state = createState(parsedData);
 
-			const result = EXPLORE_STRUCTURE_TOOL.handler(state, {maxDepth: 3});
+			const result = tool.handler(state, {maxDepth: 3});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -141,7 +143,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 			};
 			const state = createState(parsedData);
 
-			const result = EXPLORE_STRUCTURE_TOOL.handler(state, {
+			const result = tool.handler(state, {
 				maxDepth: 3,
 				prefix: '$.users',
 			});
@@ -165,7 +167,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 		it('forwards implementation errors', () => {
 			const state = createState({items: [{id: 1}, {id: 2}]});
 
-			const result = EXPLORE_STRUCTURE_TOOL.handler(state, {
+			const result = tool.handler(state, {
 				maxDepth: 3,
 				prefix: '$.items[*]',
 			});

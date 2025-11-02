@@ -15,7 +15,7 @@ import {EMBEDDING_DIMENSION, type Vignette} from '../common';
 import {generateInitialVignettes} from '../generateInitialVignettes';
 import {REALISTIC_CSV_DATA} from '../sampler.fixtures';
 
-import {REQUEST_MORE_SAMPLES_TOOL} from './requestMoreSamples.tool';
+import {createRequestMoreSamplesTool} from './requestMoreSamples.tool';
 import type {SampleRetrieverState} from './schemas';
 
 const vignettePositionSchema = z.object({
@@ -50,11 +50,13 @@ const createState = (state: SampleRetrieverState): AgentState<SampleRetrieverSta
 });
 
 describe('REQUEST_MORE_SAMPLES_TOOL', () => {
+	const tool = createRequestMoreSamplesTool<SampleRetrieverState, EmptyObject>();
+
 	describe('handler', () => {
 		it('returns error when samplerState is undefined', () => {
 			const state = createState({});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, VALID_INPUT);
+			const result = tool.handler(state, VALID_INPUT);
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -68,7 +70,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 		it('returns error for count less than 1', () => {
 			const state = createState({});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, {count: 0});
+			const result = tool.handler(state, {count: 0});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -81,7 +83,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 		it('returns error for negative count', () => {
 			const state = createState({});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, {count: -5});
+			const result = tool.handler(state, {count: -5});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -94,7 +96,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 		it('returns error for non-integer count', () => {
 			const state = createState({});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, {count: 5.5});
+			const result = tool.handler(state, {count: 5.5});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -114,7 +116,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 
 			const state = createState({samplerState: initialResult.data.state});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, {});
+			const result = tool.handler(state, {});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -144,7 +146,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 
 			const state = createState({samplerState: initialResult.data.state});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, VALID_INPUT);
+			const result = tool.handler(state, VALID_INPUT);
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -172,7 +174,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			const originalState = initialResult.data.state;
 			const state = createState({samplerState: originalState});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, VALID_INPUT);
+			const result = tool.handler(state, VALID_INPUT);
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -199,7 +201,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 
 			const state = createState({samplerState: initialResult.data.state});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, VALID_INPUT);
+			const result = tool.handler(state, VALID_INPUT);
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -238,7 +240,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			const maxIterations = 20;
 
 			while (iterations < maxIterations) {
-				const result = REQUEST_MORE_SAMPLES_TOOL.handler(currentState, {count: 2});
+				const result = tool.handler(currentState, {count: 2});
 
 				expect(isOk(result)).toBe(true);
 				if (!isOk(result)) {
@@ -293,7 +295,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 
 			const state = createState({samplerState});
 
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(state, {count: 15});
+			const result = tool.handler(state, {count: 15});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -335,7 +337,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			const state = createState({samplerState: initialResult.data.state});
 
 			// Exhaust all samples
-			const exhaust1 = REQUEST_MORE_SAMPLES_TOOL.handler(state, {count: 100});
+			const exhaust1 = tool.handler(state, {count: 100});
 			expect(isOk(exhaust1)).toBe(true);
 
 			if (!isOk(exhaust1)) {
@@ -348,7 +350,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			});
 
 			// Request more when exhausted - should succeed with empty vignettes
-			const result = REQUEST_MORE_SAMPLES_TOOL.handler(exhaustedState, {count: 10});
+			const result = tool.handler(exhaustedState, {count: 10});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {

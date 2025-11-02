@@ -62,7 +62,7 @@ export const createExploreStructureTool = <Run extends ParserState, Attempt exte
 	Attempt,
 	ExploreStructureInput
 > => {
-	const handler = (state, toolInput) => {
+	const handler: ToolReducerHandler<Run, Attempt> = (state, toolInput) => {
 		// Validate input against schema
 		const parsed = exploreStructureInputSchema.safeParse(toolInput);
 		if (!parsed.success) {
@@ -89,7 +89,7 @@ export const createExploreStructureTool = <Run extends ParserState, Attempt exte
 			newState: state,
 			toolResult: result.data,
 		});
-	} satisfies ToolReducerHandler<Run, Attempt>;
+	};
 
 	return {
 		name: 'explore_structure',

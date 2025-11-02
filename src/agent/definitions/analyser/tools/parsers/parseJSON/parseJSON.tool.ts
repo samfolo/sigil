@@ -45,7 +45,7 @@ export const createParseJSONTool = <Run extends ParserState, Attempt extends Emp
 	Attempt,
 	ParseJSONInput
 > => {
-	const handler = (state, toolInput) => {
+	const handler: ToolReducerHandler<Run, Attempt> = (state, toolInput) => {
 		// Validate input against schema
 		const parsed = parseJSONInputSchema.safeParse(toolInput);
 		if (!parsed.success) {
@@ -77,7 +77,7 @@ export const createParseJSONTool = <Run extends ParserState, Attempt extends Emp
 			},
 			toolResult: details,
 		});
-	} satisfies ToolReducerHandler<Run, Attempt>;
+	};
 
 	return {
 		name: 'parse_json',

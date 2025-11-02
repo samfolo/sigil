@@ -49,7 +49,7 @@ export const createParseXMLTool = <Run extends ParserState, Attempt extends Empt
 	Attempt,
 	ParseXMLInput
 > => {
-	const handler = (state, toolInput) => {
+	const handler: ToolReducerHandler<Run, Attempt> = (state, toolInput) => {
 		// Validate input against schema
 		const parsed = parseXMLInputSchema.safeParse(toolInput);
 		if (!parsed.success) {
@@ -81,7 +81,7 @@ export const createParseXMLTool = <Run extends ParserState, Attempt extends Empt
 			},
 			toolResult: details,
 		});
-	} satisfies ToolReducerHandler<Run, Attempt>;
+	};
 
 	return {
 		name: 'parse_xml',

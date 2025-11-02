@@ -6,7 +6,7 @@ import type {AgentState} from '@sigil/src/agent/framework/defineAgent';
 import {isErr, isOk} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';
 
-import {QUERY_JSON_PATH_TOOL} from './queryJSONPath.tool';
+import {createQueryJSONPathTool} from './queryJSONPath.tool';
 import type {QueryJSONPathResult} from './types';
 
 const isQueryJSONPathResult = (value: unknown): value is QueryJSONPathResult =>
@@ -34,6 +34,8 @@ const createState = (parsedData: unknown): AgentState<ParserState, EmptyObject> 
 });
 
 describe('QUERY_JSON_PATH_TOOL', () => {
+	const tool = createQueryJSONPathTool<ParserState, EmptyObject>();
+
 	describe('handler', () => {
 		it('returns error when parsedData is undefined', () => {
 			const state: AgentState<ParserState, EmptyObject> = {
@@ -49,7 +51,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 				attempt: {},
 			};
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, VALID_INPUT);
+			const result = tool.handler(state, VALID_INPUT);
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -62,7 +64,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 		it('returns error when path does not start with $', () => {
 			const state = createState({users: [{name: 'Alice'}]});
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: 'users[*].name'});
+			const result = tool.handler(state, {path: 'users[*].name'});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -75,7 +77,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 		it('returns error for path shorter than minimum length', () => {
 			const state = createState({users: [{name: 'Alice'}]});
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: ''});
+			const result = tool.handler(state, {path: ''});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -88,7 +90,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 		it('returns error for missing path parameter', () => {
 			const state = createState({users: [{name: 'Alice'}]});
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {});
+			const result = tool.handler(state, {});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -107,7 +109,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 			};
 			const state = createState(parsedData);
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$.users[*].name'});
+			const result = tool.handler(state, {path: '$.users[*].name'});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -138,7 +140,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 			};
 			const state = createState(parsedData);
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$.user.name'});
+			const result = tool.handler(state, {path: '$.user.name'});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -160,7 +162,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 			const parsedData = 'hello world';
 			const state = createState(parsedData);
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$'});
+			const result = tool.handler(state, {path: '$'});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -181,7 +183,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 			const parsedData = {user: {name: 'Alice'}};
 			const state = createState(parsedData);
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$.nonexistent'});
+			const result = tool.handler(state, {path: '$.nonexistent'});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -202,7 +204,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 		it('forwards implementation errors for invalid JSONPath syntax', () => {
 			const state = createState({items: [{id: 1}, {id: 2}]});
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$..[?('});
+			const result = tool.handler(state, {path: '$..[?('});
 
 			expect(isErr(result)).toBe(true);
 			if (!isErr(result)) {
@@ -221,7 +223,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 			};
 			const state = createState(parsedData);
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$.departments[*].employees[*].name'});
+			const result = tool.handler(state, {path: '$.departments[*].employees[*].name'});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {
@@ -250,7 +252,7 @@ describe('QUERY_JSON_PATH_TOOL', () => {
 			};
 			const state = createState(parsedData);
 
-			const result = QUERY_JSON_PATH_TOOL.handler(state, {path: '$.number'});
+			const result = tool.handler(state, {path: '$.number'});
 
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) {

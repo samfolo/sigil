@@ -55,7 +55,7 @@ export const createParseCSVTool = <Run extends ParserState, Attempt extends Empt
 	Attempt,
 	ParseCSVInput
 > => {
-	const handler = (state, toolInput) => {
+	const handler: ToolReducerHandler<Run, Attempt> = (state, toolInput) => {
 		// Validate input against schema
 		const parsed = parseCSVInputSchema.safeParse(toolInput);
 		if (!parsed.success) {
@@ -87,7 +87,7 @@ export const createParseCSVTool = <Run extends ParserState, Attempt extends Empt
 			},
 			toolResult: details,
 		});
-	} satisfies ToolReducerHandler<Run, Attempt>;
+	};
 
 	return {
 		name: 'parse_csv',
