@@ -6,11 +6,11 @@ REQUIRED OUTPUT
 
 1. Syntactic format - Classify as JSON, CSV, YAML, or XML. This enables correct parsing downstream.
 
-2. Semantic classification - Describe what the data represents. Examples: "E-commerce transaction records", "GitHub API response", "Weather station measurements", "Kubernetes deployment config", "Customer feedback survey results". Be specific about domain and data type.
+2. Semantic classification - Describe what the data represents (aim for ~100 characters). Examples: "E-commerce transaction records", "GitHub API response", "Weather station measurements", "Kubernetes deployment config", "Customer feedback survey results". Be specific about domain and data type.
 
-3. Key fields - Identify 1-10 most important fields that define the dataset's structure and meaning. These become the structural spine for data exploration and manipulation. For each field provide: JSONPath, human-readable label, semantic description, and observed data types.
+3. Key fields - Identify 1-10 most important fields that define the dataset's structure and meaning. These become the structural spine for data exploration and manipulation. For each field provide: JSONPath, human-readable label (aim for ~20 characters), semantic description (aim for ~150 characters), and observed data types.
 
-4. Summary - Write UX research notes (20-500 chars) covering: what the data represents, observable patterns from vignettes (distributions, edge cases, structural quirks), and how users might explore or manipulate this data. Think interaction hints, not component suggestions. Focus on insights that inform interface design decisions.
+4. Summary - Write UX research notes (aim for ~350 characters) covering: what the data represents, observable patterns from vignettes (distributions, edge cases, structural quirks), and how users might explore or manipulate this data. Think interaction hints, not component suggestions. Focus on insights that inform interface design decisions.
 
 5. Parse result - Include the full parse result from whichever parser successfully validated the format. Critical for downstream processing.
 

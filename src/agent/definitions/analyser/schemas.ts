@@ -28,14 +28,34 @@ import {ParseYAMLStructureMetadataDetailsSchema} from './tools/parsers/parseYAML
 
 /**
  * Validation constraints for analysis output
+ *
+ * Length constraints use TARGET values in prompts to guide LLM brevity,
+ * and MAX values in validation to provide buffer for LLM counting errors.
+ *
+ * Buffer formula (scaled by field length):
+ * - Short fields (target <100): +50% buffer
+ * - Medium fields (target 100-300): +75% buffer
+ * - Long fields (target 300+): +100% buffer
+ *
+ * This accounts for LLMs being poor at measuring their own output length
+ * during generation, whilst still preventing runaway generation.
  */
 export const MIN_SEMANTIC_DESCRIPTION_LENGTH = 5;
-export const MAX_SEMANTIC_DESCRIPTION_LENGTH = 200;
+export const TARGET_SEMANTIC_DESCRIPTION_LENGTH = 100;
+export const MAX_SEMANTIC_DESCRIPTION_LENGTH = 175;
+
 export const MIN_SUMMARY_LENGTH = 20;
-export const MAX_SUMMARY_LENGTH = 500;
-export const MIN_FIELD_DESCRIPTION_LENGTH = 10;
-export const MAX_FIELD_DESCRIPTION_LENGTH = 300;
+export const TARGET_SUMMARY_LENGTH = 350;
+export const MAX_SUMMARY_LENGTH = 700;
+
 export const MIN_FIELD_LABEL_LENGTH = 3;
+export const TARGET_FIELD_LABEL_LENGTH = 20;
+export const MAX_FIELD_LABEL_LENGTH = 30;
+
+export const MIN_FIELD_DESCRIPTION_LENGTH = 10;
+export const TARGET_FIELD_DESCRIPTION_LENGTH = 150;
+export const MAX_FIELD_DESCRIPTION_LENGTH = 260;
+
 export const MIN_KEY_FIELDS = 1;
 export const MAX_KEY_FIELDS = 10;
 
@@ -84,7 +104,7 @@ const KeyFieldSchema = z.object({
 	/**
 	 * Human-readable field name for display
 	 */
-	label: z.string().min(MIN_FIELD_LABEL_LENGTH).describe('Human-readable field name for display'),
+	label: z.string().min(MIN_FIELD_LABEL_LENGTH).max(MAX_FIELD_LABEL_LENGTH).describe('Human-readable field name for display'),
 
 	/**
 	 * Semantic explanation of what the field represents
