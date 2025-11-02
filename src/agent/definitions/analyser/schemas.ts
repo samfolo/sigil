@@ -176,6 +176,13 @@ export type AnalyserStructureMetadata =
 	| ParseYAMLStructureMetadata
 	| ParseXMLStructureMetadata;
 
+
+export type AnalyserParserState =
+	| ParserState<ParseJSONStructureMetadata>
+	| ParserState<ParseCSVStructureMetadata>
+	| ParserState<ParseYAMLStructureMetadata>
+	| ParserState<ParseXMLStructureMetadata>
+
 /**
  * Run-level state for the Analyser Agent
  *
@@ -189,7 +196,7 @@ export type AnalyserStructureMetadata =
  * (JSON.parse, Papa.parse) and embedding (transformers.js) are expensive
  * operations that should not be repeated.
  */
-export type AnalyserRunState = ParserState<AnalyserStructureMetadata> & SampleRetrieverState;
+export type AnalyserRunState = AnalyserParserState & SampleRetrieverState;
 
 /**
  * Attempt-level state for the Analyser Agent

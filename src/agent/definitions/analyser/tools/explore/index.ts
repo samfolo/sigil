@@ -1,5 +1,5 @@
-export {exploreStructure, EXPLORE_STRUCTURE_TOOL} from './exploreStructure';
+export {exploreStructure, createExploreStructureTool} from './exploreStructure';
 export type {ExploreStructureResult} from './exploreStructure';
 
-export {queryJSONPath, QUERY_JSON_PATH_TOOL} from './queryJSONPath';
+export {queryJSONPath, createQueryJSONPathTool} from './queryJSONPath';
 export type {QueryJSONPathResult} from './queryJSONPath';

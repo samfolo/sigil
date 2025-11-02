@@ -11,7 +11,7 @@ export type {InitialVignettesResult} from './generateInitialVignettes';
 export {requestMoreSamples} from './requestMoreSamples';
 export type {MoreSamplesResult} from './requestMoreSamples';
 
-export {REQUEST_MORE_SAMPLES_TOOL} from './requestMoreSamples';
+export {createRequestMoreSamplesTool} from './requestMoreSamples';
 export type {RequestMoreSamplesResult, SampleRetrieverState} from './requestMoreSamples';
 
 export type {Vignette, VignettePosition, SamplerState} from './common';

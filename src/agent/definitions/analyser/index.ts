@@ -20,30 +20,30 @@ export {AnalysisOutputSchema, AnalyserAgentInputSchema} from './schemas';
 export type {AnalysisOutput, AnalyserAgentInput, AnalyserRunState, AnalyserAttemptState, AnalyserStructureMetadata} from './schemas';
 
 // Parser tools
-export {parseJSON, PARSE_JSON_TOOL} from './tools/parsers';
+export {parseJSON, createParseJSONTool} from './tools/parsers';
 export type {ParseJSONResult} from './tools/parsers';
 
-export {parseYAML, PARSE_YAML_TOOL} from './tools/parsers';
+export {parseYAML, createParseYAMLTool} from './tools/parsers';
 export type {ParseYAMLResult} from './tools/parsers';
 
-export {parseCSV, PARSE_CSV_TOOL} from './tools/parsers';
+export {parseCSV, createParseCSVTool} from './tools/parsers';
 export type {ParseCSVResult, CSVMetadata} from './tools/parsers';
 
-export {parseXML, PARSE_XML_TOOL} from './tools/parsers';
+export {parseXML, createParseXMLTool} from './tools/parsers';
 export type {ParseXMLResult} from './tools/parsers';
 
 // Explore tools
-export {exploreStructure, EXPLORE_STRUCTURE_TOOL} from './tools/explore';
+export {exploreStructure, createExploreStructureTool} from './tools/explore';
 export type {ExploreStructureResult} from './tools/explore';
 
-export {queryJSONPath, QUERY_JSON_PATH_TOOL} from './tools/explore';
+export {queryJSONPath, createQueryJSONPathTool} from './tools/explore';
 export type {QueryJSONPathResult} from './tools/explore';
 
 // Sampler tools
 export {generateInitialVignettes} from './tools/sampler';
 export type {InitialVignettesResult} from './tools/sampler';
 
-export {requestMoreSamples, REQUEST_MORE_SAMPLES_TOOL} from './tools/sampler';
+export {requestMoreSamples, createRequestMoreSamplesTool} from './tools/sampler';
 export type {MoreSamplesResult, RequestMoreSamplesResult, SampleRetrieverState} from './tools/sampler';
 
 export type {Vignette, VignettePosition, SamplerState} from './tools/sampler';

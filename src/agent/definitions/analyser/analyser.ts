@@ -15,13 +15,13 @@ import {isErr} from '@sigil/src/common/errors';
 import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from './prompts';
 import type {AnalyserAgentInput, AnalysisOutput, AnalyserRunState, AnalyserAttemptState} from './schemas';
 import {AnalysisOutputSchema} from './schemas';
-import {EXPLORE_STRUCTURE_TOOL} from './tools/explore';
-import {QUERY_JSON_PATH_TOOL} from './tools/explore';
-import {PARSE_CSV_TOOL} from './tools/parsers';
-import {PARSE_JSON_TOOL} from './tools/parsers';
-import {PARSE_XML_TOOL} from './tools/parsers';
-import {PARSE_YAML_TOOL} from './tools/parsers';
-import {REQUEST_MORE_SAMPLES_TOOL} from './tools/sampler';
+import {createExploreStructureTool} from './tools/explore';
+import {createQueryJSONPathTool} from './tools/explore';
+import {createParseCSVTool} from './tools/parsers';
+import {createParseJSONTool} from './tools/parsers';
+import {createParseXMLTool} from './tools/parsers';
+import {createParseYAMLTool} from './tools/parsers';
+import {createRequestMoreSamplesTool} from './tools/sampler';
 
 /**
  * Maximum number of validation retry attempts
@@ -88,13 +88,13 @@ export const createAnalyserAgent = async (): Promise<
 					'Submit complete analysis with classification, parseResult, summary, and keyFields. Validates against AnalysisOutputSchema.',
 			},
 			helpers: {
-				parse_json: PARSE_JSON_TOOL,
-				parse_csv: PARSE_CSV_TOOL,
-				parse_yaml: PARSE_YAML_TOOL,
-				parse_xml: PARSE_XML_TOOL,
-				explore_structure: EXPLORE_STRUCTURE_TOOL,
-				query_json_path: QUERY_JSON_PATH_TOOL,
-				request_more_samples: REQUEST_MORE_SAMPLES_TOOL,
+				parse_json: createParseJSONTool<AnalyserRunState, AnalyserAttemptState>(),
+				parse_csv: createParseCSVTool<AnalyserRunState, AnalyserAttemptState>(),
+				parse_yaml: createParseYAMLTool<AnalyserRunState, AnalyserAttemptState>(),
+				parse_xml: createParseXMLTool<AnalyserRunState, AnalyserAttemptState>(),
+				explore_structure: createExploreStructureTool<AnalyserRunState, AnalyserAttemptState>(),
+				query_json_path: createQueryJSONPathTool<AnalyserRunState, AnalyserAttemptState>(),
+				request_more_samples: createRequestMoreSamplesTool<AnalyserRunState, AnalyserAttemptState>(),
 			},
 		},
 

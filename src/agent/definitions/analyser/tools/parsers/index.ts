@@ -1,11 +1,11 @@
-export {parseJSON, PARSE_JSON_TOOL} from './parseJSON';
+export {parseJSON, createParseJSONTool} from './parseJSON';
 export type {ParseJSONResult} from './parseJSON';
 
-export {parseYAML, PARSE_YAML_TOOL} from './parseYAML';
+export {parseYAML, createParseYAMLTool} from './parseYAML';
 export type {ParseYAMLResult} from './parseYAML';
 
-export {parseCSV, PARSE_CSV_TOOL} from './parseCSV';
+export {parseCSV, createParseCSVTool} from './parseCSV';
 export type {ParseCSVResult, CSVMetadata} from './parseCSV';
 
-export {parseXML, PARSE_XML_TOOL} from './parseXML';
+export {parseXML, createParseXMLTool} from './parseXML';
 export type {ParseXMLResult} from './parseXML';
