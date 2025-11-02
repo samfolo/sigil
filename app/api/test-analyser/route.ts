@@ -119,7 +119,7 @@ export const POST = async (request: NextRequest) => {
 					`[Analyser] Result: ${toolName} | ${truncate(toolResult, 300)}`
 				);
 			},
-			onValidationFailure: (context, errors) => {
+			onValidationFailure: (context, _errors) => {
 				console.log(
 					`[Analyser] Validation failed on attempt ${context.attempt}`
 				);
