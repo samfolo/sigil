@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeEach, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mockMessagesCreate = vi.fn();
 
@@ -11,19 +11,17 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 }));
 
 import {
-	executeAgent,
-	setupExecuteAgentMocks,
-	VALID_MINIMAL_AGENT,
+	AGENT_ERROR_CODES,
 	VALID_COMPLETE_AGENT,
 	VALID_EXECUTE_OPTIONS,
 	VALID_EXECUTE_OPTIONS_WITH_MAX_ATTEMPTS_OVERRIDE,
-	createExecuteOptionsWithCallbackTracking,
-	createMockApiCalls,
-	createInvalidResponse,
-	isOk,
+	VALID_MINIMAL_AGENT,
+	executeAgent,
 	isErr,
-	AGENT_ERROR_CODES,
+	isOk,
+	setupExecuteAgentMocks,
 } from '../executeAgent.common.fixtures';
+import {AnthropicApiMock, CallbackTracker, outputToolUse} from '../executeAgent.mock';
 
 describe('executeAgent - Validation', () => {
 	beforeEach(() => {
@@ -34,15 +32,13 @@ describe('executeAgent - Validation', () => {
 		it('should retry on validation failure', async () => {
 			// Use VALID_COMPLETE_AGENT which has custom validators
 			// Mock: first call returns invalid (too short), second returns valid
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]}) // Fails validation
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isOk(result)).toBe(true);
 
@@ -54,16 +50,14 @@ describe('executeAgent - Validation', () => {
 		it('should increment attempt counter', async () => {
 			// Use VALID_COMPLETE_AGENT which has custom validators
 			// Mock: first two calls return invalid, third returns valid
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]}) // First fails
+				.respondWith({content: [outputToolUse('short')]}) // Second fails
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isOk(result)).toBe(true);
 
@@ -73,14 +67,14 @@ describe('executeAgent - Validation', () => {
 		});
 
 		it('should invoke onAttemptStart callback for each attempt', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_MINIMAL_AGENT, options);
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const attemptStarts = invocations.filter(
-				(i) => i.type === 'onAttemptStart'
-			);
+			const attemptStarts = tracker.invocations.filter((i) => i.type === 'onAttemptStart');
 
 			expect(attemptStarts.length).toBeGreaterThan(0);
 			expect(attemptStarts.at(0)?.context.attempt).toBe(1);
@@ -88,19 +82,20 @@ describe('executeAgent - Validation', () => {
 
 		it('should invoke onValidationFailure callback', async () => {
 			// Use VALID_COMPLETE_AGENT and set up failure then success
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_COMPLETE_AGENT, options);
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const validationFailures = invocations.filter(
-				(i) => i.type === 'onValidationFailure'
-			);
+			const validationFailures = tracker.invocations.filter((i) => i.type === 'onValidationFailure');
 
 			expect(validationFailures.length).toBeGreaterThan(0);
 		});
@@ -109,12 +104,11 @@ describe('executeAgent - Validation', () => {
 	describe('Max attempts exceeded', () => {
 		it('should return error Result after max attempts', async () => {
 			// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
-			mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+			// Last response persists, causing all attempts to fail
+			const mock = new AnthropicApiMock();
+			mock.respondWith({content: [outputToolUse('short')]}).install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isErr(result)).toBe(true);
 		});
@@ -122,12 +116,10 @@ describe('executeAgent - Validation', () => {
 		it('should return AgentError with MAX_ATTEMPTS_EXCEEDED code', async () => {
 			// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
 			// VALID_COMPLETE_AGENT has maxAttempts: 5
-			mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+			const mock = new AnthropicApiMock();
+			mock.respondWith({content: [outputToolUse('short')]}).install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isErr(result)).toBe(true);
 
@@ -146,14 +138,17 @@ describe('executeAgent - Validation', () => {
 
 		it('should invoke onFailure callback', async () => {
 			// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
-			mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+			const mock = new AnthropicApiMock();
+			mock.respondWith({content: [outputToolUse('short')]}).install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_COMPLETE_AGENT, options);
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const failures = invocations.filter((i) => i.type === 'onFailure');
+			const failures = tracker.invocations.filter((i) => i.type === 'onFailure');
 
 			expect(failures.length).toBe(1);
 		});
@@ -161,12 +156,10 @@ describe('executeAgent - Validation', () => {
 		it('should include final attempt count', async () => {
 			// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
 			// VALID_COMPLETE_AGENT has maxAttempts: 5
-			mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+			const mock = new AnthropicApiMock();
+			mock.respondWith({content: [outputToolUse('short')]}).install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isErr(result)).toBe(true);
 
@@ -183,7 +176,8 @@ describe('executeAgent - Validation', () => {
 
 		it('should respect maxAttempts override', async () => {
 			// Use VALID_COMPLETE_AGENT and mock validation failure on all attempts
-			mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+			const mock = new AnthropicApiMock();
+			mock.respondWith({content: [outputToolUse('short')]}).install(mockMessagesCreate);
 
 			const result = await executeAgent(
 				VALID_COMPLETE_AGENT,
@@ -204,12 +198,10 @@ describe('executeAgent - Validation', () => {
 
 		it('should handle zero-length validation error messages', async () => {
 			// Mock: all attempts fail
-			mockMessagesCreate.mockResolvedValue(createInvalidResponse());
+			const mock = new AnthropicApiMock();
+			mock.respondWith({content: [outputToolUse('short')]}).install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isErr(result)).toBe(true);
 
@@ -228,14 +220,14 @@ describe('executeAgent - Validation', () => {
 
 	describe('Validation layer callbacks', () => {
 		it('should invoke onValidationLayerStart for each validation layer', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_MINIMAL_AGENT, options);
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const layerStarts = invocations.filter(
-				(i) => i.type === 'onValidationLayerStart'
-			);
+			const layerStarts = tracker.invocations.filter((i) => i.type === 'onValidationLayerStart');
 
 			// Should have at least one for the Zod schema layer
 			expect(layerStarts.length).toBeGreaterThan(0);
@@ -251,51 +243,49 @@ describe('executeAgent - Validation', () => {
 		});
 
 		it('should invoke onValidationLayerComplete for each validation layer', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_MINIMAL_AGENT, options);
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const layerCompletes = invocations.filter(
-				(i) => i.type === 'onValidationLayerComplete'
-			);
+			const layerCompletes = tracker.invocations.filter((i) => i.type === 'onValidationLayerComplete');
 
 			expect(layerCompletes.length).toBeGreaterThan(0);
 		});
 
 		it('should invoke validation layer callbacks in correct order', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_MINIMAL_AGENT, options);
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
 			// For each layer, Start should come before Complete
-			const layerStarts = invocations.filter(
-				(i) => i.type === 'onValidationLayerStart'
-			);
-			const layerCompletes = invocations.filter(
-				(i) => i.type === 'onValidationLayerComplete'
-			);
+			const layerStarts = tracker.invocations.filter((i) => i.type === 'onValidationLayerStart');
+			const layerCompletes = tracker.invocations.filter((i) => i.type === 'onValidationLayerComplete');
 
 			expect(layerStarts.length).toBe(layerCompletes.length);
 
 			// Verify each start comes before its corresponding complete
 			layerStarts.forEach((start, index) => {
-				const startIndex = invocations.indexOf(start);
-				const completeIndex = invocations.indexOf(layerCompletes.at(index)!);
+				const startIndex = tracker.invocations.indexOf(start);
+				const completeIndex = tracker.invocations.indexOf(layerCompletes.at(index)!);
 				expect(startIndex).toBeLessThan(completeIndex);
 			});
 		});
 
 		it('should pass correct layer metadata to callbacks', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_MINIMAL_AGENT, options);
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const layerStart = invocations.find(
-				(i) => i.type === 'onValidationLayerStart'
-			);
+			const layerStart = tracker.invocations.find((i) => i.type === 'onValidationLayerStart');
 
 			if (layerStart?.type === 'onValidationLayerStart') {
 				expect(layerStart.layer.name).toBeDefined();
@@ -307,17 +297,20 @@ describe('executeAgent - Validation', () => {
 
 		it('should include error in onValidationLayerComplete when layer fails', async () => {
 			// Use VALID_COMPLETE_AGENT and mock failure then success to trigger validation error
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_COMPLETE_AGENT, options);
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const failedLayer = invocations.find((i) => {
+			const failedLayer = tracker.invocations.find((i) => {
 				if (i.type === 'onValidationLayerComplete') {
 					return !i.layer.success;
 				}
@@ -333,15 +326,13 @@ describe('executeAgent - Validation', () => {
 	describe('Conversation history', () => {
 		it('should accumulate conversation history across retries', async () => {
 			// Mock: first call invalid, second call valid
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isOk(result)).toBe(true);
 
@@ -374,10 +365,11 @@ describe('executeAgent - Validation', () => {
 
 		it('should append assistant response after validation failure', async () => {
 			// Mock: first call invalid, second call valid
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -396,10 +388,11 @@ describe('executeAgent - Validation', () => {
 
 		it('should append error prompts after validation failures', async () => {
 			// Mock: first call invalid, second call valid
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -419,25 +412,29 @@ describe('executeAgent - Validation', () => {
 
 	describe('Callback invocation', () => {
 		it('should invoke onSuccess callback with output', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			const result = await executeAgent(VALID_MINIMAL_AGENT, options);
+			const result = await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
 			expect(isOk(result)).toBe(true);
 
-			const successes = invocations.filter((i) => i.type === 'onSuccess');
+			const successes = tracker.invocations.filter((i) => i.type === 'onSuccess');
 			expect(successes.length).toBe(1);
 		});
 
 		it('should invoke all callbacks in correct order', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(VALID_MINIMAL_AGENT, options);
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			expect(invocations.at(0)?.type).toBe('onAttemptStart');
-			expect(invocations.at(-1)?.type).toBe('onSuccess');
+			expect(tracker.invocations.at(0)?.type).toBe('onAttemptStart');
+			expect(tracker.invocations.at(-1)?.type).toBe('onSuccess');
 		});
 
 		it('should handle callback errors gracefully', async () => {
