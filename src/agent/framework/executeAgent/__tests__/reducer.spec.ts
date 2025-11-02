@@ -28,19 +28,17 @@ import {
 	executeAgent,
 	setupExecuteAgentMocks,
 	VALID_MINIMAL_AGENT,
-	createExecuteOptionsWithCallbackTracking,
-	createMockApiCalls,
-	createSuccessResponse,
 	isOk,
 	isErr,
 } from '../executeAgent.common.fixtures';
-import type {CallbackInvocation} from '../executeAgent.fixtures';
+
+import {AnthropicApiMock, CallbackTracker, helperToolUse, outputToolUse} from '../executeAgent.mock';
+import type {CallbackInvocation} from '../executeAgent.mock';
 
 import {
 	STATEFUL_AGENT,
 	mockParseReducerHandler,
 	mockQueryReducerHandler,
-	createStatefulSubmitResponse,
 	createAttemptTrackingValidator,
 	createAgentWithCustomValidator,
 	createAgentWithMutatingHandler,
@@ -79,28 +77,22 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 	describe('State Threading', () => {
 		it('should persist state updates to next tool call', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: 'item1, item2, item3',
 			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'csv'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test query'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'csv'})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test query'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(STATEFUL_AGENT, {
 				...options,
@@ -110,7 +102,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			// Verify both tool calls succeeded
-			const toolResults = invocations.filter((inv) => inv.type === 'onToolResult');
+			const toolResults = tracker.invocations.filter((inv) => inv.type === 'onToolResult');
 			expect(toolResults.length).toBe(2);
 
 			// First tool should be parse
@@ -133,33 +125,23 @@ describe('executeAgent - State Reducer Pattern', () => {
 		});
 
 		it('should allow dependent tools to access prior tool state', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: 'item1, item2, item3',
 			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'csv'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'transform_tool',
-					helperInput: {operation: 'uppercase'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'csv'})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [helperToolUse('transform_tool', {operation: 'uppercase'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(STATEFUL_AGENT, {
 				...options,
@@ -169,11 +151,11 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			// Verify all three tool calls succeeded
-			const toolResults = invocations.filter((inv) => inv.type === 'onToolResult');
+			const toolResults = tracker.invocations.filter((inv) => inv.type === 'onToolResult');
 			expect(toolResults.length).toBe(3);
 
 			// Verify query succeeded (proves it accessed parsedData from parse_tool)
-			const queryResult = getToolResult(invocations, 'query_tool');
+			const queryResult = getToolResult(tracker.invocations, 'query_tool');
 			expect(queryResult).toEqual({
 				query: 'test',
 				matches: 3,
@@ -182,7 +164,11 @@ describe('executeAgent - State Reducer Pattern', () => {
 		});
 
 		it('should preserve run state across validation failures and retry attempts', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: '{"key": "value"}',
@@ -195,60 +181,13 @@ describe('executeAgent - State Reducer Pattern', () => {
 			// Attempt 1: parse_tool → output (validation fails)
 			// Attempt 2: query_tool → output (validation succeeds)
 			// Key: query_tool in attempt 2 succeeds WITHOUT calling parse_tool
-			createMockApiCalls(mockMessagesCreate, [
-				// Attempt 1
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'custom',
-					response: {
-						id: 'msg_attempt1',
-						type: 'message' as const,
-						role: 'assistant' as const,
-						model: 'claude-sonnet-4-5-20250929',
-						content: [
-							{
-								type: 'tool_use' as const,
-								id: 'toolu_output1',
-								name: 'generate_output',
-								input: {result: 'attempt1', finalCount: 0},
-							},
-						],
-						stop_reason: 'tool_use' as const,
-						stop_sequence: null,
-						usage: {input_tokens: 100, output_tokens: 50},
-					},
-				},
-				// Attempt 2
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'key'},
-				},
-				{
-					type: 'custom',
-					response: {
-						id: 'msg_attempt2',
-						type: 'message' as const,
-						role: 'assistant' as const,
-						model: 'claude-sonnet-4-5-20250929',
-						content: [
-							{
-								type: 'tool_use' as const,
-								id: 'toolu_output2',
-								name: 'generate_output',
-								input: {result: 'attempt2', finalCount: 1},
-							},
-						],
-						stop_reason: 'tool_use' as const,
-						stop_sequence: null,
-						usage: {input_tokens: 100, output_tokens: 50},
-					},
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'json'})]})
+				.respondWith({content: [outputToolUse({result: 'attempt1', finalCount: 0})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'key'})]})
+				.respondWith({content: [outputToolUse({result: 'attempt2', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(agentWithValidator, {
 				...options,
@@ -264,13 +203,13 @@ describe('executeAgent - State Reducer Pattern', () => {
 			}
 
 			// Verify parse_tool was called in attempt 1
-			const parseToolCalls = invocations.filter(
+			const parseToolCalls = tracker.invocations.filter(
 				(inv) => inv.type === 'onToolCall' && inv.toolName === 'parse_tool'
 			);
 			expect(parseToolCalls.length).toBe(1);
 
 			// Verify query_tool was called in attempt 2 and succeeded
-			const queryToolResults = invocations.filter(
+			const queryToolResults = tracker.invocations.filter(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
 			);
 			expect(queryToolResults.length).toBe(1);
@@ -347,7 +286,11 @@ describe('executeAgent - State Reducer Pattern', () => {
 			// This test verifies the framework is defensive against badly-behaved handlers
 			// that keep references to state and mutate them across multiple tool calls
 
-			const {options} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: '{"test": "value"}',
@@ -356,22 +299,12 @@ describe('executeAgent - State Reducer Pattern', () => {
 			// Create agent with mutating handler from fixtures
 			const agentWithMutatingHandler = createAgentWithMutatingHandler();
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'mutating_tool',
-					helperInput: {},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'mutating_tool',
-					helperInput: {},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('mutating_tool', {})]})
+				.respondWith({content: [helperToolUse('mutating_tool', {})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(agentWithMutatingHandler, {
 				...options,
@@ -402,23 +335,21 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 	describe('Error Handling', () => {
 		it('should fire onToolResult callback with handler error', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
 			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(STATEFUL_AGENT, {
 				...options,
@@ -427,7 +358,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			expect(isOk(result)).toBe(true);
 
-			const errorToolResult = invocations.find(
+			const errorToolResult = tracker.invocations.find(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
 			);
 
@@ -439,33 +370,23 @@ describe('executeAgent - State Reducer Pattern', () => {
 		});
 
 		it('should allow subsequent tool calls after handler error', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: 'a, b, c',
 			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'csv'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'csv'})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(STATEFUL_AGENT, {
 				...options,
@@ -475,7 +396,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			// Verify first query failed, parse succeeded, second query succeeded
-			const toolResults = invocations.filter((inv) => inv.type === 'onToolResult');
+			const toolResults = tracker.invocations.filter((inv) => inv.type === 'onToolResult');
 			expect(toolResults.length).toBe(3);
 
 			// First query should error
@@ -505,23 +426,21 @@ describe('executeAgent - State Reducer Pattern', () => {
 		});
 
 		it('should return error for unknown tool name', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
 			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'unknown_tool',
-					helperInput: {},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('unknown_tool', {})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(STATEFUL_AGENT, {
 				...options,
@@ -531,7 +450,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			// Unknown tool should return error
-			const unknownToolResult = invocations.find(
+			const unknownToolResult = tracker.invocations.find(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'unknown_tool'
 			);
 
@@ -543,34 +462,23 @@ describe('executeAgent - State Reducer Pattern', () => {
 		});
 
 		it('should preserve state when handler throws exception', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
 			};
 
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'throwing_tool',
-					helperInput: {shouldThrow: true, errorMessage: 'Tool execution failed'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'json'})]})
+				.respondWith({content: [helperToolUse('throwing_tool', {shouldThrow: true, errorMessage: 'Tool execution failed'})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_THROWING_TOOL, {
 				...options,
@@ -580,7 +488,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			// Verify parse succeeded and updated state
-			const parseResult = getToolResult(invocations, 'parse_tool');
+			const parseResult = getToolResult(tracker.invocations, 'parse_tool');
 			expect(parseResult).toEqual({
 				status: 'parsed',
 				format: 'json',
@@ -588,7 +496,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			});
 
 			// Verify throwing tool returned error
-			const throwingResult = invocations.find(
+			const throwingResult = tracker.invocations.find(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'throwing_tool'
 			);
 			expect(throwingResult).toBeDefined();
@@ -598,7 +506,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			}
 
 			// Verify query succeeded (proves it sees parse's state despite throwing tool)
-			const queryResult = getToolResult(invocations, 'query_tool');
+			const queryResult = getToolResult(tracker.invocations, 'query_tool');
 			expect(queryResult).toEqual({
 				query: 'test',
 				matches: 3,
@@ -607,44 +515,25 @@ describe('executeAgent - State Reducer Pattern', () => {
 		});
 
 		it('should handle multiple exceptions without corrupting state', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: '{"key": "value"}',
 			};
 
-
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'throwing_tool',
-					helperInput: {shouldThrow: true, errorMessage: 'First exception'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'key'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'throwing_tool',
-					helperInput: {shouldThrow: true, errorMessage: 'Second exception'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'key'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'json'})]})
+				.respondWith({content: [helperToolUse('throwing_tool', {shouldThrow: true, errorMessage: 'First exception'})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'key'})]})
+				.respondWith({content: [helperToolUse('throwing_tool', {shouldThrow: true, errorMessage: 'Second exception'})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'key'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_THROWING_TOOL, {
 				...options,
@@ -654,7 +543,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result)).toBe(true);
 
 			// Verify parse succeeded
-			const parseResult = getToolResult(invocations, 'parse_tool');
+			const parseResult = getToolResult(tracker.invocations, 'parse_tool');
 			expect(parseResult).toEqual({
 				status: 'parsed',
 				format: 'json',
@@ -662,7 +551,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			});
 
 			// Verify both query calls succeeded (both see parse's state)
-			const queryResults = invocations.filter(
+			const queryResults = tracker.invocations.filter(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
 			);
 			expect(queryResults.length).toBe(2);
@@ -696,23 +585,21 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 	describe('Custom Initial State', () => {
 		it('should use initialRunState to pre-populate state fields', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
 			const input = {
 				data: 'a, b, c',
 			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_INIT_STATE, {
 				...options,
@@ -723,7 +610,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 			// Query succeeds WITHOUT parse_tool being called
 			// This proves initialRunState actually set parsedData
-			const queryResult = getToolResult(invocations, 'query_tool');
+			const queryResult = getToolResult(tracker.invocations, 'query_tool');
 			expect(queryResult).toEqual({
 				query: 'test',
 				matches: 3,
@@ -731,7 +618,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			});
 
 			// Verify parse_tool was NOT called
-			const parseToolCalls = invocations.filter(
+			const parseToolCalls = tracker.invocations.filter(
 				(inv) => inv.type === 'onToolCall' && inv.toolName === 'parse_tool'
 			);
 			expect(parseToolCalls.length).toBe(0);
@@ -740,11 +627,16 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 	describe('Backward Compatibility', () => {
 		it('should work with stateless agent (no helpers)', async () => {
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(VALID_MINIMAL_AGENT, options);
 
@@ -755,21 +647,23 @@ describe('executeAgent - State Reducer Pattern', () => {
 			}
 
 			// No helper tool calls should occur
-			const helperToolCalls = invocations.filter(
+			const helperToolCalls = tracker.invocations.filter(
 				(inv) => inv.type === 'onToolCall' && inv.toolName !== 'submit' && inv.toolName !== 'generate_output'
 			);
 			expect(helperToolCalls.length).toBe(0);
 		});
 
 		it('should leave output tool behaviour unchanged', async () => {
-			const {options} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
+			const options = {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			};
 
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: createSuccessResponse('test output'),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test output')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(VALID_MINIMAL_AGENT, options);
 
@@ -782,30 +676,28 @@ describe('executeAgent - State Reducer Pattern', () => {
 
 	describe('Execution Isolation', () => {
 		it('should not leak state between sequential executions', async () => {
-			const {options: options1, invocations: invocations1} = createExecuteOptionsWithCallbackTracking();
-			const {options: options2, invocations: invocations2} = createExecuteOptionsWithCallbackTracking();
+			const tracker1 = new CallbackTracker();
+			const options1 = {
+				input: 'test input',
+				callbacks: tracker1.createCallbacks(),
+			};
+			const tracker2 = new CallbackTracker();
+			const options2 = {
+				input: 'test input',
+				callbacks: tracker2.createCallbacks(),
+			};
 
 			const input: StatefulAgentInput = {
 				data: '{"test": true}',
 			};
 
 			// First execution: parse then query (should succeed)
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock1 = new AnthropicApiMock();
+			mock1
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'json'})]})
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result1 = await executeAgent(STATEFUL_AGENT, {
 				...options1,
@@ -815,7 +707,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result1)).toBe(true);
 
 			// Verify first execution succeeded - query worked after parse
-			const firstQueryResult = invocations1.find(
+			const firstQueryResult = tracker1.invocations.find(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
 			);
 			expect(firstQueryResult).toBeDefined();
@@ -825,17 +717,11 @@ describe('executeAgent - State Reducer Pattern', () => {
 			}
 
 			// Second execution: query WITHOUT parse (should fail if truly isolated)
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'query_tool',
-					helperInput: {query: 'test'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock2 = new AnthropicApiMock();
+			mock2
+				.respondWith({content: [helperToolUse('query_tool', {query: 'test'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			const result2 = await executeAgent(STATEFUL_AGENT, {
 				...options2,
@@ -845,7 +731,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 			expect(isOk(result2)).toBe(true);
 
 			// Verify second execution failed - query requires parse
-			const secondQueryResult = invocations2.find(
+			const secondQueryResult = tracker2.invocations.find(
 				(inv) => inv.type === 'onToolResult' && inv.toolName === 'query_tool'
 			);
 			expect(secondQueryResult).toBeDefined();
@@ -865,26 +751,13 @@ describe('executeAgent - State Reducer Pattern', () => {
 			};
 
 			// Both executions parse their respective data
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-				{
-					type: 'helper',
-					helperToolName: 'parse_tool',
-					helperInput: {format: 'json'},
-				},
-				{
-					type: 'custom',
-					response: createStatefulSubmitResponse(),
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'json'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.respondWith({content: [helperToolUse('parse_tool', {format: 'json'})]})
+				.respondWith({content: [outputToolUse({result: 'success', finalCount: 1})]})
+				.install(mockMessagesCreate);
 
 			// Execute concurrently with different inputs
 			const [result1, result2] = await Promise.all([

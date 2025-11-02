@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeEach, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mockMessagesCreate = vi.fn();
 
@@ -11,17 +11,16 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 }));
 
 import {
-	executeAgent,
-	setupExecuteAgentMocks,
-	VALID_COMPLETE_AGENT,
 	AGENT_WITH_HELPER_TOOLS,
 	AGENT_WITH_REFLECTION,
+	VALID_COMPLETE_AGENT,
 	VALID_EXECUTE_OPTIONS,
-	createMockApiCalls,
-	createOutputThenSubmitResponse,
-	isOk,
+	executeAgent,
 	isErr,
+	isOk,
+	setupExecuteAgentMocks,
 } from '../executeAgent.common.fixtures';
+import {AnthropicApiMock, helperToolUse, outputToolUse, submitToolUse} from '../executeAgent.mock';
 
 describe('executeAgent - Observability', () => {
 	beforeEach(() => {
@@ -30,10 +29,7 @@ describe('executeAgent - Observability', () => {
 
 	describe('Metadata Structure', () => {
 		it('should populate metadata on success', async () => {
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isOk(result)).toBe(true);
 
@@ -43,12 +39,10 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should populate metadata on failure', async () => {
-			mockMessagesCreate.mockRejectedValueOnce(new Error('API error'));
+			const mock = new AnthropicApiMock();
+			mock.throwWith({error: new Error('API error')}).install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isErr(result)).toBe(true);
 
@@ -58,10 +52,7 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should include latency in metadata', async () => {
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.latency).toBeDefined();
@@ -71,10 +62,7 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should include tokens in metadata', async () => {
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.tokens).toBeDefined();
@@ -86,14 +74,12 @@ describe('executeAgent - Observability', () => {
 
 	describe('Token Tracking', () => {
 		it('should track input tokens from single API call', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success', inputTokens: 150, outputTokens: 75},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')], usage: {input: 150, output: 75}})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.tokens?.input).toBe(150);
@@ -101,14 +87,12 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should track output tokens from single API call', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success', inputTokens: 150, outputTokens: 75},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')], usage: {input: 150, output: 75}})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.tokens?.output).toBe(75);
@@ -116,16 +100,17 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should accumulate tokens across multiple attempts', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid', inputTokens: 100, outputTokens: 50},
-				{type: 'invalid', inputTokens: 120, outputTokens: 60},
-				{type: 'success', result: 'valid result that is long enough', inputTokens: 150, outputTokens: 75},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')], usage: {input: 100, output: 50}})
+				.respondWith({content: [outputToolUse('short')], usage: {input: 120, output: 60}})
+				.respondWith({
+					content: [outputToolUse('valid result that is long enough')],
+					usage: {input: 150, output: 75},
+				})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.tokens?.input).toBe(370);
@@ -134,16 +119,14 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should accumulate tokens across iterations', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', inputTokens: 100, outputTokens: 50},
-				{type: 'helper', inputTokens: 120, outputTokens: 60},
-				{type: 'success', inputTokens: 150, outputTokens: 75},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})], usage: {input: 100, output: 50}})
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})], usage: {input: 120, output: 60}})
+				.respondWith({content: [outputToolUse('success result')], usage: {input: 150, output: 75}})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				AGENT_WITH_HELPER_TOOLS,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.tokens?.input).toBe(370);
@@ -152,16 +135,17 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should accumulate tokens in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success', result: 'draft 1', inputTokens: 100, outputTokens: 50},
-				{type: 'success', result: 'draft 2', inputTokens: 150, outputTokens: 75},
-				{type: 'custom', response: createOutputThenSubmitResponse('final draft', 200, 100)},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('draft 1')], usage: {input: 100, output: 50}})
+				.respondWith({content: [outputToolUse('draft 2')], usage: {input: 150, output: 75}})
+				.respondWith({
+					content: [outputToolUse('final draft'), submitToolUse()],
+					usage: {input: 200, output: 100},
+				})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				AGENT_WITH_REFLECTION,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.tokens?.input).toBe(450);
@@ -172,10 +156,7 @@ describe('executeAgent - Observability', () => {
 
 	describe('Latency Tracking', () => {
 		it('should track latency for successful execution', async () => {
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.latency).toBeTypeOf('number');
@@ -184,12 +165,10 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should track latency for failed execution', async () => {
-			mockMessagesCreate.mockRejectedValueOnce(new Error('API error'));
+			const mock = new AnthropicApiMock();
+			mock.throwWith({error: new Error('API error')}).install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isErr(result)) {
 				expect(result.error.metadata?.latency).toBeTypeOf('number');
@@ -198,16 +177,14 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should include time for multiple attempts in latency', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.latency).toBeGreaterThan(0);
@@ -215,16 +192,14 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should include time for multiple iterations in latency', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				AGENT_WITH_HELPER_TOOLS,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata?.latency).toBeGreaterThan(0);
@@ -292,14 +267,12 @@ describe('executeAgent - Observability', () => {
 
 	describe('Metadata Consistency', () => {
 		it('should always include metadata even with zero tokens', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success', inputTokens: 0, outputTokens: 0},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')], usage: {input: 0, output: 0}})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata).toBeDefined();
@@ -309,15 +282,16 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should maintain metadata structure across attempts', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid', inputTokens: 100, outputTokens: 50},
-				{type: 'success', result: 'valid result that is long enough', inputTokens: 150, outputTokens: 75},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')], usage: {input: 100, output: 50}})
+				.respondWith({
+					content: [outputToolUse('valid result that is long enough')],
+					usage: {input: 150, output: 75},
+				})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			if (isOk(result)) {
 				expect(result.data.metadata).toBeDefined();
@@ -331,15 +305,13 @@ describe('executeAgent - Observability', () => {
 
 	describe('Token Metadata in Error Paths', () => {
 		it('should include token metadata in API error responses', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', inputTokens: 100, outputTokens: 50},
-				{type: 'error', error: new Error('API error')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})], usage: {input: 100, output: 50}})
+				.throwWith({error: new Error('API error')})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				AGENT_WITH_HELPER_TOOLS,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
 			expect(isErr(result)).toBe(true);
 
@@ -352,18 +324,16 @@ describe('executeAgent - Observability', () => {
 		});
 
 		it('should include accumulated tokens when max attempts exceeded', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid', inputTokens: 100, outputTokens: 50},
-				{type: 'invalid', inputTokens: 120, outputTokens: 60},
-				{type: 'invalid', inputTokens: 150, outputTokens: 75},
-				{type: 'invalid', inputTokens: 140, outputTokens: 70},
-				{type: 'invalid', inputTokens: 160, outputTokens: 80},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')], usage: {input: 100, output: 50}})
+				.respondWith({content: [outputToolUse('short')], usage: {input: 120, output: 60}})
+				.respondWith({content: [outputToolUse('short')], usage: {input: 150, output: 75}})
+				.respondWith({content: [outputToolUse('short')], usage: {input: 140, output: 70}})
+				.respondWith({content: [outputToolUse('short')], usage: {input: 160, output: 80}})
+				.install(mockMessagesCreate);
 
-			const result = await executeAgent(
-				VALID_COMPLETE_AGENT,
-				VALID_EXECUTE_OPTIONS
-			);
+			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
 			expect(isErr(result)).toBe(true);
 

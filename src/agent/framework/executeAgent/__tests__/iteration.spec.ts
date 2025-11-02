@@ -20,13 +20,11 @@ import {
 	AGENT_WITH_THROWING_HELPER,
 	AGENT_WITH_DEFAULT_ITERATION_LIMIT,
 	VALID_EXECUTE_OPTIONS,
-	createMockApiCalls,
-	createExecuteOptionsWithCallbackTracking,
-	createMixedToolResponse,
 	isOk,
 	isErr,
 	AGENT_ERROR_CODES,
 } from '../executeAgent.common.fixtures';
+import {AnthropicApiMock, CallbackTracker, helperToolUse, outputToolUse} from '../executeAgent.mock';
 
 describe('executeAgent - Iteration Loop', () => {
 	beforeEach(() => {
@@ -35,10 +33,11 @@ describe('executeAgent - Iteration Loop', () => {
 
 	describe('Helper Tools', () => {
 		it('should execute single helper tool and then output tool', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -46,11 +45,12 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should execute multiple helper tools in sequence', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data', helperInput: {query: 'first'}},
-				{type: 'helper', helperToolName: 'query_data', helperInput: {query: 'second'}},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'first'})]})
+				.respondWith({content: [helperToolUse('query_data', {query: 'second'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -58,10 +58,11 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should handle helper tool returning error Result', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -70,10 +71,11 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should handle unknown tool gracefully', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'unknown_tool'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('unknown_tool', {})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -82,11 +84,12 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should accumulate tokens across helper tool iterations', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', inputTokens: 100, outputTokens: 50},
-				{type: 'helper', inputTokens: 120, outputTokens: 60},
-				{type: 'success', inputTokens: 150, outputTokens: 75},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})], usage: {input: 100, output: 50}})
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})], usage: {input: 120, output: 60}})
+				.respondWith({content: [outputToolUse('success result')], usage: {input: 150, output: 75}})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -99,9 +102,10 @@ describe('executeAgent - Iteration Loop', () => {
 
 	describe('Error Cases', () => {
 		it('should use default iteration limit of 15 when not specified', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_DEFAULT_ITERATION_LIMIT, VALID_EXECUTE_OPTIONS);
 
@@ -120,9 +124,10 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should exhaust iteration limit when helper tools called repeatedly', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -143,22 +148,16 @@ describe('executeAgent - Iteration Loop', () => {
 
 		it('should return OUTPUT_TOOL_NOT_USED when loop exits without output', async () => {
 			// Helper tool, then stop_reason: 'end_turn' (not 'tool_use')
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{
-					type: 'custom',
-					response: {
-						id: 'msg_no_output',
-						type: 'message',
-						role: 'assistant',
-						model: 'claude-sonnet-4-5-20250929',
-						content: [{type: 'text', text: 'I cannot complete this task'}],
-						stop_reason: 'end_turn',
-						stop_sequence: null,
-						usage: {input_tokens: 100, output_tokens: 50},
-					},
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({
+					content: [{type: 'text', text: 'I cannot complete this task'}],
+					id: 'msg_no_output',
+					stopReason: 'end_turn',
+					usage: {input: 100, output: 50},
+				})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(VALID_MINIMAL_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -179,9 +178,10 @@ describe('executeAgent - Iteration Loop', () => {
 			// Edge case: iterations exhausted while output tool was never called
 			// Both error conditions are true, but OUTPUT_TOOL_NOT_USED should be returned
 			// because it's more specific and actionable (protocol violation vs resource exhaustion)
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'}, // Repeats indefinitely (mock persists last config)
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -203,10 +203,11 @@ describe('executeAgent - Iteration Loop', () => {
 
 	describe('Handler Exception Safety', () => {
 		it('should handle helper handler that throws exception', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'throwing_tool'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('throwing_tool', {})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_THROWING_HELPER, VALID_EXECUTE_OPTIONS);
 
@@ -215,10 +216,11 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should pass error message to model when helper handler throws', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'throwing_tool'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('throwing_tool', {})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_THROWING_HELPER, VALID_EXECUTE_OPTIONS);
 
@@ -251,10 +253,11 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should mark tool result as error when helper handler throws', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'throwing_tool'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('throwing_tool', {})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_THROWING_HELPER, VALID_EXECUTE_OPTIONS);
 
@@ -283,17 +286,20 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should invoke onToolResult callback when helper handler throws', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'throwing_tool'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('throwing_tool', {})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			await executeAgent(AGENT_WITH_THROWING_HELPER, options);
+			const tracker = new CallbackTracker();
+			await executeAgent(AGENT_WITH_THROWING_HELPER, {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			});
 
 			// Should have called onToolResult with error
-			const toolResults = invocations.filter((i) => i.type === 'onToolResult');
+			const toolResults = tracker.invocations.filter((i) => i.type === 'onToolResult');
 			expect(toolResults.length).toBeGreaterThan(0);
 
 			const helperResult = toolResults.find((result) => {
@@ -312,9 +318,18 @@ describe('executeAgent - Iteration Loop', () => {
 
 	describe('Mixed Tool Uses', () => {
 		it('should process helper + output + helper in single response', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createMixedToolResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({
+					content: [
+						helperToolUse('query_data', {query: 'first query'}, 'toolu_helper1'),
+						outputToolUse('test result', 'toolu_output'),
+						helperToolUse('query_data', {query: 'second query'}, 'toolu_helper2'),
+					],
+					id: 'msg_mixed_tools',
+					usage: {input: 100, output: 50},
+				})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -326,16 +341,27 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should execute all tool handlers in mixed response', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createMixedToolResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({
+					content: [
+						helperToolUse('query_data', {query: 'first query'}, 'toolu_helper1'),
+						outputToolUse('test result', 'toolu_output'),
+						helperToolUse('query_data', {query: 'second query'}, 'toolu_helper2'),
+					],
+					id: 'msg_mixed_tools',
+					usage: {input: 100, output: 50},
+				})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
-
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			const tracker = new CallbackTracker();
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input',
+				callbacks: tracker.createCallbacks(),
+			});
 
 			// Should have called both helper tools and output tool
-			const toolCalls = invocations.filter((i) => i.type === 'onToolCall');
+			const toolCalls = tracker.invocations.filter((i) => i.type === 'onToolCall');
 
 			const helper1 = toolCalls.find((call) => {
 				if (call.type === 'onToolCall' && call.toolName === 'query_data') {
@@ -364,9 +390,18 @@ describe('executeAgent - Iteration Loop', () => {
 		});
 
 		it('should terminate after processing all tools when output is present', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createMixedToolResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({
+					content: [
+						helperToolUse('query_data', {query: 'first query'}, 'toolu_helper1'),
+						outputToolUse('test result', 'toolu_output'),
+						helperToolUse('query_data', {query: 'second query'}, 'toolu_helper2'),
+					],
+					id: 'msg_mixed_tools',
+					usage: {input: 100, output: 50},
+				})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 

@@ -19,14 +19,11 @@ import {
 	AGENT_WITH_REJECTING_REFLECTION,
 	AGENT_WITH_THROWING_REFLECTION,
 	VALID_EXECUTE_OPTIONS,
-	createMockApiCalls,
-	createOutputThenSubmitResponse,
-	createSubmitBeforeOutputResponse,
-	createExecuteOptionsWithCallbackTracking,
 	isOk,
 	isErr,
 	AGENT_ERROR_CODES,
 } from '../executeAgent.common.fixtures';
+import {AnthropicApiMock, CallbackTracker, outputToolUse, submitToolUse} from '../executeAgent.mock';
 
 describe('executeAgent - Reflection Mode', () => {
 	beforeEach(() => {
@@ -34,10 +31,11 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should execute reflection handler when output tool is called', async () => {
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'success'},
-			{type: 'submit'},
-		]);
+		const mock = new AnthropicApiMock();
+		mock
+			.respondWith({content: [outputToolUse('success result')]})
+			.respondWith({content: [submitToolUse()]})
+			.install(mockMessagesCreate);
 
 		const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -45,12 +43,13 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should allow output tool to be called multiple times before submit', async () => {
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'success', result: 'first draft'},
-			{type: 'success', result: 'second draft'},
-			{type: 'success', result: 'final draft'},
-			{type: 'custom', response: createOutputThenSubmitResponse('final draft')},
-		]);
+		const mock = new AnthropicApiMock();
+		mock
+			.respondWith({content: [outputToolUse('first draft')]})
+			.respondWith({content: [outputToolUse('second draft')]})
+			.respondWith({content: [outputToolUse('final draft')]})
+			.respondWith({content: [outputToolUse('final draft'), submitToolUse()]})
+			.install(mockMessagesCreate);
 
 		const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -63,7 +62,8 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should return SUBMIT_BEFORE_OUTPUT error when submit called without output', async () => {
-		mockMessagesCreate.mockResolvedValue(createSubmitBeforeOutputResponse());
+		const mock = new AnthropicApiMock();
+		mock.respondWith({content: [submitToolUse()]}).install(mockMessagesCreate);
 
 		const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -77,9 +77,8 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should pass output to reflection handler for formatting', async () => {
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-		]);
+		const mock = new AnthropicApiMock();
+		mock.respondWith({content: [outputToolUse('test result'), submitToolUse()]}).install(mockMessagesCreate);
 
 		const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -88,10 +87,11 @@ describe('executeAgent - Reflection Mode', () => {
 
 	it('should handle reflection handler returning error', async () => {
 		// Output is too short (< 20 chars), should get error from reflection handler
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'success', result: 'short'},
-			{type: 'custom', response: createOutputThenSubmitResponse('longer result that meets requirements')},
-		]);
+		const mock = new AnthropicApiMock();
+		mock
+			.respondWith({content: [outputToolUse('short')]})
+			.respondWith({content: [outputToolUse('longer result that meets requirements'), submitToolUse()]})
+			.install(mockMessagesCreate);
 
 		const result = await executeAgent(AGENT_WITH_REJECTING_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -103,9 +103,8 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should terminate iteration when submit is called', async () => {
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'custom', response: createOutputThenSubmitResponse('success result')},
-		]);
+		const mock = new AnthropicApiMock();
+		mock.respondWith({content: [outputToolUse('success result'), submitToolUse()]}).install(mockMessagesCreate);
 
 		const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -116,11 +115,12 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should accumulate tokens across reflection iterations', async () => {
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'success', result: 'draft 1', inputTokens: 100, outputTokens: 50},
-			{type: 'success', result: 'draft 2', inputTokens: 150, outputTokens: 75},
-			{type: 'custom', response: createOutputThenSubmitResponse('final draft', 200, 100)},
-		]);
+		const mock = new AnthropicApiMock();
+		mock
+			.respondWith({content: [outputToolUse('draft 1')], usage: {input: 100, output: 50}})
+			.respondWith({content: [outputToolUse('draft 2')], usage: {input: 150, output: 75}})
+			.respondWith({content: [outputToolUse('final draft'), submitToolUse()], usage: {input: 200, output: 100}})
+			.install(mockMessagesCreate);
 
 		const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -134,9 +134,8 @@ describe('executeAgent - Reflection Mode', () => {
 
 	it('should bypass reflection handler in non-reflection mode', async () => {
 		// VALID_MINIMAL_AGENT doesn't have reflectionHandler
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'success'},
-		]);
+		const mock = new AnthropicApiMock();
+		mock.respondWith({content: [outputToolUse('success result')]}).install(mockMessagesCreate);
 
 		const result = await executeAgent(VALID_MINIMAL_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -147,9 +146,8 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should not inject submit tool in non-reflection mode', async () => {
-		createMockApiCalls(mockMessagesCreate, [
-			{type: 'success'},
-		]);
+		const mock = new AnthropicApiMock();
+		mock.respondWith({content: [outputToolUse('success result')]}).install(mockMessagesCreate);
 
 		await executeAgent(VALID_MINIMAL_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -162,7 +160,8 @@ describe('executeAgent - Reflection Mode', () => {
 	});
 
 	it('should inject submit tool in reflection mode', async () => {
-		mockMessagesCreate.mockResolvedValue(createOutputThenSubmitResponse());
+		const mock = new AnthropicApiMock();
+		mock.respondWith({content: [outputToolUse('success result'), submitToolUse()]}).install(mockMessagesCreate);
 
 		await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -178,25 +177,17 @@ describe('executeAgent - Reflection Mode', () => {
 		it('should add tool_result when validation fails in reflection mode', async () => {
 			// First response: output+submit with invalid data (fails Zod validation)
 			// Second response: output+submit with valid data
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: {
-						id: 'msg_test_invalid',
-						type: 'message',
-						role: 'assistant',
-						model: 'claude-sonnet-4-5-20250929',
-						content: [
-							{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
-							{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
-						],
-						stop_reason: 'tool_use',
-						stop_sequence: null,
-						usage: {input_tokens: 100, output_tokens: 50},
-					},
-				},
-				{type: 'custom', response: createOutputThenSubmitResponse('valid result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({
+					content: [
+						{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
+						{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
+					],
+					id: 'msg_test_invalid',
+				})
+				.respondWith({content: [outputToolUse('valid result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -218,25 +209,17 @@ describe('executeAgent - Reflection Mode', () => {
 		});
 
 		it('should mark tool_result as error when validation fails', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: {
-						id: 'msg_test_invalid',
-						type: 'message',
-						role: 'assistant',
-						model: 'claude-sonnet-4-5-20250929',
-						content: [
-							{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
-							{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
-						],
-						stop_reason: 'tool_use',
-						stop_sequence: null,
-						usage: {input_tokens: 100, output_tokens: 50},
-					},
-				},
-				{type: 'custom', response: createOutputThenSubmitResponse('valid result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({
+					content: [
+						{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
+						{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
+					],
+					id: 'msg_test_invalid',
+				})
+				.respondWith({content: [outputToolUse('valid result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -257,31 +240,26 @@ describe('executeAgent - Reflection Mode', () => {
 		});
 
 		it('should invoke onToolResult callback when validation fails', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: {
-						id: 'msg_test_invalid',
-						type: 'message',
-						role: 'assistant',
-						model: 'claude-sonnet-4-5-20250929',
-						content: [
-							{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
-							{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
-						],
-						stop_reason: 'tool_use',
-						stop_sequence: null,
-						usage: {input_tokens: 100, output_tokens: 50},
-					},
-				},
-				{type: 'custom', response: createOutputThenSubmitResponse('valid result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({
+					content: [
+						{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
+						{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
+					],
+					id: 'msg_test_invalid',
+				})
+				.respondWith({content: [outputToolUse('valid result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const validationErrorResult = invocations.find((inv) =>
+			const validationErrorResult = tracker.invocations.find((inv) =>
 				inv.type === 'onToolResult' &&
 				inv.toolName === 'generate_output' &&
 				inv.toolResult.includes('Validation failed')
@@ -293,10 +271,11 @@ describe('executeAgent - Reflection Mode', () => {
 
 	describe('Reflection Handler Exception Safety', () => {
 		it('should handle reflection handler that throws exception', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success'},
-				{type: 'submit'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')]})
+				.respondWith({content: [submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_THROWING_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -305,10 +284,11 @@ describe('executeAgent - Reflection Mode', () => {
 		});
 
 		it('should pass error message to model when reflection handler throws', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success'},
-				{type: 'submit'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')]})
+				.respondWith({content: [submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_THROWING_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -341,10 +321,11 @@ describe('executeAgent - Reflection Mode', () => {
 		});
 
 		it('should mark tool result as error when reflection handler throws', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success'},
-				{type: 'submit'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')]})
+				.respondWith({content: [submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_THROWING_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -373,17 +354,21 @@ describe('executeAgent - Reflection Mode', () => {
 		});
 
 		it('should invoke onToolResult callback when reflection handler throws', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success'},
-				{type: 'submit'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('success result')]})
+				.respondWith({content: [submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_THROWING_REFLECTION, options);
+			await executeAgent(AGENT_WITH_THROWING_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
 			// Should have called onToolResult with error
-			const toolResults = invocations.filter((i) => i.type === 'onToolResult');
+			const toolResults = tracker.invocations.filter((i) => i.type === 'onToolResult');
 			expect(toolResults.length).toBeGreaterThan(0);
 
 			const outputResult = toolResults.find((result) => {

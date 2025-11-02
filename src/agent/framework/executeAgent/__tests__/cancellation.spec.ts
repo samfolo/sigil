@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeEach, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mockMessagesCreate = vi.fn();
 
@@ -11,18 +11,16 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 }));
 
 import {
-	executeAgent,
-	setupExecuteAgentMocks,
-	VALID_MINIMAL_AGENT,
-	VALID_COMPLETE_AGENT,
-	AGENT_WITH_HELPER_TOOLS,
-	VALID_EXECUTE_OPTIONS,
-	createMockApiCalls,
-	createInvalidResponse,
-	createHelperToolResponse,
-	isErr,
 	AGENT_ERROR_CODES,
+	AGENT_WITH_HELPER_TOOLS,
+	VALID_COMPLETE_AGENT,
+	VALID_EXECUTE_OPTIONS,
+	VALID_MINIMAL_AGENT,
+	executeAgent,
+	isErr,
+	setupExecuteAgentMocks,
 } from '../executeAgent.common.fixtures';
+import {AnthropicApiMock, helperToolUse, outputToolUse} from '../executeAgent.mock';
 
 describe('executeAgent - Cancellation', () => {
 	beforeEach(() => {
@@ -63,19 +61,18 @@ describe('executeAgent - Cancellation', () => {
 
 			// First call: return invalid response, schedule abort during delay
 			// This ensures abort happens after first attempt but before second
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: (() => {
-						// Schedule abort to happen after response returns
-						setTimeout(() => {
-							controller.abort();
-						}, 5);
-						return createInvalidResponse();
-					})(),
-					delay: 10,
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith(
+					{content: [outputToolUse('short')]},
+					{delay: 10}
+				)
+				.install(mockMessagesCreate);
+
+			// Schedule abort to happen after response returns
+			setTimeout(() => {
+				controller.abort();
+			}, 5);
 
 			const result = await executeAgent(VALID_COMPLETE_AGENT, {
 				input: 'test input',
@@ -95,19 +92,18 @@ describe('executeAgent - Cancellation', () => {
 
 			// First call: helper tool, then schedule abort during delay
 			// Second call would be another helper, but abort catches it
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: (() => {
-						// Schedule abort to happen after response returns
-						setTimeout(() => {
-							controller.abort();
-						}, 5);
-						return createHelperToolResponse('query_data');
-					})(),
-					delay: 10,
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith(
+					{content: [helperToolUse('query_data', {query: 'test'})]},
+					{delay: 10}
+				)
+				.install(mockMessagesCreate);
+
+			// Schedule abort to happen after response returns
+			setTimeout(() => {
+				controller.abort();
+			}, 5);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, {
 				input: 'test input',
@@ -224,19 +220,18 @@ describe('executeAgent - Cancellation', () => {
 
 			// First call: helper tool, schedule abort during delay
 			// Should not make a second API call
-			createMockApiCalls(mockMessagesCreate, [
-				{
-					type: 'custom',
-					response: (() => {
-						// Schedule abort to happen after response returns
-						setTimeout(() => {
-							controller.abort();
-						}, 5);
-						return createHelperToolResponse('query_data');
-					})(),
-					delay: 10,
-				},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith(
+					{content: [helperToolUse('query_data', {query: 'test'})]},
+					{delay: 10}
+				)
+				.install(mockMessagesCreate);
+
+			// Schedule abort to happen after response returns
+			setTimeout(() => {
+				controller.abort();
+			}, 5);
 
 			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
 				input: 'test input',

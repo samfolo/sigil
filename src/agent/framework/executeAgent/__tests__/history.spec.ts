@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeEach, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mockMessagesCreate = vi.fn();
 
@@ -11,16 +11,15 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 }));
 
 import {
-	executeAgent,
-	setupExecuteAgentMocks,
-	VALID_MINIMAL_AGENT,
-	VALID_COMPLETE_AGENT,
 	AGENT_WITH_HELPER_TOOLS,
 	AGENT_WITH_REFLECTION,
+	VALID_COMPLETE_AGENT,
 	VALID_EXECUTE_OPTIONS,
-	createMockApiCalls,
-	createOutputThenSubmitResponse,
+	VALID_MINIMAL_AGENT,
+	executeAgent,
+	setupExecuteAgentMocks,
 } from '../executeAgent.common.fixtures';
+import {AnthropicApiMock, helperToolUse, outputToolUse, submitToolUse} from '../executeAgent.mock';
 
 describe('executeAgent - Conversation History', () => {
 	beforeEach(() => {
@@ -54,10 +53,11 @@ describe('executeAgent - Conversation History', () => {
 
 	describe('History Accumulation Across Attempts', () => {
 		it('should accumulate history after validation failure', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -70,10 +70,11 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should include assistant response in history after failure', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -85,10 +86,11 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should append error message after validation failure', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -100,10 +102,11 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should maintain correct message order across attempts', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'invalid'},
-				{type: 'success', result: 'valid result that is long enough'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(VALID_COMPLETE_AGENT, VALID_EXECUTE_OPTIONS);
 
@@ -118,10 +121,11 @@ describe('executeAgent - Conversation History', () => {
 
 	describe('History Accumulation Across Iterations', () => {
 		it('should accumulate history after helper tool use', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -134,10 +138,11 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should include tool use in assistant message', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -157,10 +162,11 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should include tool result in user message', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -182,11 +188,12 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should accumulate multiple iterations in history', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -199,10 +206,11 @@ describe('executeAgent - Conversation History', () => {
 
 	describe('Reflection Mode History', () => {
 		it('should include output tool use in history', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success', result: 'draft'},
-				{type: 'custom', response: createOutputThenSubmitResponse('final')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('draft')]})
+				.respondWith({content: [outputToolUse('final'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -213,20 +221,21 @@ describe('executeAgent - Conversation History', () => {
 
 			if (assistantMessage) {
 				const content = assistantMessage.content;
-				const outputToolUse = Array.isArray(content)
+				const outputToolUseBlock = Array.isArray(content)
 					? content.find((block: {type: string; name?: string}) =>
 						block.type === 'tool_use' && block.name === 'generate_output'
 					)
 					: null;
-				expect(outputToolUse).toBeDefined();
+				expect(outputToolUseBlock).toBeDefined();
 			}
 		});
 
 		it('should include reflection feedback in tool result', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success', result: 'draft'},
-				{type: 'custom', response: createOutputThenSubmitResponse('final')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('draft')]})
+				.respondWith({content: [outputToolUse('final'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -246,11 +255,12 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should maintain history through multiple reflection iterations', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'success', result: 'draft 1'},
-				{type: 'success', result: 'draft 2'},
-				{type: 'custom', response: createOutputThenSubmitResponse('final')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('draft 1')]})
+				.respondWith({content: [outputToolUse('draft 2')]})
+				.respondWith({content: [outputToolUse('final'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
 
@@ -263,10 +273,11 @@ describe('executeAgent - Conversation History', () => {
 
 	describe('Tool Result Structure', () => {
 		it('should include tool_use_id in tool_result', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 
@@ -290,10 +301,11 @@ describe('executeAgent - Conversation History', () => {
 		});
 
 		it('should match tool_use_id between tool_use and tool_result', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			await executeAgent(AGENT_WITH_HELPER_TOOLS, VALID_EXECUTE_OPTIONS);
 

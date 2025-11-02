@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeEach, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mockMessagesCreate = vi.fn();
 
@@ -11,15 +11,21 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 }));
 
 import {
-	executeAgent,
-	setupExecuteAgentMocks,
 	AGENT_WITH_HELPER_TOOLS,
 	AGENT_WITH_REFLECTION,
-	createExecuteOptionsWithCallbackTracking,
-	createMockApiCalls,
-	createOutputThenSubmitResponse,
+	executeAgent,
 	isOk,
+	setupExecuteAgentMocks,
 } from '../executeAgent.common.fixtures';
+import {SUBMIT_TOOL_NAME} from '../iteration/constants';
+import {
+	AnthropicApiMock,
+	CallbackTracker,
+	OUTPUT_TOOL_NAME,
+	helperToolUse,
+	outputToolUse,
+	submitToolUse,
+} from '../executeAgent.mock';
 
 describe('executeAgent - Callbacks', () => {
 	beforeEach(() => {
@@ -28,17 +34,20 @@ describe('executeAgent - Callbacks', () => {
 
 	describe('Helper Tool Callbacks', () => {
 		it('should invoke onToolCall when helper tool is called', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const toolCalls = invocations.filter((i) => i.type === 'onToolCall');
+			const toolCalls = tracker.invocations.filter((i) => i.type === 'onToolCall');
 
 			expect(toolCalls.length).toBeGreaterThan(0);
 
@@ -53,17 +62,20 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should invoke onToolResult after helper tool executes', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const toolResults = invocations.filter((i) => i.type === 'onToolResult');
+			const toolResults = tracker.invocations.filter((i) => i.type === 'onToolResult');
 
 			expect(toolResults.length).toBeGreaterThan(0);
 
@@ -78,20 +90,23 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should invoke callbacks in correct order for helper tools', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const helperCallIndex = invocations.findIndex(
+			const helperCallIndex = tracker.invocations.findIndex(
 				(i) => i.type === 'onToolCall' && i.toolName === 'query_data'
 			);
-			const helperResultIndex = invocations.findIndex(
+			const helperResultIndex = tracker.invocations.findIndex(
 				(i) => i.type === 'onToolResult' && i.toolName === 'query_data'
 			);
 
@@ -101,17 +116,20 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should pass correct tool input to onToolCall', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data', helperInput: {query: 'test query'}},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test query'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const helperCall = invocations.find(
+			const helperCall = tracker.invocations.find(
 				(i) => i.type === 'onToolCall' && i.toolName === 'query_data'
 			);
 
@@ -121,17 +139,20 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should pass tool result string to onToolResult', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const helperResult = invocations.find(
+			const helperResult = tracker.invocations.find(
 				(i) => i.type === 'onToolResult' && i.toolName === 'query_data'
 			);
 
@@ -142,21 +163,24 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should invoke callbacks for multiple helper tool calls', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data', helperInput: {query: 'first'}},
-				{type: 'helper', helperToolName: 'query_data', helperInput: {query: 'second'}},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'first'})]})
+				.respondWith({content: [helperToolUse('query_data', {query: 'second'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const toolCalls = invocations.filter(
+			const toolCalls = tracker.invocations.filter(
 				(i) => i.type === 'onToolCall' && i.toolName === 'query_data'
 			);
-			const toolResults = invocations.filter(
+			const toolResults = tracker.invocations.filter(
 				(i) => i.type === 'onToolResult' && i.toolName === 'query_data'
 			);
 
@@ -167,54 +191,63 @@ describe('executeAgent - Callbacks', () => {
 
 	describe('Output Tool Callbacks', () => {
 		it('should invoke onToolCall when output tool is called in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const outputCall = invocations.find(
-				(i) => i.type === 'onToolCall' && i.toolName === 'generate_output'
+			const outputCall = tracker.invocations.find(
+				(i) => i.type === 'onToolCall' && i.toolName === OUTPUT_TOOL_NAME
 			);
 
 			expect(outputCall).toBeDefined();
 		});
 
 		it('should invoke onToolResult after output tool executes in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const outputResult = invocations.find(
-				(i) => i.type === 'onToolResult' && i.toolName === 'generate_output'
+			const outputResult = tracker.invocations.find(
+				(i) => i.type === 'onToolResult' && i.toolName === OUTPUT_TOOL_NAME
 			);
 
 			expect(outputResult).toBeDefined();
 		});
 
 		it('should invoke callbacks in correct order for output tool in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const outputCallIndex = invocations.findIndex(
-				(i) => i.type === 'onToolCall' && i.toolName === 'generate_output'
+			const outputCallIndex = tracker.invocations.findIndex(
+				(i) => i.type === 'onToolCall' && i.toolName === OUTPUT_TOOL_NAME
 			);
-			const outputResultIndex = invocations.findIndex(
-				(i) => i.type === 'onToolResult' && i.toolName === 'generate_output'
+			const outputResultIndex = tracker.invocations.findIndex(
+				(i) => i.type === 'onToolResult' && i.toolName === OUTPUT_TOOL_NAME
 			);
 
 			expect(outputCallIndex).toBeGreaterThan(-1);
@@ -225,34 +258,40 @@ describe('executeAgent - Callbacks', () => {
 
 	describe('Reflection Mode Callbacks', () => {
 		it('should invoke onToolCall for output in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const outputCall = invocations.find(
-				(i) => i.type === 'onToolCall' && i.toolName === 'generate_output'
+			const outputCall = tracker.invocations.find(
+				(i) => i.type === 'onToolCall' && i.toolName === OUTPUT_TOOL_NAME
 			);
 
 			expect(outputCall).toBeDefined();
 		});
 
 		it('should invoke onToolResult for output in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const outputResult = invocations.find(
-				(i) => i.type === 'onToolResult' && i.toolName === 'generate_output'
+			const outputResult = tracker.invocations.find(
+				(i) => i.type === 'onToolResult' && i.toolName === OUTPUT_TOOL_NAME
 			);
 
 			expect(outputResult).toBeDefined();
@@ -263,34 +302,40 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should invoke onToolCall for submit in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const submitCall = invocations.find(
-				(i) => i.type === 'onToolCall' && i.toolName === 'submit'
+			const submitCall = tracker.invocations.find(
+				(i) => i.type === 'onToolCall' && i.toolName === SUBMIT_TOOL_NAME
 			);
 
 			expect(submitCall).toBeDefined();
 		});
 
 		it('should invoke onToolResult for submit in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const submitResult = invocations.find(
-				(i) => i.type === 'onToolResult' && i.toolName === 'submit'
+			const submitResult = tracker.invocations.find(
+				(i) => i.type === 'onToolResult' && i.toolName === SUBMIT_TOOL_NAME
 			);
 
 			expect(submitResult).toBeDefined();
@@ -301,26 +346,29 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should maintain correct callback order in reflection mode', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'custom', response: createOutputThenSubmitResponse('test result')},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('test result'), submitToolUse()]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_REFLECTION, options);
+			await executeAgent(AGENT_WITH_REFLECTION, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const outputCallIndex = invocations.findIndex(
-				(i) => i.type === 'onToolCall' && i.toolName === 'generate_output'
+			const outputCallIndex = tracker.invocations.findIndex(
+				(i) => i.type === 'onToolCall' && i.toolName === OUTPUT_TOOL_NAME
 			);
-			const outputResultIndex = invocations.findIndex(
-				(i) => i.type === 'onToolResult' && i.toolName === 'generate_output'
+			const outputResultIndex = tracker.invocations.findIndex(
+				(i) => i.type === 'onToolResult' && i.toolName === OUTPUT_TOOL_NAME
 			);
-			const submitCallIndex = invocations.findIndex(
-				(i) => i.type === 'onToolCall' && i.toolName === 'submit'
+			const submitCallIndex = tracker.invocations.findIndex(
+				(i) => i.type === 'onToolCall' && i.toolName === SUBMIT_TOOL_NAME
 			);
-			const submitResultIndex = invocations.findIndex(
-				(i) => i.type === 'onToolResult' && i.toolName === 'submit'
+			const submitResultIndex = tracker.invocations.findIndex(
+				(i) => i.type === 'onToolResult' && i.toolName === SUBMIT_TOOL_NAME
 			);
 
 			expect(outputCallIndex).toBeLessThan(outputResultIndex);
@@ -331,12 +379,14 @@ describe('executeAgent - Callbacks', () => {
 
 	describe('Callback State', () => {
 		it('should pass current execution state to onToolCall', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const toolCall = invocations.find((i) => i.type === 'onToolCall');
+			const toolCall = tracker.invocations.find((i) => i.type === 'onToolCall');
 
 			if (toolCall?.type === 'onToolCall') {
 				expect(toolCall.context.attempt).toBeGreaterThan(0);
@@ -347,12 +397,14 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should pass current execution state to onToolResult', async () => {
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const toolResult = invocations.find((i) => i.type === 'onToolResult');
+			const toolResult = tracker.invocations.find((i) => i.type === 'onToolResult');
 
 			if (toolResult?.type === 'onToolResult') {
 				expect(toolResult.context.attempt).toBeGreaterThan(0);
@@ -363,21 +415,24 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should increment iteration count across tool callbacks', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
-			const {options, invocations} =
-        createExecuteOptionsWithCallbackTracking();
+			const tracker = new CallbackTracker();
 
-			await executeAgent(AGENT_WITH_HELPER_TOOLS, options);
+			await executeAgent(AGENT_WITH_HELPER_TOOLS, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
 
-			const helperCall = invocations.find(
+			const helperCall = tracker.invocations.find(
 				(i) => i.type === 'onToolCall' && i.toolName === 'query_data'
 			);
-			const outputCall = invocations.find(
-				(i) => i.type === 'onToolCall' && i.toolName === 'generate_output'
+			const outputCall = tracker.invocations.find(
+				(i) => i.type === 'onToolCall' && i.toolName === OUTPUT_TOOL_NAME
 			);
 
 			if (helperCall?.type === 'onToolCall' && outputCall?.type === 'onToolCall') {
@@ -430,10 +485,11 @@ describe('executeAgent - Callbacks', () => {
 		});
 
 		it('should collect errors from onToolResult in metadata', async () => {
-			createMockApiCalls(mockMessagesCreate, [
-				{type: 'helper', helperToolName: 'query_data'},
-				{type: 'success'},
-			]);
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
+				.respondWith({content: [outputToolUse('success result')]})
+				.install(mockMessagesCreate);
 
 			const result = await executeAgent(AGENT_WITH_HELPER_TOOLS, {
 				input: 'test input',

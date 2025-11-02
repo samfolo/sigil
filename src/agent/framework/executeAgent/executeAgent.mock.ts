@@ -353,15 +353,29 @@ const generateToolId = (): string => `toolu_${++toolUseCounter}`;
 /**
  * Create output tool use block
  *
- * @param result - Result value for generate_output tool
+ * @param input - Either a string result or a full input object (e.g., {result: 'value', finalCount: 1})
  * @param toolId - Optional tool ID (auto-generated if not provided)
  * @returns ToolUseBlock for generate_output
+ *
+ * @example
+ * ```typescript
+ * // Simple string result
+ * outputToolUse('success')
+ * // → {type: 'tool_use', id: 'toolu_1', name: 'generate_output', input: {result: 'success'}}
+ *
+ * // Custom input object (e.g., for reducer tests with state)
+ * outputToolUse({result: 'success', finalCount: 1})
+ * // → {type: 'tool_use', id: 'toolu_2', name: 'generate_output', input: {result: 'success', finalCount: 1}}
+ * ```
  */
-export const outputToolUse = (result: string, toolId?: string): ToolUseBlock => ({
+export const outputToolUse = (
+	input: string | Record<string, unknown>,
+	toolId?: string
+): ToolUseBlock => ({
 	type: 'tool_use',
 	id: toolId ?? generateToolId(),
 	name: OUTPUT_TOOL_NAME,
-	input: {result},
+	input: typeof input === 'string' ? {result: input} : input,
 });
 
 /**
@@ -405,6 +419,35 @@ export const submitToolUse = (toolId?: string): ToolUseBlock => ({
 export const textBlock = (text: string): TextBlock => ({
 	type: 'text',
 	text,
+});
+
+/**
+ * Create a custom Message response for special cases
+ *
+ * Use this when you need full control over the response structure,
+ * such as for testing specific edge cases or complex scenarios.
+ *
+ * @param config - Partial message configuration
+ * @returns Complete Message object
+ */
+export const createCustomMessage = (config: {
+	content: Array<TextBlock | ToolUseBlock>;
+	usage?: {input: number; output: number};
+	id?: string;
+	model?: string;
+	stopReason?: 'end_turn' | 'max_tokens' | 'stop_sequence' | 'tool_use';
+}): Message => ({
+	id: config.id ?? 'msg_custom',
+	type: 'message',
+	role: 'assistant',
+	model: config.model ?? DEFAULT_MODEL,
+	content: config.content,
+	stop_reason: config.stopReason ?? DEFAULT_STOP_REASON,
+	stop_sequence: null,
+	usage: {
+		input_tokens: config.usage?.input ?? DEFAULT_INPUT_TOKENS,
+		output_tokens: config.usage?.output ?? DEFAULT_OUTPUT_TOKENS,
+	},
 });
 
 /**
