@@ -25,11 +25,11 @@ import type {AnalyserAgentInput} from '../schemas';
 /**
  * Builds system prompt function for Analyser Agent
  *
- * Loads template from: templates/system.liquid
+ * Loads template from: src/agent/definitions/analyser/prompts/templates/system.liquid
  * Throws if template loading fails (fail-fast during agent construction).
  */
 export const buildSystemPrompt = async (): Promise<SystemPromptFunction<AnalyserAgentInput>> => {
-	const templatePath = resolve(__dirname, 'templates/system.liquid');
+	const templatePath = resolve(process.cwd(), 'src/agent/definitions/analyser/prompts/templates/system.liquid');
 	const result = await loadTemplate<AnalyserAgentInput>(templatePath);
 
 	if (isErr(result)) {
@@ -44,11 +44,11 @@ export const buildSystemPrompt = async (): Promise<SystemPromptFunction<Analyser
 /**
  * Builds user prompt function for Analyser Agent
  *
- * Loads template from: templates/user.liquid
+ * Loads template from: src/agent/definitions/analyser/prompts/templates/user.liquid
  * Throws if template loading fails (fail-fast during agent construction).
  */
 export const buildUserPrompt = async (): Promise<UserPromptFunction<AnalyserAgentInput>> => {
-	const templatePath = resolve(__dirname, 'templates/user.liquid');
+	const templatePath = resolve(process.cwd(), 'src/agent/definitions/analyser/prompts/templates/user.liquid');
 	const result = await loadTemplate<AnalyserAgentInput>(templatePath);
 
 	if (isErr(result)) {
@@ -63,11 +63,11 @@ export const buildUserPrompt = async (): Promise<UserPromptFunction<AnalyserAgen
 /**
  * Builds error prompt function for Analyser Agent
  *
- * Loads template from: templates/error.liquid
+ * Loads template from: src/agent/definitions/analyser/prompts/templates/error.liquid
  * Throws if template loading fails (fail-fast during agent construction).
  */
 export const buildErrorPrompt = async (): Promise<ErrorPromptFunction> => {
-	const templatePath = resolve(__dirname, 'templates/error.liquid');
+	const templatePath = resolve(process.cwd(), 'src/agent/definitions/analyser/prompts/templates/error.liquid');
 	const result = await loadTemplate<string>(templatePath);
 
 	if (isErr(result)) {

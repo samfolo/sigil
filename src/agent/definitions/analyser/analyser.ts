@@ -70,7 +70,7 @@ export const createAnalyserAgent = async (): Promise<
 
 		model: {
 			provider: 'anthropic' as const,
-			name: 'claude-haiku-4-20250514',
+			name: 'claude-haiku-4-5-20251001',
 			temperature: MODEL_TEMPERATURE,
 			maxTokens: MAX_MODEL_TOKENS,
 		},
