@@ -31,7 +31,6 @@ import {
 	isOk,
 	isErr,
 } from '../executeAgent.common.fixtures';
-
 import {AnthropicApiMock, CallbackTracker, helperToolUse, outputToolUse} from '../executeAgent.mock';
 import type {CallbackInvocation} from '../executeAgent.mock';
 

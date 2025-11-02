@@ -17,7 +17,6 @@ import {
 	isOk,
 	setupExecuteAgentMocks,
 } from '../executeAgent.common.fixtures';
-import {SUBMIT_TOOL_NAME} from '../iteration/constants';
 import {
 	AnthropicApiMock,
 	CallbackTracker,
@@ -26,6 +25,7 @@ import {
 	outputToolUse,
 	submitToolUse,
 } from '../executeAgent.mock';
+import {SUBMIT_TOOL_NAME} from '../iteration/constants';
 
 describe('executeAgent - Callbacks', () => {
 	beforeEach(() => {

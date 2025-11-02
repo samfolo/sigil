@@ -3,23 +3,15 @@
  *
  * Comprehensive test cases covering:
  * - Minimal valid execution options
- * - Execution options with callbacks
  * - Execution options with maxAttempts override
  * - Success results with metadata
  * - Error scenarios (max attempts, validation failures, API errors)
  */
 
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
-import type {
-	ValidationLayerMetadata,
-	ValidationLayerResult,
-} from '@sigil/src/agent/framework/validation';
-import type {AgentError} from '@sigil/src/common/errors';
 import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
 
 import type {
-	ExecuteCallbacks,
 	ExecuteFailure,
 	ExecuteOptions,
 	ExecuteSuccess,
@@ -33,118 +25,6 @@ interface TestOutput {
 }
 
 /**
- * Callback invocation record for onAttemptStart
- */
-export interface OnAttemptStartInvocation {
-  type: 'onAttemptStart';
-  context: AgentExecutionContext;
-}
-
-/**
- * Callback invocation record for onAttemptComplete
- */
-interface OnAttemptCompleteInvocation {
-  type: 'onAttemptComplete';
-  context: AgentExecutionContext;
-  success: boolean;
-}
-
-/**
- * Callback invocation record for onValidationFailure
- */
-interface OnValidationFailureInvocation {
-  type: 'onValidationFailure';
-  errors: unknown;
-  context: AgentExecutionContext;
-}
-
-/**
- * Callback invocation record for onSuccess
- */
-interface OnSuccessInvocation {
-  type: 'onSuccess';
-  output: TestOutput;
-}
-
-/**
- * Callback invocation record for onFailure
- */
-interface OnFailureInvocation {
-  type: 'onFailure';
-  errors: AgentError[];
-}
-
-/**
- * Callback invocation record for onValidationLayerStart
- */
-interface OnValidationLayerStartInvocation {
-  type: 'onValidationLayerStart';
-  layer: ValidationLayerMetadata;
-  context: AgentExecutionContext;
-}
-
-/**
- * Callback invocation record for onValidationLayerComplete
- */
-interface OnValidationLayerCompleteInvocation {
-  type: 'onValidationLayerComplete';
-  layer: ValidationLayerResult;
-  context: AgentExecutionContext;
-}
-
-/**
- * Callback invocation record for onToolCall
- */
-export interface OnToolCallInvocation {
-  type: 'onToolCall';
-  context: AgentExecutionContext;
-  toolName: string;
-  toolInput: unknown;
-}
-
-/**
- * Callback invocation record for onToolResult
- */
-export interface OnToolResultInvocation {
-  type: 'onToolResult';
-  context: AgentExecutionContext;
-  toolName: string;
-  toolResult: string;
-}
-
-/**
- * Discriminated union of all callback invocation types
- *
- * Tracks which callback was invoked and the arguments passed to it.
- * Maintains order of invocations for verifying callback sequence.
- */
-export type CallbackInvocation =
-  | OnAttemptStartInvocation
-  | OnAttemptCompleteInvocation
-  | OnValidationFailureInvocation
-  | OnSuccessInvocation
-  | OnFailureInvocation
-  | OnValidationLayerStartInvocation
-  | OnValidationLayerCompleteInvocation
-  | OnToolCallInvocation
-  | OnToolResultInvocation;
-
-/**
- * Return type for createExecuteOptionsWithCallbackTracking factory
- */
-export interface ExecuteOptionsWithCallbackTracking {
-  /**
-   * Execution options configured with callback tracking
-   */
-  options: ExecuteOptions<string, TestOutput>;
-
-  /**
-   * Array of callback invocations in order
-   */
-  invocations: CallbackInvocation[];
-}
-
-/**
  * 1. Minimal valid execution options - simplest possible configuration
  *
  * Basic string input with no maxAttempts override or callbacks.
@@ -155,108 +35,7 @@ export const VALID_EXECUTE_OPTIONS: ExecuteOptions<string, TestOutput> = {
 };
 
 /**
- * 2. Factory for execution options with callback tracking
- *
- * Creates fresh execution options with callbacks that record all invocations.
- * Each invocation is pushed to the array in order, preserving call sequence.
- * Tests can filter by type to count specific callback invocations.
- *
- * @returns Object containing execution options and invocations array
- *
- * @example
- * ```typescript
- * const {options, invocations} = createExecuteOptionsWithCallbackTracking();
- * await executeAgent(agent, options);
- *
- * // Count specific callback types
- * const attemptStarts = invocations.filter(i => i.type === 'onAttemptStart');
- * expect(attemptStarts.length).toBe(3);
- *
- * // Verify callback order
- * expect(invocations.at(0)?.type).toBe('onAttemptStart');
- * expect(invocations.at(-1)?.type).toBe('onSuccess');
- * ```
- */
-export const createExecuteOptionsWithCallbackTracking =
-  (): ExecuteOptionsWithCallbackTracking => {
-  	const invocations: CallbackInvocation[] = [];
-
-  	const callbacks: ExecuteCallbacks<TestOutput> = {
-  		onAttemptStart: (context) => {
-  			invocations.push({
-  				type: 'onAttemptStart',
-  				context,
-  			});
-  		},
-  		onAttemptComplete: (context, success) => {
-  			invocations.push({
-  				type: 'onAttemptComplete',
-  				context,
-  				success,
-  			});
-  		},
-  		onValidationFailure: (context, errors) => {
-  			invocations.push({
-  				type: 'onValidationFailure',
-  				errors,
-  				context,
-  			});
-  		},
-  		onValidationLayerStart: (context, layer) => {
-  			invocations.push({
-  				type: 'onValidationLayerStart',
-  				layer,
-  				context,
-  			});
-  		},
-  		onValidationLayerComplete: (context, layer) => {
-  			invocations.push({
-  				type: 'onValidationLayerComplete',
-  				layer,
-  				context,
-  			});
-  		},
-  		onToolCall: (context, toolName, toolInput) => {
-  			invocations.push({
-  				type: 'onToolCall',
-  				context,
-  				toolName,
-  				toolInput,
-  			});
-  		},
-  		onToolResult: (context, toolName, toolResult) => {
-  			invocations.push({
-  				type: 'onToolResult',
-  				context,
-  				toolName,
-  				toolResult,
-  			});
-  		},
-  		onSuccess: (output) => {
-  			invocations.push({
-  				type: 'onSuccess',
-  				output,
-  			});
-  		},
-  		onFailure: (errors) => {
-  			invocations.push({
-  				type: 'onFailure',
-  				errors,
-  			});
-  		},
-  	};
-
-  	return {
-  		options: {
-  			input: 'test input with callbacks',
-  			callbacks,
-  		},
-  		invocations,
-  	};
-  };
-
-/**
- * 3. Execution options with maxAttempts override
+ * 2. Execution options with maxAttempts override
  *
  * Overrides the agent's default maxAttempts (3 in VALID_MINIMAL_AGENT) to 5.
  */
@@ -269,7 +48,7 @@ export const VALID_EXECUTE_OPTIONS_WITH_MAX_ATTEMPTS_OVERRIDE: ExecuteOptions<
 };
 
 /**
- * 4. Expected success result - successful execution on first attempt
+ * 3. Expected success result - successful execution on first attempt
  *
  * Represents a successful execution with:
  * - Valid output matching the agent's output schema
@@ -292,7 +71,7 @@ export const EXPECTED_SUCCESS: ExecuteSuccess<TestOutput> = {
 };
 
 /**
- * 5. Expected max attempts exceeded error
+ * 4. Expected max attempts exceeded error
  *
  * Represents failure after exhausting all retry attempts.
  * Occurs when the agent fails validation on every attempt.
@@ -326,7 +105,7 @@ export const EXPECTED_MAX_ATTEMPTS_ERROR: ExecuteFailure = {
 };
 
 /**
- * 6. Expected validation failed error
+ * 5. Expected validation failed error
  *
  * Represents failure during output validation on a specific attempt.
  * Can occur at either Zod schema validation or custom validator layer.
@@ -360,7 +139,7 @@ export const EXPECTED_VALIDATION_FAILED_ERROR: ExecuteFailure = {
 };
 
 /**
- * 7. Expected API error
+ * 6. Expected API error
  *
  * Represents failure when calling the language model API.
  * Common causes: network issues, service outages, invalid credentials.
@@ -432,216 +211,6 @@ export const createSuccessResponse = (
 });
 
 /**
- * Creates a response with validation failure
- *
- * Helper to construct a mock API response that will fail validation.
- * Result is 'short' which fails VALID_COMPLETE_AGENT's custom validator requiring 10+ chars.
- *
- * @param inputTokens - Number of input tokens consumed
- * @param outputTokens - Number of output tokens generated
- * @param toolName - Name of the tool to use (defaults to 'generate_output')
- * @returns Mock API response object
- */
-export const createInvalidResponse = (
-	inputTokens = 100,
-	outputTokens = 50,
-	toolName = 'generate_output'
-) => ({
-	id: 'msg_test456',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_test456',
-			name: toolName,
-			input: {result: 'short'}, // Will fail custom validator requiring 10+ chars
-		},
-	],
-	stop_reason: 'tool_use' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
-});
-
-/**
- * Mock API call configuration
- *
- * Discriminated union representing different response types for mock API calls.
- * Used with createMockApiCalls to configure sequential API responses in tests.
- */
-export type MockCallConfig =
-  | {
-      type: 'success';
-      result?: string;
-      inputTokens?: number;
-      outputTokens?: number;
-      delay?: number;
-    }
-  | {
-      type: 'invalid';
-      inputTokens?: number;
-      outputTokens?: number;
-      delay?: number;
-    }
-  | {
-      type: 'error';
-      error: Error;
-      delay?: number;
-    }
-  | {
-      type: 'custom';
-      response: unknown;
-      delay?: number;
-    }
-  | {
-      type: 'helper';
-      helperToolName?: string;
-      helperInput?: Record<string, unknown>;
-      inputTokens?: number;
-      outputTokens?: number;
-      delay?: number;
-    }
-  | {
-      type: 'submit';
-      inputTokens?: number;
-      outputTokens?: number;
-      delay?: number;
-    };
-
-
-/**
- * Mock function interface
- * Represents a vi.fn() mock with mockImplementation method
- */
-interface MockFunction {
-  mockImplementation: (cb: () => Promise<unknown>) => void
-};
-
-/**
- * Configures a mock API function with sequential responses
- *
- * Configures an existing vi.fn() mock to return different responses on each call.
- * The final config entry persists for all subsequent calls beyond the array length.
- *
- * @param mock - Existing vi.fn() mock to configure
- * @param configs - Array of response configurations
- *
- * @example
- * ```typescript
- * // Simple retry scenario
- * createMockApiCalls(mockMessagesCreate, [
- *   {type: 'invalid'},
- *   {type: 'success', result: 'valid result that is long enough'}
- * ]);
- *
- * // Token accumulation test
- * createMockApiCalls(mockMessagesCreate, [
- *   {type: 'invalid', inputTokens: 100, outputTokens: 50},
- *   {type: 'success', result: 'valid result', inputTokens: 150, outputTokens: 75}
- * ]);
- *
- * // Latency measurement
- * createMockApiCalls(mockMessagesCreate, [
- *   {type: 'invalid', delay: 50},
- *   {type: 'success', result: 'valid result', delay: 50}
- * ]);
- * ```
- */
-export const createMockApiCalls = (mock: MockFunction, configs: MockCallConfig[]) => {
-	let callIndex = 0;
-
-	mock.mockImplementation(async () => {
-		const config = configs[Math.min(callIndex++, configs.length - 1)];
-
-		if (config.delay) {
-			await new Promise((resolve) => {
-				setTimeout(resolve, config.delay);
-			});
-		}
-
-		if (config.type === 'error') {
-			throw config.error;
-		}
-
-		if (config.type === 'custom') {
-			return config.response;
-		}
-
-		if (config.type === 'invalid') {
-			return createInvalidResponse(
-				config.inputTokens ?? 100,
-				config.outputTokens ?? 50
-			);
-		}
-
-		if (config.type === 'helper') {
-			return createHelperToolResponse(
-				config.helperToolName,
-				config.helperInput,
-				config.inputTokens ?? 100,
-				config.outputTokens ?? 50
-			);
-		}
-
-		if (config.type === 'submit') {
-			return createSubmitToolResponse(
-				config.inputTokens ?? 100,
-				config.outputTokens ?? 50
-			);
-		}
-
-		// success
-		return createSuccessResponse(
-			config.result ?? 'success result',
-			config.inputTokens ?? 100,
-			config.outputTokens ?? 50
-		);
-	});
-};
-
-/**
- * Creates API response with helper tool use
- *
- * Returns a response where the model calls a helper tool before the output tool.
- * Used to test helper tool execution in the iteration loop.
- *
- * @param helperToolName - Name of the helper tool
- * @param helperInput - Input object for the helper tool
- * @param inputTokens - Number of input tokens consumed
- * @param outputTokens - Number of output tokens generated
- * @returns Mock API response object
- */
-export const createHelperToolResponse = (
-	helperToolName: string = 'query_data',
-	helperInput: Record<string, unknown> = {query: 'test'},
-	inputTokens: number = 100,
-	outputTokens: number = 50
-) => ({
-	id: 'msg_helper',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_helper',
-			name: helperToolName,
-			input: helperInput,
-		},
-	],
-	stop_reason: 'tool_use' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
-});
-
-/**
  * Creates API response with submit tool use
  *
  * Returns a response where the model calls the submit tool to finalise output.
@@ -665,130 +234,6 @@ export const createSubmitToolResponse = (
 			id: 'toolu_submit',
 			name: 'submit',
 			input: {},
-		},
-	],
-	stop_reason: 'tool_use' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
-});
-
-/**
- * Creates API response with output tool followed by submit tool
- *
- * Returns a response where the model calls both output and submit in one iteration.
- * Used to test reflection mode with immediate submission.
- *
- * @param result - The result value to include in output
- * @param inputTokens - Number of input tokens consumed
- * @param outputTokens - Number of output tokens generated
- * @returns Mock API response object
- */
-export const createOutputThenSubmitResponse = (
-	result: string = 'success result',
-	inputTokens: number = 100,
-	outputTokens: number = 50
-) => ({
-	id: 'msg_output_submit',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_output',
-			name: 'generate_output',
-			input: {result},
-		},
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_submit',
-			name: 'submit',
-			input: {},
-		},
-	],
-	stop_reason: 'tool_use' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
-});
-
-/**
- * Creates API response with submit before output
- *
- * Returns a response where the model calls submit before ever calling output.
- * Used to test SUBMIT_BEFORE_OUTPUT error handling.
- *
- * @param inputTokens - Number of input tokens consumed
- * @param outputTokens - Number of output tokens generated
- * @returns Mock API response object
- */
-export const createSubmitBeforeOutputResponse = (
-	inputTokens: number = 100,
-	outputTokens: number = 50
-) => ({
-	id: 'msg_submit_before_output',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_submit',
-			name: 'submit',
-			input: {},
-		},
-	],
-	stop_reason: 'tool_use' as const,
-	stop_sequence: null,
-	usage: {
-		input_tokens: inputTokens,
-		output_tokens: outputTokens,
-	},
-});
-
-/**
- * Creates API response with multiple tool uses in single response
- *
- * Returns a response where the model calls helper + output + helper in one iteration.
- * Tests that all tools are processed in order and output is correctly extracted.
- *
- * @param result - The result value to include in output
- * @param inputTokens - Number of input tokens consumed
- * @param outputTokens - Number of output tokens generated
- * @returns Mock API response object
- */
-export const createMixedToolResponse = (
-	result: string = 'success result',
-	inputTokens: number = 100,
-	outputTokens: number = 50
-) => ({
-	id: 'msg_mixed_tools',
-	type: 'message' as const,
-	role: 'assistant' as const,
-	model: 'claude-sonnet-4-5-20250929',
-	content: [
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_helper1',
-			name: 'query_data',
-			input: {query: 'first query'},
-		},
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_output',
-			name: 'generate_output',
-			input: {result},
-		},
-		{
-			type: 'tool_use' as const,
-			id: 'toolu_helper2',
-			name: 'query_data',
-			input: {query: 'second query'},
 		},
 	],
 	stop_reason: 'tool_use' as const,
