@@ -40,7 +40,7 @@ export interface ParserState<Metadata extends ParserToolMetadata = ParserToolMet
 	/**
 	 * Raw input data to be parsed
 	 */
-	raw: string;
+	rawData: string;
 	/**
 	 * Metadata about successfully parsed data, including which tool parsed it
 	 */

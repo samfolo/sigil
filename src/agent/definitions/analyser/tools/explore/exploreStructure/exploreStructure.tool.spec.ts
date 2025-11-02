@@ -26,7 +26,7 @@ const createState = (parsedData: unknown): AgentState<ParserState, EmptyObject> 
 		maxIterations: 10,
 	},
 	run: {
-		raw: '',
+		rawData: '',
 		parsedData,
 	},
 	attempt: {},
@@ -43,7 +43,7 @@ describe('EXPLORE_STRUCTURE_TOOL', () => {
 					maxIterations: 10,
 				},
 				run: {
-					raw: '',
+					rawData: '',
 				},
 				attempt: {},
 			};

@@ -26,7 +26,7 @@ type ParseYAMLInput = z.infer<typeof parseYAMLInputSchema>;
 /**
  * Handler for parse_yaml tool
  *
- * Reads from state.run.raw, writes to state.run.structureMetadata on success.
+ * Reads from state.run.rawData, writes to state.run.structureMetadata on success.
  */
 const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructureMetadata>, EmptyObject> = (state, toolInput) => {
 	// Validate input against schema
@@ -36,7 +36,7 @@ const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructure
 	}
 
 	// Call implementation with raw data from state
-	const result = parseYAML(state.run.raw);
+	const result = parseYAML(state.run.rawData);
 
 	if (isErr(result)) {
 		return err(result.error);
@@ -75,7 +75,7 @@ const parseYAMLReducerHandler: ToolReducerHandler<ParserState<ParseYAMLStructure
  *
  * Always succeeds - parsing failures are reported in the result structure.
  *
- * Reads raw data from state.run.raw, writes structure metadata to state.run.structureMetadata.
+ * Reads raw data from state.run.rawData, writes structure metadata to state.run.structureMetadata.
  */
 export const PARSE_YAML_TOOL: HelperToolConfig<
 	'parse_yaml',

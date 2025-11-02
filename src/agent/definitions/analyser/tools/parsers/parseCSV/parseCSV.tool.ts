@@ -32,7 +32,7 @@ type ParseCSVInput = z.infer<typeof parseCSVInputSchema>;
 /**
  * Handler for parse_csv tool
  *
- * Reads from state.run.raw, writes to state.run.structureMetadata on success.
+ * Reads from state.run.rawData, writes to state.run.structureMetadata on success.
  */
 const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMetadata>, EmptyObject> = (state, toolInput) => {
 	// Validate input against schema
@@ -42,7 +42,7 @@ const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMe
 	}
 
 	// Call implementation with raw data from state
-	const result = parseCSV(state.run.raw, parsed.data.delimiter);
+	const result = parseCSV(state.run.rawData, parsed.data.delimiter);
 
 	if (isErr(result)) {
 		return err(result.error);
@@ -82,7 +82,7 @@ const parseCSVReducerHandler: ToolReducerHandler<ParserState<ParseCSVStructureMe
  *
  * Always succeeds - parsing failures are reported in the result structure.
  *
- * Reads raw data from state.run.raw, writes structure metadata to state.run.structureMetadata.
+ * Reads raw data from state.run.rawData, writes structure metadata to state.run.structureMetadata.
  */
 export const PARSE_CSV_TOOL: HelperToolConfig<
 	'parse_csv',

@@ -17,7 +17,7 @@ import type {ParseCSVStructureMetadata} from '@sigil/src/agent/definitions/analy
 import type {ParseJSONStructureMetadata} from '@sigil/src/agent/definitions/analyser/tools/parsers/parseJSON/parseJSON.tool';
 import type {ParseXMLStructureMetadata} from '@sigil/src/agent/definitions/analyser/tools/parsers/parseXML/parseXML.tool';
 import type {ParseYAMLStructureMetadata} from '@sigil/src/agent/definitions/analyser/tools/parsers/parseYAML/parseYAML.tool';
-import {VignetteSchema} from '@sigil/src/agent/definitions/analyser/tools/sampler/common';
+import {SamplerStateSchema, VignetteSchema} from '@sigil/src/agent/definitions/analyser/tools/sampler/common';
 import type {SampleRetrieverState} from '@sigil/src/agent/definitions/analyser/tools/sampler/requestMoreSamples/schemas';
 import type {EmptyObject} from '@sigil/src/common/types';
 
@@ -206,6 +206,7 @@ export type AnalyserAttemptState = EmptyObject;
  * Contains preprocessed data required before agent execution:
  * - `rawData`: Original user-uploaded data string for parsing
  * - `initialVignettes`: Pre-generated diverse samples from `generateInitialVignettes`
+ * - `samplerState`: Sampler state from preprocessing for request_more_samples tool
  *
  * The preprocessing step (generateInitialVignettes) happens before the agent
  * starts, ensuring the agent has immediate access to diverse data samples
@@ -227,6 +228,14 @@ export const AnalyserAgentInputSchema = z.object({
 		.array(VignetteSchema)
 		.min(1)
 		.describe('Pre-generated diverse samples with embeddings from preprocessing'),
+
+	/**
+	 * Sampler state from preprocessing
+	 *
+	 * Contains embeddings and chunks from `generateInitialVignettes`.
+	 * Passed through to run state for use by request_more_samples tool.
+	 */
+	samplerState: SamplerStateSchema.describe('Sampler state from preprocessing'),
 });
 
 export type AnalyserAgentInput = z.infer<typeof AnalyserAgentInputSchema>;

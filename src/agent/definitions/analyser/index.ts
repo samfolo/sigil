@@ -10,6 +10,9 @@
  * from their respective modules (parsers, explore, sampler).
  */
 
+// Agent definition factory
+export {createAnalyserAgent} from './analyser';
+
 // Schemas
 export {AnalysisOutputSchema, AnalyserAgentInputSchema} from './schemas';
 
