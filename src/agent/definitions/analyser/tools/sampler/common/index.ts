@@ -8,7 +8,7 @@ export {chunkText} from './chunkText';
 
 export {diversitySample, calculateAveragePairwiseDistance} from './diversity';
 
-export {embedText, embedBatch, cleanupEmbedder, EMBEDDING_DIMENSION} from './embedder';
+export {embedText, embedBatch, cleanupEmbedder, EMBEDDING_DIMENSION, MAX_BATCH_SIZE} from './embedder';
 export type {Embedding, EmbeddingProgressCallback} from './embedder';
 
 export type {Chunk, Vignette, VignettePosition, SamplerState} from './schemas';

@@ -56,7 +56,7 @@ describe('executeAgent - State Reducer Pattern', () => {
 	 *
 	 * Tool results are serialised as JSON strings by executeAgent
 	 */
-	const getToolResult = (invocations: CallbackInvocation[], toolName: string): unknown => {
+	const getToolResult = (invocations: readonly CallbackInvocation[], toolName: string): unknown => {
 		const result = invocations.find(
 			(inv) => inv.type === 'onToolResult' && inv.toolName === toolName
 		);

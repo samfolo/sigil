@@ -8,7 +8,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
-import {cleanupEmbedder, EMBEDDING_DIMENSION, MAX_BATCH_SIZE} from '../common';
+import {cleanupEmbedder, EMBEDDING_DIMENSION} from '../common';
 
 import {generateInitialVignettes} from './generateInitialVignettes';
 

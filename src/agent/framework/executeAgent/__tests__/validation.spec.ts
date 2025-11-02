@@ -77,7 +77,10 @@ describe('executeAgent - Validation', () => {
 			const attemptStarts = tracker.invocations.filter((i) => i.type === 'onAttemptStart');
 
 			expect(attemptStarts.length).toBeGreaterThan(0);
-			expect(attemptStarts.at(0)?.context.attempt).toBe(1);
+			const firstAttempt = attemptStarts.at(0);
+			if (firstAttempt?.type === 'onAttemptStart') {
+				expect(firstAttempt.context.attempt).toBe(1);
+			}
 		});
 
 		it('should invoke onValidationFailure callback', async () => {

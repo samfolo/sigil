@@ -11,7 +11,13 @@ import type {
 	MessageCreateParams,
 	TextBlock,
 	ToolUseBlock,
+	Usage,
 } from '@anthropic-ai/sdk/resources/messages';
+import type {Mock} from 'vitest';
+
+
+import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {ValidationLayerMetadata, ValidationLayerResult} from '@sigil/src/agent/framework/validation';
 
 import {SUBMIT_TOOL_NAME} from './iteration/constants';
 import type {ExecuteCallbacks} from './types';
@@ -67,15 +73,9 @@ export interface ResponseOptions {
 }
 
 /**
- * Mock function interface
- * Represents a vi.fn() mock with mockImplementation method
+ * Mock function type for Anthropic messages.create
  */
-interface MockFunction {
-	mockImplementation: (cb: (params: MessageCreateParams) => Promise<Message>) => void;
-	mock: {
-		calls: Array<[MessageCreateParams]>;
-	};
-}
+type MockFunction = Mock<(params: MessageCreateParams) => Promise<Message>>;
 
 /**
  * Internal response entry combining config/error with optional matcher and delay
@@ -207,9 +207,10 @@ export class AnthropicApiMock {
 			}
 
 			// Apply delay if specified
-			if (entry.options?.delay) {
+			const delay = entry.options?.delay;
+			if (delay) {
 				await new Promise((resolve) => {
-					setTimeout(resolve, entry.options.delay);
+					setTimeout(resolve, delay);
 				});
 			}
 
@@ -263,7 +264,23 @@ export class AnthropicApiMock {
 		matcher: (req: MessageCreateParams) => boolean,
 		entry: Omit<ResponseEntry, 'matcher'>
 	): void {
-		this.responses.push({...entry, matcher});
+		if (entry.type === 'response') {
+			const responseEntry: ResponseEntry = {
+				type: 'response',
+				config: entry.config as ResponseConfig,
+				options: entry.options,
+				matcher,
+			};
+			this.responses.push(responseEntry);
+		} else {
+			const errorEntry: ResponseEntry = {
+				type: 'error',
+				config: entry.config as ErrorConfig,
+				options: entry.options,
+				matcher,
+			};
+			this.responses.push(errorEntry);
+		}
 	}
 
 	/**
@@ -271,6 +288,16 @@ export class AnthropicApiMock {
 	 */
 	private buildResponse(config: ResponseConfig): Message {
 		const usage = config.usage ?? this.defaultUsage;
+
+		const usageData: Usage = {
+			input_tokens: usage.input,
+			output_tokens: usage.output,
+			cache_creation_input_tokens: 0,
+			cache_read_input_tokens: 0,
+			cache_creation: null,
+			server_tool_use: null,
+			service_tier: null,
+		};
 
 		return {
 			id: config.id ?? this.generateMessageId(),
@@ -280,10 +307,7 @@ export class AnthropicApiMock {
 			content: config.content,
 			stop_reason: config.stopReason ?? DEFAULT_STOP_REASON,
 			stop_sequence: config.stopSequence ?? DEFAULT_STOP_SEQUENCE,
-			usage: {
-				input_tokens: usage.input,
-				output_tokens: usage.output,
-			},
+			usage: usageData,
 		};
 	}
 
@@ -419,6 +443,7 @@ export const submitToolUse = (toolId?: string): ToolUseBlock => ({
 export const textBlock = (text: string): TextBlock => ({
 	type: 'text',
 	text,
+	citations: [],
 });
 
 /**
@@ -447,6 +472,11 @@ export const createCustomMessage = (config: {
 	usage: {
 		input_tokens: config.usage?.input ?? DEFAULT_INPUT_TOKENS,
 		output_tokens: config.usage?.output ?? DEFAULT_OUTPUT_TOKENS,
+		cache_creation_input_tokens: 0,
+		cache_read_input_tokens: 0,
+		cache_creation: null,
+		server_tool_use: null,
+		service_tier: null,
 	},
 });
 
@@ -455,7 +485,7 @@ export const createCustomMessage = (config: {
  */
 export interface OnAttemptStartInvocation {
 	type: 'onAttemptStart';
-	context: unknown;
+	context: AgentExecutionContext;
 }
 
 /**
@@ -463,7 +493,7 @@ export interface OnAttemptStartInvocation {
  */
 interface OnAttemptCompleteInvocation {
 	type: 'onAttemptComplete';
-	context: unknown;
+	context: AgentExecutionContext;
 	success: boolean;
 }
 
@@ -473,7 +503,7 @@ interface OnAttemptCompleteInvocation {
 interface OnValidationFailureInvocation {
 	type: 'onValidationFailure';
 	errors: unknown;
-	context: unknown;
+	context: AgentExecutionContext;
 }
 
 /**
@@ -497,8 +527,8 @@ interface OnFailureInvocation {
  */
 interface OnValidationLayerStartInvocation {
 	type: 'onValidationLayerStart';
-	layer: unknown;
-	context: unknown;
+	layer: ValidationLayerMetadata;
+	context: AgentExecutionContext;
 }
 
 /**
@@ -506,8 +536,8 @@ interface OnValidationLayerStartInvocation {
  */
 interface OnValidationLayerCompleteInvocation {
 	type: 'onValidationLayerComplete';
-	layer: unknown;
-	context: unknown;
+	layer: ValidationLayerResult;
+	context: AgentExecutionContext;
 }
 
 /**
@@ -515,7 +545,7 @@ interface OnValidationLayerCompleteInvocation {
  */
 export interface OnToolCallInvocation {
 	type: 'onToolCall';
-	context: unknown;
+	context: AgentExecutionContext;
 	toolName: string;
 	toolInput: unknown;
 }
@@ -525,7 +555,7 @@ export interface OnToolCallInvocation {
  */
 export interface OnToolResultInvocation {
 	type: 'onToolResult';
-	context: unknown;
+	context: AgentExecutionContext;
 	toolName: string;
 	toolResult: string;
 }

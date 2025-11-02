@@ -24,7 +24,7 @@ import {
 	isErr,
 	AGENT_ERROR_CODES,
 } from '../executeAgent.common.fixtures';
-import {AnthropicApiMock, CallbackTracker, helperToolUse, outputToolUse} from '../executeAgent.mock';
+import {AnthropicApiMock, CallbackTracker, helperToolUse, outputToolUse, textBlock} from '../executeAgent.mock';
 
 describe('executeAgent - Iteration Loop', () => {
 	beforeEach(() => {
@@ -152,7 +152,7 @@ describe('executeAgent - Iteration Loop', () => {
 			mock
 				.respondWith({content: [helperToolUse('query_data', {query: 'test'})]})
 				.respondWith({
-					content: [{type: 'text', text: 'I cannot complete this task'}],
+					content: [textBlock('I cannot complete this task')],
 					id: 'msg_no_output',
 					stopReason: 'end_turn',
 					usage: {input: 100, output: 50},
