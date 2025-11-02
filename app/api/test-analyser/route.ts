@@ -121,7 +121,7 @@ export const POST = async (request: NextRequest) => {
 			},
 			onValidationFailure: (context, errors) => {
 				console.log(
-					`[Analyser] Validation failed on attempt ${context.attempt}: ${JSON.stringify(errors)}`
+					`[Analyser] Validation failed on attempt ${context.attempt}`
 				);
 			},
 			onSuccess: (_output) => {

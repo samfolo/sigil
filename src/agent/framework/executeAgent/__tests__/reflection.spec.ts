@@ -173,6 +173,123 @@ describe('executeAgent - Reflection Mode', () => {
 		expect(tools?.some((tool: {name: string}) => tool.name === 'submit')).toBe(true);
 	});
 
+	describe('Validation Error Handling', () => {
+		it('should add tool_result when validation fails in reflection mode', async () => {
+			// First response: output+submit with invalid data (fails Zod validation)
+			// Second response: output+submit with valid data
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'custom',
+					response: {
+						id: 'msg_test_invalid',
+						type: 'message',
+						role: 'assistant',
+						model: 'claude-sonnet-4-5-20250929',
+						content: [
+							{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
+							{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
+						],
+						stop_reason: 'tool_use',
+						stop_sequence: null,
+						usage: {input_tokens: 100, output_tokens: 50},
+					},
+				},
+				{type: 'custom', response: createOutputThenSubmitResponse('valid result')},
+			]);
+
+			const result = await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
+
+			expect(isOk(result)).toBe(true);
+
+			// Verify second call has tool_result for the failed output tool
+			const secondCall = mockMessagesCreate.mock.calls.at(1);
+			const messages = secondCall?.at(0)?.messages;
+
+			const userMessage = Array.isArray(messages)
+				? messages.find((m) => m.role === 'user' && Array.isArray(m.content))
+				: undefined;
+
+			const toolResult = Array.isArray(userMessage?.content)
+				? userMessage.content.find((block) => typeof block === 'object' && block !== null && 'type' in block && block.type === 'tool_result')
+				: undefined;
+
+			expect(toolResult).toBeDefined();
+		});
+
+		it('should mark tool_result as error when validation fails', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'custom',
+					response: {
+						id: 'msg_test_invalid',
+						type: 'message',
+						role: 'assistant',
+						model: 'claude-sonnet-4-5-20250929',
+						content: [
+							{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
+							{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
+						],
+						stop_reason: 'tool_use',
+						stop_sequence: null,
+						usage: {input_tokens: 100, output_tokens: 50},
+					},
+				},
+				{type: 'custom', response: createOutputThenSubmitResponse('valid result')},
+			]);
+
+			await executeAgent(AGENT_WITH_REFLECTION, VALID_EXECUTE_OPTIONS);
+
+			const secondCall = mockMessagesCreate.mock.calls.at(1);
+			const messages = secondCall?.at(0)?.messages;
+
+			const userMessage = Array.isArray(messages)
+				? messages.find((m) => m.role === 'user' && Array.isArray(m.content))
+				: undefined;
+
+			const toolResult = Array.isArray(userMessage?.content)
+				? userMessage.content.find((block) => typeof block === 'object' && block !== null && 'type' in block && block.type === 'tool_result')
+				: undefined;
+
+			if (toolResult && typeof toolResult === 'object' && 'is_error' in toolResult) {
+				expect(toolResult.is_error).toBe(true);
+			}
+		});
+
+		it('should invoke onToolResult callback when validation fails', async () => {
+			createMockApiCalls(mockMessagesCreate, [
+				{
+					type: 'custom',
+					response: {
+						id: 'msg_test_invalid',
+						type: 'message',
+						role: 'assistant',
+						model: 'claude-sonnet-4-5-20250929',
+						content: [
+							{type: 'tool_use', id: 'toolu_invalid', name: 'generate_output', input: {wrongField: 'oops'}},
+							{type: 'tool_use', id: 'toolu_submit', name: 'submit', input: {}},
+						],
+						stop_reason: 'tool_use',
+						stop_sequence: null,
+						usage: {input_tokens: 100, output_tokens: 50},
+					},
+				},
+				{type: 'custom', response: createOutputThenSubmitResponse('valid result')},
+			]);
+
+			const {options, invocations} = createExecuteOptionsWithCallbackTracking();
+
+			await executeAgent(AGENT_WITH_REFLECTION, options);
+
+			const validationErrorResult = invocations.find((inv) =>
+				inv.type === 'onToolResult' &&
+				inv.toolName === 'generate_output' &&
+				inv.toolResult.includes('Validation failed')
+			);
+
+			expect(validationErrorResult).toBeDefined();
+		});
+	});
+
 	describe('Reflection Handler Exception Safety', () => {
 		it('should handle reflection handler that throws exception', async () => {
 			createMockApiCalls(mockMessagesCreate, [

@@ -121,6 +121,39 @@ export const handleValidationFailure = async <Input, Output, Run extends object,
 		layerDescription
 	);
 
+	// Find output tool's tool_use_id from last response
+	// Required to add tool_result for API protocol compliance
+	const outputToolName = params.agent.tools.output.name;
+	const outputToolUse = params.lastResponse.content.find(
+		(block): block is Anthropic.ToolUseBlock =>
+			block.type === 'tool_use' && block.name === outputToolName
+	);
+
+	if (outputToolUse) {
+		// Add tool_result with is_error for validation failure
+		// This satisfies Anthropic API requirement: every tool_use needs a corresponding tool_result
+		const toolResultContent = `Validation failed:\n${formattedError}`;
+
+		params.conversationHistory.push({
+			role: 'user',
+			content: [
+				{
+					type: 'tool_result',
+					tool_use_id: outputToolUse.id,
+					content: toolResultContent,
+					is_error: true,
+				},
+			],
+		});
+
+		// Invoke onToolResult callback for observability
+		safeInvokeCallback(
+			params.callbacks?.onToolResult,
+			[{...params.context}, outputToolName, toolResultContent],
+			params.callbackErrors
+		);
+	}
+
 	// Build error prompt
 	const errorPromptResult = await buildErrorPrompt(
 		params.agent,

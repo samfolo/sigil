@@ -46,6 +46,30 @@ Observe pattern in vignette → parse_json → explore_structure(maxDepth: 3) �
 Sampling for variety - When initial vignettes are homogeneous, request more to see data diversity:
 Review initial vignettes → request_more_samples(count: 20) → observe edge cases → parse_csv(delimiter: ';') → explore_structure
 
+CSV DATA STRUCTURE
+
+CSV parsing produces 2D arrays, not objects. The first row may or may not be headers depending on the data.
+
+Structure: `[[value, value, ...], [value, value, ...]]`
+- Outer array: rows
+- Inner arrays: column values at each position
+
+JSONPath access patterns:
+- All rows: `$[*]`
+- Specific row: `$[0]` (first row), `$[1]` (second row)
+- Specific cell: `$[row_index][column_index]`
+- Column values: `$[*][column_index]` (all values in column at index)
+
+parse_csv returns columns with indices. Use these to construct paths:
+Column "order_id" at index 0 → path: $[*][0]
+
+Workflow for CSV:
+1. parse_csv → check metadata for rowCount, columnCount, columns array
+2. explore_structure → see available paths like `$[0][0]`, `$[0][1]`, etc.
+3. query_json_path with index notation → examine values: `$[*][0]` for first column
+
+Do not attempt object-style paths like `$[*].column_name` - these will return 0 matches.
+
 WORKFLOW METHODOLOGY
 
 1. Form hypothesis - Review the provided initialVignettes to form initial hypothesis about syntactic format, semantic meaning, and key fields. Remember that vignettes show diverse samples (not sequential content) to help you understand data variety.
