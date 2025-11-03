@@ -10,6 +10,8 @@ vi.mock('@sigil/src/agent/clients/anthropic', () => ({
 	})),
 }));
 
+import {agentBuilder} from '@sigil/src/agent/framework/defineAgent/defineAgent.fixtures';
+
 import {
 	executeAgent,
 	VALID_MINIMAL_AGENT,
@@ -19,7 +21,6 @@ import {
 	isOk,
 } from '../executeAgent.common.fixtures';
 import {AnthropicApiMock, outputToolUse, helperToolUse} from '../executeAgent.mock';
-import {agentBuilder} from '@sigil/src/agent/framework/defineAgent/defineAgent.fixtures';
 
 // Agent with helper tools and token tracking enabled for multi-turn tests
 const AGENT_WITH_HELPERS_AND_TRACKING = agentBuilder(AGENT_WITH_HELPER_TOOLS)
@@ -91,7 +92,9 @@ describe('executeAgent - Prompt Caching', () => {
 			if (firstMessage && Array.isArray(firstMessage.content)) {
 				const lastBlock = firstMessage.content.at(-1);
 				expect(lastBlock).toHaveProperty('cache_control');
-				expect(lastBlock?.cache_control).toEqual({type: 'ephemeral'});
+				if (lastBlock && 'cache_control' in lastBlock) {
+					expect(lastBlock.cache_control).toEqual({type: 'ephemeral'});
+				}
 			}
 		});
 
@@ -118,7 +121,9 @@ describe('executeAgent - Prompt Caching', () => {
 			if (lastMessage && Array.isArray(lastMessage.content)) {
 				const lastBlock = lastMessage.content.at(-1);
 				expect(lastBlock).toHaveProperty('cache_control');
-				expect(lastBlock?.cache_control).toEqual({type: 'ephemeral'});
+				if (lastBlock && 'cache_control' in lastBlock) {
+					expect(lastBlock.cache_control).toEqual({type: 'ephemeral'});
+				}
 			}
 		});
 

@@ -202,7 +202,7 @@ describe('addCacheControlToHistory', () => {
 		});
 
 		it('should not mutate original content array', () => {
-			const content: Anthropic.Messages.ContentBlock[] = [
+			const content: Anthropic.Messages.ContentBlockParam[] = [
 				{type: 'text', text: 'Original'},
 			];
 			const history: Anthropic.MessageParam[] = [

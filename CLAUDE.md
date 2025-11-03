@@ -72,6 +72,19 @@ if (condition) {
 }
 ```
 
+Comments describe code as it exists, not how it changed or will change:
+```typescript
+// Good
+// Content is an array of content blocks
+const content = message.content;
+
+// Bad - references changes or process
+// Content is now an array after refactoring
+// Content changed to array as per PRD
+// Content uses array for backward compatibility
+const content = message.content;
+```
+
 File-level constants use SCREAMING_SNAKE_CASE:
 ```typescript
 export const MAX_RETRY_COUNT = 3;

@@ -84,21 +84,23 @@ export const addCacheControlToHistory = (
 	}
 
 	// Handle both string and array content formats
-	let content: Anthropic.Messages.ContentBlock[];
+	let content: string | Anthropic.MessageParam['content'];
 	if (typeof lastUserMessage.content === 'string') {
-		content = [{type: 'text', text: lastUserMessage.content}];
+		content = [{type: 'text', text: lastUserMessage.content, cache_control: {type: 'ephemeral'}}];
 	} else {
 		// Shallow copy the content array
-		content = [...lastUserMessage.content];
-	}
+		const contentArray = [...lastUserMessage.content];
+		const lastBlock = contentArray.at(-1);
 
-	// Add cache_control to the last content block
-	const lastBlock = content.at(-1);
-	if (lastBlock) {
-		content[content.length - 1] = {
-			...lastBlock,
-			cache_control: {type: 'ephemeral'},
-		};
+		// Add cache_control to the last content block
+		if (lastBlock && 'type' in lastBlock) {
+			contentArray[contentArray.length - 1] = {
+				...lastBlock,
+				cache_control: {type: 'ephemeral'},
+			} as typeof lastBlock;
+		}
+
+		content = contentArray;
 	}
 
 	// Replace the message in the copied history
@@ -175,7 +177,7 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 		}
 
 		// Convert system prompt to array format with cache_control for prompt caching
-		const systemParam: Anthropic.Messages.SystemParam[] = [
+		const systemParam: Array<Anthropic.Messages.TextBlockParam> = [
 			{
 				type: 'text',
 				text: systemPrompt,

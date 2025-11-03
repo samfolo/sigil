@@ -130,14 +130,22 @@ export class AnthropicApiMock {
 	private outputTokensAccumulated = 0;
 	private mockFunction: MockFunction | null = null;
 	private readonly defaultModel: string;
-	private readonly defaultUsage: {input: number; output: number};
+	private readonly defaultUsage: {
+		input: number;
+		output: number;
+		cacheCreationInput?: number;
+		cacheReadInput?: number;
+	};
 
 	/**
 	 * Create a new AnthropicApiMock
 	 *
 	 * @param options - Default configuration
 	 */
-	constructor(options?: {model?: string; defaultUsage?: {input: number; output: number}}) {
+	constructor(options?: {
+		model?: string;
+		defaultUsage?: {input: number; output: number; cacheCreationInput?: number; cacheReadInput?: number};
+	}) {
 		this.defaultModel = options?.model ?? DEFAULT_MODEL;
 		this.defaultUsage = options?.defaultUsage ?? {
 			input: DEFAULT_INPUT_TOKENS,
@@ -297,8 +305,8 @@ export class AnthropicApiMock {
 		const usageData: Usage = {
 			input_tokens: usage.input,
 			output_tokens: usage.output,
-			cache_creation_input_tokens: usage.cacheCreationInput ?? 0,
-			cache_read_input_tokens: usage.cacheReadInput ?? 0,
+			cache_creation_input_tokens: usage.cacheCreationInput ?? null,
+			cache_read_input_tokens: usage.cacheReadInput ?? null,
 			cache_creation: null,
 			server_tool_use: null,
 			service_tier: null,
