@@ -123,6 +123,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 	// Track token usage across all attempts
 	let totalInputTokens = 0;
 	let totalOutputTokens = 0;
+	let totalCacheCreationInputTokens = 0;
+	let totalCacheReadInputTokens = 0;
 
 	// Determine max attempts (options override or agent default)
 	const maxAttempts = options.maxAttempts ?? agent.validation.maxAttempts;
@@ -315,6 +317,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 		const {output, lastResponse: response, updatedState} = iterationResult.data;
 		totalInputTokens = iterationResult.data.tokenMetrics.input;
 		totalOutputTokens = iterationResult.data.tokenMetrics.output;
+		totalCacheCreationInputTokens = iterationResult.data.tokenMetrics.cacheCreationInput ?? 0;
+		totalCacheReadInputTokens = iterationResult.data.tokenMetrics.cacheReadInput ?? 0;
 		currentState = updatedState;
 
 		// Check for cancellation before validation
@@ -380,6 +384,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				tokenMetrics: {
 					input: totalInputTokens,
 					output: totalOutputTokens,
+					cacheCreationInput: totalCacheCreationInputTokens || undefined,
+					cacheReadInput: totalCacheReadInputTokens || undefined,
 				},
 				callbackErrors,
 				callbacks: options.callbacks,

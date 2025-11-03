@@ -363,7 +363,14 @@ describe('executeAgent - Validation', () => {
 
 			expect(messages).toBeDefined();
 			expect(messages?.at(0)?.role).toBe('user');
-			expect(messages?.at(0)?.content).toContain('test input');
+
+			// Content is an array of content blocks
+			const content = messages?.at(0)?.content;
+			expect(Array.isArray(content)).toBe(true);
+			if (Array.isArray(content)) {
+				const textBlock = content.find((block) => block.type === 'text');
+				expect(textBlock?.text).toContain('test input');
+			}
 		});
 
 		it('should append assistant response after validation failure', async () => {

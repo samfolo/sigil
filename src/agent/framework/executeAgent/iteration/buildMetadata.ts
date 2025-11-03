@@ -47,6 +47,8 @@ export const buildMetadata = (options: BuildMetadataOptions): ExecuteMetadata =>
 		metadata.tokens = {
 			input: options.tokenMetrics.input,
 			output: options.tokenMetrics.output,
+			cacheCreationInput: options.tokenMetrics.cacheCreationInput,
+			cacheReadInput: options.tokenMetrics.cacheReadInput,
 		};
 	}
 
