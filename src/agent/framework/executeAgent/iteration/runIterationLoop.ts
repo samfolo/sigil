@@ -54,7 +54,7 @@ export interface RunIterationLoopResult<Output, Run extends object, Attempt exte
  * @param history - Original conversation history (not mutated)
  * @returns Modified copy with cache_control added, or original if no user message found
  */
-const addCacheControlToHistory = (
+export const addCacheControlToHistory = (
 	history: Anthropic.MessageParam[]
 ): Anthropic.MessageParam[] => {
 	if (history.length === 0) {
@@ -174,6 +174,15 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 			}));
 		}
 
+		// Convert system prompt to array format with cache_control for prompt caching
+		const systemParam: Anthropic.Messages.SystemParam[] = [
+			{
+				type: 'text',
+				text: systemPrompt,
+				cache_control: {type: 'ephemeral'},
+			},
+		];
+
 		// Call Anthropic API
 		try {
 			response = await anthropic.messages.create(
@@ -181,7 +190,7 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 					model: agent.model.name,
 					max_tokens: agent.model.maxTokens,
 					temperature: agent.model.temperature,
-					system: systemPrompt,
+					system: systemParam,
 					messages: conversationHistory,
 					tools,
 				},
