@@ -14,17 +14,19 @@ import type {EmptyObject} from '@sigil/src/common/types';
 /**
  * Builds system prompt by calling agent's prompt function
  *
+ * Called once before the retry loop to generate the static system prompt.
+ * The system prompt is preserved across all retry attempts and cached for efficiency.
+ *
  * @param signal - Optional AbortSignal to cancel prompt generation
  * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildSystemPrompt = async <Input, Output, Run extends object = EmptyObject, Attempt extends object = EmptyObject>(
 	agent: AgentDefinition<Input, Output, Run, Attempt>,
 	input: Input,
-	context: AgentExecutionContext,
 	signal?: AbortSignal
 ): Promise<Result<string, AgentError[]>> => {
 	try {
-		const prompt = await agent.prompts.system(input, context, signal);
+		const prompt = await agent.prompts.system(input, signal);
 		return ok(prompt);
 	} catch (error) {
 		return err([
@@ -35,7 +37,6 @@ export const buildSystemPrompt = async <Input, Output, Run extends object = Empt
 				context: {
 					promptType: 'system',
 					reason: error instanceof Error ? error.message : String(error),
-					attempt: context.attempt,
 				},
 			},
 		]);

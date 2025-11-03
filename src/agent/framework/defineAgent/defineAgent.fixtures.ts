@@ -313,7 +313,7 @@ const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput, EmptyObject, Empty
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _context: AgentExecutionContext, _signal?: AbortSignal) =>
+		system: async (input: string, _signal?: AbortSignal) =>
 			`You are a test agent processing: ${input}`,
 		user: async (input: string, _signal?: AbortSignal) =>
 			`Please process this input: ${input}`,

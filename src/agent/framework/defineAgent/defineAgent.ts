@@ -33,30 +33,25 @@ export interface ModelConfig {
 }
 
 /**
- * System prompt function - receives input and execution state
+ * System prompt function - receives input only
  *
- * Called on each attempt. Can adapt based on state.attempt to provide
- * retry-specific context (e.g., "this is retry 2/5").
+ * Called once before the retry loop to generate the static system prompt.
+ * This prompt is preserved across all retry attempts and cached for efficiency.
+ * Retry context is provided via error prompts in conversation history.
  *
  * @template Input - The type of input data the agent accepts
  * @param input - The agent input data
- * @param state - Execution state containing attempt number and max attempts
  * @param signal - Optional AbortSignal to cancel long-running prompt generation
  * @returns Promise resolving to the generated system prompt string
  *
  * @example
  * ```typescript
- * const systemPrompt: SystemPromptFunction<string> = async (input, state, signal) => {
- *   if (state.attempt > 1) {
- *     return `You are processing: ${input}. Retry ${state.attempt}/${state.maxAttempts}.`;
- *   }
- *   return `You are processing: ${input}`;
- * };
+ * const systemPrompt: SystemPromptFunction<string> = async (input, signal) =>
+ *   `You are processing: ${input}`;
  * ```
  */
 export type SystemPromptFunction<Input> = (
   input: Input,
-  context: AgentExecutionContext,
   signal?: AbortSignal
 ) => Promise<string>;
 
@@ -314,10 +309,11 @@ export interface ToolsConfig<Output, Run extends object, Attempt extends object>
  */
 export interface PromptsConfig<Input> {
   /**
-   * System prompt function - receives agent input and execution state
+   * System prompt function - receives agent input only
    *
-   * Called on each attempt and can adapt based on state (e.g., mention retry count).
-   * The system prompt provides meta-context about the execution environment.
+   * Called once before the retry loop to generate the static system prompt.
+   * The system prompt is preserved across all retry attempts and cached for efficiency.
+   * Retry context is provided via error prompts in conversation history.
    */
   system: SystemPromptFunction<Input>;
 
@@ -478,7 +474,7 @@ export interface AgentDefinition<Input, Output, Run extends object, Attempt exte
  *     maxTokens: 4096,
  *   },
  *   prompts: {
- *     system: async (input, context) => `Analyse data on attempt ${context.attempt}`,
+ *     system: async (input) => `Analyse data: ${input}`,
  *     user: async (input) => `Process: ${input}`,
  *     error: async (errorMessage, context) =>
  *       `Attempt ${context.attempt}/${context.maxAttempts} failed:\n${errorMessage}`,

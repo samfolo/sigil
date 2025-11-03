@@ -30,8 +30,7 @@ describe('buildSystemPrompt', () => {
 		it('should generate system prompt successfully', async () => {
 			const result = await buildSystemPrompt(
 				WORKING_AGENT,
-				TEST_INPUT,
-				FIRST_ATTEMPT_CONTEXT
+				TEST_INPUT
 			);
 
 			expect(isOk(result)).toBe(true);
@@ -39,35 +38,6 @@ describe('buildSystemPrompt', () => {
 			if (isOk(result)) {
 				expect(result.data).toContain('System prompt');
 				expect(result.data).toContain(TEST_INPUT.query);
-				expect(result.data).toContain('attempt 1/3');
-			}
-		});
-
-		it('should pass execution state correctly', async () => {
-			const result = await buildSystemPrompt(
-				WORKING_AGENT,
-				TEST_INPUT,
-				SECOND_ATTEMPT_CONTEXT
-			);
-
-			expect(isOk(result)).toBe(true);
-
-			if (isOk(result)) {
-				expect(result.data).toContain('attempt 2/3');
-			}
-		});
-
-		it('should handle final attempt state', async () => {
-			const result = await buildSystemPrompt(
-				WORKING_AGENT,
-				TEST_INPUT,
-				FINAL_ATTEMPT_CONTEXT
-			);
-
-			expect(isOk(result)).toBe(true);
-
-			if (isOk(result)) {
-				expect(result.data).toContain('attempt 3/3');
 			}
 		});
 	});
@@ -76,8 +46,7 @@ describe('buildSystemPrompt', () => {
 		it('should handle synchronous throw', async () => {
 			const result = await buildSystemPrompt(
 				SYSTEM_THROWS_AGENT,
-				TEST_INPUT,
-				FIRST_ATTEMPT_CONTEXT
+				TEST_INPUT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -95,7 +64,6 @@ describe('buildSystemPrompt', () => {
 					expect(firstError.context.reason).toBe(
 						'System prompt generation failed'
 					);
-					expect(firstError.context.attempt).toBe(1);
 				}
 			}
 		});
@@ -103,8 +71,7 @@ describe('buildSystemPrompt', () => {
 		it('should handle asynchronous rejection', async () => {
 			const result = await buildSystemPrompt(
 				SYSTEM_REJECTS_AGENT,
-				TEST_INPUT,
-				SECOND_ATTEMPT_CONTEXT
+				TEST_INPUT
 			);
 
 			expect(isErr(result)).toBe(true);
@@ -120,7 +87,6 @@ describe('buildSystemPrompt', () => {
 					expect(firstError.context.reason).toBe(
 						'System prompt async failure'
 					);
-					expect(firstError.context.attempt).toBe(2);
 				}
 			}
 		});
@@ -128,8 +94,7 @@ describe('buildSystemPrompt', () => {
 		it('should handle non-Error throw', async () => {
 			const result = await buildSystemPrompt(
 				NON_ERROR_THROW_AGENT,
-				TEST_INPUT,
-				FIRST_ATTEMPT_CONTEXT
+				TEST_INPUT
 			);
 
 			expect(isErr(result)).toBe(true);

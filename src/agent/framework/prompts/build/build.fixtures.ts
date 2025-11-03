@@ -100,8 +100,8 @@ export const WORKING_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObject, 
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, context: AgentExecutionContext) =>
-			`System prompt for ${input.query} (attempt ${context.attempt}/${context.maxAttempts})`,
+		system: async (input: TestInput) =>
+			`System prompt for ${input.query}`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
 		error: async (errorMessage: string, context: AgentExecutionContext) =>
@@ -134,7 +134,7 @@ export const SYSTEM_THROWS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyOb
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (_input: TestInput, _context: AgentExecutionContext) => {
+		system: async (_input: TestInput) => {
 			throw new Error('System prompt generation failed');
 		},
 		user: async (input: TestInput) =>
@@ -169,7 +169,7 @@ export const USER_THROWS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObje
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _context: AgentExecutionContext) =>
+		system: async (input: TestInput) =>
 			`System prompt: ${input.query}`,
 		user: async (_input: TestInput) => {
 			throw new Error('User prompt generation failed');
@@ -204,7 +204,7 @@ export const ERROR_THROWS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObj
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _context: AgentExecutionContext) =>
+		system: async (input: TestInput) =>
 			`System prompt: ${input.query}`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
@@ -239,7 +239,7 @@ export const SYSTEM_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyO
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (_input: TestInput, _context: AgentExecutionContext) =>
+		system: async (_input: TestInput) =>
 			Promise.reject(new Error('System prompt async failure')),
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
@@ -273,7 +273,7 @@ export const USER_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyObj
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _context: AgentExecutionContext) =>
+		system: async (input: TestInput) =>
 			`System prompt: ${input.query}`,
 		user: async (_input: TestInput) =>
 			Promise.reject(new Error('User prompt async failure')),
@@ -307,7 +307,7 @@ export const ERROR_REJECTS_AGENT: AgentDefinition<TestInput, TestOutput, EmptyOb
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _context: AgentExecutionContext) =>
+		system: async (input: TestInput) =>
 			`System prompt: ${input.query}`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,
@@ -341,7 +341,7 @@ export const NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput, Empty
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (_input: TestInput, _context: AgentExecutionContext) => {
+		system: async (_input: TestInput) => {
 			throw 'String error instead of Error object';
 		},
 		user: async (input: TestInput) =>
@@ -376,7 +376,7 @@ export const USER_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput, 
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _context: AgentExecutionContext) =>
+		system: async (input: TestInput) =>
 			`System prompt: ${input.query}`,
 		user: async (_input: TestInput) => {
 			throw 'String error in user prompt';
@@ -411,7 +411,7 @@ export const ERROR_NON_ERROR_THROW_AGENT: AgentDefinition<TestInput, TestOutput,
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: TestInput, _context: AgentExecutionContext) =>
+		system: async (input: TestInput) =>
 			`System prompt: ${input.query}`,
 		user: async (input: TestInput) =>
 			`User prompt: ${input.query}`,

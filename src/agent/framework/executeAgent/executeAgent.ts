@@ -123,8 +123,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 	// Track token usage across all attempts
 	let totalInputTokens = 0;
 	let totalOutputTokens = 0;
-	let totalCacheCreationInputTokens = 0;
-	let totalCacheReadInputTokens = 0;
+	let totalCacheCreationInputTokens: number | undefined;
+	let totalCacheReadInputTokens: number | undefined;
 
 	// Determine max attempts (options override or agent default)
 	const maxAttempts = options.maxAttempts ?? agent.validation.maxAttempts;
@@ -153,10 +153,36 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			phase: 'prompt_generation',
 			observability: agent.observability,
 			durationMetrics: {startTime},
-			tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
+			tokenMetrics: {
+				input: totalInputTokens,
+				output: totalOutputTokens,
+				cacheCreationInput: totalCacheCreationInputTokens,
+				cacheReadInput: totalCacheReadInputTokens,
+			},
 			callbackErrors,
 			buildMetadata,
 		}));
+	}
+
+	// Build system prompt once (static for caching)
+	const systemPromptResult = await buildSystemPrompt(agent, options.input, options.signal);
+	if (isErr(systemPromptResult)) {
+		return err({
+			errors: systemPromptResult.error,
+			metadata: buildMetadata({
+				observability: agent.observability,
+				durationMetrics: {
+					startTime,
+				},
+				tokenMetrics: {
+					input: totalInputTokens,
+					output: totalOutputTokens,
+					cacheCreationInput: totalCacheCreationInputTokens,
+					cacheReadInput: totalCacheReadInputTokens,
+				},
+				callbackErrors
+			}),
+		});
 	}
 
 	// Build user prompt once (immutable task description)
@@ -172,6 +198,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				tokenMetrics: {
 					input: totalInputTokens,
 					output: totalOutputTokens,
+					cacheCreationInput: totalCacheCreationInputTokens,
+					cacheReadInput: totalCacheReadInputTokens,
 				},
 				callbackErrors
 			}),
@@ -198,7 +226,12 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				phase: 'prompt_generation',
 				observability: agent.observability,
 				durationMetrics: {startTime},
-				tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
+				tokenMetrics: {
+					input: totalInputTokens,
+					output: totalOutputTokens,
+					cacheCreationInput: totalCacheCreationInputTokens,
+					cacheReadInput: totalCacheReadInputTokens,
+				},
 				callbackErrors,
 				buildMetadata,
 			}));
@@ -237,43 +270,6 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			callbackErrors
 		);
 
-		// Check for cancellation before building system prompt
-		if (options.signal?.aborted) {
-			return err(createCancellationError({
-				attempt,
-				phase: 'prompt_generation',
-				observability: agent.observability,
-				durationMetrics: {startTime},
-				tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
-				callbackErrors,
-				buildMetadata,
-			}));
-		}
-
-		// Build system prompt (can adapt based on attempt)
-		const systemPromptResult = await buildSystemPrompt(
-			agent,
-			options.input,
-			context,
-		);
-
-		if (isErr(systemPromptResult)) {
-			return err({
-				errors: systemPromptResult.error,
-				metadata: buildMetadata({
-					observability: agent.observability,
-					durationMetrics: {
-						startTime,
-					},
-					tokenMetrics: {
-						input: totalInputTokens,
-						output: totalOutputTokens,
-					},
-					callbackErrors
-				}),
-			});
-		}
-
 		// Determine if reflection mode is enabled
 		const isReflectionEnabled = !!agent.tools.output.reflectionHandler;
 
@@ -306,6 +302,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			tokenMetrics: {
 				input: totalInputTokens,
 				output: totalOutputTokens,
+				cacheCreationInput: totalCacheCreationInputTokens,
+				cacheReadInput: totalCacheReadInputTokens,
 			},
 		});
 
@@ -317,8 +315,15 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 		const {output, lastResponse: response, updatedState} = iterationResult.data;
 		totalInputTokens = iterationResult.data.tokenMetrics.input;
 		totalOutputTokens = iterationResult.data.tokenMetrics.output;
-		totalCacheCreationInputTokens = iterationResult.data.tokenMetrics.cacheCreationInput ?? 0;
-		totalCacheReadInputTokens = iterationResult.data.tokenMetrics.cacheReadInput ?? 0;
+
+		// Accumulate cache metrics only if present
+		if (iterationResult.data.tokenMetrics.cacheCreationInput !== undefined) {
+			totalCacheCreationInputTokens = (totalCacheCreationInputTokens ?? 0) + iterationResult.data.tokenMetrics.cacheCreationInput;
+		}
+		if (iterationResult.data.tokenMetrics.cacheReadInput !== undefined) {
+			totalCacheReadInputTokens = (totalCacheReadInputTokens ?? 0) + iterationResult.data.tokenMetrics.cacheReadInput;
+		}
+
 		currentState = updatedState;
 
 		// Check for cancellation before validation
@@ -328,7 +333,12 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				phase: 'validation',
 				observability: agent.observability,
 				durationMetrics: {startTime},
-				tokenMetrics: {input: totalInputTokens, output: totalOutputTokens},
+				tokenMetrics: {
+					input: totalInputTokens,
+					output: totalOutputTokens,
+					cacheCreationInput: totalCacheCreationInputTokens,
+					cacheReadInput: totalCacheReadInputTokens,
+				},
 				callbackErrors,
 				buildMetadata,
 			}));
@@ -384,8 +394,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				tokenMetrics: {
 					input: totalInputTokens,
 					output: totalOutputTokens,
-					cacheCreationInput: totalCacheCreationInputTokens || undefined,
-					cacheReadInput: totalCacheReadInputTokens || undefined,
+					cacheCreationInput: totalCacheCreationInputTokens,
+					cacheReadInput: totalCacheReadInputTokens,
 				},
 				callbackErrors,
 				callbacks: options.callbacks,
@@ -408,6 +418,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			tokenMetrics: {
 				input: totalInputTokens,
 				output: totalOutputTokens,
+				cacheCreationInput: totalCacheCreationInputTokens,
+				cacheReadInput: totalCacheReadInputTokens,
 			},
 			callbackErrors,
 			callbacks: options.callbacks,
@@ -448,6 +460,8 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 		tokenMetrics: {
 			input: totalInputTokens,
 			output: totalOutputTokens,
+			cacheCreationInput: totalCacheCreationInputTokens,
+			cacheReadInput: totalCacheReadInputTokens,
 		},
 		callbackErrors
 	});

@@ -163,10 +163,7 @@ export const POST = async (request: NextRequest) => {
 			metadata: {
 				attempts: result.data.attempts,
 				latency: result.data.metadata?.latency,
-				tokens: result.data.metadata?.tokens ? {
-					input: result.data.metadata.tokens.input,
-					output: result.data.metadata.tokens.output,
-				} : undefined,
+				tokens: result.data.metadata?.tokens,
 			},
 		});
 	} catch (error) {

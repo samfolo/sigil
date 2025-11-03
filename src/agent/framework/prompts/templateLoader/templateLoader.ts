@@ -139,8 +139,8 @@ export const compileTemplate = <T>(
 /**
  * Converts a TemplateFunction to a SystemPromptFunction
  *
- * SystemPromptFunction signature: (input: Input, context: AgentExecutionContext) => Promise<string>
- * This is a direct pass-through since the signatures match.
+ * SystemPromptFunction signature: (input: Input, signal?: AbortSignal) => Promise<string>
+ * The template receives empty context since system prompts are static for caching.
  *
  * @template Input - The type of input data the system prompt accepts
  * @param template - The template function to convert
@@ -157,7 +157,7 @@ export const compileTemplate = <T>(
  */
 export const asSystemPromptFunction = <Input>(
 	template: TemplateFunction<Input>
-): SystemPromptFunction<Input> => template;
+): SystemPromptFunction<Input> => async (input: Input): Promise<string> => template(input, {attempt: 1, maxAttempts: 1, iteration: 1, maxIterations: 1});
 
 /**
  * Converts a TemplateFunction to a UserPromptFunction
