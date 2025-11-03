@@ -45,6 +45,72 @@ export interface RunIterationLoopResult<Output, Run extends object, Attempt exte
 }
 
 /**
+ * Adds cache control to the last user message in conversation history
+ *
+ * Creates a shallow copy of the conversation history and adds cache_control
+ * to the last content block of the last user message. This enables prompt
+ * caching for the entire conversation history up to that point.
+ *
+ * @param history - Original conversation history (not mutated)
+ * @returns Modified copy with cache_control added, or original if no user message found
+ */
+const addCacheControlToHistory = (
+	history: Anthropic.MessageParam[]
+): Anthropic.MessageParam[] => {
+	if (history.length === 0) {
+		return history;
+	}
+
+	// Find the last user message by searching backwards
+	let lastUserMessageIndex = -1;
+	for (let i = history.length - 1; i >= 0; i--) {
+		if (history[i]?.role === 'user') {
+			lastUserMessageIndex = i;
+			break;
+		}
+	}
+
+	// If no user message found, return original history
+	if (lastUserMessageIndex === -1) {
+		return history;
+	}
+
+	// Create shallow copy of history
+	const modifiedHistory = [...history];
+	const lastUserMessage = history[lastUserMessageIndex];
+
+	if (!lastUserMessage) {
+		return history;
+	}
+
+	// Handle both string and array content formats
+	let content: Anthropic.Messages.ContentBlock[];
+	if (typeof lastUserMessage.content === 'string') {
+		content = [{type: 'text', text: lastUserMessage.content}];
+	} else {
+		// Shallow copy the content array
+		content = [...lastUserMessage.content];
+	}
+
+	// Add cache_control to the last content block
+	const lastBlock = content.at(-1);
+	if (lastBlock) {
+		content[content.length - 1] = {
+			...lastBlock,
+			cache_control: {type: 'ephemeral'},
+		};
+	}
+
+	// Replace the message in the copied history
+	modifiedHistory[lastUserMessageIndex] = {
+		...lastUserMessage,
+		content,
+	};
+
+	return modifiedHistory;
+};
+
+/**
  * Runs the agent iteration loop, calling the API and processing tool uses until
  * termination conditions are met.
  *

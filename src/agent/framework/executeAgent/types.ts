@@ -25,6 +25,16 @@ export interface TokenMetrics {
 	 * Total output tokens generated
 	 */
 	output: number;
+
+	/**
+	 * Total tokens used to create cache entries
+	 */
+	cacheCreationInput?: number;
+
+	/**
+	 * Total tokens read from cache
+	 */
+	cacheReadInput?: number;
 }
 
 /**
