@@ -183,6 +183,9 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 			},
 		];
 
+		// Add cache_control to conversation history for prompt caching
+		const messagesWithCache = addCacheControlToHistory(conversationHistory);
+
 		// Call Anthropic API
 		try {
 			response = await anthropic.messages.create(
@@ -191,7 +194,7 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 					max_tokens: agent.model.maxTokens,
 					temperature: agent.model.temperature,
 					system: systemParam,
-					messages: conversationHistory,
+					messages: messagesWithCache,
 					tools,
 				},
 				{
@@ -223,6 +226,14 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 		// Accumulate token usage
 		tokenMetrics.input += response.usage.input_tokens;
 		tokenMetrics.output += response.usage.output_tokens;
+
+		// Accumulate cache metrics if present
+		if (response.usage.cache_creation_input_tokens) {
+			tokenMetrics.cacheCreationInput = (tokenMetrics.cacheCreationInput || 0) + response.usage.cache_creation_input_tokens;
+		}
+		if (response.usage.cache_read_input_tokens) {
+			tokenMetrics.cacheReadInput = (tokenMetrics.cacheReadInput || 0) + response.usage.cache_read_input_tokens;
+		}
 
 		// Check stop reason - exit if not tool_use
 		if (response.stop_reason !== 'tool_use') {
@@ -378,6 +389,8 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 		tokenMetrics: {
 			input: tokenMetrics.input,
 			output: tokenMetrics.output,
+			cacheCreationInput: tokenMetrics.cacheCreationInput,
+			cacheReadInput: tokenMetrics.cacheReadInput,
 		},
 	});
 };

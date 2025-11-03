@@ -55,7 +55,12 @@ export interface ResponseConfig {
 	model?: string;
 	stopReason?: 'end_turn' | 'max_tokens' | 'stop_sequence' | 'tool_use';
 	stopSequence?: string | null;
-	usage?: {input: number; output: number};
+	usage?: {
+		input: number;
+		output: number;
+		cacheCreationInput?: number;
+		cacheReadInput?: number;
+	};
 }
 
 /**
@@ -292,8 +297,8 @@ export class AnthropicApiMock {
 		const usageData: Usage = {
 			input_tokens: usage.input,
 			output_tokens: usage.output,
-			cache_creation_input_tokens: 0,
-			cache_read_input_tokens: 0,
+			cache_creation_input_tokens: usage.cacheCreationInput ?? 0,
+			cache_read_input_tokens: usage.cacheReadInput ?? 0,
 			cache_creation: null,
 			server_tool_use: null,
 			service_tier: null,
