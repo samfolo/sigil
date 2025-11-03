@@ -121,35 +121,60 @@ export const POST = async (request: NextRequest) => {
 			samplerState,
 		};
 
-		// Truncation helper for log output
-		const truncate = (str: string, max: number): string =>
-			str.length > max ? str.slice(0, max) + '...' : str;
-
 		// Observability callbacks
 		const callbacks: ExecuteCallbacks<AnalysisOutput> = {
 			onAttemptStart: (context) => {
-				console.log(`[Analyser] Attempt ${context.attempt}/${context.maxAttempts}`);
+				logger.info(
+					{
+						event: 'attempt_start',
+						attempt: context.attempt,
+						maxAttempts: context.maxAttempts,
+						iteration: context.iteration,
+						maxIterations: context.maxIterations,
+					},
+					'Attempt started'
+				);
 			},
 			onToolCall: (context, toolName, toolInput) => {
-				console.log(
-					`[Analyser] Tool: ${toolName} | Input: ${truncate(JSON.stringify(toolInput), 200)}`
+				logger.trace(
+					{
+						event: 'tool_call',
+						attempt: context.attempt,
+						iteration: context.iteration,
+						toolName,
+						toolInput,
+					},
+					'Tool called'
 				);
 			},
 			onToolResult: (context, toolName, toolResult) => {
-				console.log(
-					`[Analyser] Result: ${toolName} | ${truncate(toolResult, 300)}`
+				logger.trace(
+					{
+						event: 'tool_result',
+						attempt: context.attempt,
+						iteration: context.iteration,
+						toolName,
+						toolResult: truncate(toolResult, 300),
+					},
+					'Tool result'
 				);
 			},
-			onValidationFailure: (context, _errors) => {
-				console.log(
-					`[Analyser] Validation failed on attempt ${context.attempt}`
+			onValidationFailure: (context, errors) => {
+				logger.warn(
+					{
+						event: 'validation_failure',
+						attempt: context.attempt,
+						iteration: context.iteration,
+						errors,
+					},
+					'Validation failed'
 				);
 			},
-			onSuccess: (_output) => {
-				console.log('[Analyser] Success');
+			onSuccess: (output) => {
+				logger.info({event: 'success', output}, 'Agent succeeded');
 			},
-			onFailure: (_errors) => {
-				console.log('[Analyser] Terminal failure');
+			onFailure: (errors) => {
+				logger.error({event: 'failure', errors}, 'Agent failed');
 			},
 		};
 
@@ -181,7 +206,10 @@ export const POST = async (request: NextRequest) => {
 			},
 		});
 	} catch (error) {
-		console.error('[Analyser] Unexpected error:', error);
+		logger.error(
+			{event: 'unexpected_error', error: error instanceof Error ? error.message : String(error)},
+			'Unexpected error'
+		);
 		return NextResponse.json(
 			{
 				error: 'Failed to process request',
