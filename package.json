@@ -43,6 +43,8 @@
     "next": "15.5.4",
     "openai": "^6.1.0",
     "papaparse": "^5.5.3",
+    "pino": "^10.1.0",
+    "pino-pretty": "^13.1.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-leaflet": "^5.0.0",
