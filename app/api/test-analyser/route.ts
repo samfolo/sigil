@@ -7,6 +7,7 @@ import {generateInitialVignettes} from '@sigil/src/agent/definitions/analyser/to
 import type {ExecuteCallbacks} from '@sigil/src/agent/framework/executeAgent';
 import {executeAgent} from '@sigil/src/agent/framework/executeAgent';
 import {isErr} from '@sigil/src/common/errors/result';
+import {createAgentLogger} from '@sigil/src/common/observability/logger';
 
 const INITIAL_VIGNETTE_COUNT = 20;
 
@@ -53,6 +54,10 @@ const INITIAL_VIGNETTE_COUNT = 20;
  * ```
  */
 export const POST = async (request: NextRequest) => {
+	const logger = createAgentLogger('AnalyserAgent');
+	const truncate = (str: string, max: number): string =>
+		str.length > max ? str.slice(0, max) + '...' : str;
+
 	try {
 		// Request validation
 		const body = await request.json();
@@ -66,13 +71,19 @@ export const POST = async (request: NextRequest) => {
 		}
 
 		// Preprocessing: Generate initial vignettes
-		console.log('[Analyser] Starting preprocessing...');
+		logger.info({event: 'preprocessing_start'}, 'Starting preprocessing');
 		const vignetteResult = await generateInitialVignettes(rawData, INITIAL_VIGNETTE_COUNT, {
 			onChunkingComplete: (chunkCount, dataSizeKB) => {
-				console.log(`[Vignettes] Chunked ${dataSizeKB} KB of data. Generating embeddings...`);
+				logger.info(
+					{event: 'chunking_complete', chunkCount, dataSizeKB},
+					'Chunked data, generating embeddings'
+				);
 			},
 			onEmbeddingProgress: (current, total) => {
-				console.log(`[Vignettes] Embedded ${current}/${total} chunks`);
+				logger.debug(
+					{event: 'embedding_progress', current, total},
+					'Embedding progress'
+				);
 			},
 		});
 
@@ -84,7 +95,10 @@ export const POST = async (request: NextRequest) => {
 		}
 
 		const {vignettes, state: samplerState} = vignetteResult.data;
-		console.log(`[Analyser] Generated ${vignettes.length} vignettes`);
+		logger.info(
+			{event: 'vignettes_generated', vignetteCount: vignettes.length},
+			'Generated vignettes'
+		);
 
 		// Agent creation
 		let agent;
