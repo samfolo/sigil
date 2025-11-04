@@ -140,12 +140,13 @@ export const compileTemplate = <T>(
 /**
  * Converts a TemplateFunction to a SystemPromptFunction
  *
- * SystemPromptFunction signature: (input: Input, signal?: AbortSignal) => Promise<string>
+ * SystemPromptFunction signature: (input: Input, signal?: AbortSignal) => Promise<Anthropic.Messages.TextBlockParam[]>
+ * The template output is wrapped in a single text block with ephemeral cache control enabled.
  * The template receives empty context since system prompts are static for caching.
  *
  * @template Input - The type of input data the system prompt accepts
  * @param template - The template function to convert
- * @returns SystemPromptFunction that can be used in agent prompts config
+ * @returns SystemPromptFunction that returns cached text block array
  *
  * @example
  * ```typescript
@@ -158,7 +159,16 @@ export const compileTemplate = <T>(
  */
 export const asSystemPromptFunction = <Input>(
 	template: TemplateFunction<Input>
-): SystemPromptFunction<Input> => async (input: Input): Promise<string> => template(input, {attempt: 1, maxAttempts: 1, iteration: 1, maxIterations: 1});
+): SystemPromptFunction<Input> => async (input: Input): Promise<Anthropic.Messages.TextBlockParam[]> => {
+		const text = await template(input, {attempt: 1, maxAttempts: 1, iteration: 1, maxIterations: 1});
+		return [
+			{
+				type: 'text',
+				text,
+				cache_control: {type: 'ephemeral'},
+			},
+		];
+	};
 
 /**
  * Converts a TemplateFunction to a UserPromptFunction

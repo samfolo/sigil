@@ -22,7 +22,7 @@ export interface RunIterationLoopParams<Input, Output, Run extends object, Attem
 	context: AgentExecutionContext;
 	state: ProcessToolUsesState<Run, Attempt>;
 	conversationHistory: Anthropic.MessageParam[];
-	systemPrompt: string;
+	systemPrompt: Anthropic.Messages.TextBlockParam[];
 	tools: Anthropic.Tool[];
 	isReflectionEnabled: boolean;
 	maxIterations: number;
@@ -177,15 +177,6 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 			}));
 		}
 
-		// Convert system prompt to array format with cache_control for prompt caching
-		const systemParam: Array<Anthropic.Messages.TextBlockParam> = [
-			{
-				type: 'text',
-				text: systemPrompt,
-				cache_control: {type: 'ephemeral'},
-			},
-		];
-
 		// Add cache_control to conversation history for prompt caching
 		const messagesWithCache = addCacheControlToHistory(conversationHistory);
 
@@ -196,7 +187,7 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 					model: agent.model.name,
 					max_tokens: agent.model.maxTokens,
 					temperature: agent.model.temperature,
-					system: systemParam,
+					system: systemPrompt,
 					messages: messagesWithCache,
 					tools,
 				},

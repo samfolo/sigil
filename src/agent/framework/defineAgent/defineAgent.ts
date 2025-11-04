@@ -76,7 +76,7 @@ export interface ModelConfig {
 export type SystemPromptFunction<Input> = (
   input: Input,
   signal?: AbortSignal
-) => Promise<Array<Anthropic.Messages.TextBlockParam>>;
+) => Promise<Anthropic.Messages.TextBlockParam[]>;
 
 /**
  * User prompt function - receives input only
