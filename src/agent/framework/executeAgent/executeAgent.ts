@@ -161,6 +161,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			},
 			callbackErrors,
 			buildMetadata,
+			onFailure: options.callbacks?.onFailure,
 		}));
 	}
 
@@ -234,6 +235,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				},
 				callbackErrors,
 				buildMetadata,
+				onFailure: options.callbacks?.onFailure,
 			}));
 		}
 
@@ -341,6 +343,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 				},
 				callbackErrors,
 				buildMetadata,
+				onFailure: options.callbacks?.onFailure,
 			}));
 		}
 

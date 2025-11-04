@@ -101,6 +101,11 @@ interface CreateCancellationErrorOptions {
 		tokenMetrics: TokenMetrics;
 		callbackErrors: Error[];
 	}) => ExecuteFailure['metadata'];
+
+	/**
+	 * Optional onFailure callback to invoke when cancellation occurs
+	 */
+	onFailure?: (errors: AgentError[], metadata?: ExecuteFailure['metadata']) => void;
 }
 
 /**
@@ -108,7 +113,7 @@ interface CreateCancellationErrorOptions {
  *
  * Shared utility for creating cancellation errors with consistent structure
  * across the execution pipeline. Handles metadata building based on observability
- * configuration.
+ * configuration. Invokes the onFailure callback if provided.
  *
  * @param options - Cancellation error options
  * @returns ExecuteFailure with EXECUTION_CANCELLED error
@@ -131,8 +136,17 @@ export const createCancellationError = (options: CreateCancellationErrorOptions)
 		callbackErrors: options.callbackErrors,
 	});
 
-	return {
+	const failure: ExecuteFailure = {
 		errors: [error],
 		metadata,
 	};
+
+	// Invoke onFailure callback if provided
+	safeInvokeCallback(
+		options.onFailure,
+		[failure.errors, failure.metadata],
+		options.callbackErrors
+	);
+
+	return failure;
 };

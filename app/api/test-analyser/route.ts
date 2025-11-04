@@ -11,6 +11,9 @@ import {createAgentLogger} from '@sigil/src/common/observability/logger';
 
 const INITIAL_VIGNETTE_COUNT = 20;
 
+// HTTP Status Codes
+const CLIENT_CLOSED_REQUEST = 499;
+
 /**
  * Test API route for end-to-end analyser agent integration.
  *
@@ -236,10 +239,26 @@ export const POST = async (request: NextRequest) => {
 		const result = await executeAgent(agent, {
 			input: agentInput,
 			callbacks,
+			signal: request.signal,
 		});
 
 		// Handle execution result
 		if (isErr(result)) {
+			// Check if execution was cancelled
+			const isCancelled = result.error.errors.some(
+				(error) => error.code === 'EXECUTION_CANCELLED'
+			);
+
+			if (isCancelled) {
+				return NextResponse.json(
+					{
+						error: 'Request cancelled',
+						details: result.error,
+					},
+					{status: CLIENT_CLOSED_REQUEST},
+				);
+			}
+
 			return NextResponse.json(
 				{
 					error: 'Analysis failed',
