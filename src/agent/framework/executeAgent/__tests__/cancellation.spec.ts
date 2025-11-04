@@ -177,7 +177,7 @@ describe('executeAgent - Cancellation', () => {
 	});
 
 	describe('Cleanup After Abort', () => {
-		it('should not invoke onFailure callback when aborted', async () => {
+		it('should invoke onFailure callback when aborted', async () => {
 			const controller = new AbortController();
 			controller.abort();
 
@@ -193,7 +193,28 @@ describe('executeAgent - Cancellation', () => {
 				},
 			});
 
-			expect(callbackInvocations).not.toContain('onFailure');
+			expect(callbackInvocations).toContain('onFailure');
+		});
+
+		it('should invoke onFailure callback with EXECUTION_CANCELLED error', async () => {
+			const controller = new AbortController();
+			controller.abort();
+
+			const onFailure = vi.fn();
+
+			await executeAgent(VALID_MINIMAL_AGENT, {
+				input: 'test input',
+				signal: controller.signal,
+				callbacks: {
+					onFailure,
+				},
+			});
+
+			expect(onFailure).toHaveBeenCalledOnce();
+			const [errors, metadata] = onFailure.mock.calls[0] ?? [];
+			expect(errors).toHaveLength(1);
+			expect(errors?.at(0)?.code).toBe(AGENT_ERROR_CODES.EXECUTION_CANCELLED);
+			expect(metadata).toBeDefined();
 		});
 
 		it('should not invoke onSuccess callback when aborted', async () => {

@@ -173,6 +173,7 @@ export const runIterationLoop = async <Input, Output, Run extends object, Attemp
 				tokenMetrics,
 				callbackErrors,
 				buildMetadata,
+				onFailure: callbacks.onFailure,
 			}));
 		}
 

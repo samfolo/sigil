@@ -43,6 +43,11 @@ export interface ProcessToolUsesCallbacks<Output> {
 	 * Callback to invoke after tool execution
 	 */
 	onToolResult?: ExecuteCallbacks<Output>['onToolResult'];
+
+	/**
+	 * Callback to invoke when execution fails or is cancelled
+	 */
+	onFailure?: ExecuteCallbacks<Output>['onFailure'];
 }
 
 /**

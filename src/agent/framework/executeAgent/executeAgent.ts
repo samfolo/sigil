@@ -296,6 +296,7 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			callbacks: {
 				onToolCall: options.callbacks?.onToolCall,
 				onToolResult: options.callbacks?.onToolResult,
+				onFailure: options.callbacks?.onFailure,
 			},
 			callbackErrors,
 			durationMetrics: {
