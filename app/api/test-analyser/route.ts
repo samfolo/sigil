@@ -459,6 +459,15 @@ export const POST = async (request: NextRequest) => {
 			...generatorResult.data.output,
 		};
 
+		logger.trace(
+			{
+				event: 'spec_generated',
+				agent: 'GenerateSigilIR',
+				spec: completeSpec,
+			},
+			'ComponentSpec generated with framework metadata'
+		);
+
 		// Full success response
 		return NextResponse.json({
 			status: 'success',
