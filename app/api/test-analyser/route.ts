@@ -208,11 +208,27 @@ export const POST = async (request: NextRequest) => {
 					'Tool result'
 				);
 			},
-			onSuccess: (output) => {
-				logger.info({event: 'success', output}, 'Agent succeeded');
+			onSuccess: (output, metadata) => {
+				logger.info(
+					{
+						event: 'success',
+						output,
+						tokens: metadata?.tokens,
+						latency: metadata?.latency,
+					},
+					'Agent succeeded'
+				);
 			},
-			onFailure: (errors) => {
-				logger.error({event: 'failure', errors}, 'Agent failed');
+			onFailure: (errors, metadata) => {
+				logger.error(
+					{
+						event: 'failure',
+						errors,
+						tokens: metadata?.tokens,
+						latency: metadata?.latency,
+					},
+					'Agent failed'
+				);
 			},
 		};
 

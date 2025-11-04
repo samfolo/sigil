@@ -153,15 +153,17 @@ export interface ExecuteCallbacks<Output> {
 	 * Called when agent execution succeeds
 	 *
 	 * @param output - The validated output from the agent
+	 * @param metadata - Optional execution metadata including token usage and latency
 	 */
-	onSuccess?: (output: Output) => void;
+	onSuccess?: (output: Output, metadata?: ExecuteMetadata) => void;
 
 	/**
 	 * Called when agent execution fails after all attempts
 	 *
 	 * @param errors - Array of AgentError describing what went wrong
+	 * @param metadata - Optional execution metadata including token usage and latency
 	 */
-	onFailure?: (errors: AgentError[]) => void;
+	onFailure?: (errors: AgentError[], metadata?: ExecuteMetadata) => void;
 }
 
 /**

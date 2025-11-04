@@ -433,7 +433,6 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 	}
 
 	// Max attempts exceeded - all attempts failed validation
-	// Invoke onFailure callback
 	const maxAttemptsError: AgentError = {
 		code: AGENT_ERROR_CODES.MAX_ATTEMPTS_EXCEEDED,
 		severity: 'error',
@@ -444,12 +443,6 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 			lastError: lastValidationError ? safeStringify(lastValidationError) : undefined,
 		},
 	};
-
-	safeInvokeCallback(
-		options.callbacks?.onFailure,
-		[[maxAttemptsError]],
-		callbackErrors
-	);
 
 	// Build metadata based on observability configuration
 	const metadata = buildMetadata({
@@ -465,6 +458,13 @@ export const executeAgent = async <Input, Output, Run extends object, Attempt ex
 		},
 		callbackErrors
 	});
+
+	// Invoke onFailure callback with errors and metadata
+	safeInvokeCallback(
+		options.callbacks?.onFailure,
+		[[maxAttemptsError], metadata],
+		callbackErrors
+	);
 
 	return err({
 		errors: [maxAttemptsError],

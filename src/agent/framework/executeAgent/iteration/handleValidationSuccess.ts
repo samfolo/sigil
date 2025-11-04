@@ -55,8 +55,8 @@ export interface HandleValidationSuccessParams<Output> {
  *
  * Orchestrates the success flow:
  * 1. Invoke onAttemptComplete callback with success = true
- * 2. Invoke onSuccess callback with validated output
- * 3. Build execution metadata (latency, tokens, callback errors)
+ * 2. Build execution metadata (latency, tokens, callback errors)
+ * 3. Invoke onSuccess callback with validated output and metadata
  * 4. Return ExecuteSuccess result
  *
  * @param params - Success handling parameters
@@ -72,13 +72,6 @@ export const handleValidationSuccess = <Output>(
 		params.callbackErrors
 	);
 
-	// Invoke onSuccess callback
-	safeInvokeCallback(
-		params.callbacks?.onSuccess,
-		[params.output],
-		params.callbackErrors
-	);
-
 	// Build metadata based on observability configuration
 	const metadata = buildMetadata({
 		observability: params.observability,
@@ -86,6 +79,13 @@ export const handleValidationSuccess = <Output>(
 		tokenMetrics: params.tokenMetrics,
 		callbackErrors: params.callbackErrors
 	});
+
+	// Invoke onSuccess callback with output and metadata
+	safeInvokeCallback(
+		params.callbacks?.onSuccess,
+		[params.output, metadata],
+		params.callbackErrors
+	);
 
 	return ok({
 		output: params.output,

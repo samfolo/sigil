@@ -20,7 +20,7 @@ import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {ValidationLayerMetadata, ValidationLayerResult} from '@sigil/src/agent/framework/validation';
 
 import {SUBMIT_TOOL_NAME} from './iteration/constants';
-import type {ExecuteCallbacks} from './types';
+import type {ExecuteCallbacks, ExecuteMetadata} from './types';
 
 /**
  * Output tool name used in test mocks
@@ -525,6 +525,7 @@ interface OnValidationFailureInvocation {
 interface OnSuccessInvocation<Output> {
 	type: 'onSuccess';
 	output: Output;
+	metadata?: ExecuteMetadata;
 }
 
 /**
@@ -533,6 +534,7 @@ interface OnSuccessInvocation<Output> {
 interface OnFailureInvocation {
 	type: 'onFailure';
 	errors: unknown[];
+	metadata?: ExecuteMetadata;
 }
 
 /**
@@ -659,14 +661,14 @@ export class CallbackTracker<Output = unknown> {
 				this.invokeWithErrorHandling(() => overrides?.onToolResult?.(context, toolName, toolResult));
 			},
 
-			onSuccess: (output) => {
-				this.invocationsList.push({type: 'onSuccess', output});
-				this.invokeWithErrorHandling(() => overrides?.onSuccess?.(output));
+			onSuccess: (output, metadata) => {
+				this.invocationsList.push({type: 'onSuccess', output, metadata});
+				this.invokeWithErrorHandling(() => overrides?.onSuccess?.(output, metadata));
 			},
 
-			onFailure: (errors) => {
-				this.invocationsList.push({type: 'onFailure', errors});
-				this.invokeWithErrorHandling(() => overrides?.onFailure?.(errors));
+			onFailure: (errors, metadata) => {
+				this.invocationsList.push({type: 'onFailure', errors, metadata});
+				this.invokeWithErrorHandling(() => overrides?.onFailure?.(errors, metadata));
 			},
 		};
 	}
