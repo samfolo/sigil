@@ -8,6 +8,7 @@
  * - Invalid configurations for each validation rule
  */
 
+import type Anthropic from '@anthropic-ai/sdk';
 import {z} from 'zod';
 
 import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
@@ -313,8 +314,13 @@ const BASE_MINIMAL_AGENT: AgentDefinition<string, TestOutput, EmptyObject, Empty
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: string, _signal?: AbortSignal) =>
-			`You are a test agent processing: ${input}`,
+		system: async (input: string, _signal?: AbortSignal): Promise<Anthropic.Messages.TextBlockParam[]> => [
+			{
+				type: 'text',
+				text: `You are a test agent processing: ${input}`,
+				cache_control: {type: 'ephemeral'},
+			},
+		],
 		user: async (input: string, _signal?: AbortSignal) =>
 			`Please process this input: ${input}`,
 		error: async (errorMessage: string, context: AgentExecutionContext, _signal?: AbortSignal) =>

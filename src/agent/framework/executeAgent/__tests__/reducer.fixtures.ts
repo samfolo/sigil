@@ -390,8 +390,12 @@ const BASE_STATEFUL_AGENT: AgentDefinition<StatefulAgentInput, StatefulTestOutpu
 		maxTokens: 1024,
 	},
 	prompts: {
-		system: async (input: StatefulAgentInput) =>
-			`You are a test agent processing data: ${input.data}. Use the tools to parse, query, and transform.`,
+		system: async (input: StatefulAgentInput) => [
+			{
+				type: 'text',
+				text: `You are a test agent processing data: ${input.data}. Use the tools to parse, query, and transform.`,
+			},
+		],
 		user: async (input: StatefulAgentInput) =>
 			`Process this data: ${input.data}`,
 		error: async (errorMessage: string, context) =>

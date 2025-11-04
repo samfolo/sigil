@@ -173,7 +173,7 @@ describe('defineAgent', () => {
 
 				expect(() => {
 					// Testing immutability at runtime
-					result.data.prompts.system = async () => 'modified';
+					result.data.prompts.system = async () => [{type: 'text', text: 'modified'}];
 				}).toThrow();
 			}
 		});

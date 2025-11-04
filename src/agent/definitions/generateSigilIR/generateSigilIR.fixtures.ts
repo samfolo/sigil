@@ -14,15 +14,21 @@ export const VALID_GENERATE_SIGIL_IR_INPUT: GenerateSigilIRInput = {
 			semantic: 'User account data with names, emails, and status flags',
 		},
 		parseResult: {
-			format: 'csv',
-			rowCount: 100,
-			columnCount: 3,
-			columns: [
-				{index: 0, name: 'name'},
-				{index: 1, name: 'email'},
-				{index: 2, name: 'status'},
-			],
-			size: 2500,
+			valid: true,
+			metadata: {
+				size: {
+					bytes: 2500,
+					characters: 2450,
+					lines: 101,
+				},
+				rowCount: 100,
+				columnCount: 3,
+				columns: [
+					{index: 0, content: {value: 'name', exact: true}},
+					{index: 1, content: {value: 'email', exact: true}},
+					{index: 2, content: {value: 'status', exact: true}},
+				],
+			},
 		},
 		summary: 'Dataset contains user account information with three primary fields: name (full names), email (contact addresses), and status (account states). Data appears clean with consistent formatting. Status values show categorical distribution across active, inactive, and pending states.',
 		keyFields: [
@@ -60,6 +66,7 @@ export const VALID_COMPONENT_SPEC_OUTPUT: GenerateSigilIROutput = {
 			type: 'stack',
 			direction: 'vertical',
 			id: 'root-layout',
+			spacing: 'normal',
 			children: [{type: 'component', component_id: 'table-1'}],
 		},
 		nodes: {
