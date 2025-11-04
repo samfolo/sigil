@@ -1,0 +1,19 @@
+{% assign penultimate = context.maxAttempts | minus: 1 -%}
+{% if context.attempt == penultimate -%}
+Attempt {{ context.attempt }}/{{ context.maxAttempts }} failed validation - next attempt is your final opportunity
+{% else -%}
+Attempt {{ context.attempt }}/{{ context.maxAttempts }} failed validation
+{% endif -%}
+
+{{ data }}
+
+Correction approach:
+
+- Review all errors carefully to identify specific validation layer failures (Zod schema, buildRenderTree, or React render)
+- Verify ComponentSpec structure matches the full schema provided in the system prompt
+- Check component IDs follow the {componentType}-{number} pattern (e.g., "table-1")
+- Ensure accessor paths match exactly the keyFields paths from AnalysisOutput
+- Confirm accessor_bindings match the accessors used in component configs
+- Verify affordances array is empty (current renderer limitation)
+- Ensure layout uses supported types (stack with vertical direction for single component)
+- Submit complete corrected spec via generate_component_spec - partial corrections will fail validation again

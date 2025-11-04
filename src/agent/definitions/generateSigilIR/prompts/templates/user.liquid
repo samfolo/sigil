@@ -1,0 +1,20 @@
+ANALYSED DATA
+
+Format: {{ data.analysis.classification.syntactic | upcase }}
+Description: {{ data.analysis.classification.semantic }}
+
+Summary:
+{{ data.analysis.summary }}
+
+Key Fields:
+{% for field in data.analysis.keyFields -%}
+- Path: {{ field.path }}
+  Label: {{ field.label }}
+  Description: {{ field.description }}
+  Types: {{ field.dataTypes | join: ", " }}
+{% endfor %}
+TASK
+
+Generate a complete ComponentSpec for this analysed data. Use the keyFields paths directly as column accessors. Follow the renderer capabilities and schema provided in the system prompt.
+
+Output the complete spec via the generate_component_spec tool.
