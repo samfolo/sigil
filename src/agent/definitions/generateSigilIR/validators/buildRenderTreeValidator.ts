@@ -6,9 +6,9 @@
  * not actual data binding.
  */
 
+import {buildRenderTree} from '@sigil/renderer/core/buildRenderTree';
 import {createCustomValidator} from '@sigil/src/agent/framework/validation';
 import {isErr} from '@sigil/src/common/errors/result';
-import {buildRenderTree} from '@sigil/renderer/core/buildRenderTree';
 
 import type {GenerateSigilIROutput} from '../types';
 
@@ -20,20 +20,20 @@ import type {GenerateSigilIROutput} from '../types';
  * and correct.
  */
 export const createBuildRenderTreeValidator = () => createCustomValidator<GenerateSigilIROutput>(
-		'build-render-tree',
-		'Validates that ComponentSpec structure can be rendered',
-		async (output) => {
-			// Add temporary id/created_at for validation
-			const completeSpec = {
-				...output,
-				id: 'temp-validation-id',
-				created_at: new Date().toISOString(),
-			};
+	'build-render-tree',
+	'Validates that ComponentSpec structure can be rendered',
+	async (output) => {
+		// Add temporary id/created_at for validation
+		const completeSpec = {
+			...output,
+			id: 'temp-validation-id',
+			created_at: new Date().toISOString(),
+		};
 
-			const result = buildRenderTree(completeSpec, []);
+		const result = buildRenderTree(completeSpec, []);
 
-			if (isErr(result)) {
-				throw result.error;
-			}
+		if (isErr(result)) {
+			throw result.error;
 		}
-	);
+	}
+);

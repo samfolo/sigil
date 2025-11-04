@@ -8,8 +8,8 @@
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
 import {defineAgent} from '@sigil/src/agent/framework/defineAgent';
 import {isErr} from '@sigil/src/common/errors/result';
-import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas';
 import type {EmptyObject} from '@sigil/src/common/types';
+import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas';
 
 import {buildSystemPrompt, buildUserPrompt, buildErrorPrompt} from './prompts/build';
 import type {GenerateSigilIRInput, GenerateSigilIROutput} from './types';

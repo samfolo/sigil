@@ -1,11 +1,16 @@
+import {randomUUID} from 'node:crypto';
+
 import type {NextRequest} from 'next/server';
 import {NextResponse} from 'next/server';
 
 import type {AnalyserAgentInput, AnalysisOutput} from '@sigil/src/agent/definitions/analyser';
 import {createAnalyserAgent} from '@sigil/src/agent/definitions/analyser';
 import {generateInitialVignettes} from '@sigil/src/agent/definitions/analyser/tools/sampler';
+import type {GenerateSigilIRInput, GenerateSigilIROutput} from '@sigil/src/agent/definitions/generateSigilIR';
+import {createGenerateSigilIRAgent} from '@sigil/src/agent/definitions/generateSigilIR';
 import type {ExecuteCallbacks} from '@sigil/src/agent/framework/executeAgent';
 import {executeAgent} from '@sigil/src/agent/framework/executeAgent';
+import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import {createAgentLogger} from '@sigil/src/common/observability/logger';
 
@@ -57,7 +62,7 @@ const CLIENT_CLOSED_REQUEST = 499;
  * ```
  */
 export const POST = async (request: NextRequest) => {
-	const logger = createAgentLogger('AnalyserAgent');
+	const logger = createAgentLogger('DataProcessingPipeline');
 	const truncate = (str: string, max: number): string =>
 		str.length > max ? str.slice(0, max) + '...' : str;
 
@@ -159,6 +164,7 @@ export const POST = async (request: NextRequest) => {
 				logger.info(
 					{
 						event: 'attempt_start',
+						agent: 'Analyser',
 						attempt: context.attempt,
 						maxAttempts: context.maxAttempts,
 						iteration: context.iteration,
@@ -171,6 +177,7 @@ export const POST = async (request: NextRequest) => {
 				logger.info(
 					{
 						event: 'attempt_complete',
+						agent: 'Analyser',
 						attempt: context.attempt,
 						maxAttempts: context.maxAttempts,
 						iteration: context.iteration,
@@ -184,6 +191,7 @@ export const POST = async (request: NextRequest) => {
 				logger.warn(
 					{
 						event: 'validation_failure',
+						agent: 'Analyser',
 						attempt: context.attempt,
 						iteration: context.iteration,
 						errors,
@@ -195,6 +203,7 @@ export const POST = async (request: NextRequest) => {
 				logger.debug(
 					{
 						event: 'validation_layer_start',
+						agent: 'Analyser',
 						attempt: context.attempt,
 						iteration: context.iteration,
 						layerName: layer.name,
@@ -207,6 +216,7 @@ export const POST = async (request: NextRequest) => {
 				logger.debug(
 					{
 						event: 'validation_layer_complete',
+						agent: 'Analyser',
 						attempt: context.attempt,
 						iteration: context.iteration,
 						layerName: layer.name,
@@ -220,6 +230,7 @@ export const POST = async (request: NextRequest) => {
 				logger.trace(
 					{
 						event: 'tool_call',
+						agent: 'Analyser',
 						attempt: context.attempt,
 						iteration: context.iteration,
 						toolName,
@@ -232,6 +243,7 @@ export const POST = async (request: NextRequest) => {
 				logger.trace(
 					{
 						event: 'tool_result',
+						agent: 'Analyser',
 						attempt: context.attempt,
 						iteration: context.iteration,
 						toolName,
@@ -244,6 +256,7 @@ export const POST = async (request: NextRequest) => {
 				logger.info(
 					{
 						event: 'success',
+						agent: 'Analyser',
 						output,
 						tokens: metadata?.tokens,
 						latency: metadata?.latency,
@@ -255,6 +268,7 @@ export const POST = async (request: NextRequest) => {
 				logger.error(
 					{
 						event: 'failure',
+						agent: 'Analyser',
 						errors,
 						tokens: metadata?.tokens,
 						latency: metadata?.latency,
@@ -286,14 +300,177 @@ export const POST = async (request: NextRequest) => {
 			);
 		}
 
-		// Success response
+		// Analyser succeeded - store metadata
+		const analyserMetadata = {
+			attempts: result.data.attempts,
+			latency: result.data.metadata?.latency,
+			tokens: result.data.metadata?.tokens,
+		};
+		const analysisOutput = result.data.output;
+
+		logger.info(
+			{event: 'analyser_complete', metadata: analyserMetadata},
+			'Analyser complete, starting GenerateSigilIR'
+		);
+
+		// Create GenerateSigilIR agent
+		let generatorAgent;
+		try {
+			generatorAgent = await createGenerateSigilIRAgent();
+		} catch (error) {
+			// Return partial success: analysis succeeded but IR generation failed to init
+			return NextResponse.json({
+				status: 'partial_success',
+				analysis: analysisOutput,
+				spec: null,
+				error: {
+					code: AGENT_ERROR_CODES.AGENT_CREATION_FAILED,
+					details: error instanceof Error ? error.message : 'Unknown error',
+				},
+				metadata: {
+					analyser: analyserMetadata,
+					generator: null,
+				},
+			});
+		}
+
+		// Build GenerateSigilIR input
+		const generatorInput: GenerateSigilIRInput = {
+			analysis: analysisOutput,
+		};
+
+		// Observability callbacks for GenerateSigilIR
+		const generatorCallbacks: ExecuteCallbacks<GenerateSigilIROutput> = {
+			onAttemptStart: (context) => {
+				logger.info(
+					{
+						event: 'attempt_start',
+						agent: 'GenerateSigilIR',
+						attempt: context.attempt,
+						maxAttempts: context.maxAttempts,
+					},
+					'GenerateSigilIR attempt started'
+				);
+			},
+			onAttemptComplete: (context, success) => {
+				logger.info(
+					{
+						event: 'attempt_complete',
+						agent: 'GenerateSigilIR',
+						attempt: context.attempt,
+						success,
+					},
+					'GenerateSigilIR attempt completed'
+				);
+			},
+			onValidationFailure: (context, errors) => {
+				logger.warn(
+					{
+						event: 'validation_failure',
+						agent: 'GenerateSigilIR',
+						attempt: context.attempt,
+						errors,
+					},
+					'GenerateSigilIR validation failed'
+				);
+			},
+			onValidationLayerStart: (context, layer) => {
+				logger.debug(
+					{
+						event: 'validation_layer_start',
+						agent: 'GenerateSigilIR',
+						attempt: context.attempt,
+						layerName: layer.name,
+						layerType: layer.type,
+					},
+					'GenerateSigilIR validation layer started'
+				);
+			},
+			onValidationLayerComplete: (context, layer) => {
+				logger.debug(
+					{
+						event: 'validation_layer_complete',
+						agent: 'GenerateSigilIR',
+						attempt: context.attempt,
+						layerName: layer.name,
+						success: layer.success,
+					},
+					'GenerateSigilIR validation layer completed'
+				);
+			},
+			onSuccess: (output, metadata) => {
+				logger.info(
+					{
+						event: 'success',
+						agent: 'GenerateSigilIR',
+						tokens: metadata?.tokens,
+						latency: metadata?.latency,
+					},
+					'GenerateSigilIR succeeded'
+				);
+			},
+			onFailure: (errors, metadata) => {
+				logger.error(
+					{
+						event: 'failure',
+						agent: 'GenerateSigilIR',
+						errors,
+						tokens: metadata?.tokens,
+						latency: metadata?.latency,
+					},
+					'GenerateSigilIR failed'
+				);
+			},
+		};
+
+		// Execute GenerateSigilIR agent
+		const generatorResult = await executeAgent(generatorAgent, {
+			input: generatorInput,
+			callbacks: generatorCallbacks,
+			signal: controller.signal,
+		});
+
+		// Handle GenerateSigilIR result
+		if (isErr(generatorResult)) {
+			if (controller.signal.aborted) {
+				return handleCancellation('execution', generatorResult.error);
+			}
+
+			// Return partial success: analysis succeeded but IR generation failed
+			return NextResponse.json({
+				status: 'partial_success',
+				analysis: analysisOutput,
+				spec: null,
+				error: {
+					code: AGENT_ERROR_CODES.SPEC_GENERATION_FAILED,
+					details: generatorResult.error,
+				},
+				metadata: {
+					analyser: analyserMetadata,
+					generator: null,
+				},
+			});
+		}
+
+		// Both agents succeeded - add id and created_at to spec
+		const completeSpec = {
+			id: randomUUID(),
+			created_at: new Date().toISOString(),
+			...generatorResult.data.output,
+		};
+
+		// Full success response
 		return NextResponse.json({
 			status: 'success',
-			analysis: result.data.output,
+			analysis: analysisOutput,
+			spec: completeSpec,
 			metadata: {
-				attempts: result.data.attempts,
-				latency: result.data.metadata?.latency,
-				tokens: result.data.metadata?.tokens,
+				analyser: analyserMetadata,
+				generator: {
+					attempts: generatorResult.data.attempts,
+					latency: generatorResult.data.metadata?.latency,
+					tokens: generatorResult.data.metadata?.tokens,
+				},
 			},
 		});
 	} catch (error) {
