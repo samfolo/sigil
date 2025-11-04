@@ -61,6 +61,25 @@ export const POST = async (request: NextRequest) => {
 	const truncate = (str: string, max: number): string =>
 		str.length > max ? str.slice(0, max) + '...' : str;
 
+	// Create local AbortController that mirrors request.signal
+	const controller = new AbortController();
+	const mirrorAbort = () => {
+		controller.abort();
+	};
+	request.signal.addEventListener('abort', mirrorAbort);
+
+	// Helper to handle cancellation responses
+	const handleCancellation = (phase: string, details: unknown) => {
+		logger.info(
+			{event: 'request_cancelled', phase, error: details},
+			'Request cancelled by client'
+		);
+		return NextResponse.json(
+			{error: 'Request cancelled', details},
+			{status: CLIENT_CLOSED_REQUEST}
+		);
+	};
+
 	try {
 		// Request validation
 		const body = await request.json();
@@ -92,10 +111,15 @@ export const POST = async (request: NextRequest) => {
 					);
 				},
 			},
-			request.signal
+			controller.signal
 		);
 
 		if (isErr(vignetteResult)) {
+			// Check if preprocessing was cancelled
+			if (controller.signal.aborted) {
+				return handleCancellation('preprocessing', vignetteResult.error);
+			}
+
 			return NextResponse.json(
 				{error: 'Preprocessing failed', details: vignetteResult.error},
 				{status: 400}
@@ -244,24 +268,13 @@ export const POST = async (request: NextRequest) => {
 		const result = await executeAgent(agent, {
 			input: agentInput,
 			callbacks,
-			signal: request.signal,
+			signal: controller.signal,
 		});
 
 		// Handle execution result
 		if (isErr(result)) {
-			// Check if execution was cancelled
-			const isCancelled = result.error.errors.some(
-				(error) => error.code === 'EXECUTION_CANCELLED'
-			);
-
-			if (isCancelled) {
-				return NextResponse.json(
-					{
-						error: 'Request cancelled',
-						details: result.error,
-					},
-					{status: CLIENT_CLOSED_REQUEST},
-				);
+			if (controller.signal.aborted) {
+				return handleCancellation('execution', result.error);
 			}
 
 			return NextResponse.json(
@@ -284,6 +297,15 @@ export const POST = async (request: NextRequest) => {
 			},
 		});
 	} catch (error) {
+		// Check if request was cancelled
+		if (controller.signal.aborted) {
+			return handleCancellation(
+				'request',
+				error instanceof Error ? error.message : String(error)
+			);
+		}
+
+		// Unexpected error
 		logger.error(
 			{event: 'unexpected_error', error: error instanceof Error ? error.message : String(error)},
 			'Unexpected error'
@@ -295,5 +317,8 @@ export const POST = async (request: NextRequest) => {
 			},
 			{status: 500}
 		);
+	} finally {
+		// Cleanup: remove abort listener
+		request.signal.removeEventListener('abort', mirrorAbort);
 	}
 };

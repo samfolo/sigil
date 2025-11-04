@@ -1,5 +1,6 @@
 import {readFile} from 'node:fs/promises';
 
+import type Anthropic from '@anthropic-ai/sdk';
 import {Liquid} from 'liquidjs';
 
 import type {

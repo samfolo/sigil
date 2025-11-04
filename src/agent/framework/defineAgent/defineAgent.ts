@@ -1,3 +1,4 @@
+import type Anthropic from '@anthropic-ai/sdk';
 import type {z} from 'zod';
 
 import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
@@ -35,25 +36,47 @@ export interface ModelConfig {
 /**
  * System prompt function - receives input only
  *
- * Called once before the retry loop to generate the static system prompt.
- * This prompt is preserved across all retry attempts and cached for efficiency.
- * Retry context is provided via error prompts in conversation history.
+ * Called once before the retry loop to generate the static system prompt array.
+ * Each array element can have cache_control to enable prompt caching (see
+ * https://docs.claude.com/en/docs/build-with-claude/prompt-caching for details).
+ * This prompt is preserved across all retry attempts. Retry context is provided
+ * via error prompts in conversation history.
  *
  * @template Input - The type of input data the agent accepts
  * @param input - The agent input data
  * @param signal - Optional AbortSignal to cancel long-running prompt generation
- * @returns Promise resolving to the generated system prompt string
+ * @returns Promise resolving to array of text blocks with optional cache control
  *
  * @example
  * ```typescript
- * const systemPrompt: SystemPromptFunction<string> = async (input, signal) =>
- *   `You are processing: ${input}`;
+ * // Simple single-block system prompt with caching
+ * const systemPrompt: SystemPromptFunction<string> = async (input, signal) => [
+ *   {
+ *     type: 'text',
+ *     text: `You are processing: ${input}`,
+ *     cache_control: {type: 'ephemeral'}
+ *   }
+ * ];
+ *
+ * // Multi-block system prompt with separate cached segments
+ * const systemPrompt: SystemPromptFunction<Input> = async (input, signal) => [
+ *   {
+ *     type: 'text',
+ *     text: instructionsTemplate,
+ *     cache_control: {type: 'ephemeral'}
+ *   },
+ *   {
+ *     type: 'text',
+ *     text: JSON.stringify(schema),
+ *     cache_control: {type: 'ephemeral'}
+ *   }
+ * ];
  * ```
  */
 export type SystemPromptFunction<Input> = (
   input: Input,
   signal?: AbortSignal
-) => Promise<string>;
+) => Promise<Array<Anthropic.Messages.TextBlockParam>>;
 
 /**
  * User prompt function - receives input only
@@ -311,9 +334,10 @@ export interface PromptsConfig<Input> {
   /**
    * System prompt function - receives agent input only
    *
-   * Called once before the retry loop to generate the static system prompt.
-   * The system prompt is preserved across all retry attempts and cached for efficiency.
-   * Retry context is provided via error prompts in conversation history.
+   * Called once before the retry loop to generate the static system prompt array.
+   * The system prompt is preserved across all retry attempts. Use cache_control
+   * on text blocks to enable prompt caching. Retry context is provided via error
+   * prompts in conversation history.
    */
   system: SystemPromptFunction<Input>;
 
@@ -474,7 +498,11 @@ export interface AgentDefinition<Input, Output, Run extends object, Attempt exte
  *     maxTokens: 4096,
  *   },
  *   prompts: {
- *     system: async (input) => `Analyse data: ${input}`,
+ *     system: async (input) => [{
+ *       type: 'text',
+ *       text: `Analyse data: ${input}`,
+ *       cache_control: {type: 'ephemeral'}
+ *     }],
  *     user: async (input) => `Process: ${input}`,
  *     error: async (errorMessage, context) =>
  *       `Attempt ${context.attempt}/${context.maxAttempts} failed:\n${errorMessage}`,
