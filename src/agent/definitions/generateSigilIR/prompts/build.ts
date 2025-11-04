@@ -12,6 +12,7 @@ import {resolve} from 'node:path';
 
 import type Anthropic from '@anthropic-ai/sdk';
 
+import componentSpecSchema from '@sigil/spec/schema/specification.schema.json' assert {type: 'json'};
 import type {
 	SystemPromptFunction,
 	UserPromptFunction,
@@ -25,7 +26,6 @@ import {
 import {isErr} from '@sigil/src/common/errors/result';
 
 // Import the full ComponentSpec schema as raw JSON
-import componentSpecSchema from '@sigil/spec/schema/specification.schema.json' assert {type: 'json'};
 
 import type {GenerateSigilIRInput} from '../types';
 
