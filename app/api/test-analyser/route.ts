@@ -135,6 +135,55 @@ export const POST = async (request: NextRequest) => {
 					'Attempt started'
 				);
 			},
+			onAttemptComplete: (context, success) => {
+				logger.info(
+					{
+						event: 'attempt_complete',
+						attempt: context.attempt,
+						maxAttempts: context.maxAttempts,
+						iteration: context.iteration,
+						maxIterations: context.maxIterations,
+						success,
+					},
+					'Attempt completed'
+				);
+			},
+			onValidationFailure: (context, errors) => {
+				logger.warn(
+					{
+						event: 'validation_failure',
+						attempt: context.attempt,
+						iteration: context.iteration,
+						errors,
+					},
+					'Validation failed'
+				);
+			},
+			onValidationLayerStart: (context, layer) => {
+				logger.debug(
+					{
+						event: 'validation_layer_start',
+						attempt: context.attempt,
+						iteration: context.iteration,
+						layerName: layer.name,
+						layerType: layer.type,
+					},
+					'Validation layer started'
+				);
+			},
+			onValidationLayerComplete: (context, layer) => {
+				logger.debug(
+					{
+						event: 'validation_layer_complete',
+						attempt: context.attempt,
+						iteration: context.iteration,
+						layerName: layer.name,
+						layerType: layer.type,
+						success: layer.success,
+					},
+					'Validation layer completed'
+				);
+			},
 			onToolCall: (context, toolName, toolInput) => {
 				logger.trace(
 					{
@@ -157,17 +206,6 @@ export const POST = async (request: NextRequest) => {
 						toolResult: truncate(toolResult, 300),
 					},
 					'Tool result'
-				);
-			},
-			onValidationFailure: (context, errors) => {
-				logger.warn(
-					{
-						event: 'validation_failure',
-						attempt: context.attempt,
-						iteration: context.iteration,
-						errors,
-					},
-					'Validation failed'
 				);
 			},
 			onSuccess: (output) => {

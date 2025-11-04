@@ -1,5 +1,6 @@
 import {randomUUID} from 'crypto';
 import {join} from 'path';
+
 import pino from 'pino';
 
 const LOG_LEVEL_TRACE = 'trace';
@@ -7,12 +8,22 @@ const LOG_LEVEL_DEBUG = 'debug';
 const DEFAULT_CONSOLE_LOG_LEVEL = LOG_LEVEL_DEBUG;
 
 /**
+ * Formats a Date as yyyy-MM-dd
+ */
+const formatDateAsYYYYMMDD = (date: Date): string => {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	return `${year}-${month}-${day}`;
+};
+
+/**
  * Creates an agent logger with structured logging capabilities
  *
  * Generates a unique traceId for correlating events within a single agent execution.
  * In development mode, logs are written to both console (with pretty formatting) and
- * to timestamped JSONL files in the logs/ directory. In production, logs are written
- * as JSON to stdout.
+ * to timestamped JSONL files in the logs/yyyy-MM-dd/ directory. In production, logs
+ * are written as JSON to stdout only.
  *
  * @param agentName - Name of the agent for log identification
  * @returns Pino logger instance with agent and traceId context
@@ -27,13 +38,14 @@ const DEFAULT_CONSOLE_LOG_LEVEL = LOG_LEVEL_DEBUG;
 export const createAgentLogger = (agentName: string): pino.Logger => {
 	const traceId = `agent_${randomUUID()}`;
 	const isDevelopment = process.env.NODE_ENV === 'development';
+	const consoleLogLevel = process.env.LOG_LEVEL || DEFAULT_CONSOLE_LOG_LEVEL;
 
 	let logger: pino.Logger;
 
 	if (isDevelopment) {
 		const timestamp = Date.now();
-		const logFilePath = join(process.cwd(), 'logs', `${agentName}-${timestamp}.jsonl`);
-		const consoleLogLevel = process.env.LOG_LEVEL || DEFAULT_CONSOLE_LOG_LEVEL;
+		const dateFolder = formatDateAsYYYYMMDD(new Date());
+		const logFilePath = join(process.cwd(), 'logs', dateFolder, `${agentName}-${timestamp}.jsonl`);
 
 		try {
 			logger = pino(
