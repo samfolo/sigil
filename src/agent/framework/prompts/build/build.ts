@@ -5,6 +5,8 @@
  * during prompt generation, converting them into structured AgentError format.
  */
 
+import type Anthropic from '@anthropic-ai/sdk';
+
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent/defineAgent';
 import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result, AgentError} from '@sigil/src/common/errors';
@@ -14,17 +16,18 @@ import type {EmptyObject} from '@sigil/src/common/types';
 /**
  * Builds system prompt by calling agent's prompt function
  *
- * Called once before the retry loop to generate the static system prompt.
- * The system prompt is preserved across all retry attempts and cached for efficiency.
+ * Called once before the retry loop to generate the static system prompt array.
+ * The system prompt is preserved across all retry attempts. Each text block can
+ * have cache_control for prompt caching efficiency.
  *
  * @param signal - Optional AbortSignal to cancel prompt generation
- * @returns Result with prompt string, or PROMPT_GENERATION_FAILED if function throws
+ * @returns Result with prompt text block array, or PROMPT_GENERATION_FAILED if function throws
  */
 export const buildSystemPrompt = async <Input, Output, Run extends object = EmptyObject, Attempt extends object = EmptyObject>(
 	agent: AgentDefinition<Input, Output, Run, Attempt>,
 	input: Input,
 	signal?: AbortSignal
-): Promise<Result<string, AgentError[]>> => {
+): Promise<Result<Anthropic.Messages.TextBlockParam[], AgentError[]>> => {
 	try {
 		const prompt = await agent.prompts.system(input, signal);
 		return ok(prompt);
@@ -112,7 +115,7 @@ export const buildErrorPrompt = async <Input, Output, Run extends object = Empty
  */
 export interface FirstAttemptPrompts {
   isRetry: false;
-  system: string;
+  system: Anthropic.Messages.TextBlockParam[];
   user: string;
 }
 
@@ -121,7 +124,7 @@ export interface FirstAttemptPrompts {
  */
 export interface RetryAttemptPrompts {
   isRetry: true;
-  system: string;
+  system: Anthropic.Messages.TextBlockParam[];
   user: string;
   error: string;
 }
