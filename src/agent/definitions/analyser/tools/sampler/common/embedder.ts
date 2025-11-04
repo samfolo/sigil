@@ -218,10 +218,16 @@ export const embedText = async (
  */
 export const embedBatch = async (
 	texts: string[],
-	onProgress?: EmbeddingProgressCallback
+	onProgress?: EmbeddingProgressCallback,
+	signal?: AbortSignal
 ): Promise<Result<Embedding[], string>> => {
 	if (texts.length === 0) {
 		return ok([]);
+	}
+
+	// Check for cancellation before processing
+	if (signal?.aborted) {
+		return err('Embedding cancelled');
 	}
 
 	const embedderResult = await getEmbedder();
@@ -237,8 +243,13 @@ export const embedBatch = async (
 		const total = texts.length;
 
 		for (let i = 0; i < texts.length; i += MAX_BATCH_SIZE) {
+			// Check for cancellation before each batch
+			if (signal?.aborted) {
+				return err('Embedding cancelled');
+			}
+
 			const batch = texts.slice(i, i + MAX_BATCH_SIZE);
-			const batchResult = await embedBatch(batch);
+			const batchResult = await embedBatch(batch, onProgress, signal);
 
 			if (isErr(batchResult)) {
 				return batchResult;
@@ -260,6 +271,11 @@ export const embedBatch = async (
 		}
 
 		return ok(allEmbeddings);
+	}
+
+	// Check for cancellation before calling embedder model
+	if (signal?.aborted) {
+		return err('Embedding cancelled');
 	}
 
 	try {

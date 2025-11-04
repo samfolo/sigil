@@ -85,7 +85,8 @@ export interface VignetteGenerationCallbacks {
 export const generateInitialVignettes = async (
 	rawData: string,
 	count: number,
-	callbacks?: VignetteGenerationCallbacks
+	callbacks?: VignetteGenerationCallbacks,
+	signal?: AbortSignal
 ): Promise<Result<InitialVignettesResult, string>> => {
 	// Validate input
 	if (!rawData || rawData.trim().length === 0) {
@@ -94,6 +95,11 @@ export const generateInitialVignettes = async (
 
 	if (count <= 0) {
 		return err('Count must be greater than 0');
+	}
+
+	// Check for cancellation before chunking
+	if (signal?.aborted) {
+		return err('Vignette generation cancelled');
 	}
 
 	// Step 1: Chunk the data
@@ -122,14 +128,24 @@ export const generateInitialVignettes = async (
 		}
 	}
 
+	// Check for cancellation before embedding
+	if (signal?.aborted) {
+		return err('Vignette generation cancelled');
+	}
+
 	// Step 2: Embed all chunks
 	const texts = chunks.map((chunk) => chunk.content);
-	const embeddingResult = await embedBatch(texts, callbacks?.onEmbeddingProgress);
+	const embeddingResult = await embedBatch(texts, callbacks?.onEmbeddingProgress, signal);
 	if (isErr(embeddingResult)) {
 		return embeddingResult;
 	}
 
 	const embeddings = embeddingResult.data;
+
+	// Check for cancellation before diversity sampling
+	if (signal?.aborted) {
+		return err('Vignette generation cancelled');
+	}
 
 	// Step 3: Select diverse samples
 	const actualCount = Math.min(count, chunks.length);

@@ -75,20 +75,25 @@ export const POST = async (request: NextRequest) => {
 
 		// Preprocessing: Generate initial vignettes
 		logger.info({event: 'preprocessing_start'}, 'Starting preprocessing');
-		const vignetteResult = await generateInitialVignettes(rawData, INITIAL_VIGNETTE_COUNT, {
-			onChunkingComplete: (chunkCount, dataSizeKB) => {
-				logger.info(
-					{event: 'chunking_complete', chunkCount, dataSizeKB},
-					'Chunked data, generating embeddings'
-				);
+		const vignetteResult = await generateInitialVignettes(
+			rawData,
+			INITIAL_VIGNETTE_COUNT,
+			{
+				onChunkingComplete: (chunkCount, dataSizeKB) => {
+					logger.info(
+						{event: 'chunking_complete', chunkCount, dataSizeKB},
+						'Chunked data, generating embeddings'
+					);
+				},
+				onEmbeddingProgress: (current, total) => {
+					logger.debug(
+						{event: 'embedding_progress', current, total},
+						'Embedding progress'
+					);
+				},
 			},
-			onEmbeddingProgress: (current, total) => {
-				logger.debug(
-					{event: 'embedding_progress', current, total},
-					'Embedding progress'
-				);
-			},
-		});
+			request.signal
+		);
 
 		if (isErr(vignetteResult)) {
 			return NextResponse.json(
