@@ -5,7 +5,7 @@
  * 1. System prompt template (agent instructions)
  * 2. Full ComponentSpec schema (raw JSON for token efficiency)
  *
- * Both segments use ephemeral cache control for 90% cost reduction on cache hits.
+ * Both segments use ephemeral cache control for cost reduction on cache hits.
  */
 
 import {resolve} from 'node:path';
