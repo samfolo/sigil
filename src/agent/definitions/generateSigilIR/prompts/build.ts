@@ -51,7 +51,7 @@ export const buildSystemPrompt = async (): Promise<SystemPromptFunction<Generate
 	const templateFunction = result.data;
 
 	// Return function that builds two-block cached prompt
-	return async (input: GenerateSigilIRInput, signal?: AbortSignal): Promise<Anthropic.Messages.TextBlockParam[]> => {
+	return async (input: GenerateSigilIRInput): Promise<Anthropic.Messages.TextBlockParam[]> => {
 		const instructionsText = await templateFunction(input, {attempt: 1, maxAttempts: 1, iteration: 1, maxIterations: 1});
 
 		return [
