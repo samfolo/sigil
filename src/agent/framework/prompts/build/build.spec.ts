@@ -36,8 +36,10 @@ describe('buildSystemPrompt', () => {
 			expect(isOk(result)).toBe(true);
 
 			if (isOk(result)) {
-				expect(result.data).toContain('System prompt');
-				expect(result.data).toContain(TEST_INPUT.query);
+				expect(result.data).toHaveLength(1);
+				expect(result.data.at(0)?.type).toBe('text');
+				expect(result.data.at(0)?.text).toContain('System prompt');
+				expect(result.data.at(0)?.text).toContain(TEST_INPUT.query);
 			}
 		});
 	});
