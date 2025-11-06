@@ -1,55 +1,72 @@
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
-import type {ValidationLayerMetadata, ValidationLayerResult} from '@sigil/src/agent/framework/validation';
+/**
+ * Zod schemas for agent execution types
+ *
+ * Single source of truth for execution-related types including token metrics,
+ * execution metadata, and performance tracking.
+ */
+
+import {z} from 'zod';
+
 import type {AgentError} from '@sigil/src/common/errors';
 
-/**
- * Duration metrics for execution tracking
- */
-export interface DurationMetrics {
-	/**
-	 * Execution start time from performance.now()
-	 */
-	startTime: number;
-}
+import type {AgentExecutionContext} from '../schemas';
+import type {ValidationLayerMetadata, ValidationLayerResult} from '../validation';
 
 /**
- * Token count tracking
+ * Token usage metrics for Claude API requests
+ *
+ * Tracks input/output tokens and prompt caching metrics across
+ * all API calls during agent execution.
  */
-export interface TokenMetrics {
+export const TokenMetricsSchema = z.object({
 	/**
 	 * Total input tokens consumed
 	 */
-	input: number;
+	input: z.number().int().nonnegative().describe('Total input tokens consumed'),
 
 	/**
 	 * Total output tokens generated
 	 */
-	output: number;
+	output: z.number().int().nonnegative().describe('Total output tokens generated'),
 
 	/**
 	 * Total tokens used to create cache entries
 	 */
-	cacheCreationInput?: number;
+	cacheCreationInput: z.number().int().nonnegative().optional().describe('Total tokens used to create cache entries'),
 
 	/**
 	 * Total tokens read from cache
 	 */
-	cacheReadInput?: number;
-}
+	cacheReadInput: z.number().int().nonnegative().optional().describe('Total tokens read from cache'),
+});
+
+export type TokenMetrics = z.infer<typeof TokenMetricsSchema>;
+
+/**
+ * Duration metrics for execution tracking
+ */
+export const DurationMetricsSchema = z.object({
+	/**
+	 * Execution start time from performance.now()
+	 */
+	startTime: z.number().describe('Execution start time from performance.now()'),
+});
+
+export type DurationMetrics = z.infer<typeof DurationMetricsSchema>;
 
 /**
  * Execution metadata containing resource usage and performance data
  */
-export interface ExecuteMetadata {
+export const ExecuteMetadataSchema = z.object({
 	/**
 	 * Total execution latency in milliseconds
 	 */
-	latency?: number;
+	latency: z.number().optional().describe('Total execution latency in milliseconds'),
 
 	/**
 	 * Token usage statistics
 	 */
-	tokens?: TokenMetrics;
+	tokens: TokenMetricsSchema.optional().describe('Token usage statistics'),
 
 	/**
 	 * Errors thrown by callbacks during execution
@@ -59,8 +76,10 @@ export interface ExecuteMetadata {
 	 * agent execution. The presence of callback errors indicates bugs in callback implementations
 	 * that should be fixed.
 	 */
-	callbackErrors?: Error[];
-}
+	callbackErrors: z.instanceof(Error).array().optional().describe('Errors thrown by callbacks during execution'),
+});
+
+export type ExecuteMetadata = z.infer<typeof ExecuteMetadataSchema>;
 
 /**
  * Callback functions for monitoring agent execution progress

@@ -37,33 +37,3 @@ export const AgentExecutionContextSchema = z.object({
 });
 
 export type AgentExecutionContext = z.infer<typeof AgentExecutionContextSchema>;
-
-/**
- * Token usage metrics for Claude API requests
- *
- * Tracks input/output tokens and prompt caching metrics across
- * all API calls during agent execution.
- */
-export const TokenMetricsSchema = z.object({
-	/**
-	 * Total input tokens consumed
-	 */
-	input: z.number().int().nonnegative().describe('Total input tokens consumed'),
-
-	/**
-	 * Total output tokens generated
-	 */
-	output: z.number().int().nonnegative().describe('Total output tokens generated'),
-
-	/**
-	 * Total tokens used to create cache entries
-	 */
-	cacheCreationInput: z.number().int().nonnegative().optional().describe('Total tokens used to create cache entries'),
-
-	/**
-	 * Total tokens read from cache
-	 */
-	cacheReadInput: z.number().int().nonnegative().optional().describe('Total tokens read from cache'),
-});
-
-export type TokenMetrics = z.infer<typeof TokenMetricsSchema>;

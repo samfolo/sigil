@@ -2,7 +2,7 @@ import type {ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
 import type {AgentError, ExecutionPhase, Result} from '@sigil/src/common/errors';
 import {AGENT_ERROR_CODES, isErr} from '@sigil/src/common/errors';
 
-import type {DurationMetrics, ExecuteFailure, TokenMetrics} from './types';
+import type {DurationMetrics, ExecuteFailure, TokenMetrics} from './schemas';
 
 /**
  * Formatted tool result for Anthropic API

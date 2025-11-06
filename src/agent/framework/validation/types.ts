@@ -8,6 +8,8 @@
 
 import type {Result} from '@sigil/src/common/errors/result';
 
+import type {ValidationLayerMetadata} from './schemas';
+
 /**
  * Single validation layer in the agent output validation pipeline
  *
@@ -43,34 +45,6 @@ export interface ValidationLayer<Output> {
  * @template Output - Type of agent output being validated
  */
 export type ValidationLayers<Output> = ValidationLayer<Output>[];
-
-/**
- * Type of validation layer
- *
- * - `zod`: Schema validation (Layer 2 in agent pipeline)
- * - `custom`: Custom validation (Layer 3+ in agent pipeline)
- */
-export type ValidationLayerType = 'zod' | 'custom';
-
-/**
- * Metadata about a validation layer
- */
-export interface ValidationLayerMetadata {
-  /**
-   * Name of the validation layer
-   */
-  name: string;
-
-  /**
-   * Human-readable description of the layer's purpose
-   */
-  description: string;
-
-  /**
-   * Type of validation layer
-   */
-  type: ValidationLayerType;
-}
 
 /**
  * Identifying information for a validation layer (name and description only)

@@ -1,7 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type {z} from 'zod';
 
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {ValidationLayer} from '@sigil/src/agent/framework/validation';
 import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';

@@ -1,11 +1,11 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
 import type {AgentState} from '@sigil/src/agent/framework/defineAgent/types';
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import {isErr} from '@sigil/src/common/errors';
 
-import type {ExecuteCallbacks} from '../types';
+import type {ExecuteCallbacks} from '../schemas';
 import {formatReflectionHandlerResult, safeInvokeCallback} from '../util';
 
 import {SUBMIT_TOOL_NAME} from './constants';

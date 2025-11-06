@@ -1,11 +1,11 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
 import {createAnthropicClient} from '@sigil/src/agent/clients/anthropic';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import {DEFAULT_MAX_ITERATIONS} from '@sigil/src/agent/framework/common';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
 import type {AgentState} from '@sigil/src/agent/framework/defineAgent/types';
 import {buildSystemPrompt, buildUserPrompt} from '@sigil/src/agent/framework/prompts/build';
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {
 	ValidationLayerMetadata,
 	ValidationLayerResult,
@@ -27,7 +27,7 @@ import type {
 	ExecuteOptions,
 	ExecuteSuccess,
 	ExecuteFailure,
-} from './types';
+} from './schemas';
 import {createCancellationError, safeInvokeCallback} from './util';
 
 /**

@@ -1,4 +1,4 @@
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {Result} from '@sigil/src/common/errors/result';
 
 /**

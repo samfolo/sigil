@@ -11,7 +11,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import {z} from 'zod';
 
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {Result} from '@sigil/src/common/errors';
 import {err, ok} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';

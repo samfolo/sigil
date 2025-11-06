@@ -1,8 +1,9 @@
+export type {ValidationLayerType, ValidationLayerMetadata} from './schemas';
+export {ValidationLayerTypeSchema, ValidationLayerMetadataSchema} from './schemas';
+
 export type {
 	ValidationLayer,
 	ValidationLayers,
-	ValidationLayerType,
-	ValidationLayerMetadata,
 	ValidationLayerIdentity,
 	ValidationLayerSuccess,
 	ValidationLayerFailure,

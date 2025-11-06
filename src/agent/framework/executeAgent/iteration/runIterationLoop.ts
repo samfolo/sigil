@@ -1,12 +1,12 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
 import type {AgentState} from '@sigil/src/agent/framework/defineAgent/types';
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors';
 import {err, ok, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
-import type {DurationMetrics, ExecuteFailure, TokenMetrics} from '../types';
+import type {DurationMetrics, ExecuteFailure, TokenMetrics} from '../schemas';
 import {createCancellationError} from '../util';
 
 import {buildMetadata} from './buildMetadata';

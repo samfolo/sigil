@@ -16,11 +16,11 @@ import type {
 import type {Mock} from 'vitest';
 
 
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {ValidationLayerMetadata, ValidationLayerResult} from '@sigil/src/agent/framework/validation';
 
 import {SUBMIT_TOOL_NAME} from './iteration/constants';
-import type {ExecuteCallbacks, ExecuteMetadata} from './types';
+import type {ExecuteCallbacks, ExecuteMetadata} from './schemas';
 
 /**
  * Output tool name used in test mocks

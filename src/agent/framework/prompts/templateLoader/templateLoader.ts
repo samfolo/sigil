@@ -3,12 +3,12 @@ import {readFile} from 'node:fs/promises';
 import type Anthropic from '@anthropic-ai/sdk';
 import {Liquid} from 'liquidjs';
 
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {
 	SystemPromptFunction,
 	UserPromptFunction,
 	ErrorPromptFunction,
 } from '@sigil/src/agent/framework/defineAgent';
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result} from '@sigil/src/common/errors/result';
 import {ok, err} from '@sigil/src/common/errors/result';
 

@@ -1,4 +1,4 @@
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 
 /**
  * Sample data types for testing templates

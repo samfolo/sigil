@@ -10,8 +10,8 @@
 
 import {z} from 'zod';
 
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent/defineAgent';
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {EmptyObject} from '@sigil/src/common/types';
 
 /**

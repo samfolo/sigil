@@ -5,11 +5,11 @@ Structured logging for agent execution using Pino.
 ## Usage
 
 ```typescript
-import {createAgentLogger} from '@sigil/src/common/observability/logger';
+import {createSigilLogger} from '@sigil/src/common/observability/logger';
 
-const logger = createAgentLogger('AnalyserAgent');
-logger.info({event: 'attempt_start', attempt: 1, maxAttempts: 3}, 'Attempt started');
-logger.trace({event: 'tool_call', toolName: 'sampler'}, 'Tool called');
+const logger = createSigilLogger('AnalyserAgent');
+logger.info({event: 'attempt_start', attempt: 1, maxAttempts: 3, iteration: 0, maxIterations: 10}, 'Attempt started');
+logger.trace({event: 'tool_call', attempt: 1, iteration: 1, toolName: 'sampler', toolInput: {}}, 'Tool called');
 ```
 
 ## Log Levels

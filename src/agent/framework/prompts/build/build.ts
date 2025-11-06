@@ -7,8 +7,8 @@
 
 import type Anthropic from '@anthropic-ai/sdk';
 
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent/defineAgent';
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 import type {EmptyObject} from '@sigil/src/common/types';

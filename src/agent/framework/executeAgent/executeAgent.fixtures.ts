@@ -15,7 +15,7 @@ import type {
 	ExecuteFailure,
 	ExecuteOptions,
 	ExecuteSuccess,
-} from './types';
+} from './schemas';
 
 /**
  * Simple output interface matching the test agent's output schema

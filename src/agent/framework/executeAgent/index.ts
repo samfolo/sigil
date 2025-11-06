@@ -4,5 +4,5 @@ export type {
 	ExecuteMetadata,
 	ExecuteOptions,
 	ExecuteSuccess,
-} from './types';
+} from './schemas';
 export {executeAgent} from './executeAgent';

@@ -1,14 +1,14 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
+import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {AgentDefinition} from '@sigil/src/agent/framework/defineAgent';
 import {buildErrorPrompt} from '@sigil/src/agent/framework/prompts/build';
-import type {AgentExecutionContext} from '@sigil/src/agent/framework/types';
 import type {ValidationLayerIdentity} from '@sigil/src/agent/framework/validation';
 import {formatValidationErrorForPrompt} from '@sigil/src/agent/framework/validation/format';
 import type {Result} from '@sigil/src/common/errors';
 import {err, isErr, ok} from '@sigil/src/common/errors';
 
-import type {DurationMetrics, ExecuteCallbacks, ExecuteFailure, TokenMetrics} from '../types';
+import type {DurationMetrics, ExecuteCallbacks, ExecuteFailure, TokenMetrics} from '../schemas';
 import {safeInvokeCallback} from '../util';
 
 import {buildMetadata} from './buildMetadata';
