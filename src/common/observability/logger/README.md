@@ -8,8 +8,26 @@ Structured logging for agent execution using Pino.
 import {createSigilLogger} from '@sigil/src/common/observability/logger';
 
 const logger = createSigilLogger('AnalyserAgent');
-logger.info({event: 'attempt_start', attempt: 1, maxAttempts: 3, iteration: 0, maxIterations: 10}, 'Attempt started');
-logger.trace({event: 'tool_call', attempt: 1, iteration: 1, toolName: 'sampler', toolInput: {}}, 'Tool called');
+
+logger.info({
+	event: 'attempt_start',
+	data: {
+		attempt: 1,
+		maxAttempts: 3,
+		iteration: 0,
+		maxIterations: 10,
+	},
+}, 'Attempt started');
+
+logger.trace({
+	event: 'tool_call',
+	data: {
+		attempt: 1,
+		iteration: 1,
+		toolName: 'sampler',
+		toolInput: {},
+	},
+}, 'Tool called');
 ```
 
 ## Log Levels
@@ -35,7 +53,7 @@ logger.trace({event: 'tool_call', attempt: 1, iteration: 1, toolName: 'sampler',
 Console shows human-readable output. Files contain JSONL with structured fields:
 
 ```jsonl
-{"level":30,"time":1730567890123,"agent":"AnalyserAgent","traceId":"agent_abc-123","event":"attempt_start","attempt":1,"maxAttempts":3,"msg":"Attempt started"}
+{"level":30,"time":1730567890123,"agent":"AnalyserAgent","traceId":"agent_abc-123","event":"attempt_start","data":{"attempt":1,"maxAttempts":3,"iteration":0,"maxIterations":10},"msg":"Attempt started"}
 ```
 
 Each logger instance generates a unique `traceId` for correlating events within a single execution.

@@ -13,7 +13,7 @@ import {z} from 'zod';
 
 import {TokenMetricsSchema} from '@sigil/src/agent/framework';
 
-import {PinoLogBaseSchema} from './events';
+import {PinoLogBaseSchema} from './baseSchema';
 
 /**
  * Preprocessing start event
@@ -22,7 +22,7 @@ import {PinoLogBaseSchema} from './events';
  */
 export const PreprocessingStartEventSchema = PinoLogBaseSchema.extend({
 	event: z.literal('preprocessing_start'),
-	data: z.object({}),
+	data: z.object({}).optional(),
 });
 
 export type PreprocessingStartEvent = z.infer<typeof PreprocessingStartEventSchema>;
@@ -125,7 +125,7 @@ export type RequestCancelledEvent = z.infer<typeof RequestCancelledEventSchema>;
  */
 export const ClientDisconnectedEventSchema = PinoLogBaseSchema.extend({
 	event: z.literal('client_disconnected'),
-	data: z.object({}),
+	data: z.object({}).optional(),
 });
 
 export type ClientDisconnectedEvent = z.infer<typeof ClientDisconnectedEventSchema>;

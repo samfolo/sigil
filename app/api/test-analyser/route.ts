@@ -98,7 +98,7 @@ export const POST = async (request: NextRequest) => {
 		}
 
 		// Preprocessing: Generate initial vignettes
-		logger.info({event: 'preprocessing_start', data: {}}, 'Starting preprocessing');
+		logger.info({event: 'preprocessing_start'}, 'Starting preprocessing');
 		const vignetteResult = await generateInitialVignettes(
 			rawData,
 			INITIAL_VIGNETTE_COUNT,

@@ -2,8 +2,10 @@ export {createSigilLogger} from './logger';
 export type {SigilLogger, SigilLogEventData} from './logger';
 
 // Base schema and combined log entry types
-export type {PinoLogBase, SigilLogEntry} from './events';
-export {PinoLogBaseSchema, SigilLogEntrySchema, isSigilLogEntry} from './events';
+export type {PinoLogBase} from './baseSchema';
+export {PinoLogBaseSchema} from './baseSchema';
+export type {SigilLogEntry} from './events';
+export {SigilLogEntrySchema, isSigilLogEntry} from './events';
 
 // Framework event types and schemas
 export type {

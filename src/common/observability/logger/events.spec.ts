@@ -23,10 +23,12 @@ describe('Sigil log event schemas', () => {
 				agent: 'Analyser',
 				traceId: 'agent_test-uuid',
 				event: 'attempt_start',
-				attempt: 1,
-				maxAttempts: 3,
-				iteration: 0,
-				maxIterations: 15,
+				data: {
+					attempt: 1,
+					maxAttempts: 3,
+					iteration: 0,
+					maxIterations: 15,
+				},
 				msg: 'Attempt started',
 			};
 
@@ -41,9 +43,11 @@ describe('Sigil log event schemas', () => {
 				agent: 'Analyser',
 				traceId: 'agent_test-uuid',
 				event: 'attempt_start',
-				attempt: 1,
-				maxAttempts: 3,
-				// Missing iteration and maxIterations
+				data: {
+					attempt: 1,
+					maxAttempts: 3,
+					// Missing iteration and maxIterations
+				},
 				msg: 'Attempt started',
 			};
 
@@ -62,10 +66,12 @@ describe('Sigil log event schemas', () => {
 				agent: 'Analyser',
 				traceId: 'agent_test-uuid',
 				event: 'tool_call',
-				attempt: 1,
-				iteration: 1,
-				toolName: 'parse_yaml',
-				toolInput: {},
+				data: {
+					attempt: 1,
+					iteration: 1,
+					toolName: 'parse_yaml',
+					toolInput: {},
+				},
 				msg: 'Tool called',
 			};
 
@@ -82,10 +88,12 @@ describe('Sigil log event schemas', () => {
 				agent: 'TestAgent',
 				traceId: 'agent_test',
 				event: 'attempt_start',
-				attempt: 1,
-				maxAttempts: 3,
-				iteration: 0,
-				maxIterations: 15,
+				data: {
+					attempt: 1,
+					maxAttempts: 3,
+					iteration: 0,
+					maxIterations: 15,
+				},
 				msg: 'Test',
 			};
 
@@ -95,11 +103,13 @@ describe('Sigil log event schemas', () => {
 				agent: 'TestAgent',
 				traceId: 'agent_test',
 				event: 'success',
-				tokens: {
-					input: 100,
-					output: 200,
+				data: {
+					tokens: {
+						input: 100,
+						output: 200,
+					},
+					latency: 1000,
 				},
-				latency: 1000,
 				msg: 'Success',
 			};
 

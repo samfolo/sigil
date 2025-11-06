@@ -11,7 +11,7 @@ import {z} from 'zod';
 
 import {TokenMetricsSchema} from '@sigil/src/agent/framework';
 
-import {PinoLogBaseSchema} from './events';
+import {PinoLogBaseSchema} from './baseSchema';
 
 /**
  * Attempt start event
