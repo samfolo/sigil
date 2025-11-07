@@ -27,28 +27,16 @@ export interface FixtureMetadata {
 	 * Unix timestamp in milliseconds from first log entry
 	 */
 	timestamp: number;
-
-	/**
-	 * Number of data records
-	 * Currently 0 as data extraction is not yet implemented
-	 */
-	recordCount: number;
 }
 
 /**
- * Complete fixture with spec, data, and logs
+ * Complete fixture with spec and logs
  */
 export interface Fixture extends FixtureMetadata {
 	/**
 	 * Validated ComponentSpec from spec_generated event
 	 */
 	spec: ComponentSpec;
-
-	/**
-	 * Input data array
-	 * Currently empty array as data extraction is not yet implemented
-	 */
-	data: unknown[];
 
 	/**
 	 * All log entries from the JSONL file

@@ -1,0 +1,1 @@
+export {scanFixtureDirectories} from './scanFixtures';
