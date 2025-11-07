@@ -4,7 +4,7 @@ import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 import type {SigilLogEntry} from '@sigil/src/common/observability/logger';
 import {SpecGeneratedEventSchema} from '@sigil/src/common/observability/logger';
-import type {ComponentSpec} from '@sigil/src/lib/generated/schemas/specification';
+import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 
 /**

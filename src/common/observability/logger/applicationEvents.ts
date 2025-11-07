@@ -12,6 +12,7 @@
 import {z} from 'zod';
 
 import {TokenMetricsSchema} from '@sigil/src/agent/framework';
+import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas/specification';
 
 import {PinoLogBaseSchema} from './baseSchema';
 
@@ -97,7 +98,7 @@ export type AnalyserCompleteEvent = z.infer<typeof AnalyserCompleteEventSchema>;
 export const SpecGeneratedEventSchema = PinoLogBaseSchema.extend({
 	event: z.literal('spec_generated'),
 	data: z.object({
-		spec: z.unknown().describe('Generated component spec'),
+		spec: ComponentSpecSchema.describe('Generated component spec'),
 	}),
 });
 
