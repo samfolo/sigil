@@ -2,8 +2,17 @@ import {mkdirSync, writeFileSync} from 'fs';
 import {join} from 'path';
 import {dirSync} from 'tmp';
 
-import type {TempFSDirBuilder} from './TempFSDirBuilder';
-import type {TempFSFileBuilder} from './TempFSFileBuilder';
+import type {Result} from '@sigil/src/common/errors/result';
+import {err, ok} from '@sigil/src/common/errors/result';
+
+import {TempFSFileBuilder} from './TempFSFileBuilder';
+
+/**
+ * Filesystem node types
+ */
+export type TempFSNode =
+	| {type: 'directory'; name: string; children: TempFSNode[]}
+	| {type: 'file'; name: string; content: string | TempFSFileBuilder};
 
 /**
  * Result of building a temporary filesystem
@@ -25,99 +34,119 @@ export interface TempFSResult {
  * Builder for creating temporary filesystem structures for testing
  *
  * Uses the tmp library to create temporary directories with automatic cleanup.
- * Provides fluent API for building directory and file hierarchies.
+ * Provides fluent API for building recursive directory and file hierarchies.
  *
  * @example
  * ```typescript
- * const fs = new TempFSBuilder()
- *   .withDirectory('logs', new TempFSDirBuilder()
- *     .withFile('test.txt', new TempFSFileBuilder().withContent('data')))
- *   .withFile('root.txt', new TempFSFileBuilder().withContent('content'))
+ * const result = new TempFSBuilder()
+ *   .withDirectory('logs', [
+ *     dateDir('2025-11-07', [
+ *       logFile('test.jsonl', [...]),
+ *     ]),
+ *   ])
+ *   .withFile('root.txt', 'content')
  *   .build();
  *
- * // Use fs.root in tests
- * const files = readdirSync(fs.root);
+ * if (!isOk(result)) {
+ *   throw new Error(result.error);
+ * }
+ *
+ * const {root, cleanup} = result.data;
+ *
+ * // Use root in tests
+ * const files = readdirSync(root);
  *
  * // Clean up after test
- * fs.cleanup();
+ * cleanup();
  * ```
  */
 export class TempFSBuilder {
-	private rootFiles: Array<{name: string; builder: TempFSFileBuilder}> = [];
-	private rootDirs: Array<{name: string; builder: TempFSDirBuilder}> = [];
+	private nodes: TempFSNode[] = [];
+
+	/**
+	 * Add one or more filesystem nodes to the root
+	 *
+	 * @param nodes - Filesystem nodes to add (use with helper functions like logFile, dateDir)
+	 * @returns This builder for chaining
+	 */
+	with(...nodes: TempFSNode[]): this {
+		this.nodes.push(...nodes);
+		return this;
+	}
 
 	/**
 	 * Add a file to the root directory
 	 *
 	 * @param name - File name
-	 * @param builder - File builder
+	 * @param content - File content string or TempFSFileBuilder for complex cases
 	 * @returns This builder for chaining
 	 */
-	withFile(name: string, builder: TempFSFileBuilder): this {
-		this.rootFiles.push({name, builder});
+	withFile(name: string, content: string | TempFSFileBuilder): this {
+		this.nodes.push({type: 'file', name, content});
 		return this;
 	}
 
 	/**
-	 * Add a directory to the root
+	 * Add a directory to the root with children
 	 *
 	 * @param name - Directory name
-	 * @param builder - Directory builder
+	 * @param children - Array of TempFSNode children (files and subdirectories)
 	 * @returns This builder for chaining
 	 */
-	withDirectory(name: string, builder: TempFSDirBuilder): this {
-		this.rootDirs.push({name, builder});
+	withDirectory(name: string, children: TempFSNode[]): this {
+		this.nodes.push({type: 'directory', name, children});
 		return this;
 	}
 
 	/**
 	 * Build the temporary filesystem
 	 *
-	 * Creates a temporary directory and writes all configured files and directories.
+	 * Creates a temporary directory and recursively writes all configured files and directories.
 	 * Returns the root path and a cleanup function.
 	 *
-	 * @returns TempFSResult with root path and cleanup function
+	 * @returns Result containing TempFSResult with root path and cleanup function or error message
 	 */
-	build(): TempFSResult {
-		const tmpDir = dirSync({unsafeCleanup: true});
+	build(): Result<TempFSResult, string> {
+		try {
+			const tmpDir = dirSync({unsafeCleanup: true});
 
-		// Write root-level files
-		for (const {name, builder} of this.rootFiles) {
-			const filePath = join(tmpDir.name, name);
-			writeFileSync(filePath, builder.getContent(), 'utf-8');
+			for (const node of this.nodes) {
+				this.buildNode(tmpDir.name, node);
+			}
+
+			return ok({
+				root: tmpDir.name,
+				cleanup: () => tmpDir.removeCallback(),
+			});
+		} catch (error) {
+			if (error instanceof Error) {
+				return err(`Failed to build temporary filesystem: ${error.message}`);
+			}
+			return err(`Failed to build temporary filesystem: ${String(error)}`);
 		}
-
-		// Write root-level directories
-		for (const {name, builder} of this.rootDirs) {
-			const dirPath = join(tmpDir.name, name);
-			this.buildDirectory(dirPath, builder);
-		}
-
-		return {
-			root: tmpDir.name,
-			cleanup: () => tmpDir.removeCallback(),
-		};
 	}
 
 	/**
-	 * Recursively build a directory structure
+	 * Recursively build a filesystem node
 	 *
-	 * @param dirPath - Absolute path where directory should be created
-	 * @param builder - Directory builder
+	 * @param parentPath - Absolute path to parent directory
+	 * @param node - Filesystem node to build
 	 */
-	private buildDirectory(dirPath: string, builder: TempFSDirBuilder): void {
-		mkdirSync(dirPath, {recursive: true});
+	private buildNode(parentPath: string, node: TempFSNode): void {
+		if (node.type === 'file') {
+			const filePath = join(parentPath, node.name);
+			const content =
+				typeof node.content === 'string'
+					? node.content
+					: node.content.getContent();
+			writeFileSync(filePath, content, 'utf-8');
+		} else {
+			const dirPath = join(parentPath, node.name);
+			mkdirSync(dirPath, {recursive: true});
 
-		// Write files in this directory
-		for (const {name, builder: fileBuilder} of builder.getFiles()) {
-			const filePath = join(dirPath, name);
-			writeFileSync(filePath, fileBuilder.getContent(), 'utf-8');
-		}
-
-		// Recursively build subdirectories
-		for (const {name, builder: dirBuilder} of builder.getDirectories()) {
-			const subDirPath = join(dirPath, name);
-			this.buildDirectory(subDirPath, dirBuilder);
+			for (const child of node.children) {
+				this.buildNode(dirPath, child);
+			}
 		}
 	}
 }

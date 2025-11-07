@@ -1,4 +1,4 @@
-import type {TempFSFileBuilder} from './TempFSFileBuilder';
+import {TempFSFileBuilder} from './TempFSFileBuilder';
 
 /**
  * File entry in a directory
@@ -27,10 +27,13 @@ export class TempFSDirBuilder {
 	 * Add a file to this directory
 	 *
 	 * @param name - File name
-	 * @param builder - File builder
+	 * @param content - File content string or TempFSFileBuilder for complex cases
 	 * @returns This builder for chaining
 	 */
-	withFile(name: string, builder: TempFSFileBuilder): this {
+	withFile(name: string, content: string | TempFSFileBuilder): this {
+		const builder = typeof content === 'string'
+			? new TempFSFileBuilder().withContent(content)
+			: content;
 		this.files.push({name, builder});
 		return this;
 	}
