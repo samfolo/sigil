@@ -1,0 +1,1 @@
+export {extractSpec} from './extractSpec';
