@@ -3,6 +3,8 @@
  *
  * Provides reusable test data generators for comprehensive integration testing.
  * All generators support deterministic seeding for reproducible tests.
+ *
+ * Includes temporary filesystem builders for creating realistic test file structures.
  */
 
 export {
@@ -22,3 +24,6 @@ export type {
 	XMLGeneratorConfig,
 	YAMLGeneratorConfig,
 } from './generators';
+
+export {TempFSBuilder, TempFSDirBuilder, TempFSFileBuilder} from './fs';
+export type {DirEntry, FileEntry, TempFSResult} from './fs';
