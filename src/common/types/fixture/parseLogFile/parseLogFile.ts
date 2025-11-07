@@ -6,7 +6,7 @@ import {isSigilLogEntry} from '@sigil/src/common/observability/logger';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
-const LOG_FIXTURE_PARSING = process.env['LOG_FIXTURE_PARSING'] === 'true';
+const LOG_FIXTURE_PARSING = process.env.LOG_FIXTURE_PARSING === 'true';
 
 /**
  * Type guard for Node.js filesystem errors
