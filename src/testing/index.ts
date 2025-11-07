@@ -25,5 +25,5 @@ export type {
 	YAMLGeneratorConfig,
 } from './generators';
 
-export {TempFSBuilder, TempFSDirBuilder, TempFSFileBuilder} from './fs';
-export type {DirEntry, FileEntry, TempFSResult} from './fs';
+export {TempFSBuilder, TempFSFileBuilder} from './fs';
+export type {TempFSResult} from './fs';
