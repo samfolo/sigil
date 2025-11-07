@@ -1,7 +1,32 @@
 import type {PinoLogBase, SigilLogEntry} from '@sigil/src/common/observability/logger';
 import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger';
+import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 import type {TempFSNode} from '@sigil/src/testing/fs';
 import {TempFSFileBuilder} from '@sigil/src/testing/fs';
+
+const DEFAULT_LOG_LEVEL = 30;
+const TEST_PROCESS_ID = 12345;
+const TEST_HOSTNAME = 'test-host';
+const TEST_AGENT_NAME = 'TestAgent';
+
+export const VALID_COMPONENT_SPEC: ComponentSpec = {
+	id: 'test-spec',
+	created_at: '2025-11-07T10:00:00Z',
+	title: 'Test Spec',
+	data_shape: 'hierarchical',
+	description: 'Test component spec',
+	root: {
+		accessor_bindings: {},
+		layout: {
+			id: 'root-layout',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [],
+		},
+		nodes: {},
+	},
+};
 
 /**
  * Creates a SigilLogEntry with sensible defaults
@@ -22,11 +47,11 @@ export const logEntry = (
 	partial: Omit<SigilLogEntry, keyof PinoLogBase> & Partial<PinoLogBase>
 ): SigilLogEntry => {
 	const base: PinoLogBase = {
-		level: 30,
+		level: DEFAULT_LOG_LEVEL,
 		time: Date.now(),
-		pid: 12345,
-		hostname: 'test-host',
-		agent: 'TestAgent',
+		pid: TEST_PROCESS_ID,
+		hostname: TEST_HOSTNAME,
+		agent: TEST_AGENT_NAME,
 		traceId: 'agent_test-trace',
 		msg: 'Test log message',
 	};

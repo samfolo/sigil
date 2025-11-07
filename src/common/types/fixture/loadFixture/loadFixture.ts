@@ -4,11 +4,8 @@ import {join} from 'path';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isOk, ok} from '@sigil/src/common/errors/result';
 
-import {extractSpec} from '../extractSpec';
-import {parseLogFile} from '../parseLogFile';
-import type {Fixture} from '../types';
-
-const DATE_DIRECTORY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+import {DATE_DIRECTORY_PATTERN, type Fixture} from '../types';
+import {processFixtureFile} from '../utils';
 
 /**
  * Loads a complete fixture by ID
@@ -60,33 +57,19 @@ export const loadFixture = (id: string): Result<Fixture, string> => {
 			continue;
 		}
 
-		const parseResult = parseLogFile(filePath);
-		if (!isOk(parseResult)) {
-			return err(`Failed to parse log file: ${parseResult.error}`);
+		const processResult = processFixtureFile(filePath);
+		if (!isOk(processResult)) {
+			return err(processResult.error);
 		}
 
-		const logs = parseResult.data;
-
-		if (logs.length === 0) {
-			return err(`Log file is empty: ${id}`);
-		}
-
-		const specResult = extractSpec(logs);
-		if (!isOk(specResult)) {
-			return err(`Failed to extract spec: ${specResult.error}`);
-		}
-
-		const firstLog = logs.at(0);
-		if (!firstLog) {
-			return err(`Failed to access first log entry: ${id}`);
-		}
+		const {logs, spec, timestamp} = processResult.data;
 
 		const fixture: Fixture = {
 			id,
 			displayName: id,
 			date: dateDir,
-			timestamp: firstLog.time,
-			spec: specResult.data,
+			timestamp,
+			spec,
 			logs,
 		};
 

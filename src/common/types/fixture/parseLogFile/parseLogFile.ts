@@ -6,7 +6,7 @@ import type {SigilLogEntry} from '@sigil/src/common/observability/logger';
 import {isSigilLogEntry} from '@sigil/src/common/observability/logger';
 
 
-const LOG_FIXTURE_PARSING = process.env.LOG_FIXTURE_PARSING === 'true';
+const DEBUG_FIXTURE_PARSING = process.env.DEBUG_FIXTURE_PARSING === 'true';
 
 /**
  * Type guard for Node.js filesystem errors
@@ -17,7 +17,7 @@ const isNodeError = (error: unknown): error is NodeJS.ErrnoException => error in
  * Parses a JSONL log file into an array of validated SigilLogEntry objects
  *
  * Reads the file line-by-line, parses each line as JSON, and validates it against
- * the SigilLogEntry schema. Invalid lines are skipped silently unless LOG_FIXTURE_PARSING
+ * the SigilLogEntry schema. Invalid lines are skipped silently unless DEBUG_FIXTURE_PARSING
  * environment variable is set to 'true'.
  *
  * @param filePath - Absolute path to the JSONL file
@@ -50,7 +50,7 @@ export const parseLogFile = (filePath: string): Result<SigilLogEntry[], string> 
 		try {
 			parsed = JSON.parse(line);
 		} catch (error) {
-			if (LOG_FIXTURE_PARSING) {
+			if (DEBUG_FIXTURE_PARSING) {
 				console.error(`× Malformed JSON at line ${index + 1}:`, error);
 			}
 			continue;
@@ -59,7 +59,7 @@ export const parseLogFile = (filePath: string): Result<SigilLogEntry[], string> 
 		if (isSigilLogEntry(parsed)) {
 			entries.push(parsed);
 		} else {
-			if (LOG_FIXTURE_PARSING) {
+			if (DEBUG_FIXTURE_PARSING) {
 				console.error(`× Invalid SigilLogEntry at line ${index + 1}`);
 			}
 		}

@@ -1,32 +1,12 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {isOk} from '@sigil/src/common/errors/result';
-import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 import type {TempFSResult} from '@sigil/src/testing/fs';
 import {TempFSBuilder} from '@sigil/src/testing/fs';
 
-import {dateDir, logEntry, logFile} from '../fixture.mock';
+import {dateDir, logEntry, logFile, VALID_COMPONENT_SPEC} from '../fixture.mock';
 
 import {scanFixtureDirectories} from './scanFixtures';
-
-const VALID_COMPONENT_SPEC: ComponentSpec = {
-	id: 'test-spec',
-	created_at: '2025-11-07T10:00:00Z',
-	title: 'Test Spec',
-	data_shape: 'hierarchical',
-	description: 'Test component spec',
-	root: {
-		accessor_bindings: {},
-		layout: {
-			id: 'root-layout',
-			type: 'stack',
-			direction: 'vertical',
-			spacing: 'normal',
-			children: [],
-		},
-		nodes: {},
-	},
-};
 
 describe('scanFixtureDirectories', () => {
 	let tempFS: TempFSResult | null = null;

@@ -2,6 +2,11 @@ import type {SigilLogEntry} from '@sigil/src/common/observability/logger';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 /**
+ * Pattern matching yyyy-MM-dd date directories
+ */
+export const DATE_DIRECTORY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
  * Metadata about a fixture without the full spec and logs
  */
 export interface FixtureMetadata {

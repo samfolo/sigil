@@ -16,17 +16,6 @@ export class TempFSFileBuilder {
 	}
 
 	/**
-	 * Append content to the file
-	 *
-	 * @param content - Content to append
-	 * @returns This builder for chaining
-	 */
-	appendContent(content: string): this {
-		this.fileContent += content;
-		return this;
-	}
-
-	/**
 	 * Get the file content
 	 *
 	 * @returns File content string

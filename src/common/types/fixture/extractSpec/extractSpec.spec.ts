@@ -3,28 +3,9 @@ import {describe, expect, it} from 'vitest';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
-import {logEntry} from '../fixture.mock';
+import {logEntry, VALID_COMPONENT_SPEC} from '../fixture.mock';
 
 import {extractSpec} from './extractSpec';
-
-const VALID_COMPONENT_SPEC: ComponentSpec = {
-	id: 'test-spec',
-	created_at: '2025-11-07T10:00:00Z',
-	title: 'Test Spec',
-	data_shape: 'hierarchical',
-	description: 'Test component spec',
-	root: {
-		accessor_bindings: {},
-		layout: {
-			id: 'root-layout',
-			type: 'stack',
-			direction: 'vertical',
-			spacing: 'normal',
-			children: [],
-		},
-		nodes: {},
-	},
-};
 
 describe('extractSpec', () => {
 	describe('with valid spec_generated event', () => {

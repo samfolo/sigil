@@ -4,11 +4,10 @@ import {join} from 'path';
 import type {Result} from '@sigil/src/common/errors/result';
 import {isOk, ok} from '@sigil/src/common/errors/result';
 
-import {extractSpec} from '../extractSpec';
-import {parseLogFile} from '../parseLogFile';
-import type {FixtureMetadata} from '../types';
+import {DATE_DIRECTORY_PATTERN, type FixtureMetadata} from '../types';
+import {processFixtureFile} from '../utils';
 
-const DATE_DIRECTORY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DEBUG_FIXTURE_SCANNING = process.env.DEBUG_FIXTURE_SCANNING === 'true';
 
 /**
  * Scans a specific root directory for fixture files
@@ -50,26 +49,15 @@ const scanDirectory = (rootPath: string, prefix: string): FixtureMetadata[] => {
 			const filePath = join(dateDirPath, file);
 			const filename = file.replace(/\.jsonl$/, '');
 
-			const parseResult = parseLogFile(filePath);
-			if (!isOk(parseResult)) {
+			const processResult = processFixtureFile(filePath);
+			if (!isOk(processResult)) {
+				if (DEBUG_FIXTURE_SCANNING) {
+					console.warn(`⚠ Skipping ${filename}: ${processResult.error}`);
+				}
 				continue;
 			}
 
-			const logs = parseResult.data;
-
-			if (logs.length === 0) {
-				continue;
-			}
-
-			const specResult = extractSpec(logs);
-			if (!isOk(specResult)) {
-				continue;
-			}
-
-			const firstLog = logs.at(0);
-			if (!firstLog) {
-				continue;
-			}
+			const {timestamp} = processResult.data;
 
 			const id = `${prefix}/${filename}`;
 
@@ -77,7 +65,7 @@ const scanDirectory = (rootPath: string, prefix: string): FixtureMetadata[] => {
 				id,
 				displayName: id,
 				date: dateDir,
-				timestamp: firstLog.time,
+				timestamp,
 			});
 		}
 	}
