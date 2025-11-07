@@ -8,25 +8,21 @@ import {logEntry} from '../fixture.mock';
 import {extractSpec} from './extractSpec';
 
 const VALID_COMPONENT_SPEC: ComponentSpec = {
-	id: 'test-spec-123',
+	id: 'test-spec',
 	created_at: '2025-11-07T10:00:00Z',
-	title: 'Test Visualisation',
-	description: 'A test component spec',
-	data_shape: {
-		type: 'array',
-		items: {
-			type: 'object',
-			properties: {
-				name: {type: 'string'},
-				value: {type: 'number'},
-			},
-		},
-	},
+	title: 'Test Spec',
+	data_shape: 'hierarchical',
+	description: 'Test component spec',
 	root: {
-		component: 'data-table',
-		props: {
-			columns: [],
+		accessor_bindings: {},
+		layout: {
+			id: 'root-layout',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [],
 		},
+		nodes: {},
 	},
 };
 
@@ -73,7 +69,11 @@ describe('extractSpec', () => {
 					time: 1000,
 					data: {spec: oldSpec},
 				}),
-				logEntry({event: 'validation_failure', time: 1500}),
+				logEntry({
+					event: 'validation_failure',
+					time: 1500,
+					data: {attempt: 1, iteration: 0, errors: []},
+				}),
 				logEntry({
 					event: 'spec_generated',
 					time: 2000,
@@ -97,7 +97,11 @@ describe('extractSpec', () => {
 		it('should return error', () => {
 			const logs = [
 				logEntry({event: 'preprocessing_start', time: 1000}),
-				logEntry({event: 'chunking_complete', time: 2000}),
+				logEntry({
+					event: 'chunking_complete',
+					time: 2000,
+					data: {chunkCount: 10, dataSizeKB: '50.00'},
+				}),
 			];
 
 			const result = extractSpec(logs);
@@ -127,10 +131,16 @@ describe('extractSpec', () => {
 	describe('with spec_generated event missing data field', () => {
 		it('should return validation error', () => {
 			const logs = [
-				logEntry({
-					event: 'spec_generated',
+				{
+					level: 30,
 					time: 1000,
-				}),
+					pid: 12345,
+					hostname: 'test-host',
+					agent: 'TestAgent',
+					traceId: 'agent_test-trace',
+					msg: 'Test log message',
+					event: 'spec_generated',
+				} as never,
 			];
 
 			const result = extractSpec(logs);
@@ -147,11 +157,17 @@ describe('extractSpec', () => {
 	describe('with spec_generated event missing spec field', () => {
 		it('should return validation error', () => {
 			const logs = [
-				logEntry({
-					event: 'spec_generated',
+				{
+					level: 30,
 					time: 1000,
+					pid: 12345,
+					hostname: 'test-host',
+					agent: 'TestAgent',
+					traceId: 'agent_test-trace',
+					msg: 'Test log message',
+					event: 'spec_generated',
 					data: {other: 'field'},
-				}),
+				} as never,
 			];
 
 			const result = extractSpec(logs);
@@ -168,15 +184,21 @@ describe('extractSpec', () => {
 	describe('with invalid ComponentSpec schema', () => {
 		it('should return validation error with details', () => {
 			const logs = [
-				logEntry({
-					event: 'spec_generated',
+				{
+					level: 30,
 					time: 1000,
+					pid: 12345,
+					hostname: 'test-host',
+					agent: 'TestAgent',
+					traceId: 'agent_test-trace',
+					msg: 'Test log message',
+					event: 'spec_generated',
 					data: {
 						spec: {
 							id: 'missing-required-fields',
 						},
 					},
-				}),
+				} as never,
 			];
 
 			const result = extractSpec(logs);

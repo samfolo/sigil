@@ -1,12 +1,32 @@
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 
 import {isErr, isOk} from '@sigil/src/common/errors/result';
+import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 import type {TempFSResult} from '@sigil/src/testing/fs';
 import {TempFSBuilder} from '@sigil/src/testing/fs';
 
 import {logEntry, logFile} from '../fixture.mock';
 
 import {parseLogFile} from './parseLogFile';
+
+const VALID_COMPONENT_SPEC: ComponentSpec = {
+	id: 'test-spec',
+	created_at: '2025-11-07T10:00:00Z',
+	title: 'Test Spec',
+	data_shape: 'hierarchical',
+	description: 'Test component spec',
+	root: {
+		accessor_bindings: {},
+		layout: {
+			id: 'root-layout',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [],
+		},
+		nodes: {},
+	},
+};
 
 describe('parseLogFile', () => {
 	let tempFS: TempFSResult | null = null;
@@ -24,7 +44,7 @@ describe('parseLogFile', () => {
 			const entry2 = logEntry({
 				event: 'spec_generated',
 				time: 2000,
-				data: {spec: {id: 'test'}},
+				data: {spec: VALID_COMPONENT_SPEC},
 			});
 
 			const buildResult = new TempFSBuilder()
@@ -53,8 +73,12 @@ describe('parseLogFile', () => {
 
 	describe('with malformed JSON lines', () => {
 		it('should skip invalid lines and return valid entries', () => {
-			const entry1 = logEntry({event: 'attempt_start', time: 1000});
-			const entry2 = logEntry({event: 'success', time: 2000});
+			const entry1 = logEntry({
+				event: 'attempt_start',
+				time: 1000,
+				data: {attempt: 1, maxAttempts: 3, iteration: 0, maxIterations: 10},
+			});
+			const entry2 = logEntry({event: 'success', time: 2000, data: {}});
 
 			const content = `${JSON.stringify(entry1)}\n{this is not valid json}\n${JSON.stringify(entry2)}`;
 
@@ -84,9 +108,17 @@ describe('parseLogFile', () => {
 
 	describe('with invalid SigilLogEntry structures', () => {
 		it('should skip invalid structures and return valid entries', () => {
-			const entry1 = logEntry({event: 'tool_call', time: 1000});
+			const entry1 = logEntry({
+				event: 'tool_call',
+				time: 1000,
+				data: {attempt: 1, iteration: 1, toolName: 'test-tool', toolInput: {}},
+			});
 			const invalidEntry = {some: 'invalid', structure: true};
-			const entry2 = logEntry({event: 'tool_result', time: 2000});
+			const entry2 = logEntry({
+				event: 'tool_result',
+				time: 2000,
+				data: {attempt: 1, iteration: 1, toolName: 'test-tool', toolResult: 'success'},
+			});
 
 			const content = `${JSON.stringify(entry1)}\n${JSON.stringify(invalidEntry)}\n${JSON.stringify(entry2)}`;
 

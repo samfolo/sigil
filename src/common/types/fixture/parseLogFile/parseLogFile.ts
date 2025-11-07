@@ -1,19 +1,17 @@
 import {readFileSync} from 'fs';
 
+import type {Result} from '@sigil/src/common/errors/result';
+import {err, ok} from '@sigil/src/common/errors/result';
 import type {SigilLogEntry} from '@sigil/src/common/observability/logger';
 import {isSigilLogEntry} from '@sigil/src/common/observability/logger';
 
-import type {Result} from '@sigil/src/common/errors/result';
-import {err, ok} from '@sigil/src/common/errors/result';
 
 const LOG_FIXTURE_PARSING = process.env.LOG_FIXTURE_PARSING === 'true';
 
 /**
  * Type guard for Node.js filesystem errors
  */
-const isNodeError = (error: unknown): error is NodeJS.ErrnoException => {
-	return error instanceof Error;
-};
+const isNodeError = (error: unknown): error is NodeJS.ErrnoException => error instanceof Error;
 
 /**
  * Parses a JSONL log file into an array of validated SigilLogEntry objects

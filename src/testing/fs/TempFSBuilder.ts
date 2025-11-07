@@ -1,11 +1,12 @@
 import {mkdirSync, writeFileSync} from 'fs';
 import {join} from 'path';
+
 import {dirSync} from 'tmp';
 
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 
-import {TempFSFileBuilder} from './TempFSFileBuilder';
+import type {TempFSFileBuilder} from './tempFSFileBuilder';
 
 /**
  * Filesystem node types

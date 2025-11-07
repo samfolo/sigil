@@ -1,4 +1,4 @@
-import {TempFSFileBuilder} from './TempFSFileBuilder';
+import {TempFSFileBuilder} from './tempFSFileBuilder';
 
 /**
  * File entry in a directory

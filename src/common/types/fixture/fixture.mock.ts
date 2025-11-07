@@ -1,11 +1,12 @@
-import type {SigilLogEntry} from '@sigil/src/common/observability/logger';
+import type {PinoLogBase, SigilLogEntry} from '@sigil/src/common/observability/logger';
+import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger';
 import type {TempFSNode} from '@sigil/src/testing/fs';
 import {TempFSFileBuilder} from '@sigil/src/testing/fs';
 
 /**
  * Creates a SigilLogEntry with sensible defaults
  *
- * @param partial - Partial log entry properties to override defaults
+ * @param partial - Event-specific fields (event and data) plus optional Pino field overrides
  * @returns Complete SigilLogEntry object
  *
  * @example
@@ -13,19 +14,30 @@ import {TempFSFileBuilder} from '@sigil/src/testing/fs';
  * const entry = logEntry({
  *   event: 'spec_generated',
  *   data: {spec: validSpec},
+ *   time: 1000, // Optional override
  * });
  * ```
  */
-export const logEntry = (partial: Partial<SigilLogEntry> & {event: string}): SigilLogEntry => ({
-	level: 30,
-	time: Date.now(),
-	pid: 12345,
-	hostname: 'test-host',
-	agent: 'TestAgent',
-	traceId: 'agent_test-trace',
-	msg: 'Test log message',
-	...partial,
-});
+export const logEntry = (
+	partial: Omit<SigilLogEntry, keyof PinoLogBase> & Partial<PinoLogBase>
+): SigilLogEntry => {
+	const base: PinoLogBase = {
+		level: 30,
+		time: Date.now(),
+		pid: 12345,
+		hostname: 'test-host',
+		agent: 'TestAgent',
+		traceId: 'agent_test-trace',
+		msg: 'Test log message',
+	};
+
+	const entry = {
+		...base,
+		...partial,
+	};
+
+	return SigilLogEntrySchema.parse(entry);
+};
 
 /**
  * Creates a file node with JSONL content from log entries
@@ -65,6 +77,4 @@ export const logFile = (name: string, entries: SigilLogEntry[]): TempFSNode => {
  * ])
  * ```
  */
-export const dateDir = (date: string, children: TempFSNode[]): TempFSNode => {
-	return {type: 'directory', name: date, children};
-};
+export const dateDir = (date: string, children: TempFSNode[]): TempFSNode => ({type: 'directory', name: date, children});

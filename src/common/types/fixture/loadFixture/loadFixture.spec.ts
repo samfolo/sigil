@@ -12,12 +12,20 @@ import {loadFixture} from './loadFixture';
 const VALID_COMPONENT_SPEC: ComponentSpec = {
 	id: 'test-spec',
 	created_at: '2025-11-07T10:00:00Z',
-	title: 'Test',
-	data_shape: {
-		type: 'array',
-		items: {type: 'object', properties: {}},
+	title: 'Test Spec',
+	data_shape: 'hierarchical',
+	description: 'Test component spec',
+	root: {
+		accessor_bindings: {},
+		layout: {
+			id: 'root-layout',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [],
+		},
+		nodes: {},
 	},
-	root: {component: 'data-table', props: {columns: []}},
 };
 
 describe('loadFixture', () => {
@@ -40,7 +48,7 @@ describe('loadFixture', () => {
 			const buildResult = new TempFSBuilder()
 				.withDirectory('logs', [
 					dateDir('2025-11-07', [
-						logFile('MyAgent-123', [
+						logFile('MyAgent-123.jsonl', [
 							logEntry({event: 'preprocessing_start', time: 1000}),
 							logEntry({event: 'spec_generated', time: 1100, data: {spec: VALID_COMPONENT_SPEC}}),
 						]),
@@ -76,7 +84,7 @@ describe('loadFixture', () => {
 			const buildResult = new TempFSBuilder()
 				.withDirectory('fixtures', [
 					dateDir('2025-11-06', [
-						logFile('example-fixture', [
+						logFile('example-fixture.jsonl', [
 							logEntry({event: 'preprocessing_start', time: 2000}),
 							logEntry({event: 'spec_generated', time: 2100, data: {spec: VALID_COMPONENT_SPEC}}),
 						]),
@@ -223,7 +231,7 @@ describe('loadFixture', () => {
 				return;
 			}
 
-			expect(result.error).toContain('Fixture not found');
+			expect(result.error).toContain('Log file is empty');
 		});
 	});
 
@@ -232,9 +240,13 @@ describe('loadFixture', () => {
 			const buildResult = new TempFSBuilder()
 				.withDirectory('logs', [
 					dateDir('2025-11-07', [
-						logFile('no-spec', [
+						logFile('no-spec.jsonl', [
 							logEntry({event: 'preprocessing_start', time: 1000}),
-							logEntry({event: 'chunking_complete', time: 1100}),
+							logEntry({
+								event: 'chunking_complete',
+								time: 1100,
+								data: {chunkCount: 5, dataSizeKB: '25.50'},
+							}),
 						]),
 					]),
 				])

@@ -1,5 +1,5 @@
 import type {SigilLogEntry} from '@sigil/src/common/observability/logger';
-import type {ComponentSpec} from '@sigil/src/lib/generated/schemas/specification';
+import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 /**
  * Metadata about a fixture without the full spec and logs

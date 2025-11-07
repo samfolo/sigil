@@ -12,12 +12,20 @@ import {scanFixtureDirectories} from './scanFixtures';
 const VALID_COMPONENT_SPEC: ComponentSpec = {
 	id: 'test-spec',
 	created_at: '2025-11-07T10:00:00Z',
-	title: 'Test',
-	data_shape: {
-		type: 'array',
-		items: {type: 'object', properties: {}},
+	title: 'Test Spec',
+	data_shape: 'hierarchical',
+	description: 'Test component spec',
+	root: {
+		accessor_bindings: {},
+		layout: {
+			id: 'root-layout',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [],
+		},
+		nodes: {},
 	},
-	root: {component: 'data-table', props: {columns: []}},
 };
 
 describe('scanFixtureDirectories', () => {
@@ -200,7 +208,11 @@ describe('scanFixtureDirectories', () => {
 						]),
 						logFile('no-spec.jsonl', [
 							logEntry({event: 'preprocessing_start', time: 2000}),
-							logEntry({event: 'chunking_complete', time: 2100}),
+							logEntry({
+								event: 'chunking_complete',
+								time: 2100,
+								data: {chunkCount: 8, dataSizeKB: '40.00'},
+							}),
 						]),
 					]),
 				])
