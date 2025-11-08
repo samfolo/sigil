@@ -19,7 +19,7 @@ import {scanFixtureDirectories} from '@sigil/src/common/types/fixture';
  * @returns 200 with {fixtures: FixtureMetadata[]} - sorted newest first
  * @returns 500 with {error: string} - if scanning fails
  */
-export const GET = async (request: NextRequest) => {
+export const GET = async (_request: NextRequest) => {
 	try {
 		const result = scanFixtureDirectories();
 

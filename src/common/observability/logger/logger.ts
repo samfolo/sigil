@@ -98,7 +98,7 @@ const formatDateAsYYYYMMDD = (date: Date): string => {
  * @returns Child SigilLogger instance
  */
 const createChildLogger = (parentLogger: pino.Logger, agentName: string, traceId: string): SigilLogger => {
-	const childPino = parentLogger.child({agent: agentName});
+	const childPino = parentLogger.child({agent: agentName, traceId});
 
 	return {
 		trace: (eventData: SigilLogEventData, msg: string) => {
