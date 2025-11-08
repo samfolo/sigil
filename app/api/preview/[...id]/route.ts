@@ -2,7 +2,7 @@ import type {NextRequest} from 'next/server';
 import {NextResponse} from 'next/server';
 
 import {isErr} from '@sigil/src/common/errors/result';
-import {loadFixture} from '@sigil/src/common/types/fixture';
+import {loadFixture} from '@sigil/src/common/fixtures';
 
 /**
  * Loads a specific fixture by ID

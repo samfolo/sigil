@@ -2,7 +2,7 @@ import type {NextRequest} from 'next/server';
 import {NextResponse} from 'next/server';
 
 import {isErr} from '@sigil/src/common/errors/result';
-import {scanFixtureDirectories} from '@sigil/src/common/types/fixture';
+import {scanFixtureDirectories} from '@sigil/src/common/fixtures';
 
 /**
  * Lists all available fixtures from logs/ and fixtures/ directories

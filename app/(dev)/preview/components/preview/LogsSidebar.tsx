@@ -1,9 +1,9 @@
-import CodeMirror from '@uiw/react-codemirror';
 import {json} from '@codemirror/lang-json';
+import CodeMirror from '@uiw/react-codemirror';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import type {ReactNode} from 'react';
 
-import type {Fixture} from '@sigil/src/common/types/fixture';
+import type {Fixture} from '@sigil/src/common/fixtures/schemas';
 import {Button} from '@sigil/src/ui/primitives/button';
 
 export type LogsSidebarState = 'expanded' | 'closed' | 'hidden';
