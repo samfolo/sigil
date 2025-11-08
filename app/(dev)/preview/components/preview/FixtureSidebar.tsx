@@ -50,7 +50,7 @@ export const FixtureSidebar = ({
 						)}
 						{error && <ErrorBox message={error.message} />}
 						{!isLoading && !error && fixtures && fixtures.length === 0 && (
-							<p className="w-full py-4 text-sm opacity-60 text-centre">No fixtures available</p>
+							<p className="w-full px-3 py-4 text-sm opacity-60 text-centre">No fixtures available</p>
 						)}
 						{!isLoading && !error && fixtures && fixtures.length > 0 && (
 							<div className="flex flex-col gap-1">
@@ -82,7 +82,7 @@ export const FixtureSidebar = ({
 						)}
 						{error && <ErrorBox message={error.message} />}
 						{!isLoading && !error && logsFixtures && logsFixtures.length === 0 && (
-							<p className="w-full py-4 text-sm opacity-60 text-centre">No logs available</p>
+							<p className="w-full px-3 py-4 text-sm opacity-60 text-centre">No logs available</p>
 						)}
 						{!isLoading && !error && logsFixtures && logsFixtures.length > 0 && (
 							<div className="flex flex-col gap-1">

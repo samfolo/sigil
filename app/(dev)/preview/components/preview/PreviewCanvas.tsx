@@ -28,7 +28,7 @@ export const PreviewCanvas = ({fixture, isLoading, error}: PreviewCanvasProps): 
 		{error && <ErrorBox message={error.message} />}
 
 		{fixture && !isLoading && !error && (
-			<div className="p-8">
+			<div className="w-full p-8 flex items-center justify-center">
 				<p className="text-sm opacity-60">Rendered output will appear here</p>
 			</div>
 		)}
