@@ -163,6 +163,7 @@ interface Result {
 - Array indexing: `.at(0)` instead of `[0]`, `.at(-1)` for last element
 - Type narrowing: `switch` with discriminated unions, not type assertions
 - Type guards: Use `instanceof`, `typeof`, `in`, or Zod schemas instead of `as` casting
+- Zod schemas: Prefer `schemas.ts` files, derive types with `z.infer`, use `.parse()` to avoid `as` casting
 - Zod V4: Check https://zod.dev for documentation
 
 Avoid `as` casting wherever possible:
