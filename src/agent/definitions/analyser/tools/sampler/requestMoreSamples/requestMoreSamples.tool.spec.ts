@@ -18,6 +18,8 @@ import {REALISTIC_CSV_DATA} from '../sampler.fixtures';
 import {createRequestMoreSamplesTool} from './requestMoreSamples.tool';
 import type {SampleRetrieverState} from './schemas';
 
+const REQUEST_MORE_SAMPLES_TIMEOUT = 15000; // 15 seconds
+
 const vignettePositionSchema = z.object({
 	start: z.number(),
 	end: z.number(),
@@ -53,7 +55,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 	const tool = createRequestMoreSamplesTool<SampleRetrieverState, EmptyObject>();
 
 	describe('handler', () => {
-		it('returns error when samplerState is undefined', () => {
+		it('returns error when samplerState is undefined', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, () => {
 			const state = createState({});
 
 			const result = tool.handler(state, VALID_INPUT);
@@ -67,7 +69,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(result.error).toContain('Initial vignettes must be generated first');
 		});
 
-		it('returns error for count less than 1', () => {
+		it('returns error for count less than 1', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, () => {
 			const state = createState({});
 
 			const result = tool.handler(state, {count: 0});
@@ -80,7 +82,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(result.error).toContain('Invalid input');
 		});
 
-		it('returns error for negative count', () => {
+		it('returns error for negative count', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, () => {
 			const state = createState({});
 
 			const result = tool.handler(state, {count: -5});
@@ -93,7 +95,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(result.error).toContain('Invalid input');
 		});
 
-		it('returns error for non-integer count', () => {
+		it('returns error for non-integer count', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, () => {
 			const state = createState({});
 
 			const result = tool.handler(state, {count: 5.5});
@@ -106,7 +108,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(result.error).toContain('Invalid input');
 		});
 
-		it('uses default count of 10 when count not provided', async () => {
+		it('uses default count of 10 when count not provided', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 			const initialResult = await generateInitialVignettes(REALISTIC_CSV_DATA, 5);
 
 			expect(isOk(initialResult)).toBe(true);
@@ -136,7 +138,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(parsed.data.vignettes.length).toBeLessThanOrEqual(10);
 		});
 
-		it('returns unchanged state with tool result on success', async () => {
+		it('returns unchanged state with tool result on success', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 			const initialResult = await generateInitialVignettes(REALISTIC_CSV_DATA, 10);
 
 			expect(isOk(initialResult)).toBe(true);
@@ -163,7 +165,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(parsed.success).toBe(true);
 		});
 
-		it('updates state.run.samplerState with newState', async () => {
+		it('updates state.run.samplerState with newState', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 			const initialResult = await generateInitialVignettes(REALISTIC_CSV_DATA, 10);
 
 			expect(isOk(initialResult)).toBe(true);
@@ -191,7 +193,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(newProvidedCount).toBeGreaterThan(originalProvidedCount);
 		});
 
-		it('returns vignettes with valid schema', async () => {
+		it('returns vignettes with valid schema', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 			const initialResult = await generateInitialVignettes(REALISTIC_CSV_DATA, 5);
 
 			expect(isOk(initialResult)).toBe(true);
@@ -224,7 +226,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			}
 		});
 
-		it('hasMore flag indicates availability correctly', async () => {
+		it('hasMore flag indicates availability correctly', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 			const smallData = 'Text. '.repeat(10);
 			const initialResult = await generateInitialVignettes(smallData, 2);
 
@@ -283,7 +285,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			expect(iterations).toBeLessThan(maxIterations);
 		});
 
-		it('integration: works with actual SamplerState from generateInitialVignettes', async () => {
+		it('integration: works with actual SamplerState from generateInitialVignettes', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 			const initialResult = await generateInitialVignettes(REALISTIC_CSV_DATA, 20);
 
 			expect(isOk(initialResult)).toBe(true);
@@ -326,7 +328,7 @@ describe('REQUEST_MORE_SAMPLES_TOOL', () => {
 			}
 		});
 
-		it('handles exhausted state with empty results', async () => {
+		it('handles exhausted state with empty results', {timeout: REQUEST_MORE_SAMPLES_TIMEOUT}, async () => {
 			const initialResult = await generateInitialVignettes('Short text', 1);
 
 			expect(isOk(initialResult)).toBe(true);

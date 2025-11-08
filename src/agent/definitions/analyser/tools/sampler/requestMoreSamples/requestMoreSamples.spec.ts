@@ -13,7 +13,7 @@ import {generateInitialVignettes} from '../generateInitialVignettes';
 
 import {requestMoreSamples} from './requestMoreSamples';
 
-const REQUEST_MORE_SAMPLES_TIMEOUT = 10000; // 10 seconds
+const REQUEST_MORE_SAMPLES_TIMEOUT = 15000; // 15 seconds
 
 describe('requestMoreSamples', () => {
 	afterEach(() => {

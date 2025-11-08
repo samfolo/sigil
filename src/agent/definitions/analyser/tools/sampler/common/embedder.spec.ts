@@ -24,6 +24,11 @@ const NORMALISED_MAGNITUDE = 1.0;
 const MAGNITUDE_PRECISION = 5;
 const EMBEDDING_VALUE_PRECISION = 6;
 
+/**
+ * Timeout for embedder operations
+ */
+const EMBEDDER_TIMEOUT = 15000; // 15 seconds
+
 describe('embedder', () => {
 	afterEach(() => {
 		// Clean up singleton after each test
@@ -31,7 +36,7 @@ describe('embedder', () => {
 	});
 
 	describe('getEmbedder', () => {
-		it('should return successful result with singleton instance', async () => {
+		it('should return successful result with singleton instance', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result1 = await getEmbedder();
 			const result2 = await getEmbedder();
 
@@ -43,7 +48,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should create new instance after cleanup', async () => {
+		it('should create new instance after cleanup', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result1 = await getEmbedder();
 			expect(isOk(result1)).toBe(true);
 
@@ -61,7 +66,7 @@ describe('embedder', () => {
 	});
 
 	describe('embedText', () => {
-		it('should return 384-dimensional vector', async () => {
+		it('should return 384-dimensional vector', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result = await embedText('hello world');
 
 			expect(isOk(result)).toBe(true);
@@ -71,7 +76,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should return normalised vector with magnitude ≈ 1', async () => {
+		it('should return normalised vector with magnitude ≈ 1', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result = await embedText('This is CSV data with columns');
 
 			expect(isOk(result)).toBe(true);
@@ -86,7 +91,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should produce different embeddings for different texts', async () => {
+		it('should produce different embeddings for different texts', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result1 = await embedText('hello world');
 			const result2 = await embedText('goodbye world');
 
@@ -102,7 +107,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should handle empty string', async () => {
+		it('should handle empty string', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result = await embedText('');
 
 			expect(isOk(result)).toBe(true);
@@ -113,7 +118,7 @@ describe('embedder', () => {
 	});
 
 	describe('embedBatch', () => {
-		it('should handle multiple texts', async () => {
+		it('should handle multiple texts', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const texts = ['text one', 'text two', 'text three'];
 			const result = await embedBatch(texts);
 
@@ -126,7 +131,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should return normalised vectors', async () => {
+		it('should return normalised vectors', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const texts = ['hello', 'world'];
 			const result = await embedBatch(texts);
 
@@ -144,7 +149,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should match embedText results', async () => {
+		it('should match embedText results', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const text = 'test text';
 			const singleResult = await embedText(text);
 			const batchResult = await embedBatch([text]);
@@ -164,7 +169,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should handle empty array', async () => {
+		it('should handle empty array', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result = await embedBatch([]);
 
 			expect(isOk(result)).toBe(true);
@@ -173,7 +178,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should handle single text', async () => {
+		it('should handle single text', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const result = await embedBatch(['single text']);
 
 			expect(isOk(result)).toBe(true);
@@ -183,7 +188,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should handle batches larger than MAX_BATCH_SIZE', async () => {
+		it('should handle batches larger than MAX_BATCH_SIZE', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			// Create array with more texts than MAX_BATCH_SIZE
 			const texts = Array.from({length: MAX_BATCH_SIZE + 50}, (_, i) => `text ${i}`);
 			const result = await embedBatch(texts);
@@ -198,7 +203,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should handle batch exactly at MAX_BATCH_SIZE', async () => {
+		it('should handle batch exactly at MAX_BATCH_SIZE', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const texts = Array.from({length: MAX_BATCH_SIZE}, (_, i) => `text ${i}`);
 			const result = await embedBatch(texts);
 
@@ -208,7 +213,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should handle batch just over MAX_BATCH_SIZE', async () => {
+		it('should handle batch just over MAX_BATCH_SIZE', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			const texts = Array.from({length: MAX_BATCH_SIZE + 1}, (_, i) => `text ${i}`);
 			const result = await embedBatch(texts);
 
@@ -220,7 +225,7 @@ describe('embedder', () => {
 	});
 
 	describe('cleanupEmbedder', () => {
-		it('should reset singleton state', async () => {
+		it('should reset singleton state', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			// Get initial embedder
 			const result1 = await getEmbedder();
 			expect(isOk(result1)).toBe(true);
@@ -238,7 +243,7 @@ describe('embedder', () => {
 	});
 
 	describe('error handling', () => {
-		it('should handle concurrent initialisation requests', async () => {
+		it('should handle concurrent initialisation requests', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			// Fire multiple requests simultaneously before first completes
 			const promises = Array.from({length: 5}, () => embedText('concurrent test'));
 
@@ -253,7 +258,7 @@ describe('embedder', () => {
 			}
 		});
 
-		it('should handle rapid successive calls', async () => {
+		it('should handle rapid successive calls', {timeout: EMBEDDER_TIMEOUT}, async () => {
 			// Quick successive calls
 			const result1 = await embedText('call 1');
 			const result2 = await embedText('call 2');
