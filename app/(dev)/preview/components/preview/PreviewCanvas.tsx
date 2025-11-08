@@ -19,18 +19,18 @@ interface PreviewCanvasProps {
  */
 export const PreviewCanvas = ({fixture, isLoading, error}: PreviewCanvasProps): ReactNode => (
 	<main className="flex items-centre justify-centre bg-preview-canvas text-preview-text">
-		{!fixture && !isLoading && !error && (
-			<p className="text-lg opacity-60">No preview loaded</p>
-		)}
+		<div className="w-full h-full p-8 flex items-center justify-center">
+			{!fixture && !isLoading && !error && (
+				<p className="text-sm opacity-60">No preview loaded</p>
+			)}
 
-		{isLoading && <Loader2 className="h-8 w-8 animate-spin" />}
+			{isLoading && <Loader2 className="h-8 w-8 animate-spin" />}
 
-		{error && <ErrorBox message={error.message} />}
+			{error && <ErrorBox message={error.message} />}
 
-		{fixture && !isLoading && !error && (
-			<div className="w-full p-8 flex items-center justify-center">
+			{fixture && !isLoading && !error && (
 				<p className="text-sm opacity-60">Rendered output will appear here</p>
-			</div>
-		)}
+			)}
+		</div>
 	</main>
 );

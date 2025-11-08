@@ -1,0 +1,96 @@
+/**
+ * Run artifact schemas
+ *
+ * Zod schemas for run-based artifact storage. Derive types using z.infer and
+ * use schemas to validate data when loading artifacts from disk.
+ */
+
+import {z} from 'zod';
+
+import {AnalysisOutputSchema} from '@sigil/src/agent/definitions/analyser';
+import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger/events';
+import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas';
+
+/**
+ * Summary information about a run
+ */
+export const RunMetadataSchema = z.object({
+	/**
+	 * Agent name
+	 */
+	agent: z.string().describe('Agent name (e.g., "DataProcessingPipeline", "Analyser")'),
+
+	/**
+	 * Unix timestamp in milliseconds when run started
+	 */
+	startTimestamp: z.number().int().positive().describe('Unix timestamp in milliseconds when run started'),
+
+	/**
+	 * Unix timestamp in milliseconds when run completed
+	 *
+	 * Null if the run crashed before completion.
+	 */
+	endTimestamp: z.number().int().positive().nullable().describe('Unix timestamp in milliseconds when run completed, null if crashed'),
+
+	/**
+	 * Whether the run succeeded
+	 */
+	success: z.boolean().describe('Whether the run succeeded'),
+});
+
+export type RunMetadata = z.infer<typeof RunMetadataSchema>;
+
+/**
+ * Complete artifact bundle for a single run
+ *
+ * Each run directory contains:
+ * - input.txt: Raw input data (JSON, CSV string, etc.)
+ * - analysis.json: Output from Analyser agent (may be null if Analyser failed)
+ * - output.json: Generated spec from GenerateSigilIR agent (may be null if GenerateSigilIR failed)
+ * - logs.jsonl: Line-by-line execution logs written by Pino transport
+ * - metadata.json: Summary information about the run
+ */
+export const RunArtifactSchema = z.object({
+	/**
+	 * Run identifier
+	 *
+	 * Format: YYYYMMDD-HHMMSS-xxxx where xxxx is 4-char hex suffix
+	 */
+	runId: z.string().regex(/^\d{8}-\d{6}-[a-f0-9]{4}$/).describe('Run identifier (format: YYYYMMDD-HHMMSS-xxxx)'),
+
+	/**
+	 * Raw input data
+	 *
+	 * Loaded as-is from input.txt without parsing.
+	 * May be JSON string, CSV string, or any other format.
+	 */
+	input: z.unknown().describe('Raw input data from input.txt'),
+
+	/**
+	 * Output from Analyser agent
+	 *
+	 * Null if the run failed before Analyser completed.
+	 */
+	analysis: AnalysisOutputSchema.nullable().describe('Output from Analyser agent, null if Analyser failed'),
+
+	/**
+	 * Generated spec from GenerateSigilIR agent
+	 *
+	 * Null if the run failed before GenerateSigilIR completed.
+	 */
+	output: ComponentSpecSchema.nullable().describe('Generated spec from GenerateSigilIR agent, null if GenerateSigilIR failed'),
+
+	/**
+	 * Parsed log entries from logs.jsonl
+	 *
+	 * One entry per line in the JSONL file.
+	 */
+	logs: z.array(SigilLogEntrySchema).describe('Parsed log entries from logs.jsonl'),
+
+	/**
+	 * Summary information about the run
+	 */
+	metadata: RunMetadataSchema.describe('Summary information about the run'),
+});
+
+export type RunArtifact = z.infer<typeof RunArtifactSchema>;
