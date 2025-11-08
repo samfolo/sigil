@@ -18,7 +18,7 @@ export class TempFSFileBuilder {
 	/**
 	 * Get the file content
 	 *
-	 * @returns File content string
+	 * @returns File content as string
 	 */
 	getContent(): string {
 		return this.fileContent;
