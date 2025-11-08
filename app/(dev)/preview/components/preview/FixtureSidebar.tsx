@@ -36,25 +36,21 @@ export const FixtureSidebar = ({
 		</header>
 
 		<ScrollArea className="h-[calc(100vh-76px)]">
-			<div className="flex flex-col">
+			<div className="w-[320px]">
 				{/* Fixtures Section */}
 				<section>
-					<div className="sticky top-0 bg-preview-sidebar px-6 py-3">
+					<div className="sticky top-0 bg-preview-sidebar px-6 py-3 z-10">
 						<h2 className="text-sm font-medium uppercase tracking-wide opacity-70">Fixtures</h2>
 					</div>
-					<div className="px-3 pb-6">
+					<div className="px-3 pb-6 min-h-[100px]">
 						{isLoading && (
-							<div className="flex items-centre justify-centre py-8">
+							<div className="flex w-full items-centre justify-centre py-8">
 								<Loader2 className="h-5 w-5 animate-spin" />
 							</div>
 						)}
-						{error && (
-							<div className="px-3">
-								<ErrorBox message={error.message} />
-							</div>
-						)}
+						{error && <ErrorBox message={error.message} />}
 						{!isLoading && !error && fixtures && fixtures.length === 0 && (
-							<p className="px-3 py-4 text-sm opacity-60">No fixtures available</p>
+							<p className="w-full py-4 text-sm opacity-60 text-centre">No fixtures available</p>
 						)}
 						{!isLoading && !error && fixtures && fixtures.length > 0 && (
 							<div className="flex flex-col gap-1">
@@ -62,10 +58,10 @@ export const FixtureSidebar = ({
 									<Button
 										key={fixture.id}
 										variant={selectedId === fixture.id ? 'default' : 'ghost'}
-										className="w-full justify-start text-left"
+										className="w-full justify-start text-left overflow-hidden px-3"
 										onClick={() => onSelectFixture(fixture.id)}
 									>
-										{fixture.displayName}
+										<span className="truncate">{fixture.displayName}</span>
 									</Button>
 								))}
 							</div>
@@ -75,22 +71,18 @@ export const FixtureSidebar = ({
 
 				{/* Logs Section */}
 				<section>
-					<div className="sticky top-0 bg-preview-sidebar px-6 py-3">
+					<div className="sticky top-0 bg-preview-sidebar px-6 py-3 z-10">
 						<h2 className="text-sm font-medium uppercase tracking-wide opacity-70">Logs</h2>
 					</div>
-					<div className="px-3 pb-6">
+					<div className="px-3 pb-6 min-h-[100px]">
 						{isLoading && (
-							<div className="flex items-centre justify-centre py-8">
+							<div className="flex w-full items-centre justify-centre py-8">
 								<Loader2 className="h-5 w-5 animate-spin" />
 							</div>
 						)}
-						{error && (
-							<div className="px-3">
-								<ErrorBox message={error.message} />
-							</div>
-						)}
+						{error && <ErrorBox message={error.message} />}
 						{!isLoading && !error && logsFixtures && logsFixtures.length === 0 && (
-							<p className="px-3 py-4 text-sm opacity-60">No logs available</p>
+							<p className="w-full py-4 text-sm opacity-60 text-centre">No logs available</p>
 						)}
 						{!isLoading && !error && logsFixtures && logsFixtures.length > 0 && (
 							<div className="flex flex-col gap-1">
@@ -98,10 +90,10 @@ export const FixtureSidebar = ({
 									<Button
 										key={fixture.id}
 										variant={selectedId === fixture.id ? 'default' : 'ghost'}
-										className="w-full justify-start text-left"
+										className="w-full justify-start text-left overflow-hidden px-3"
 										onClick={() => onSelectFixture(fixture.id)}
 									>
-										{fixture.displayName}
+										<span className="truncate">{fixture.displayName}</span>
 									</Button>
 								))}
 							</div>
