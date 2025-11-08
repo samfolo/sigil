@@ -1,11 +1,12 @@
 import {json} from '@codemirror/lang-json';
-import {codeFolding, foldGutter, HighlightStyle, syntaxHighlighting} from '@codemirror/language';
+import {codeFolding, foldAll, foldGutter, HighlightStyle, syntaxHighlighting, unfoldAll} from '@codemirror/language';
 import type {EditorState} from '@codemirror/state';
 import {EditorView} from '@codemirror/view';
 import {tags} from '@lezer/highlight';
 import CodeMirror from '@uiw/react-codemirror';
-import {ChevronLeft, ChevronRight} from 'lucide-react';
+import {ChevronLeft, ChevronRight, FoldVertical, UnfoldVertical} from 'lucide-react';
 import type {ReactNode} from 'react';
+import {useState} from 'react';
 
 import type {Fixture} from '@sigil/src/common/fixtures/schemas';
 import {Button} from '@sigil/src/ui/primitives/button';
@@ -25,6 +26,10 @@ const SIDEBAR_THEME = EditorView.theme(
 		},
 		'&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
 			backgroundColor: 'oklch(0.3 0 0)',
+		},
+		'.cm-matchingBracket, .cm-nonmatchingBracket': {
+			backgroundColor: 'oklch(0.2 0 0)',
+			outline: '1px solid oklch(0.4 0 0)',
 		},
 		'.cm-selectionBackground': {
 			backgroundColor: 'oklch(0.3 0 0)',
@@ -86,18 +91,32 @@ const MONOCHROME_HIGHLIGHTING = syntaxHighlighting(
 );
 
 /**
+ * Formats logs as individual JSON objects instead of an array
+ */
+const formatLogsAsObjects = (logs: unknown[]): string => logs.map((log) => JSON.stringify(log, null, 2)).join('\n');
+
+/**
  * Extracts event key from folded JSON log object
  */
 const prepareFoldPlaceholder = (state: EditorState, range: {from: number; to: number}) => {
 	const text = state.doc.sliceString(range.from, range.to);
 
 	try {
-		const parsed = JSON.parse(`{${text}}`);
+		// Try parsing as-is first (complete object)
+		const parsed = JSON.parse(text);
 		if (parsed && typeof parsed === 'object' && 'event' in parsed) {
 			return parsed.event;
 		}
 	} catch {
-		// If parsing fails, return null
+		// If direct parsing fails, try wrapping in braces (object contents only)
+		try {
+			const parsed = JSON.parse(`{${text}}`);
+			if (parsed && typeof parsed === 'object' && 'event' in parsed) {
+				return parsed.event;
+			}
+		} catch {
+			// If both fail, return null
+		}
 	}
 
 	return null;
@@ -145,6 +164,19 @@ export const LogsSidebar = ({fixture, state, onToggle, isLoading}: LogsSidebarPr
 	const width = SIDEBAR_WIDTHS[state];
 	const showBorder = state !== 'hidden';
 	const isExpanded = state === 'expanded';
+	const [editorView, setEditorView] = useState<EditorView | null>(null);
+
+	const handleFoldAll = () => {
+		if (editorView) {
+			foldAll(editorView);
+		}
+	};
+
+	const handleExpandAll = () => {
+		if (editorView) {
+			unfoldAll(editorView);
+		}
+	};
 
 	return (
 		<aside
@@ -156,31 +188,55 @@ export const LogsSidebar = ({fixture, state, onToggle, isLoading}: LogsSidebarPr
 		>
 			<div className="flex h-full flex-col">
 				<header
-					className={`flex shrink-0 items-centre border-b items-center ${
+					className={`flex shrink-0 items-centre border-b items-center px-4 py-2 ${
 						isExpanded
-							? 'justify-between border-white/10 pl-6 pr-4 py-4'
-							: 'justify-end border-transparent px-4 py-4'
+							? 'justify-between border-white/10'
+							: 'justify-end border-transparent'
 					}`}
 				>
 					<h2
-						className={`font-mono text-sm text-balance ${
+						className={`font-mono text-sm ${
 							isExpanded ? 'opacity-100 transition-opacity duration-200 delay-300' : 'opacity-0'
 						}`}
 					>
 						Logs
 					</h2>
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={onToggle}
-						aria-label={isExpanded ? 'Collapse logs sidebar' : 'Expand logs sidebar'}
-					>
-						{isExpanded ? (
-							<ChevronRight className="h-5 w-5" />
-						) : (
-							<ChevronLeft className="h-5 w-5" />
+					<div className="flex gap-2">
+						{isExpanded && editorView && (
+							<>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={handleFoldAll}
+									aria-label="Fold all logs"
+									className="transition-opacity duration-200 delay-300"
+								>
+									<FoldVertical className="h-5 w-5" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={handleExpandAll}
+									aria-label="Expand all folds"
+									className="transition-opacity duration-200 delay-300"
+								>
+									<UnfoldVertical className="h-5 w-5" />
+								</Button>
+							</>
 						)}
-					</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={onToggle}
+							aria-label={isExpanded ? 'Collapse logs sidebar' : 'Expand logs sidebar'}
+						>
+							{isExpanded ? (
+								<ChevronRight className="h-5 w-5" />
+							) : (
+								<ChevronLeft className="h-5 w-5" />
+							)}
+						</Button>
+					</div>
 				</header>
 
 				{isExpanded && (
@@ -206,7 +262,7 @@ export const LogsSidebar = ({fixture, state, onToggle, isLoading}: LogsSidebarPr
 						{!isLoading && fixture && fixture.logs.length > 0 && (
 							<div className="h-full overflow-auto">
 								<CodeMirror
-									value={JSON.stringify(fixture.logs, null, 2)}
+									value={formatLogsAsObjects(fixture.logs)}
 									extensions={[
 										json(),
 										EditorView.lineWrapping,
@@ -220,6 +276,9 @@ export const LogsSidebar = ({fixture, state, onToggle, isLoading}: LogsSidebarPr
 										lineNumbers: false,
 										foldGutter: false,
 										highlightActiveLine: false,
+									}}
+									onCreateEditor={(view) => {
+										setEditorView(view);
 									}}
 								/>
 							</div>
