@@ -61,10 +61,10 @@ export const RunArtifactSchema = z.object({
 	/**
 	 * Raw input data
 	 *
-	 * Loaded as-is from input.txt without parsing.
-	 * May be JSON string, CSV string, or any other format.
+	 * Always stored and loaded as a string from input.txt.
+	 * Objects and non-string primitives are stringified on save.
 	 */
-	input: z.unknown().describe('Raw input data from input.txt'),
+	input: z.string().describe('Raw input data from input.txt (always a string)'),
 
 	/**
 	 * Output from Analyser agent

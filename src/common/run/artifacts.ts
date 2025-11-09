@@ -17,8 +17,20 @@ import type {ComponentSpec} from '@sigil/src/lib/generated/types';
 import type {RunArtifact, RunMetadata} from './schemas';
 import {RunMetadataSchema} from './schemas';
 
+/**
+ * Enable debug logging for run directory scanning
+ *
+ * Set environment variable DEBUG_RUN_SCANNING=true to log detailed information
+ * when scanning the runs directory, including invalid directory names encountered.
+ */
 const DEBUG_RUN_SCANNING = process.env.DEBUG_RUN_SCANNING === 'true';
-const RUN_ID_PATTERN = /^\d{8}-\d{6}-[a-f0-9]{4}$/;
+
+/**
+ * Pattern for validating run ID format
+ *
+ * Format: YYYYMMDD-HHMMSS-xxxx where xxxx is 4-character hex suffix
+ */
+export const RUN_ID_PATTERN = /^\d{8}-\d{6}-[a-f0-9]{4}$/;
 
 export const INPUT_FILENAME = 'input.txt';
 export const ANALYSIS_FILENAME = 'analysis.json';
@@ -29,9 +41,10 @@ export const METADATA_FILENAME = 'metadata.json';
 /**
  * Gets the base directory for all runs
  *
- * Uses SIGIL_TEST_RUN_DIR environment variable if set, otherwise defaults to 'runs/'.
+ * Directory location can be overridden via SIGIL_TEST_RUN_DIR environment variable.
+ * This is primarily used in tests to isolate test runs from production runs.
  *
- * @returns Absolute path to runs directory
+ * @returns Absolute path to runs directory (defaults to <project>/runs/)
  */
 const getRunsDirectory = (): string => {
 	const projectRoot = process.cwd();
@@ -71,6 +84,9 @@ const ensureRunDirectory = (runId: string): Result<void, string> => {
 		}
 		return ok(undefined);
 	} catch (error) {
+		if (isNodeError(error)) {
+			return err(`Failed to create run directory: ${error.message}`);
+		}
 		return err(`Failed to create run directory: ${String(error)}`);
 	}
 };
@@ -114,6 +130,9 @@ export const saveInput = (runId: string, data: unknown): Result<void, string> =>
 		writeFileSync(inputPath, content, 'utf-8');
 		return ok(undefined);
 	} catch (error) {
+		if (isNodeError(error)) {
+			return err(`Failed to write input: ${error.message}`);
+		}
 		return err(`Failed to write input: ${String(error)}`);
 	}
 };
@@ -138,6 +157,9 @@ export const saveAnalysis = (runId: string, analysis: AnalysisOutput): Result<vo
 		writeFileSync(analysisPath, JSON.stringify(analysis, null, 2), 'utf-8');
 		return ok(undefined);
 	} catch (error) {
+		if (isNodeError(error)) {
+			return err(`Failed to write analysis: ${error.message}`);
+		}
 		return err(`Failed to write analysis: ${String(error)}`);
 	}
 };
@@ -162,6 +184,9 @@ export const saveOutput = (runId: string, spec: ComponentSpec): Result<void, str
 		writeFileSync(outputPath, JSON.stringify(spec, null, 2), 'utf-8');
 		return ok(undefined);
 	} catch (error) {
+		if (isNodeError(error)) {
+			return err(`Failed to write output: ${error.message}`);
+		}
 		return err(`Failed to write output: ${String(error)}`);
 	}
 };
@@ -186,6 +211,9 @@ export const saveMetadata = (runId: string, metadata: RunMetadata): Result<void,
 		writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
 		return ok(undefined);
 	} catch (error) {
+		if (isNodeError(error)) {
+			return err(`Failed to write metadata: ${error.message}`);
+		}
 		return err(`Failed to write metadata: ${String(error)}`);
 	}
 };
@@ -287,6 +315,7 @@ export const loadRunArtifact = (runId: string): Result<RunArtifact, string> => {
 	const logLines = logsContent.split('\n').filter((line) => line.trim() !== '');
 	const logs = [];
 
+	// Parse each line; index is 0-based, so add 1 for human-readable line numbers in errors
 	for (const [index, line] of logLines.entries()) {
 		let parsed: unknown;
 

@@ -6,11 +6,25 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {AnalysisOutput} from '@sigil/src/agent/definitions/analyser';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 import {logEntry, VALID_COMPONENT_SPEC} from '@sigil/src/common/fixtures/fixture.mock';
+import type {SigilLogEntry} from '@sigil/src/common/observability/logger';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types';
-import type {TempFSNode, TempFSResult} from '@sigil/src/testing/fs';
 import {TempFSBuilder} from '@sigil/src/testing/fs';
+import type {TempFSNode, TempFSResult} from '@sigil/src/testing/fs';
 
-import {ANALYSIS_FILENAME, INPUT_FILENAME, loadRunArtifact, LOGS_FILENAME, METADATA_FILENAME, OUTPUT_FILENAME, saveAnalysis, saveInput, saveMetadata, saveOutput, scanRuns} from './artifacts';
+import {
+	ANALYSIS_FILENAME,
+	INPUT_FILENAME,
+	LOGS_FILENAME,
+	METADATA_FILENAME,
+	OUTPUT_FILENAME,
+	RUN_ID_PATTERN,
+	loadRunArtifact,
+	saveAnalysis,
+	saveInput,
+	saveMetadata,
+	saveOutput,
+	scanRuns,
+} from './artifacts';
 import {generateRunId} from './generateRunId';
 import type {RunMetadata} from './schemas';
 
@@ -80,20 +94,30 @@ const runDir = (
 	return {type: 'directory', name: runId, children};
 };
 
+/**
+ * Helper to save logs to a run directory
+ *
+ * Simulates Pino transport behaviour by writing logs as JSONL.
+ */
+const saveLogs = (tempFS: TempFSResult | null, runId: string, logs: SigilLogEntry[]): void => {
+	const logsContent = logs.map((entry) => JSON.stringify(entry)).join('\n');
+	const runDir = join(tempFS?.root ?? '', 'runs', runId);
+	writeFileSync(join(runDir, LOGS_FILENAME), logsContent);
+};
+
 describe('generateRunId', () => {
 	it('should generate unique IDs with correct format', () => {
 		const ids = new Set<string>();
-		const COUNT = 100;
-		const RUN_ID_PATTERN = /^\d{8}-\d{6}-[a-f0-9]{4}$/;
+		const UNIQUENESS_TEST_RUN_COUNT = 100;
 
-		for (let i = 0; i < COUNT; i++) {
+		for (let i = 0; i < UNIQUENESS_TEST_RUN_COUNT; i++) {
 			const runId = generateRunId();
 
 			expect(runId).toMatch(RUN_ID_PATTERN);
 			ids.add(runId);
 		}
 
-		expect(ids.size).toBe(COUNT);
+		expect(ids.size).toBe(UNIQUENESS_TEST_RUN_COUNT);
 	});
 });
 
@@ -104,7 +128,7 @@ describe('artifact save and load functions', () => {
 		const buildResult = new TempFSBuilder().build();
 		expect(isOk(buildResult)).toBe(true);
 		if (!isOk(buildResult)) {
-			return;
+			throw new Error(`Failed to create temp filesystem: ${buildResult.error}`);
 		}
 		tempFS = buildResult.data;
 		vi.spyOn(process, 'cwd').mockImplementation(() => tempFS?.root ?? '/test');
@@ -130,14 +154,10 @@ describe('artifact save and load functions', () => {
 
 			// Save minimal required files for loading
 			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
-			const logsContent = logs.map((entry) => JSON.stringify(entry)).join('\n');
 			saveMetadata(runId, VALID_RUN_METADATA);
 			saveOutput(runId, VALID_COMPONENT_SPEC);
 			saveAnalysis(runId, VALID_ANALYSIS_OUTPUT);
-
-			// Manually write logs (simulating Pino transport)
-			const runDir = join(tempFS?.root ?? '', 'runs', runId);
-			writeFileSync(join(runDir, LOGS_FILENAME), logsContent);
+			saveLogs(tempFS, runId, logs);
 
 			const loadResult = loadRunArtifact(runId);
 			expect(isOk(loadResult)).toBe(true);
@@ -157,11 +177,8 @@ describe('artifact save and load functions', () => {
 
 			// Save minimal required files
 			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
-			const logsContent = logs.map((entry) => JSON.stringify(entry)).join('\n');
 			saveMetadata(runId, VALID_RUN_METADATA);
-
-			const runDir = join(tempFS?.root ?? '', 'runs', runId);
-			writeFileSync(join(runDir, LOGS_FILENAME), logsContent);
+			saveLogs(tempFS, runId, logs);
 
 			const loadResult = loadRunArtifact(runId);
 			expect(isOk(loadResult)).toBe(true);
@@ -212,10 +229,8 @@ describe('artifact save and load functions', () => {
 			saveMetadata(runId, VALID_RUN_METADATA);
 
 			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
-			const logsContent = logs.map((entry) => JSON.stringify(entry)).join('\n');
-
-			const runDir = join(tempFS?.root ?? '', 'runs', runId);
-			writeFileSync(join(runDir, LOGS_FILENAME), logsContent);
+	
+			saveLogs(tempFS, runId, logs);
 
 			const loadResult = loadRunArtifact(runId);
 			expect(isOk(loadResult)).toBe(true);
@@ -240,10 +255,8 @@ describe('artifact save and load functions', () => {
 			saveMetadata(runId, VALID_RUN_METADATA);
 
 			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
-			const logsContent = logs.map((entry) => JSON.stringify(entry)).join('\n');
-
-			const runDir = join(tempFS?.root ?? '', 'runs', runId);
-			writeFileSync(join(runDir, LOGS_FILENAME), logsContent);
+	
+			saveLogs(tempFS, runId, logs);
 
 			const loadResult = loadRunArtifact(runId);
 			expect(isOk(loadResult)).toBe(true);
@@ -272,10 +285,8 @@ describe('artifact save and load functions', () => {
 			saveInput(runId, 'test');
 
 			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
-			const logsContent = logs.map((entry) => JSON.stringify(entry)).join('\n');
-
-			const runDir = join(tempFS?.root ?? '', 'runs', runId);
-			writeFileSync(join(runDir, LOGS_FILENAME), logsContent);
+	
+			saveLogs(tempFS, runId, logs);
 
 			const loadResult = loadRunArtifact(runId);
 			expect(isOk(loadResult)).toBe(true);
@@ -302,10 +313,8 @@ describe('artifact save and load functions', () => {
 			saveInput(runId, 'test');
 
 			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
-			const logsContent = logs.map((entry) => JSON.stringify(entry)).join('\n');
-
-			const runDir = join(tempFS?.root ?? '', 'runs', runId);
-			writeFileSync(join(runDir, LOGS_FILENAME), logsContent);
+	
+			saveLogs(tempFS, runId, logs);
 
 			const loadResult = loadRunArtifact(runId);
 			expect(isOk(loadResult)).toBe(true);

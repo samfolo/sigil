@@ -5,7 +5,21 @@
  * Each run gets a unique directory containing input, analysis, output, logs, and metadata.
  */
 
-export {ANALYSIS_FILENAME, getRunDirectory, INPUT_FILENAME, loadRunArtifact, LOGS_FILENAME, METADATA_FILENAME, OUTPUT_FILENAME, saveAnalysis, saveInput, saveMetadata, saveOutput, scanRuns} from './artifacts';
+export {
+	ANALYSIS_FILENAME,
+	INPUT_FILENAME,
+	LOGS_FILENAME,
+	METADATA_FILENAME,
+	OUTPUT_FILENAME,
+	RUN_ID_PATTERN,
+	getRunDirectory,
+	loadRunArtifact,
+	saveAnalysis,
+	saveInput,
+	saveMetadata,
+	saveOutput,
+	scanRuns,
+} from './artifacts';
 export {generateRunId} from './generateRunId';
-export type {RunArtifact, RunMetadata} from './schemas';
 export {RunArtifactSchema, RunMetadataSchema} from './schemas';
+export type {RunArtifact, RunMetadata} from './schemas';
