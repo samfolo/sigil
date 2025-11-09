@@ -1,0 +1,6 @@
+{"level":30,"time":1762692154433,"pid":52850,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_e3b1df34-f475-4d8d-b097-c74f50f58af2","event":"preprocessing_start","msg":"Parent message"}
+{"level":30,"time":1762692154433,"pid":52850,"hostname":"Sams-MacBook-Pro.local","agent":"ChildAgent","traceId":"agent_e3b1df34-f475-4d8d-b097-c74f50f58af2","event":"client_disconnected","msg":"Child message"}
+{"level":30,"time":1762692769346,"pid":54832,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_4b7b974c-5bd9-4bf6-b455-d04275b8a3f6","event":"preprocessing_start","msg":"Parent message"}
+{"level":30,"time":1762692769346,"pid":54832,"hostname":"Sams-MacBook-Pro.local","agent":"ChildAgent","traceId":"agent_4b7b974c-5bd9-4bf6-b455-d04275b8a3f6","event":"client_disconnected","msg":"Child message"}
+{"level":30,"time":1762692842245,"pid":56255,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_f6a9ebe7-df2b-4635-acbe-948112db9899","event":"preprocessing_start","msg":"Parent message"}
+{"level":30,"time":1762692842245,"pid":56255,"hostname":"Sams-MacBook-Pro.local","agent":"ChildAgent","traceId":"agent_f6a9ebe7-df2b-4635-acbe-948112db9899","event":"client_disconnected","msg":"Child message"}

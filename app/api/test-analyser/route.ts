@@ -69,6 +69,7 @@ export const POST = async (request: NextRequest) => {
 	let startTimestamp: number | undefined;
 	let status: RunMetadataStatus = 'failed';
 	let logger: ReturnType<typeof createSigilLogger> | undefined;
+	const executedAgents: string[] = [];
 
 	const truncate = (str: string, max: number): string =>
 		str.length > max ? str.slice(0, max) + '...' : str;
@@ -188,6 +189,9 @@ export const POST = async (request: NextRequest) => {
 		};
 
 		const analyserLogger = logger.child('Analyser');
+
+		// Track Analyser execution
+		executedAgents.push('Analyser');
 
 		// Observability callbacks
 		const callbacks: ExecuteCallbacks<AnalysisOutput> = {
@@ -391,6 +395,9 @@ export const POST = async (request: NextRequest) => {
 
 		const generatorLogger = logger.child('GenerateSigilIR');
 
+		// Track GenerateSigilIR execution
+		executedAgents.push('GenerateSigilIR');
+
 		// Observability callbacks for GenerateSigilIR
 		const generatorCallbacks: ExecuteCallbacks<GenerateSigilIROutput> = {
 			onAttemptStart: (context) => {
@@ -584,7 +591,8 @@ export const POST = async (request: NextRequest) => {
 		// Save run metadata if execution got past validation
 		if (runId && logger && startTimestamp) {
 			const metadataResult = saveMetadata(runId, {
-				agent: 'DataProcessingPipeline',
+				pipeline: 'DataProcessingPipeline',
+				agents: executedAgents,
 				startTimestamp,
 				endTimestamp: Date.now(),
 				status,

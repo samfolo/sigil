@@ -6,7 +6,7 @@
  */
 
 import {existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync} from 'fs';
-import {join} from 'path';
+import {isAbsolute, join} from 'path';
 
 import type {AnalysisOutput} from '@sigil/src/agent/definitions/analyser';
 import type {Result} from '@sigil/src/common/errors/result';
@@ -47,9 +47,15 @@ export const METADATA_FILENAME = 'metadata.json';
  * @returns Absolute path to runs directory (defaults to <project>/runs/)
  */
 const getRunsDirectory = (): string => {
-	const projectRoot = process.cwd();
 	const runsDir = process.env.SIGIL_TEST_RUN_DIR ?? 'runs';
-	return join(projectRoot, runsDir);
+
+	// If test override is an absolute path, use it directly
+	if (isAbsolute(runsDir)) {
+		return runsDir;
+	}
+
+	// Otherwise, join with project root
+	return join(process.cwd(), runsDir);
 };
 
 /**

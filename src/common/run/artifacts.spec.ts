@@ -59,7 +59,8 @@ const VALID_ANALYSIS_OUTPUT: AnalysisOutput = {
 };
 
 const VALID_RUN_METADATA: RunMetadata = {
-	agent: 'TestAgent',
+	pipeline: 'TestPipeline',
+	agents: ['TestAgent'],
 	startTimestamp: 1000,
 	endTimestamp: 2000,
 	status: 'completed',
@@ -294,7 +295,8 @@ describe('artifact save and load functions', () => {
 		it(`should save and load metadata correctly to ${METADATA_FILENAME}`, () => {
 			const runId = generateRunId();
 			const metadata: RunMetadata = {
-				agent: 'DataProcessingPipeline',
+				pipeline: 'DataProcessingPipeline',
+				agents: ['Analyser', 'GenerateSigilIR'],
 				startTimestamp: 1699000000000,
 				endTimestamp: 1699000060000,
 				status: 'completed',
@@ -322,7 +324,8 @@ describe('artifact save and load functions', () => {
 		it('should handle null endTimestamp for crashed runs', () => {
 			const runId = generateRunId();
 			const metadata: RunMetadata = {
-				agent: 'TestAgent',
+				pipeline: 'TestPipeline',
+				agents: [],
 				startTimestamp: 1699000000000,
 				endTimestamp: null,
 				status: 'failed',

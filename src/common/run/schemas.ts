@@ -23,9 +23,19 @@ export type RunMetadataStatus = z.infer<typeof RunMetadataStatusSchema>;
  */
 export const RunMetadataSchema = z.object({
 	/**
-	 * Agent name
+	 * Pipeline orchestrator name
+	 *
+	 * The top-level agent coordinating the execution (e.g., "DataProcessingPipeline").
 	 */
-	agent: z.string().describe('Agent name (e.g., "DataProcessingPipeline", "Analyser")'),
+	pipeline: z.string().describe('Pipeline orchestrator name'),
+
+	/**
+	 * Subordinate agents executed during the run
+	 *
+	 * List of agents that were invoked by the pipeline (e.g., ["Analyser", "GenerateSigilIR"]).
+	 * Empty array if the pipeline failed before executing any agents.
+	 */
+	agents: z.array(z.string()).describe('Subordinate agents executed during the run'),
 
 	/**
 	 * Unix timestamp in milliseconds when run started

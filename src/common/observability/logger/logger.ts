@@ -3,7 +3,7 @@ import {join} from 'path';
 
 import pino from 'pino';
 
-import {LOGS_FILENAME} from '@sigil/src/common/run';
+import {LOGS_FILENAME, getRunDirectory} from '@sigil/src/common/run';
 
 import type {SigilLogEntry} from './events';
 
@@ -98,28 +98,39 @@ export interface SigilLogger extends Omit<pino.Logger, 'trace' | 'debug' | 'info
 const createChildLogger = (parentLogger: pino.Logger, agentName: string, traceId: string): SigilLogger => {
 	const childPino = parentLogger.child({agent: agentName, traceId});
 
-	return {
-		...childPino,
-		trace: (eventData: SigilLogEventData, msg: string) => {
-			childPino.trace(eventData, msg);
-		},
-		debug: (eventData: SigilLogEventData, msg: string) => {
-			childPino.debug(eventData, msg);
-		},
-		info: (eventData: SigilLogEventData, msg: string) => {
-			childPino.info(eventData, msg);
-		},
-		warn: (eventData: SigilLogEventData, msg: string) => {
-			childPino.warn(eventData, msg);
-		},
-		error: (eventData: SigilLogEventData, msg: string) => {
-			childPino.error(eventData, msg);
-		},
-		fatal: (eventData: SigilLogEventData, msg: string) => {
-			childPino.fatal(eventData, msg);
-		},
-		child: (childAgentName: string) => createChildLogger(parentLogger, childAgentName, traceId),
+	// Save references to original Pino methods before overwriting
+	const originalTrace = childPino.trace.bind(childPino);
+	const originalDebug = childPino.debug.bind(childPino);
+	const originalInfo = childPino.info.bind(childPino);
+	const originalWarn = childPino.warn.bind(childPino);
+	const originalError = childPino.error.bind(childPino);
+	const originalFatal = childPino.fatal.bind(childPino);
+
+	// Create wrapper that exposes full Pino API while overriding log methods
+	const wrapper = childPino as unknown as SigilLogger;
+
+	// Override log methods with type-safe signatures
+	wrapper.trace = (eventData: SigilLogEventData, msg: string) => {
+		originalTrace(eventData, msg);
 	};
+	wrapper.debug = (eventData: SigilLogEventData, msg: string) => {
+		originalDebug(eventData, msg);
+	};
+	wrapper.info = (eventData: SigilLogEventData, msg: string) => {
+		originalInfo(eventData, msg);
+	};
+	wrapper.warn = (eventData: SigilLogEventData, msg: string) => {
+		originalWarn(eventData, msg);
+	};
+	wrapper.error = (eventData: SigilLogEventData, msg: string) => {
+		originalError(eventData, msg);
+	};
+	wrapper.fatal = (eventData: SigilLogEventData, msg: string) => {
+		originalFatal(eventData, msg);
+	};
+	wrapper.child = (childAgentName: string) => createChildLogger(parentLogger, childAgentName, traceId);
+
+	return wrapper;
 };
 
 /**
@@ -155,7 +166,7 @@ export const createSigilLogger = (agentName: string, runId: string, options?: {p
 	let logger: pino.Logger;
 
 	if (isDevelopment) {
-		const logFilePath = join(process.cwd(), 'runs', runId, LOGS_FILENAME);
+		const logFilePath = join(getRunDirectory(runId), LOGS_FILENAME);
 
 		if (persist) {
 			try {
@@ -212,27 +223,38 @@ export const createSigilLogger = (agentName: string, runId: string, options?: {p
 
 	const pinoLogger = logger.child({agent: agentName, traceId});
 
-	return {
-		...pinoLogger,
-		trace: (eventData: SigilLogEventData, msg: string) => {
-			pinoLogger.trace(eventData, msg);
-		},
-		debug: (eventData: SigilLogEventData, msg: string) => {
-			pinoLogger.debug(eventData, msg);
-		},
-		info: (eventData: SigilLogEventData, msg: string) => {
-			pinoLogger.info(eventData, msg);
-		},
-		warn: (eventData: SigilLogEventData, msg: string) => {
-			pinoLogger.warn(eventData, msg);
-		},
-		error: (eventData: SigilLogEventData, msg: string) => {
-			pinoLogger.error(eventData, msg);
-		},
-		fatal: (eventData: SigilLogEventData, msg: string) => {
-			pinoLogger.fatal(eventData, msg);
-		},
-		child: (childAgentName: string) =>
-			createChildLogger(logger, childAgentName, traceId),
+	// Save references to original Pino methods before overwriting
+	const originalTrace = pinoLogger.trace.bind(pinoLogger);
+	const originalDebug = pinoLogger.debug.bind(pinoLogger);
+	const originalInfo = pinoLogger.info.bind(pinoLogger);
+	const originalWarn = pinoLogger.warn.bind(pinoLogger);
+	const originalError = pinoLogger.error.bind(pinoLogger);
+	const originalFatal = pinoLogger.fatal.bind(pinoLogger);
+
+	// Create wrapper that exposes full Pino API while overriding log methods
+	const wrapper = pinoLogger as unknown as SigilLogger;
+
+	// Override log methods with type-safe signatures
+	wrapper.trace = (eventData: SigilLogEventData, msg: string) => {
+		originalTrace(eventData, msg);
 	};
+	wrapper.debug = (eventData: SigilLogEventData, msg: string) => {
+		originalDebug(eventData, msg);
+	};
+	wrapper.info = (eventData: SigilLogEventData, msg: string) => {
+		originalInfo(eventData, msg);
+	};
+	wrapper.warn = (eventData: SigilLogEventData, msg: string) => {
+		originalWarn(eventData, msg);
+	};
+	wrapper.error = (eventData: SigilLogEventData, msg: string) => {
+		originalError(eventData, msg);
+	};
+	wrapper.fatal = (eventData: SigilLogEventData, msg: string) => {
+		originalFatal(eventData, msg);
+	};
+	wrapper.child = (childAgentName: string) =>
+		createChildLogger(logger, childAgentName, traceId);
+
+	return wrapper;
 };
