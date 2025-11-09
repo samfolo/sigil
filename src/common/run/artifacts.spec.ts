@@ -34,9 +34,18 @@ const VALID_ANALYSIS_OUTPUT: AnalysisOutput = {
 		semantic: 'Test analysis data',
 	},
 	parseResult: {
-		tool: 'parse_json',
-		rootType: 'object',
-		depth: 1,
+		valid: true,
+		metadata: {
+			structure: 'object',
+			size: {
+				bytes: 100,
+				characters: 100,
+				lines: 5,
+			},
+			depth: {value: 1, exact: true},
+			topLevelKeys: [{value: 'id', exact: true}],
+			totalKeyCount: 1,
+		},
 	},
 	summary: 'This is a test analysis output with at least the minimum required length for validation',
 	keyFields: [
@@ -212,10 +221,23 @@ describe('artifact save and load functions', () => {
 					semantic: 'CSV data analysis with structured rows',
 				},
 				parseResult: {
-					tool: 'parse_csv',
-					hasHeader: true,
-					rowCount: 100,
-					columnCount: 5,
+					valid: true,
+					metadata: {
+						size: {
+							bytes: 500,
+							characters: 500,
+							lines: 100,
+						},
+						rowCount: 100,
+						columnCount: 5,
+						columns: [
+							{index: 0, content: {value: 'id', exact: true}},
+							{index: 1, content: {value: 'name', exact: true}},
+							{index: 2, content: {value: 'email', exact: true}},
+							{index: 3, content: {value: 'age', exact: true}},
+							{index: 4, content: {value: 'city', exact: true}},
+						],
+					},
 				},
 				summary: 'CSV data analysis with structured rows and columns representing tabular information with headers',
 				keyFields: [{path: '$.id', label: 'ID', description: 'Unique identifier field', dataTypes: ['string']}],

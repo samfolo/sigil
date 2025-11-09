@@ -11,6 +11,10 @@ export default defineConfig({
 		include: ['**/*.{test,spec}.{ts,tsx}'],
 		exclude: ['node_modules', 'dist', '.next'],
 		setupFiles: ['./vitest.setup.ts'],
+		typecheck: {
+			enabled: true,
+			tsconfig: './tsconfig.json',
+		},
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json', 'html'],
