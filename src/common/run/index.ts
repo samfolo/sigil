@@ -21,5 +21,5 @@ export {
 	scanRuns,
 } from './artifacts';
 export {generateRunId} from './generateRunId';
-export {RunArtifactSchema, RunMetadataSchema} from './schemas';
-export type {RunArtifact, RunMetadata} from './schemas';
+export {RunArtifactSchema, RunMetadataSchema, RunMetadataStatusSchema} from './schemas';
+export type {RunArtifact, RunMetadata, RunMetadataStatus} from './schemas';

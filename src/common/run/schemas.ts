@@ -12,6 +12,13 @@ import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger/events
 import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas';
 
 /**
+ * Run completion status
+ */
+export const RunMetadataStatusSchema = z.enum(['completed', 'failed']);
+
+export type RunMetadataStatus = z.infer<typeof RunMetadataStatusSchema>;
+
+/**
  * Summary information about a run
  */
 export const RunMetadataSchema = z.object({
@@ -33,9 +40,12 @@ export const RunMetadataSchema = z.object({
 	endTimestamp: z.number().int().positive().nullable().describe('Unix timestamp in milliseconds when run completed, null if crashed'),
 
 	/**
-	 * Whether the run succeeded
+	 * Run completion status
+	 *
+	 * - 'completed': Full pipeline succeeded
+	 * - 'failed': Pipeline failed or was cancelled
 	 */
-	success: z.boolean().describe('Whether the run succeeded'),
+	status: RunMetadataStatusSchema.describe('Run completion status'),
 });
 
 export type RunMetadata = z.infer<typeof RunMetadataSchema>;

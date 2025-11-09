@@ -62,7 +62,7 @@ const VALID_RUN_METADATA: RunMetadata = {
 	agent: 'TestAgent',
 	startTimestamp: 1000,
 	endTimestamp: 2000,
-	success: true,
+	status: 'completed',
 };
 
 /**
@@ -297,7 +297,7 @@ describe('artifact save and load functions', () => {
 				agent: 'DataProcessingPipeline',
 				startTimestamp: 1699000000000,
 				endTimestamp: 1699000060000,
-				success: true,
+				status: 'completed',
 			};
 
 			const saveResult = saveMetadata(runId, metadata);
@@ -325,7 +325,7 @@ describe('artifact save and load functions', () => {
 				agent: 'TestAgent',
 				startTimestamp: 1699000000000,
 				endTimestamp: null,
-				success: false,
+				status: 'failed',
 			};
 
 			const saveResult = saveMetadata(runId, metadata);
@@ -345,7 +345,7 @@ describe('artifact save and load functions', () => {
 			}
 
 			expect(loadResult.data.metadata.endTimestamp).toBeNull();
-			expect(loadResult.data.metadata.success).toBe(false);
+			expect(loadResult.data.metadata.status).toBe('failed');
 		});
 	});
 });
@@ -493,7 +493,7 @@ describe('loadRunArtifact', () => {
 				runDir('20251108-143022-a3f9', {
 					input: 'test input',
 					logs: logsContent,
-					metadata: {...VALID_RUN_METADATA, success: false},
+					metadata: {...VALID_RUN_METADATA, status: 'failed'},
 				}),
 			])
 			.build();
@@ -513,7 +513,7 @@ describe('loadRunArtifact', () => {
 
 		expect(result.data.analysis).toBeNull();
 		expect(result.data.output).toBeNull();
-		expect(result.data.metadata.success).toBe(false);
+		expect(result.data.metadata.status).toBe('failed');
 	});
 
 	it('should load run with analysis but no output (GenerateSigilIR failed)', () => {
@@ -529,7 +529,7 @@ describe('loadRunArtifact', () => {
 					input: 'test input',
 					analysis: VALID_ANALYSIS_OUTPUT,
 					logs: logsContent,
-					metadata: {...VALID_RUN_METADATA, success: false},
+					metadata: {...VALID_RUN_METADATA, status: 'failed'},
 				}),
 			])
 			.build();
@@ -549,7 +549,7 @@ describe('loadRunArtifact', () => {
 
 		expect(result.data.analysis).toEqual(VALID_ANALYSIS_OUTPUT);
 		expect(result.data.output).toBeNull();
-		expect(result.data.metadata.success).toBe(false);
+		expect(result.data.metadata.status).toBe('failed');
 	});
 
 	it('should load complete successful run', () => {
@@ -782,14 +782,14 @@ describe('scanRuns', () => {
 				runDir('20251108-143023-b4e0', {
 					input: 'test2',
 					logs: logsContent,
-					metadata: {...VALID_RUN_METADATA, startTimestamp: 2000, success: false},
+					metadata: {...VALID_RUN_METADATA, startTimestamp: 2000, status: 'failed'},
 				}),
 				// Failed after Analyser
 				runDir('20251108-143024-c5f1', {
 					input: 'test3',
 					analysis: VALID_ANALYSIS_OUTPUT,
 					logs: logsContent,
-					metadata: {...VALID_RUN_METADATA, startTimestamp: 1000, success: false},
+					metadata: {...VALID_RUN_METADATA, startTimestamp: 1000, status: 'failed'},
 				}),
 			])
 			.build();

@@ -13,6 +13,8 @@ import {executeAgent} from '@sigil/src/agent/framework/executeAgent';
 import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import {createSigilLogger} from '@sigil/src/common/observability/logger';
+import type {RunMetadataStatus} from '@sigil/src/common/run';
+import {generateRunId, saveInput, saveAnalysis, saveOutput, saveMetadata} from '@sigil/src/common/run';
 
 const INITIAL_VIGNETTE_COUNT = 20;
 
@@ -62,7 +64,12 @@ const CLIENT_CLOSED_REQUEST = 499;
  * ```
  */
 export const POST = async (request: NextRequest) => {
-	const logger = createSigilLogger('DataProcessingPipeline');
+	// Declare run tracking variables in outer scope (for finally block)
+	let runId: string | undefined;
+	let startTimestamp: number | undefined;
+	let status: RunMetadataStatus = 'failed';
+	let logger: ReturnType<typeof createSigilLogger> | undefined;
+
 	const truncate = (str: string, max: number): string =>
 		str.length > max ? str.slice(0, max) + '...' : str;
 
@@ -75,10 +82,13 @@ export const POST = async (request: NextRequest) => {
 
 	// Helper to handle cancellation responses
 	const handleCancellation = (phase: string, details: unknown) => {
-		logger.info(
-			{event: 'request_cancelled', data: {phase, error: details}},
-			'Request cancelled by client'
-		);
+		// Logger may not be initialised if cancellation happens during validation
+		if (logger) {
+			logger.info(
+				{event: 'request_cancelled', data: {phase, error: details}},
+				'Request cancelled by client'
+			);
+		}
 		return NextResponse.json(
 			{error: 'Request cancelled', details},
 			{status: CLIENT_CLOSED_REQUEST}
@@ -97,6 +107,11 @@ export const POST = async (request: NextRequest) => {
 			);
 		}
 
+		// Generate run ID and initialise tracking
+		runId = generateRunId();
+		startTimestamp = Date.now();
+		logger = createSigilLogger('DataProcessingPipeline', runId);
+
 		// Preprocessing: Generate initial vignettes
 		logger.info({event: 'preprocessing_start'}, 'Starting preprocessing');
 		const vignetteResult = await generateInitialVignettes(
@@ -104,16 +119,20 @@ export const POST = async (request: NextRequest) => {
 			INITIAL_VIGNETTE_COUNT,
 			{
 				onChunkingComplete: (chunkCount, dataSizeKB) => {
-					logger.info(
-						{event: 'chunking_complete', data: {chunkCount, dataSizeKB}},
-						'Chunked data, generating embeddings'
-					);
+					if (logger) {
+						logger.info(
+							{event: 'chunking_complete', data: {chunkCount, dataSizeKB}},
+							'Chunked data, generating embeddings'
+						);
+					}
 				},
 				onEmbeddingProgress: (current, total) => {
-					logger.debug(
-						{event: 'embedding_progress', data: {current, total}},
-						'Embedding progress'
-					);
+					if (logger) {
+						logger.debug(
+							{event: 'embedding_progress', data: {current, total}},
+							'Embedding progress'
+						);
+					}
 				},
 			},
 			controller.signal
@@ -136,6 +155,16 @@ export const POST = async (request: NextRequest) => {
 			{event: 'vignettes_generated', data: {vignetteCount: vignettes.length}},
 			'Generated vignettes'
 		);
+
+		// Save input artifact
+		const inputResult = saveInput(runId, rawData);
+		if (isErr(inputResult)) {
+			logger.error(
+				{event: 'unexpected_error', data: {error: inputResult.error}},
+				'Failed to save input'
+			);
+			// Continue execution - don't fail the request if input save fails
+		}
 
 		// Agent creation
 		let agent;
@@ -324,6 +353,16 @@ export const POST = async (request: NextRequest) => {
 			'Analyser complete, starting GenerateSigilIR'
 		);
 
+		// Save analysis artifact
+		const analysisResult = saveAnalysis(runId, analysisOutput);
+		if (isErr(analysisResult)) {
+			logger.error(
+				{event: 'unexpected_error', data: {error: analysisResult.error}},
+				'Failed to save analysis'
+			);
+			// Continue execution - don't fail the request if analysis save fails
+		}
+
 		// Create GenerateSigilIR agent
 		let generatorAgent;
 		try {
@@ -488,15 +527,18 @@ export const POST = async (request: NextRequest) => {
 			...generatorResult.data.output,
 		};
 
-		generatorLogger.trace(
-			{
-				event: 'spec_generated',
-				data: {
-					spec: completeSpec,
-				},
-			},
-			'ComponentSpec generated with framework metadata'
-		);
+		// Save output artifact
+		const outputResult = saveOutput(runId, completeSpec);
+		if (isErr(outputResult)) {
+			logger.error(
+				{event: 'unexpected_error', data: {error: outputResult.error}},
+				'Failed to save output'
+			);
+			// Continue execution - don't fail the request if output save fails
+		}
+
+		// Mark as completed only when full pipeline succeeds
+		status = 'completed';
 
 		// Full success response
 		return NextResponse.json({
@@ -522,10 +564,12 @@ export const POST = async (request: NextRequest) => {
 		}
 
 		// Unexpected error
-		logger.error(
-			{event: 'unexpected_error', data: {error: error instanceof Error ? error.message : String(error)}},
-			'Unexpected error'
-		);
+		if (logger) {
+			logger.error(
+				{event: 'unexpected_error', data: {error: error instanceof Error ? error.message : String(error)}},
+				'Unexpected error'
+			);
+		}
 		return NextResponse.json(
 			{
 				error: 'Failed to process request',
@@ -536,5 +580,22 @@ export const POST = async (request: NextRequest) => {
 	} finally {
 		// Cleanup: remove abort listener
 		request.signal.removeEventListener('abort', mirrorAbort);
+
+		// Save run metadata if execution got past validation
+		if (runId && logger && startTimestamp) {
+			const metadataResult = saveMetadata(runId, {
+				agent: 'DataProcessingPipeline',
+				startTimestamp,
+				endTimestamp: Date.now(),
+				status,
+			});
+
+			if (isErr(metadataResult)) {
+				logger.error(
+					{event: 'unexpected_error', data: {error: metadataResult.error}},
+					'Failed to save run metadata'
+				);
+			}
+		}
 	}
 };
