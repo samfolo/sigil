@@ -122,7 +122,6 @@ describe('createSigilLogger', () => {
 	};
 
 	it('should write to run directory when persist is true (default)', async () => {
-		vi.stubEnv('NODE_ENV', 'development');
 		const runId = 'test-001';
 
 		const logger = createSigilLogger(TEST_AGENT_NAME, runId);
@@ -156,7 +155,6 @@ describe('createSigilLogger', () => {
 	});
 
 	it('should write to run directory when persist is explicitly true', async () => {
-		vi.stubEnv('NODE_ENV', 'development');
 		const runId = 'test-002';
 
 		const logger = createSigilLogger(TEST_AGENT_NAME, runId, {persist: true});
@@ -174,7 +172,6 @@ describe('createSigilLogger', () => {
 	});
 
 	it('should not write to disk when persist is false', async () => {
-		vi.stubEnv('NODE_ENV', 'development');
 		const runId = 'test-003';
 
 		const logger = createSigilLogger(TEST_AGENT_NAME, runId, {persist: false});
@@ -216,7 +213,6 @@ describe('createSigilLogger', () => {
 	});
 
 	it('should respect LOG_LEVEL environment variable for console, but log all levels to file', async () => {
-		vi.stubEnv('NODE_ENV', 'development');
 		vi.stubEnv('LOG_LEVEL', 'info');
 		const runId = 'test-005';
 
@@ -242,7 +238,6 @@ describe('createSigilLogger', () => {
 	});
 
 	it('should create child logger that writes to same file with different agent name', async () => {
-		vi.stubEnv('NODE_ENV', 'development');
 		const runId = 'test-006';
 
 		const logger = createSigilLogger(TEST_AGENT_NAME, runId);
@@ -277,7 +272,6 @@ describe('createSigilLogger', () => {
 	});
 
 	it('should expose Pino flush method', async () => {
-		vi.stubEnv('NODE_ENV', 'development');
 		const runId = 'test-007';
 
 		const logger = createSigilLogger(TEST_AGENT_NAME, runId);

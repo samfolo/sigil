@@ -159,43 +159,54 @@ const createChildLogger = (parentLogger: pino.Logger, agentName: string, traceId
  */
 export const createSigilLogger = (agentName: string, runId: string, options?: {persist?: boolean}): SigilLogger => {
 	const traceId = `agent_${randomUUID()}`;
-	const isDevelopment = process.env.NODE_ENV === 'development';
 	const consoleLogLevel = process.env.LOG_LEVEL || DEFAULT_CONSOLE_LOG_LEVEL;
 	const persist = options?.persist ?? true;
 
 	let logger: pino.Logger;
 
-	if (isDevelopment) {
-		const logFilePath = join(getRunDirectory(runId), LOGS_FILENAME);
+	switch (process.env.NODE_ENV) {
+		case 'development': {
+			const logFilePath = join(getRunDirectory(runId), LOGS_FILENAME);
 
-		if (persist) {
-			try {
-				logger = pino(
-					{level: LOG_LEVEL_TRACE},
-					pino.transport({
-						targets: [
-							{
-								target: 'pino-pretty',
-								level: consoleLogLevel,
-								options: {
-									colorize: true,
+			if (persist) {
+				try {
+					logger = pino(
+						{level: LOG_LEVEL_TRACE},
+						pino.transport({
+							targets: [
+								{
+									target: 'pino-pretty',
+									level: consoleLogLevel,
+									options: {
+										colorize: true,
+									},
 								},
-							},
-							{
-								target: 'pino/file',
-								level: LOG_LEVEL_TRACE,
-								options: {
-									destination: logFilePath,
-									mkdir: true,
+								{
+									target: 'pino/file',
+									level: LOG_LEVEL_TRACE,
+									options: {
+										destination: logFilePath,
+										mkdir: true,
+									},
 								},
-							},
-						],
-					})
-				);
-			} catch (error) {
-				console.warn(`⚠ Failed to initialise file logging: ${error instanceof Error ? error.message : 'Unknown error'}`);
-				console.warn('Continuing with console-only logging');
+							],
+						})
+					);
+				} catch (error) {
+					console.warn(`⚠ Failed to initialise file logging: ${error instanceof Error ? error.message : 'Unknown error'}`);
+					console.warn('Continuing with console-only logging');
 
+					logger = pino({
+						level: LOG_LEVEL_TRACE,
+						transport: {
+							target: 'pino-pretty',
+							options: {
+								colorize: true,
+							},
+						},
+					});
+				}
+			} else {
 				logger = pino({
 					level: LOG_LEVEL_TRACE,
 					transport: {
@@ -206,19 +217,45 @@ export const createSigilLogger = (agentName: string, runId: string, options?: {p
 					},
 				});
 			}
-		} else {
-			logger = pino({
-				level: LOG_LEVEL_TRACE,
-				transport: {
-					target: 'pino-pretty',
-					options: {
-						colorize: true,
-					},
-				},
-			});
+			break;
 		}
-	} else {
-		logger = pino({level: LOG_LEVEL_TRACE});
+
+		case 'test': {
+			const logFilePath = join(getRunDirectory(runId), LOGS_FILENAME);
+
+			if (persist) {
+				try {
+					logger = pino(
+						{level: LOG_LEVEL_TRACE},
+						pino.transport({
+							targets: [
+								{
+									target: 'pino/file',
+									level: LOG_LEVEL_TRACE,
+									options: {
+										destination: logFilePath,
+										mkdir: true,
+									},
+								},
+							],
+						})
+					);
+				} catch (error) {
+					console.warn(`⚠ Failed to initialise file logging: ${error instanceof Error ? error.message : 'Unknown error'}`);
+					console.warn('Continuing with silent logging');
+
+					logger = pino({level: LOG_LEVEL_TRACE});
+				}
+			} else {
+				logger = pino({level: LOG_LEVEL_TRACE});
+			}
+			break;
+		}
+
+		default: {
+			logger = pino({level: LOG_LEVEL_TRACE});
+			break;
+		}
 	}
 
 	const pinoLogger = logger.child({agent: agentName, traceId});
