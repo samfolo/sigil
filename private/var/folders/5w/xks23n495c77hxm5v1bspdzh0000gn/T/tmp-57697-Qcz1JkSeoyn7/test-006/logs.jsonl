@@ -1,2 +1,0 @@
-{"level":30,"time":1762693128612,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_1dbbf2ce-6937-44fe-b82e-35720bde81f6","event":"preprocessing_start","msg":"Parent message"}
-{"level":30,"time":1762693128612,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"ChildAgent","traceId":"agent_1dbbf2ce-6937-44fe-b82e-35720bde81f6","event":"client_disconnected","msg":"Child message"}

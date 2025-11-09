@@ -1,2 +1,0 @@
-{"level":30,"time":1762693121775,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_83f13c4d-3793-4aac-9c2b-3580c980ad42","event":"preprocessing_start","msg":"Test message"}
-{"level":20,"time":1762693121775,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_83f13c4d-3793-4aac-9c2b-3580c980ad42","event":"embedding_progress","data":{"current":1,"total":10},"msg":"Debug message"}

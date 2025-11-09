@@ -1,4 +1,0 @@
-{"level":10,"time":1762693126575,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_2e4fdb0b-468b-48b1-9730-79434f5fd970","event":"embedding_progress","data":{"current":1,"total":10},"msg":"Trace message"}
-{"level":20,"time":1762693126575,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_2e4fdb0b-468b-48b1-9730-79434f5fd970","event":"chunking_complete","data":{"chunkCount":5,"dataSizeKB":"100"},"msg":"Debug message"}
-{"level":30,"time":1762693126576,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_2e4fdb0b-468b-48b1-9730-79434f5fd970","event":"preprocessing_start","msg":"Info message"}
-{"level":40,"time":1762693126576,"pid":57697,"hostname":"Sams-MacBook-Pro.local","agent":"TestAgent","traceId":"agent_2e4fdb0b-468b-48b1-9730-79434f5fd970","event":"unexpected_error","data":{"error":"test warning"},"msg":"Warn message"}
