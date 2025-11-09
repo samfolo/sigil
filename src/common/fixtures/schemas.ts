@@ -8,7 +8,7 @@
 
 import {z} from 'zod';
 
-import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger';
+import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger/events';
 import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas';
 
 /**

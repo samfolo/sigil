@@ -7,7 +7,7 @@
 
 import {z} from 'zod';
 
-import {AnalysisOutputSchema} from '@sigil/src/agent/definitions/analyser';
+import {AnalysisOutputSchema} from '@sigil/src/agent/definitions/analyser/schemas';
 import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger/events';
 import {ComponentSpecSchema} from '@sigil/src/lib/generated/schemas';
 

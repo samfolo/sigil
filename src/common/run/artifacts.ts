@@ -8,7 +8,7 @@
 import {existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync} from 'fs';
 import {isAbsolute, join} from 'path';
 
-import type {AnalysisOutput} from '@sigil/src/agent/definitions/analyser';
+import type {AnalysisOutput} from '@sigil/src/agent/definitions/analyser/schemas';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, ok} from '@sigil/src/common/errors/result';
 import {SigilLogEntrySchema} from '@sigil/src/common/observability/logger/events';
