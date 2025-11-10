@@ -124,8 +124,8 @@ const KeyFieldSchema = z.object({
 /**
  * Complete analysis output from Analyser Agent
  *
- * Includes data classification, parser results, summary, key fields
- * with semantic descriptions, and the parsed data structure for downstream processing.
+ * Includes data classification, parser results, summary, and key fields
+ * with semantic descriptions for downstream processing.
  */
 export const AnalysisOutputSchema = z.object({
 	/**
@@ -169,21 +169,6 @@ export const AnalysisOutputSchema = z.object({
 		.min(MIN_KEY_FIELDS)
 		.max(MAX_KEY_FIELDS)
 		.describe('Key fields with semantic descriptions'),
-
-	/**
-	 * Parsed and normalised data structure
-	 *
-	 * Contains the in-memory JavaScript representation of the parsed data:
-	 * - JSON: Result of JSON.parse
-	 * - CSV: Two-dimensional array from Papa.parse
-	 * - YAML: Result from js-yaml load
-	 * - XML: JSON representation from fast-xml-parser
-	 *
-	 * This is the exact data structure for which the ComponentSpec was generated.
-	 * Storing this ensures that future parsing changes (JSON repair, normalisation,
-	 * delimiter detection) don't break rendering of historical specs.
-	 */
-	parsedData: z.unknown().describe('Parsed and normalised data structure for which the spec was generated'),
 });
 
 /**

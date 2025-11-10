@@ -13,6 +13,7 @@ import type {TempFSNode, TempFSResult} from '@sigil/src/testing/fs';
 
 import {
 	ANALYSIS_FILENAME,
+	DATA_FILENAME,
 	INPUT_FILENAME,
 	LOGS_FILENAME,
 	METADATA_FILENAME,
@@ -20,6 +21,7 @@ import {
 	RUN_ID_PATTERN,
 	loadRunArtifact,
 	saveAnalysis,
+	saveData,
 	saveInput,
 	saveMetadata,
 	saveOutput,
@@ -56,7 +58,6 @@ const VALID_ANALYSIS_OUTPUT: AnalysisOutput = {
 			dataTypes: ['string'],
 		},
 	],
-	parsedData: {id: 'test123'},
 };
 
 const VALID_RUN_METADATA: RunMetadata = {
@@ -243,10 +244,6 @@ describe('artifact save and load functions', () => {
 				},
 				summary: 'CSV data analysis with structured rows and columns representing tabular information with headers',
 				keyFields: [{path: '$.id', label: 'ID', description: 'Unique identifier field', dataTypes: ['string']}],
-				parsedData: [
-					['id', 'name', 'email', 'age', 'city'],
-					['1', 'Alice', 'alice@example.com', '30', 'NYC'],
-				],
 			};
 
 			const saveResult = saveAnalysis(runId, analysis);
@@ -293,6 +290,76 @@ describe('artifact save and load functions', () => {
 			}
 
 			expect(loadResult.data.output).toEqual(spec);
+		});
+	});
+
+	describe('saveData', () => {
+		it(`should save and load data correctly to ${DATA_FILENAME}`, () => {
+			const runId = generateRunId();
+			const parsedData = {
+				items: ['item1', 'item2', 'item3'],
+				count: 3,
+				metadata: {source: 'test'},
+			};
+
+			const saveResult = saveData(runId, parsedData);
+			expect(isOk(saveResult)).toBe(true);
+
+			// Save other required files
+			saveInput(runId, 'test');
+			saveMetadata(runId, VALID_RUN_METADATA);
+
+			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
+
+			saveLogs(tempFS, runId, logs);
+
+			const loadResult = loadRunArtifact(runId);
+			expect(isOk(loadResult)).toBe(true);
+			if (!isOk(loadResult)) {
+				return;
+			}
+
+			expect(loadResult.data.data).toEqual(parsedData);
+		});
+
+		it('should handle array data', () => {
+			const runId = generateRunId();
+			const parsedData = [
+				['id', 'name', 'email'],
+				['1', 'Alice', 'alice@example.com'],
+				['2', 'Bob', 'bob@example.com'],
+			];
+
+			const saveResult = saveData(runId, parsedData);
+			expect(isOk(saveResult)).toBe(true);
+
+			// Save other required files
+			saveInput(runId, 'test');
+			saveMetadata(runId, VALID_RUN_METADATA);
+
+			const logs = [logEntry({event: 'preprocessing_start', time: 1000})];
+
+			saveLogs(tempFS, runId, logs);
+
+			const loadResult = loadRunArtifact(runId);
+			expect(isOk(loadResult)).toBe(true);
+			if (!isOk(loadResult)) {
+				return;
+			}
+
+			expect(loadResult.data.data).toEqual(parsedData);
+		});
+
+		it('should return error when write fails', () => {
+			const runId = '/invalid/path/run123';
+			const parsedData = {test: 'data'};
+
+			const result = saveData(runId, parsedData);
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				expect(result.error).toContain('Failed to write data');
+			}
 		});
 	});
 

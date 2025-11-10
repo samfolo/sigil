@@ -480,4 +480,95 @@ describe('executeAgent - Validation', () => {
 			}
 		});
 	});
+
+	describe('State projection', () => {
+		it('should include projected state in success result when projectFinalState is defined', async () => {
+			// Create agent with state projection
+			const agentWithProjection = {
+				...VALID_MINIMAL_AGENT,
+				projectFinalState: (state: {run: {testData: string}}) => state.run.testData,
+				initialRunState: () => ({testData: 'projected-value'}),
+			};
+
+			const result = await executeAgent(agentWithProjection, VALID_EXECUTE_OPTIONS);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data.stateProjection).toBe('projected-value');
+			}
+		});
+
+		it('should return STATE_PROJECTION_FAILED error when projection function throws', async () => {
+			// Create agent with failing projection
+			const agentWithFailingProjection = {
+				...VALID_MINIMAL_AGENT,
+				projectFinalState: () => {
+					throw new Error('Projection failed');
+				},
+				initialRunState: () => ({testData: 'value'}),
+			};
+
+			const result = await executeAgent(agentWithFailingProjection, VALID_EXECUTE_OPTIONS);
+
+			expect(isErr(result)).toBe(true);
+
+			if (isErr(result)) {
+				const error = result.error.errors.at(0);
+				expect(error?.code).toBe(AGENT_ERROR_CODES.STATE_PROJECTION_FAILED);
+				expect(error?.category).toBe('execution');
+			}
+		});
+
+		it('should work correctly when projectFinalState is undefined', async () => {
+			// Use agent without projection (VALID_MINIMAL_AGENT has no projectFinalState)
+			const result = await executeAgent(VALID_MINIMAL_AGENT, VALID_EXECUTE_OPTIONS);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data.stateProjection).toBeUndefined();
+			}
+		});
+
+		it('should provide access to run state, attempt state, and context in projection function', async () => {
+			interface TestRunState {
+				items: string[];
+			}
+
+			interface TestAttemptState {
+				callCount: number;
+			}
+
+			// Create agent that projects from all available state
+			const agentWithFullStateProjection = {
+				...VALID_MINIMAL_AGENT,
+				projectFinalState: (state: {
+					run: TestRunState;
+					attempt: TestAttemptState;
+					context: {attempt: number; maxAttempts: number};
+				}) => ({
+					runData: state.run.items,
+					attemptCalls: state.attempt.callCount,
+					attemptNumber: state.context.attempt,
+					maxAttempts: state.context.maxAttempts,
+				}),
+				initialRunState: () => ({items: ['item1', 'item2', 'item3']}),
+				initialAttemptState: () => ({callCount: 5}),
+			};
+
+			const result = await executeAgent(agentWithFullStateProjection, VALID_EXECUTE_OPTIONS);
+
+			expect(isOk(result)).toBe(true);
+
+			if (isOk(result)) {
+				expect(result.data.stateProjection).toEqual({
+					runData: ['item1', 'item2', 'item3'],
+					attemptCalls: 5,
+					attemptNumber: 1,
+					maxAttempts: 3,
+				});
+			}
+		});
+	});
 });

@@ -51,11 +51,6 @@ export const VALID_GENERATE_SIGIL_IR_INPUT: GenerateSigilIRInput = {
 				dataTypes: ['string'],
 			},
 		],
-		parsedData: [
-			['name', 'email', 'status'],
-			['Alice Smith', 'alice@example.com', 'active'],
-			['Bob Jones', 'bob@example.com', 'pending'],
-		],
 	},
 };
 
