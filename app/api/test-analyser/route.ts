@@ -14,7 +14,7 @@ import {AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import {createSigilLogger} from '@sigil/src/common/observability/logger';
 import type {RunMetadataStatus} from '@sigil/src/common/run';
-import {generateRunId, saveInput, saveAnalysis, saveOutput, saveMetadata} from '@sigil/src/common/run';
+import {generateRunId, saveInput, saveData, saveAnalysis, saveOutput, saveMetadata} from '@sigil/src/common/run';
 
 const INITIAL_VIGNETTE_COUNT = 20;
 
@@ -351,11 +351,22 @@ export const POST = async (request: NextRequest) => {
 			tokens: result.data.metadata?.tokens,
 		};
 		const analysisOutput = result.data.output;
+		const parsedData = result.data.stateProjection;
 
 		logger.info(
 			{event: 'analyser_complete', data: {metadata: analyserMetadata}},
 			'Analyser complete, starting GenerateSigilIR'
 		);
+
+		// Save data artifact (parsed data from state projection)
+		const dataResult = saveData(runId, parsedData);
+		if (isErr(dataResult)) {
+			logger.error(
+				{event: 'unexpected_error', data: {error: dataResult.error}},
+				'Failed to save data'
+			);
+			// Continue execution - don't fail the request if data save fails
+		}
 
 		// Save analysis artifact
 		const analysisResult = saveAnalysis(runId, analysisOutput);

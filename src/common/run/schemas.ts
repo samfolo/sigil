@@ -65,6 +65,7 @@ export type RunMetadata = z.infer<typeof RunMetadataSchema>;
  *
  * Each run directory contains:
  * - input.txt: Raw input data (JSON, CSV string, etc.)
+ * - data.json: Parsed data from Analyser agent (may be null if Analyser failed)
  * - analysis.json: Output from Analyser agent (may be null if Analyser failed)
  * - output.json: Generated spec from GenerateSigilIR agent (may be null if GenerateSigilIR failed)
  * - logs.jsonl: Line-by-line execution logs written by Pino transport
@@ -85,6 +86,14 @@ export const RunArtifactSchema = z.object({
 	 * Objects and non-string primitives are stringified on save.
 	 */
 	input: z.string().describe('Raw input data from input.txt (always a string)'),
+
+	/**
+	 * Parsed data from Analyser agent
+	 *
+	 * The structured data extracted by the Analyser agent's parser tools.
+	 * Null if the run failed before Analyser completed.
+	 */
+	data: z.unknown().nullable().describe('Parsed data from Analyser agent, null if Analyser failed'),
 
 	/**
 	 * Output from Analyser agent

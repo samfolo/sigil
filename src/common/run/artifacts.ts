@@ -33,6 +33,7 @@ const DEBUG_RUN_SCANNING = process.env.DEBUG_RUN_SCANNING === 'true';
 export const RUN_ID_PATTERN = /^\d{8}-\d{6}-[a-f0-9]{4}$/;
 
 export const INPUT_FILENAME = 'input.txt';
+export const DATA_FILENAME = 'data.json';
 export const ANALYSIS_FILENAME = 'analysis.json';
 export const OUTPUT_FILENAME = 'output.json';
 export const LOGS_FILENAME = 'logs.jsonl';
@@ -140,6 +141,33 @@ export const saveInput = (runId: string, data: unknown): Result<void, string> =>
 			return err(`Failed to write input: ${error.message}`);
 		}
 		return err(`Failed to write input: ${String(error)}`);
+	}
+};
+
+/**
+ * Saves parsed data to data.json
+ *
+ * @param runId - Run identifier
+ * @param data - Parsed data from Analyser agent state projection
+ * @returns Result indicating success or failure
+ */
+export const saveData = (runId: string, data: unknown): Result<void, string> => {
+	const dirResult = ensureRunDirectory(runId);
+	if (!dirResult.success) {
+		return dirResult;
+	}
+
+	const runDir = getRunDirectory(runId);
+	const dataPath = join(runDir, DATA_FILENAME);
+
+	try {
+		writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
+		return ok(undefined);
+	} catch (error) {
+		if (isNodeError(error)) {
+			return err(`Failed to write data: ${error.message}`);
+		}
+		return err(`Failed to write data: ${String(error)}`);
 	}
 };
 
@@ -254,6 +282,7 @@ export const loadRunArtifact = (runId: string): Result<RunArtifact, string> => {
 	}
 
 	const inputPath = join(runDir, INPUT_FILENAME);
+	const dataPath = join(runDir, DATA_FILENAME);
 	const analysisPath = join(runDir, ANALYSIS_FILENAME);
 	const outputPath = join(runDir, OUTPUT_FILENAME);
 	const logsPath = join(runDir, LOGS_FILENAME);
@@ -281,6 +310,17 @@ export const loadRunArtifact = (runId: string): Result<RunArtifact, string> => {
 			return err(`Failed to read input: ${error.message}`);
 		}
 		return err(`Failed to read input: ${String(error)}`);
+	}
+
+	// Load data if present (may be null for failed runs)
+	let data: unknown | null = null;
+	if (existsSync(dataPath)) {
+		try {
+			const dataContent = readFileSync(dataPath, 'utf-8');
+			data = JSON.parse(dataContent);
+		} catch (error) {
+			return err(`Failed to parse ${DATA_FILENAME}: ${String(error)}`);
+		}
 	}
 
 	// Load analysis if present (may be null for failed runs)
@@ -365,6 +405,7 @@ export const loadRunArtifact = (runId: string): Result<RunArtifact, string> => {
 	return ok({
 		runId,
 		input,
+		data,
 		analysis,
 		output,
 		logs,

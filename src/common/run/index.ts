@@ -7,6 +7,7 @@
 
 export {
 	ANALYSIS_FILENAME,
+	DATA_FILENAME,
 	INPUT_FILENAME,
 	LOGS_FILENAME,
 	METADATA_FILENAME,
@@ -15,6 +16,7 @@ export {
 	getRunDirectory,
 	loadRunArtifact,
 	saveAnalysis,
+	saveData,
 	saveInput,
 	saveMetadata,
 	saveOutput,

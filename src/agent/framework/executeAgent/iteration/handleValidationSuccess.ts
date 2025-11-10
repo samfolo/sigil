@@ -1,9 +1,9 @@
 import type {AgentExecutionContext} from '@sigil/src/agent/framework';
-import type {ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
+import type {AgentState, ObservabilityConfig} from '@sigil/src/agent/framework/defineAgent';
 import type {Result} from '@sigil/src/common/errors';
-import {ok} from '@sigil/src/common/errors';
+import {ok, err, AGENT_ERROR_CODES} from '@sigil/src/common/errors';
 
-import type {DurationMetrics, ExecuteCallbacks, ExecuteSuccess, TokenMetrics} from '../schemas';
+import type {DurationMetrics, ExecuteCallbacks, ExecuteSuccess, ExecuteFailure, TokenMetrics} from '../schemas';
 import {safeInvokeCallback} from '../util';
 
 import {buildMetadata} from './buildMetadata';
@@ -13,8 +13,15 @@ import {buildMetadata} from './buildMetadata';
  *
  * @template Output - The type of validated output the agent produces
  * @template Run - User run state type
+ * @template Attempt - User attempt state type
+ * @template ProjectedState - Type of state projection
  */
-export interface HandleValidationSuccessParams<Output, Run extends object> {
+export interface HandleValidationSuccessParams<
+  Output,
+  Run extends object,
+  Attempt extends object,
+  ProjectedState
+> {
 	/**
 	 * Validated output from the agent
 	 */
@@ -56,9 +63,14 @@ export interface HandleValidationSuccessParams<Output, Run extends object> {
 	runState: Run;
 
 	/**
+	 * Final attempt state for projection
+	 */
+	attemptState: Attempt;
+
+	/**
 	 * Optional projection function from agent definition
 	 */
-	projectFinalState?: (runState: Readonly<Run>) => unknown;
+	projectFinalState?: (state: Readonly<AgentState<Run, Attempt>>) => ProjectedState;
 }
 
 /**
@@ -66,22 +78,45 @@ export interface HandleValidationSuccessParams<Output, Run extends object> {
  *
  * Orchestrates the success flow:
  * 1. Invoke onAttemptComplete callback with success = true
- * 2. Build execution metadata (latency, tokens, callback errors)
- * 3. Invoke onSuccess callback with validated output and metadata
- * 4. Return ExecuteSuccess result
+ * 2. Call projectFinalState if defined to extract state projection (fails execution if throws)
+ * 3. Build execution metadata (latency, tokens, callback errors)
+ * 4. Invoke onSuccess callback with output and metadata
+ * 5. Return ExecuteSuccess result with optional stateProjection
  *
  * @param params - Success handling parameters
- * @returns Result containing ExecuteSuccess with output, attempts, and metadata
+ * @returns Result containing ExecuteSuccess with output, attempts, metadata, and optional stateProjection
  */
-export const handleValidationSuccess = <Output>(
-	params: HandleValidationSuccessParams<Output>
-): Result<ExecuteSuccess<Output>, never> => {
+export const handleValidationSuccess = <
+  Output,
+  Run extends object,
+  Attempt extends object,
+  ProjectedState
+>(
+		params: HandleValidationSuccessParams<Output, Run, Attempt, ProjectedState>
+	): Result<ExecuteSuccess<Output, ProjectedState>, ExecuteFailure> => {
 	// Invoke onAttemptComplete callback with success
 	safeInvokeCallback(
 		params.callbacks?.onAttemptComplete,
 		[{...params.context}, true],
 		params.callbackErrors
 	);
+
+	// Call projectFinalState if defined to extract state projection
+	let stateProjection: ProjectedState | undefined;
+	let projectionError: Error | undefined;
+
+	if (params.projectFinalState) {
+		try {
+			const fullState: AgentState<Run, Attempt> = {
+				context: params.context,
+				run: params.runState,
+				attempt: params.attemptState,
+			};
+			stateProjection = params.projectFinalState(fullState);
+		} catch (error) {
+			projectionError = error instanceof Error ? error : new Error(String(error));
+		}
+	}
 
 	// Build metadata based on observability configuration
 	const metadata = buildMetadata({
@@ -90,6 +125,21 @@ export const handleValidationSuccess = <Output>(
 		tokenMetrics: params.tokenMetrics,
 		callbackErrors: params.callbackErrors
 	});
+
+	// If projection failed, return error
+	if (projectionError) {
+		return err({
+			errors: [{
+				code: AGENT_ERROR_CODES.STATE_PROJECTION_FAILED,
+				severity: 'error',
+				category: 'execution',
+				context: {
+					error: projectionError.message,
+				},
+			}],
+			metadata,
+		});
+	}
 
 	// Invoke onSuccess callback with output and metadata
 	safeInvokeCallback(
@@ -102,5 +152,6 @@ export const handleValidationSuccess = <Output>(
 		output: params.output,
 		attempts: params.context.attempt,
 		metadata,
+		stateProjection,
 	});
 };

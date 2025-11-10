@@ -56,7 +56,7 @@ const MAX_MODEL_TOKENS = 8000;
  * @throws Error if template loading or agent validation fails
  */
 export const createAnalyserAgent = async (): Promise<
-	AgentDefinition<AnalyserAgentInput, AnalysisOutput, AnalyserRunState, AnalyserAttemptState>
+	AgentDefinition<AnalyserAgentInput, AnalysisOutput, AnalyserRunState, AnalyserAttemptState, unknown>
 > => {
 	// Load async prompt templates
 	const systemPrompt = await buildSystemPrompt();
@@ -64,7 +64,7 @@ export const createAnalyserAgent = async (): Promise<
 	const errorPrompt = await buildErrorPrompt();
 
 	// Build agent definition (types inferred from helper tool configs)
-	const definition: AgentDefinition<AnalyserAgentInput, AnalysisOutput, AnalyserRunState, AnalyserAttemptState> = {
+	const definition: AgentDefinition<AnalyserAgentInput, AnalysisOutput, AnalyserRunState, AnalyserAttemptState, unknown> = {
 		name: 'AnalyserAgent',
 		description: 'Data format UX researcher - classifies formats and extracts semantic metadata',
 
@@ -120,6 +120,8 @@ export const createAnalyserAgent = async (): Promise<
 		}),
 
 		initialAttemptState: () => ({}),
+
+		projectFinalState: (state) => state.run.parsedData,
 	};
 
 	// Validate and return frozen definition

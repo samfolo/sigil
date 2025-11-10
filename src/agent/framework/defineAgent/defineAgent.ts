@@ -571,8 +571,8 @@ export const defineAgent = <
   Attempt extends object,
   ProjectedState = void
 >(
-	definition: AgentDefinition<Input, Output, Run, Attempt, ProjectedState>
-): Result<Readonly<AgentDefinition<Input, Output, Run, Attempt, ProjectedState>>, AgentError[]> => {
+		definition: AgentDefinition<Input, Output, Run, Attempt, ProjectedState>
+	): Result<Readonly<AgentDefinition<Input, Output, Run, Attempt, ProjectedState>>, AgentError[]> => {
 	const errors: AgentError[] = [];
 
 	// Validate name

@@ -89,9 +89,8 @@ export type ExecuteMetadata = z.infer<typeof ExecuteMetadataSchema>;
  * use non-blocking patterns (e.g., `void asyncOperation().catch(handleError)`).
  *
  * @template Output - The type of validated output the agent produces
- * @template ProjectedState - The type of state projection (defaults to void)
  */
-export interface ExecuteCallbacks<Output, ProjectedState = void> {
+export interface ExecuteCallbacks<Output> {
 	/**
 	 * Called when an execution attempt starts
 	 *
@@ -191,9 +190,8 @@ export interface ExecuteCallbacks<Output, ProjectedState = void> {
  *
  * @template Input - The type of input data the agent accepts
  * @template Output - The type of validated output the agent produces
- * @template ProjectedState - The type of state projection (defaults to void)
  */
-export interface ExecuteOptions<Input, Output, ProjectedState = void> {
+export interface ExecuteOptions<Input, Output> {
 	/**
 	 * Input data to pass to the agent
 	 */
@@ -209,7 +207,7 @@ export interface ExecuteOptions<Input, Output, ProjectedState = void> {
 	/**
 	 * Optional callback functions to monitor execution progress
 	 */
-	callbacks?: ExecuteCallbacks<Output, ProjectedState>;
+	callbacks?: ExecuteCallbacks<Output>;
 
 	/**
 	 * Optional AbortSignal to cancel execution mid-flight

@@ -121,7 +121,7 @@ export const executeAgent = async <
   ProjectedState = void
 >(
 	agent: AgentDefinition<Input, Output, Run, Attempt, ProjectedState>,
-	options: ExecuteOptions<Input, Output, ProjectedState>
+	options: ExecuteOptions<Input, Output>
 ): Promise<Result<ExecuteSuccess<Output, ProjectedState>, ExecuteFailure>> => {
 	// Track execution start time for latency calculation
 	const startTime = performance.now();
@@ -409,6 +409,9 @@ export const executeAgent = async <
 				},
 				callbackErrors,
 				callbacks: options.callbacks,
+				runState,
+				attemptState,
+				projectFinalState: agent.projectFinalState,
 			});
 		}
 
