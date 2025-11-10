@@ -6,7 +6,7 @@ import type {ValidationLayer} from '@sigil/src/agent/framework/validation';
 import type {Result, AgentError} from '@sigil/src/common/errors';
 import {ok, err, AGENT_ERROR_CODES, AGENT_VALIDATION_CONSTRAINTS} from '@sigil/src/common/errors';
 
-import type {ToolReducerHandler} from './types';
+import type {AgentState, ToolReducerHandler} from './types';
 
 /**
  * Configuration for the LLM model used by the agent
@@ -388,8 +388,15 @@ export interface PromptsConfig<Input> {
  * @template Output - The type of output the agent produces
  * @template Run - User run state type (persists across attempts)
  * @template Attempt - User attempt state type (resets on retry)
+ * @template ProjectedState - Type of state projection returned by projectFinalState (defaults to void)
  */
-export interface AgentDefinition<Input, Output, Run extends object, Attempt extends object> {
+export interface AgentDefinition<
+  Input,
+  Output,
+  Run extends object,
+  Attempt extends object,
+  ProjectedState = void
+> {
   /**
    * Unique name for the agent
    */
@@ -476,28 +483,29 @@ export interface AgentDefinition<Input, Output, Run extends object, Attempt exte
   /**
    * Optional function to extract specific state for external use
    *
-   * Called after successful validation with a frozen runState snapshot.
+   * Called after successful validation with readonly access to full execution state.
    * Use this to expose internal state that needs to be accessed after agent execution,
    * such as parsed data artifacts or computed metrics.
    *
-   * The projection is included in ExecuteSuccess as stateProjection field.
+   * The projection is included in ExecuteSuccess as stateProjection field with full type safety.
    *
-   * @param runState - Final run state (readonly snapshot)
-   * @returns Projected state value or record of values
+   * @param state - Readonly snapshot of full agent state (context, run, attempt)
+   * @returns Projected state value with type matching ProjectedState generic
    *
    * @example
    * ```typescript
    * // Single projection
-   * projectFinalState: (runState) => runState.parsedData
+   * projectFinalState: (state) => state.run.parsedData
    *
    * // Multiple projections
-   * projectFinalState: (runState) => ({
-   *   parsedData: runState.parsedData,
-   *   metrics: runState.metrics,
+   * projectFinalState: (state) => ({
+   *   parsedData: state.run.parsedData,
+   *   metrics: state.attempt.metrics,
+   *   attemptCount: state.context.attempt,
    * })
    * ```
    */
-  projectFinalState?: (runState: Readonly<Run>) => unknown;
+  projectFinalState?: (state: Readonly<AgentState<Run, Attempt>>) => ProjectedState;
 }
 
 /**
@@ -556,9 +564,15 @@ export interface AgentDefinition<Input, Output, Run extends object, Attempt exte
  * const agent = result.data;
  * ```
  */
-export const defineAgent = <Input, Output, Run extends object, Attempt extends object>(
-	definition: AgentDefinition<Input, Output, Run, Attempt>
-): Result<Readonly<AgentDefinition<Input, Output, Run, Attempt>>, AgentError[]> => {
+export const defineAgent = <
+  Input,
+  Output,
+  Run extends object,
+  Attempt extends object,
+  ProjectedState = void
+>(
+	definition: AgentDefinition<Input, Output, Run, Attempt, ProjectedState>
+): Result<Readonly<AgentDefinition<Input, Output, Run, Attempt, ProjectedState>>, AgentError[]> => {
 	const errors: AgentError[] = [];
 
 	// Validate name

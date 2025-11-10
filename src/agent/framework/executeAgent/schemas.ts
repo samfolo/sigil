@@ -89,8 +89,9 @@ export type ExecuteMetadata = z.infer<typeof ExecuteMetadataSchema>;
  * use non-blocking patterns (e.g., `void asyncOperation().catch(handleError)`).
  *
  * @template Output - The type of validated output the agent produces
+ * @template ProjectedState - The type of state projection (defaults to void)
  */
-export interface ExecuteCallbacks<Output> {
+export interface ExecuteCallbacks<Output, ProjectedState = void> {
 	/**
 	 * Called when an execution attempt starts
 	 *
@@ -190,8 +191,9 @@ export interface ExecuteCallbacks<Output> {
  *
  * @template Input - The type of input data the agent accepts
  * @template Output - The type of validated output the agent produces
+ * @template ProjectedState - The type of state projection (defaults to void)
  */
-export interface ExecuteOptions<Input, Output> {
+export interface ExecuteOptions<Input, Output, ProjectedState = void> {
 	/**
 	 * Input data to pass to the agent
 	 */
@@ -207,7 +209,7 @@ export interface ExecuteOptions<Input, Output> {
 	/**
 	 * Optional callback functions to monitor execution progress
 	 */
-	callbacks?: ExecuteCallbacks<Output>;
+	callbacks?: ExecuteCallbacks<Output, ProjectedState>;
 
 	/**
 	 * Optional AbortSignal to cancel execution mid-flight
@@ -224,11 +226,12 @@ export interface ExecuteOptions<Input, Output> {
  *
  * This is the success data structure, not a Result wrapper.
  * Failures are represented by ExecuteFailure in the Result pattern:
- * `Result<ExecuteSuccess<Output>, ExecuteFailure>`
+ * `Result<ExecuteSuccess<Output, ProjectedState>, ExecuteFailure>`
  *
  * @template Output - The type of validated output the agent produces
+ * @template ProjectedState - The type of state projection (defaults to void)
  */
-export interface ExecuteSuccess<Output> {
+export interface ExecuteSuccess<Output, ProjectedState = void> {
 	/**
 	 * Validated output from the agent
 	 *
@@ -251,12 +254,12 @@ export interface ExecuteSuccess<Output> {
 	metadata?: ExecuteMetadata;
 
 	/**
-	 * Projection of final runState as defined by agent's projectFinalState function
+	 * Projection of final execution state as defined by agent's projectFinalState function
 	 *
 	 * Only populated if the agent defines a projectFinalState function.
-	 * Contains the extracted state value returned by that function.
+	 * Type-safe: matches the return type of projectFinalState.
 	 */
-	stateProjection?: unknown;
+	stateProjection?: ProjectedState;
 }
 
 /**

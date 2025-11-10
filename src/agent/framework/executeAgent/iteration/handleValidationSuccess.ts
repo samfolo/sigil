@@ -12,8 +12,9 @@ import {buildMetadata} from './buildMetadata';
  * Parameters for handling validation success
  *
  * @template Output - The type of validated output the agent produces
+ * @template Run - User run state type
  */
-export interface HandleValidationSuccessParams<Output> {
+export interface HandleValidationSuccessParams<Output, Run extends object> {
 	/**
 	 * Validated output from the agent
 	 */
@@ -48,6 +49,16 @@ export interface HandleValidationSuccessParams<Output> {
 	 * Callback functions for observability
 	 */
 	callbacks?: ExecuteCallbacks<Output>;
+
+	/**
+	 * Final run state for projection
+	 */
+	runState: Run;
+
+	/**
+	 * Optional projection function from agent definition
+	 */
+	projectFinalState?: (runState: Readonly<Run>) => unknown;
 }
 
 /**

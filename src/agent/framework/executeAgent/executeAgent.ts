@@ -113,10 +113,16 @@ const DEFAULT_ATTEMPT_STATE_INITIALISER = <Attempt>(): Attempt => ({} as Attempt
  * Options for building execution metadata
  */
 
-export const executeAgent = async <Input, Output, Run extends object, Attempt extends object>(
-	agent: AgentDefinition<Input, Output, Run, Attempt>,
-	options: ExecuteOptions<Input, Output>
-): Promise<Result<ExecuteSuccess<Output>, ExecuteFailure>> => {
+export const executeAgent = async <
+  Input,
+  Output,
+  Run extends object,
+  Attempt extends object,
+  ProjectedState = void
+>(
+	agent: AgentDefinition<Input, Output, Run, Attempt, ProjectedState>,
+	options: ExecuteOptions<Input, Output, ProjectedState>
+): Promise<Result<ExecuteSuccess<Output, ProjectedState>, ExecuteFailure>> => {
 	// Track execution start time for latency calculation
 	const startTime = performance.now();
 
