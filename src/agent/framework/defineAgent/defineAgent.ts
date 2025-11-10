@@ -472,6 +472,32 @@ export interface AgentDefinition<Input, Output, Run extends object, Attempt exte
    * ```
    */
   initialAttemptState?: (input: Input, run: Run, context: AgentExecutionContext) => Attempt;
+
+  /**
+   * Optional function to extract specific state for external use
+   *
+   * Called after successful validation with a frozen runState snapshot.
+   * Use this to expose internal state that needs to be accessed after agent execution,
+   * such as parsed data artifacts or computed metrics.
+   *
+   * The projection is included in ExecuteSuccess as stateProjection field.
+   *
+   * @param runState - Final run state (readonly snapshot)
+   * @returns Projected state value or record of values
+   *
+   * @example
+   * ```typescript
+   * // Single projection
+   * projectFinalState: (runState) => runState.parsedData
+   *
+   * // Multiple projections
+   * projectFinalState: (runState) => ({
+   *   parsedData: runState.parsedData,
+   *   metrics: runState.metrics,
+   * })
+   * ```
+   */
+  projectFinalState?: (runState: Readonly<Run>) => unknown;
 }
 
 /**

@@ -249,6 +249,14 @@ export interface ExecuteSuccess<Output> {
 	 * Contains information about resource usage and performance
 	 */
 	metadata?: ExecuteMetadata;
+
+	/**
+	 * Projection of final runState as defined by agent's projectFinalState function
+	 *
+	 * Only populated if the agent defines a projectFinalState function.
+	 * Contains the extracted state value returned by that function.
+	 */
+	stateProjection?: unknown;
 }
 
 /**
