@@ -378,7 +378,7 @@ describe('loadRunArtifact', () => {
 		}
 		tempFS = buildResult.data;
 
-		const result = loadRunArtifact('20251108-143022-a3f9');
+		const result = loadRunArtifact('20251108-143022000-a3f9');
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
@@ -396,7 +396,7 @@ describe('loadRunArtifact', () => {
 			.withDirectory('runs', [
 				{
 					type: 'directory',
-					name: '20251108-143022-a3f9',
+					name: '20251108-143022000-a3f9',
 					children: [
 						{type: 'file', name: LOGS_FILENAME, content: logsContent},
 						{type: 'file', name: METADATA_FILENAME, content: JSON.stringify(VALID_RUN_METADATA)},
@@ -411,7 +411,7 @@ describe('loadRunArtifact', () => {
 		}
 		tempFS = buildResult.data;
 
-		const result = loadRunArtifact('20251108-143022-a3f9');
+		const result = loadRunArtifact('20251108-143022000-a3f9');
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
@@ -426,7 +426,7 @@ describe('loadRunArtifact', () => {
 			.withDirectory('runs', [
 				{
 					type: 'directory',
-					name: '20251108-143022-a3f9',
+					name: '20251108-143022000-a3f9',
 					children: [
 						{type: 'file', name: INPUT_FILENAME, content: 'test'},
 						{type: 'file', name: METADATA_FILENAME, content: JSON.stringify(VALID_RUN_METADATA)},
@@ -441,7 +441,7 @@ describe('loadRunArtifact', () => {
 		}
 		tempFS = buildResult.data;
 
-		const result = loadRunArtifact('20251108-143022-a3f9');
+		const result = loadRunArtifact('20251108-143022000-a3f9');
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
@@ -459,7 +459,7 @@ describe('loadRunArtifact', () => {
 			.withDirectory('runs', [
 				{
 					type: 'directory',
-					name: '20251108-143022-a3f9',
+					name: '20251108-143022000-a3f9',
 					children: [
 						{type: 'file', name: INPUT_FILENAME, content: 'test'},
 						{type: 'file', name: LOGS_FILENAME, content: logsContent},
@@ -474,7 +474,7 @@ describe('loadRunArtifact', () => {
 		}
 		tempFS = buildResult.data;
 
-		const result = loadRunArtifact('20251108-143022-a3f9');
+		const result = loadRunArtifact('20251108-143022000-a3f9');
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
@@ -493,7 +493,7 @@ describe('loadRunArtifact', () => {
 
 		const buildResult = new TempFSBuilder()
 			.withDirectory('runs', [
-				runDir('20251108-143022-a3f9', {
+				runDir('20251108-143022000-a3f9', {
 					input: 'test input',
 					logs: logsContent,
 					metadata: {...VALID_RUN_METADATA, status: 'failed'},
@@ -507,7 +507,7 @@ describe('loadRunArtifact', () => {
 		}
 		tempFS = buildResult.data;
 
-		const result = loadRunArtifact('20251108-143022-a3f9');
+		const result = loadRunArtifact('20251108-143022000-a3f9');
 
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {
@@ -528,7 +528,7 @@ describe('loadRunArtifact', () => {
 
 		const buildResult = new TempFSBuilder()
 			.withDirectory('runs', [
-				runDir('20251108-143022-a3f9', {
+				runDir('20251108-143022000-a3f9', {
 					input: 'test input',
 					analysis: VALID_ANALYSIS_OUTPUT,
 					logs: logsContent,
@@ -543,7 +543,7 @@ describe('loadRunArtifact', () => {
 		}
 		tempFS = buildResult.data;
 
-		const result = loadRunArtifact('20251108-143022-a3f9');
+		const result = loadRunArtifact('20251108-143022000-a3f9');
 
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {
@@ -564,7 +564,7 @@ describe('loadRunArtifact', () => {
 
 		const buildResult = new TempFSBuilder()
 			.withDirectory('runs', [
-				runDir('20251108-143022-a3f9', {
+				runDir('20251108-143022000-a3f9', {
 					input: 'test input',
 					analysis: VALID_ANALYSIS_OUTPUT,
 					output: VALID_COMPONENT_SPEC,
@@ -580,14 +580,14 @@ describe('loadRunArtifact', () => {
 		}
 		tempFS = buildResult.data;
 
-		const result = loadRunArtifact('20251108-143022-a3f9');
+		const result = loadRunArtifact('20251108-143022000-a3f9');
 
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {
 			return;
 		}
 
-		expect(result.data.runId).toBe('20251108-143022-a3f9');
+		expect(result.data.runId).toBe('20251108-143022000-a3f9');
 		expect(result.data.input).toBe('test input');
 		expect(result.data.analysis).toEqual(VALID_ANALYSIS_OUTPUT);
 		expect(result.data.output).toEqual(VALID_COMPONENT_SPEC);
@@ -655,7 +655,7 @@ describe('scanRuns', () => {
 
 		const buildResult = new TempFSBuilder()
 			.withDirectory('runs', [
-				runDir('20251108-143022-a3f9', {
+				runDir('20251108-143022000-a3f9', {
 					input: 'test',
 					logs: logsContent,
 					metadata: VALID_RUN_METADATA,
@@ -679,7 +679,7 @@ describe('scanRuns', () => {
 		}
 
 		expect(result.data).toHaveLength(1);
-		expect(result.data.at(0)?.runId).toBe('20251108-143022-a3f9');
+		expect(result.data.at(0)?.runId).toBe('20251108-143022000-a3f9');
 	});
 
 	it('should skip runs with missing required files', () => {
@@ -688,7 +688,7 @@ describe('scanRuns', () => {
 
 		const buildResult = new TempFSBuilder()
 			.withDirectory('runs', [
-				runDir('20251108-143022-a3f9', {
+				runDir('20251108-143022000-a3f9', {
 					input: 'test',
 					logs: logsContent,
 					metadata: VALID_RUN_METADATA,
@@ -718,7 +718,7 @@ describe('scanRuns', () => {
 		}
 
 		expect(result.data).toHaveLength(1);
-		expect(result.data.at(0)?.runId).toBe('20251108-143022-a3f9');
+		expect(result.data.at(0)?.runId).toBe('20251108-143022000-a3f9');
 	});
 
 	it('should sort runs by startTimestamp descending (newest first)', () => {
@@ -727,7 +727,7 @@ describe('scanRuns', () => {
 
 		const buildResult = new TempFSBuilder()
 			.withDirectory('runs', [
-				runDir('20251108-143022-a3f9', {
+				runDir('20251108-143022000-a3f9', {
 					input: 'test1',
 					logs: logsContent,
 					metadata: {...VALID_RUN_METADATA, startTimestamp: 1000},
@@ -763,7 +763,7 @@ describe('scanRuns', () => {
 		expect(result.data.at(0)?.metadata.startTimestamp).toBe(3000);
 		expect(result.data.at(1)?.runId).toBe('20251108-143024-c5f1');
 		expect(result.data.at(1)?.metadata.startTimestamp).toBe(2000);
-		expect(result.data.at(2)?.runId).toBe('20251108-143022-a3f9');
+		expect(result.data.at(2)?.runId).toBe('20251108-143022000-a3f9');
 		expect(result.data.at(2)?.metadata.startTimestamp).toBe(1000);
 	});
 
@@ -774,7 +774,7 @@ describe('scanRuns', () => {
 		const buildResult = new TempFSBuilder()
 			.withDirectory('runs', [
 				// Complete run
-				runDir('20251108-143022-a3f9', {
+				runDir('20251108-143022000-a3f9', {
 					input: 'test1',
 					analysis: VALID_ANALYSIS_OUTPUT,
 					output: VALID_COMPONENT_SPEC,

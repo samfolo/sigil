@@ -75,9 +75,9 @@ export const RunArtifactSchema = z.object({
 	/**
 	 * Run identifier
 	 *
-	 * Format: YYYYMMDD-HHMMSS-xxxx where xxxx is 4-char hex suffix
+	 * Format: YYYYMMDD-HHmmssSSS-xxxx where xxxx is 4-char hex suffix
 	 */
-	runId: z.string().regex(/^\d{8}-\d{6}-[a-f0-9]{4}$/).describe('Run identifier (format: YYYYMMDD-HHMMSS-xxxx)'),
+	runId: z.string().regex(/^\d{8}-\d{9}-[a-f0-9]{4}$/).describe('Run identifier (format: YYYYMMDD-HHmmssSSS-xxxx)'),
 
 	/**
 	 * Raw input data

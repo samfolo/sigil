@@ -28,9 +28,9 @@ const DEBUG_RUN_SCANNING = process.env.DEBUG_RUN_SCANNING === 'true';
 /**
  * Pattern for validating run ID format
  *
- * Format: YYYYMMDD-HHMMSS-xxxx where xxxx is 4-character hex suffix
+ * Format: YYYYMMDD-HHmmssSSS-xxxx where xxxx is 4-character hex suffix
  */
-export const RUN_ID_PATTERN = /^\d{8}-\d{6}-[a-f0-9]{4}$/;
+export const RUN_ID_PATTERN = /^\d{8}-\d{9}-[a-f0-9]{4}$/;
 
 export const INPUT_FILENAME = 'input.txt';
 export const DATA_FILENAME = 'data.json';
@@ -67,8 +67,8 @@ const getRunsDirectory = (): string => {
  *
  * @example
  * ```typescript
- * const path = getRunDirectory('20251108-143022-a3f9');
- * // "/project/runs/20251108-143022-a3f9/"
+ * const path = getRunDirectory('20251108-143022000-a3f9');
+ * // "/project/runs/20251108-143022000-a3f9/"
  * ```
  */
 export const getRunDirectory = (runId: string): string => {
@@ -268,7 +268,7 @@ const isNodeError = (error: unknown): error is NodeJS.ErrnoException => error in
  *
  * @example
  * ```typescript
- * const result = loadRunArtifact('20251108-143022-a3f9');
+ * const result = loadRunArtifact('20251108-143022000-a3f9');
  * if (isOk(result)) {
  *   console.log(result.data.metadata.agent);
  * }
