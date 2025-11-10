@@ -56,6 +56,7 @@ const VALID_ANALYSIS_OUTPUT: AnalysisOutput = {
 			dataTypes: ['string'],
 		},
 	],
+	parsedData: {id: 'test123'},
 };
 
 const VALID_RUN_METADATA: RunMetadata = {
@@ -242,6 +243,10 @@ describe('artifact save and load functions', () => {
 				},
 				summary: 'CSV data analysis with structured rows and columns representing tabular information with headers',
 				keyFields: [{path: '$.id', label: 'ID', description: 'Unique identifier field', dataTypes: ['string']}],
+				parsedData: [
+					['id', 'name', 'email', 'age', 'city'],
+					['1', 'Alice', 'alice@example.com', '30', 'NYC'],
+				],
 			};
 
 			const saveResult = saveAnalysis(runId, analysis);
@@ -732,12 +737,12 @@ describe('scanRuns', () => {
 					logs: logsContent,
 					metadata: {...VALID_RUN_METADATA, startTimestamp: 1000},
 				}),
-				runDir('20251108-143023-b4e0', {
+				runDir('20251108-143023000-b4e0', {
 					input: 'test2',
 					logs: logsContent,
 					metadata: {...VALID_RUN_METADATA, startTimestamp: 3000},
 				}),
-				runDir('20251108-143024-c5f1', {
+				runDir('20251108-143024000-c5f1', {
 					input: 'test3',
 					logs: logsContent,
 					metadata: {...VALID_RUN_METADATA, startTimestamp: 2000},
@@ -759,9 +764,9 @@ describe('scanRuns', () => {
 		}
 
 		expect(result.data).toHaveLength(3);
-		expect(result.data.at(0)?.runId).toBe('20251108-143023-b4e0');
+		expect(result.data.at(0)?.runId).toBe('20251108-143023000-b4e0');
 		expect(result.data.at(0)?.metadata.startTimestamp).toBe(3000);
-		expect(result.data.at(1)?.runId).toBe('20251108-143024-c5f1');
+		expect(result.data.at(1)?.runId).toBe('20251108-143024000-c5f1');
 		expect(result.data.at(1)?.metadata.startTimestamp).toBe(2000);
 		expect(result.data.at(2)?.runId).toBe('20251108-143022000-a3f9');
 		expect(result.data.at(2)?.metadata.startTimestamp).toBe(1000);
@@ -782,13 +787,13 @@ describe('scanRuns', () => {
 					metadata: {...VALID_RUN_METADATA, startTimestamp: 3000},
 				}),
 				// Failed before Analyser
-				runDir('20251108-143023-b4e0', {
+				runDir('20251108-143023000-b4e0', {
 					input: 'test2',
 					logs: logsContent,
 					metadata: {...VALID_RUN_METADATA, startTimestamp: 2000, status: 'failed'},
 				}),
 				// Failed after Analyser
-				runDir('20251108-143024-c5f1', {
+				runDir('20251108-143024000-c5f1', {
 					input: 'test3',
 					analysis: VALID_ANALYSIS_OUTPUT,
 					logs: logsContent,

@@ -31,6 +31,7 @@ import type {
 	OutputToolNotUsedContext,
 	PromptGenerationFailedContext,
 	RateLimitErrorContext,
+	StateProjectionFailedContext,
 	SubmitBeforeOutputContext,
 	TokenLimitExceededContext,
 	ValidationFailedContext,
@@ -191,6 +192,13 @@ const formatMaxAttemptsExceeded = (
 const formatExecutionCancelled = (
 	context: ExecutionCancelledContext
 ): string => `Execution cancelled at attempt ${context.attempt} during ${context.phase} phase`;
+
+/**
+ * Formats STATE_PROJECTION_FAILED error
+ */
+const formatStateProjectionFailed = (
+	context: StateProjectionFailedContext
+): string => `State projection failed: ${context.error}`;
 
 /**
  * Formats API_ERROR error
@@ -398,6 +406,11 @@ export const formatAgentError = (error: AgentError): string => {
 		case AGENT_ERROR_CODES.EXECUTION_CANCELLED:
 			baseMessage = formatExecutionCancelled(error.context);
 			break;
+
+		case AGENT_ERROR_CODES.STATE_PROJECTION_FAILED:
+			baseMessage = formatStateProjectionFailed(error.context);
+			break;
+
 		case AGENT_ERROR_CODES.API_ERROR:
 			baseMessage = formatApiError(error.context);
 			break;

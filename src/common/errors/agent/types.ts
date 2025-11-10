@@ -29,6 +29,7 @@ import type {
 	OutputToolNotUsedContext,
 	PromptGenerationFailedContext,
 	RateLimitErrorContext,
+	StateProjectionFailedContext,
 	SubmitBeforeOutputContext,
 	TokenLimitExceededContext,
 	ValidationFailedContext,
@@ -181,6 +182,15 @@ export interface ExecutionCancelledError
   category: 'execution';
 }
 
+export interface StateProjectionFailedError
+  extends StructuredError<
+    typeof AGENT_ERROR_CODES.STATE_PROJECTION_FAILED,
+    AgentErrorCategory,
+    StateProjectionFailedContext
+  > {
+  category: 'execution';
+}
+
 // Model errors
 export interface ApiErrorError
   extends StructuredError<
@@ -276,6 +286,7 @@ export type AgentError =
   | MaxAttemptsExceededError
   | MaxIterationsExceededError
   | ExecutionCancelledError
+  | StateProjectionFailedError
   | ApiErrorError
   | RateLimitErrorError
   | TokenLimitExceededError

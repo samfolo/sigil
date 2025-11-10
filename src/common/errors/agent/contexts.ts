@@ -125,6 +125,13 @@ export interface ExecutionCancelledContext {
 }
 
 /**
+ * Context for STATE_PROJECTION_FAILED error
+ */
+export interface StateProjectionFailedContext {
+  error: string;
+}
+
+/**
  * Context for API_ERROR error
  */
 export interface ApiErrorContext {
