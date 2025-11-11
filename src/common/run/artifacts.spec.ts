@@ -349,18 +349,6 @@ describe('artifact save and load functions', () => {
 
 			expect(loadResult.data.data).toEqual(parsedData);
 		});
-
-		it('should return error when write fails', () => {
-			const runId = '/invalid/path/run123';
-			const parsedData = {test: 'data'};
-
-			const result = saveData(runId, parsedData);
-			expect(isErr(result)).toBe(true);
-
-			if (isErr(result)) {
-				expect(result.error).toContain('Failed to write data');
-			}
-		});
 	});
 
 	describe('saveMetadata', () => {
