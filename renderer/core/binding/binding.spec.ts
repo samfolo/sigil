@@ -15,7 +15,7 @@ import {describe, expect, it} from 'vitest';
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
-import {bindData} from './binding';
+import {bindTabularData} from './binding';
 import {
 	ALL_COLUMNS_UNDEFINED,
 	COMPLEX_VALUE_MAPPINGS,
@@ -37,9 +37,9 @@ import {
 	SINGLE_ROW_SINGLE_COLUMN,
 } from './binding.fixtures';
 
-describe('bindData - successful binding', () => {
+describe('bindTabularData - successful binding', () => {
 	it('should bind simple flat data successfully', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
@@ -61,7 +61,7 @@ describe('bindData - successful binding', () => {
 	});
 
 	it('should bind nested object data successfully', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			NESTED_OBJECT_DATA.data,
 			NESTED_OBJECT_DATA.columns,
 			NESTED_OBJECT_DATA.accessorBindings,
@@ -78,7 +78,7 @@ describe('bindData - successful binding', () => {
 	});
 
 	it('should bind data with arrays in rows successfully', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			DATA_WITH_ARRAYS.data,
 			DATA_WITH_ARRAYS.columns,
 			DATA_WITH_ARRAYS.accessorBindings,
@@ -96,7 +96,7 @@ describe('bindData - successful binding', () => {
 	});
 
 	it('should bind deeply nested structures successfully', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			DEEPLY_NESTED_DATA.data,
 			DEEPLY_NESTED_DATA.columns,
 			DEEPLY_NESTED_DATA.accessorBindings,
@@ -117,7 +117,7 @@ describe('bindData - successful binding', () => {
 	});
 
 	it('should apply value mappings correctly', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			COMPLEX_VALUE_MAPPINGS.data,
 			COMPLEX_VALUE_MAPPINGS.columns,
 			COMPLEX_VALUE_MAPPINGS.accessorBindings,
@@ -140,7 +140,7 @@ describe('bindData - successful binding', () => {
 	});
 
 	it('should preserve cell metadata (format, dataType)', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
@@ -158,9 +158,9 @@ describe('bindData - successful binding', () => {
 	});
 });
 
-describe('bindData - error accumulation', () => {
+describe('bindTabularData - error accumulation', () => {
 	it('should accumulate errors when accessor points to missing field', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			INVALID_ACCESSOR_MISSING_FIELD.data,
 			INVALID_ACCESSOR_MISSING_FIELD.columns,
 			INVALID_ACCESSOR_MISSING_FIELD.accessorBindings,
@@ -178,7 +178,7 @@ describe('bindData - error accumulation', () => {
 	});
 
 	it('should handle wrong array index gracefully', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			INVALID_ACCESSOR_ARRAY_INDEX.data,
 			INVALID_ACCESSOR_ARRAY_INDEX.columns,
 			INVALID_ACCESSOR_ARRAY_INDEX.accessorBindings,
@@ -197,7 +197,7 @@ describe('bindData - error accumulation', () => {
 	});
 
 	it('should stringify arrays when accessor returns array', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			INVALID_ACCESSOR_ARRAY_RETURNED.data,
 			INVALID_ACCESSOR_ARRAY_RETURNED.columns,
 			INVALID_ACCESSOR_ARRAY_RETURNED.accessorBindings,
@@ -214,7 +214,7 @@ describe('bindData - error accumulation', () => {
 	});
 
 	it('should handle mixed success/failure across rows', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			MIXED_SUCCESS_FAILURE_DATA.data,
 			MIXED_SUCCESS_FAILURE_DATA.columns,
 			MIXED_SUCCESS_FAILURE_DATA.accessorBindings,
@@ -238,9 +238,9 @@ describe('bindData - error accumulation', () => {
 	});
 });
 
-describe('bindData - path context construction', () => {
+describe('bindTabularData - path context construction', () => {
 	it('should construct row paths with simple path context', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
@@ -257,7 +257,7 @@ describe('bindData - path context construction', () => {
 	});
 
 	it('should construct row paths with nested path context', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			NESTED_PATH_CONTEXT.data,
 			NESTED_PATH_CONTEXT.columns,
 			NESTED_PATH_CONTEXT.accessorBindings,
@@ -277,7 +277,7 @@ describe('bindData - path context construction', () => {
 		// This test will be more meaningful once we implement error path construction
 		// For now, verify that row paths are constructed correctly in the implementation
 		const pathContext = ['$', '.data'];
-		const result = bindData(
+		const result = bindTabularData(
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
@@ -292,11 +292,11 @@ describe('bindData - path context construction', () => {
 	});
 });
 
-describe('bindData - accessor path stripping', () => {
+describe('bindTabularData - accessor path stripping', () => {
 	it('should strip $. prefix when building full paths', () => {
 		// This test validates that accessor '$.user.name' is correctly stripped to 'user.name'
 		// before combining with rowPath to avoid paths like '$[0]$.user.name'
-		const result = bindData(
+		const result = bindTabularData(
 			NESTED_OBJECT_DATA.data,
 			NESTED_OBJECT_DATA.columns,
 			NESTED_OBJECT_DATA.accessorBindings,
@@ -311,7 +311,7 @@ describe('bindData - accessor path stripping', () => {
 	});
 
 	it('should handle array accessors correctly in path construction', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			DATA_WITH_ARRAYS.data,
 			DATA_WITH_ARRAYS.columns,
 			DATA_WITH_ARRAYS.accessorBindings,
@@ -328,7 +328,7 @@ describe('bindData - accessor path stripping', () => {
 
 	it('should not produce invalid paths like $[0]$.field', () => {
 		// This is a regression test - ensure path construction doesn't create invalid JSONPath
-		const result = bindData(
+		const result = bindTabularData(
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
@@ -342,12 +342,12 @@ describe('bindData - accessor path stripping', () => {
 	});
 });
 
-describe('bindData - error context preservation', () => {
+describe('bindTabularData - error context preservation', () => {
 	it('should preserve original error context when updating paths', () => {
 		// This test will be more meaningful once error handling is fully implemented
 		// It verifies that when queryJSONPath returns an error, the context is preserved
 		// and only the path field is updated with row context
-		const result = bindData(
+		const result = bindTabularData(
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
@@ -365,7 +365,7 @@ describe('bindData - error context preservation', () => {
 	it('should not mutate original QueryError context', () => {
 		// Verify that error context from queryJSONPath is not mutated
 		// This is important for debugging and error tracking
-		const result = bindData(
+		const result = bindTabularData(
 			INVALID_ACCESSOR_MISSING_FIELD.data,
 			INVALID_ACCESSOR_MISSING_FIELD.columns,
 			INVALID_ACCESSOR_MISSING_FIELD.accessorBindings,
@@ -377,9 +377,9 @@ describe('bindData - error context preservation', () => {
 	});
 });
 
-describe('bindData - edge cases', () => {
+describe('bindTabularData - edge cases', () => {
 	it('should handle empty data array', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			EMPTY_DATA_ARRAY.data,
 			EMPTY_DATA_ARRAY.columns,
 			EMPTY_DATA_ARRAY.accessorBindings,
@@ -393,7 +393,7 @@ describe('bindData - edge cases', () => {
 	});
 
 	it('should handle null values in data', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			DATA_WITH_NULL_VALUES.data,
 			DATA_WITH_NULL_VALUES.columns,
 			DATA_WITH_NULL_VALUES.accessorBindings,
@@ -414,7 +414,7 @@ describe('bindData - edge cases', () => {
 	});
 
 	it('should handle undefined values in data', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			DATA_WITH_UNDEFINED_VALUES.data,
 			DATA_WITH_UNDEFINED_VALUES.columns,
 			DATA_WITH_UNDEFINED_VALUES.accessorBindings,
@@ -435,7 +435,7 @@ describe('bindData - edge cases', () => {
 	});
 
 	it('should handle single row with single column', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			SINGLE_ROW_SINGLE_COLUMN.data,
 			SINGLE_ROW_SINGLE_COLUMN.columns,
 			SINGLE_ROW_SINGLE_COLUMN.accessorBindings,
@@ -450,7 +450,7 @@ describe('bindData - edge cases', () => {
 	});
 
 	it('should handle row with all columns having undefined values', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			ALL_COLUMNS_UNDEFINED.data,
 			ALL_COLUMNS_UNDEFINED.columns,
 			ALL_COLUMNS_UNDEFINED.accessorBindings,
@@ -468,9 +468,9 @@ describe('bindData - edge cases', () => {
 	});
 });
 
-describe('bindData - error scenarios with invalid accessors', () => {
+describe('bindTabularData - error scenarios with invalid accessors', () => {
 	it('should handle accessor that does not start with $', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			INVALID_ACCESSOR_NO_DOLLAR_PREFIX.data,
 			INVALID_ACCESSOR_NO_DOLLAR_PREFIX.columns,
 			INVALID_ACCESSOR_NO_DOLLAR_PREFIX.accessorBindings,
@@ -490,7 +490,7 @@ describe('bindData - error scenarios with invalid accessors', () => {
 	});
 
 	it('should accumulate multiple errors across rows for invalid accessor', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			MULTIPLE_ROWS_INVALID_ACCESSOR.data,
 			MULTIPLE_ROWS_INVALID_ACCESSOR.columns,
 			MULTIPLE_ROWS_INVALID_ACCESSOR.accessorBindings,
@@ -508,7 +508,7 @@ describe('bindData - error scenarios with invalid accessors', () => {
 	});
 
 	it('should update error paths with row context for invalid accessors', () => {
-		const result = bindData(
+		const result = bindTabularData(
 			INVALID_ACCESSOR_WITH_PATH_CONTEXT.data,
 			INVALID_ACCESSOR_WITH_PATH_CONTEXT.columns,
 			INVALID_ACCESSOR_WITH_PATH_CONTEXT.accessorBindings,

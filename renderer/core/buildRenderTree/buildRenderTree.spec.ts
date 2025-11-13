@@ -399,10 +399,10 @@ describe('buildRenderTree - path context correctness', () => {
 			return;
 		}
 
-		// Paths should be constructed with root context ['']
-		// which means they should look like '[0]', '[1]', '[2]'
+		// Paths should be constructed with root context ['$']
+		// which means they should look like '$[0]', '$[1]', '$[2]'
 		result.error.forEach((error) => {
-			expect(error.path).toMatch(/^\[\d+\]/);
+			expect(error.path).toMatch(/^\$\[\d+\]/);
 		});
 	});
 });

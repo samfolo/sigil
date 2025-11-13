@@ -10,9 +10,10 @@
  * Uses jsonpath-plus for full JSONPath specification support.
  */
 
+import {ERROR_CODES} from '@sigil/src/common/errors';
 import type {SpecError} from '@sigil/src/common/errors';
-import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok} from '@sigil/src/common/errors/result';
+import type {Result} from '@sigil/src/common/errors/result';
 import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {CellValue, Column, Row} from '../types';
@@ -55,35 +56,51 @@ export const enrichColumns = (
 });
 
 /**
- * Binds raw data to rows based on column definitions
+ * Binds tabular data to rows based on column definitions
  *
  * For each row in the data:
- * 1. Generates a unique row ID
- * 2. Extracts values using JSONPath accessors (via queryJSONPath)
- * 3. Applies value_mappings if present in FieldMetadata
- * 4. Returns structured Row objects
+ * 1. Validates that data is an array (required for tabular rendering)
+ * 2. Generates a unique row ID
+ * 3. Extracts values using JSONPath accessors (via queryJSONPath)
+ * 4. Applies value_mappings if present in FieldMetadata
+ * 5. Returns structured Row objects
  *
  * Handles nested data structures using jsonpath-plus for full JSONPath support.
  * Supports complete JSONPath specification: wildcards, filters, recursive descent.
  *
  * Error handling:
+ * - Returns NOT_ARRAY error if data is not an array
  * - Accumulates all errors across rows and columns
  * - Enriches error paths with row context (e.g., '$[0].user.name')
  * - Uses fallback values (raw: null, display: '') when queries fail
  * - Returns all errors at end if any occurred
  *
- * @param data - Raw data array (can be flat or nested objects)
+ * @param data - Raw data (must be an array for tabular rendering)
  * @param columns - Column definitions with accessors
  * @param accessorBindings - Field metadata containing value_mappings
  * @param pathContext - JSONPath segments representing location in data structure (e.g., ['$'] or ['$', '[0]', '.users'])
  * @returns Result containing array of processed rows, or accumulated errors
  */
-export const bindData = (
-	data: unknown[],
+export const bindTabularData = (
+	data: unknown,
 	columns: Column[],
 	accessorBindings: Record<string, FieldMetadata>,
 	pathContext: string[],
 ): Result<Row[], SpecError[]> => {
+	// Validate that data is an array (required for tabular rendering)
+	if (!Array.isArray(data)) {
+		return err([{
+			code: ERROR_CODES.NOT_ARRAY,
+			severity: 'error',
+			category: 'data',
+			path: pathContext.join(''),
+			context: {
+				actualType: typeof data,
+				value: data,
+			},
+		}]);
+	}
+
 	const errors: SpecError[] = [];
 	const rows: Row[] = [];
 

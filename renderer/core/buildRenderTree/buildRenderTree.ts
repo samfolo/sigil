@@ -6,7 +6,7 @@ import {ERROR_CODES, err, isErr, ok, type Result, type SpecError} from '@sigil/s
 import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
-import {bindData, enrichColumns, extractColumns} from '../binding';
+import {bindTabularData, enrichColumns, extractColumns} from '../binding';
 import {VALID_LAYOUT_CHILD_TYPES} from '../constants/constants';
 import type {RenderTree, Row} from '../types';
 import {extractFirstLayoutChild} from '../utils/layout';
@@ -21,7 +21,7 @@ import {extractFirstLayoutChild} from '../utils/layout';
  * 4. Extract columns from config
  * 5. Get accessor_bindings for component
  * 6. Enrich columns with metadata
- * 7. Bind data to rows
+ * 7. Bind data to rows (validates array structure when needed)
  * 8. Return RenderTree
  *
  * This function accumulates all structural errors found in the spec rather than
@@ -29,10 +29,10 @@ import {extractFirstLayoutChild} from '../utils/layout';
  * errors may be dependent (e.g., missing component prevents data binding).
  *
  * @param spec - ComponentSpec from Sigil IR
- * @param data - Raw data array
+ * @param data - Raw data (structure validated based on component requirements)
  * @returns Result containing RenderTree or array of structured errors
  */
-export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<RenderTree, SpecError[] | string> => {
+export const buildRenderTree = (spec: ComponentSpec, data: unknown): Result<RenderTree, SpecError[]> => {
 	const errors: SpecError[] = [];
 
 	// Extract first child from layout
@@ -99,7 +99,7 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 					const enrichedColumns = enrichColumns(columns, accessorBindings);
 
 					// Bind data to rows with path context
-					const bindResult = bindData(data, enrichedColumns, accessorBindings, ['']);
+					const bindResult = bindTabularData(data, enrichedColumns, accessorBindings, ['$']);
 
 					// Handle binding errors
 					let rows: Row[];
@@ -132,12 +132,12 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown[]): Result<Re
 				case 'hierarchy':
 				case 'composition':
 				case 'text-insight':
-					return err(`Unsupported component type: ${componentNode.type}`);
+					throw new Error(`Unsupported component type: ${componentNode.type}`);
 			}
 		}
 
 		case 'layout':
-			return err('Nested layouts not yet supported');
+			throw new Error('Nested layouts not yet supported');
 
 		default: {
 			// Exhaustiveness check

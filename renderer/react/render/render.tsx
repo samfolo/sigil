@@ -24,23 +24,17 @@ import {DataTable} from '../components';
  * 5. Return React element
  *
  * @param spec - ComponentSpec from Sigil IR
- * @param data - Raw data array
+ * @param data - Raw data (structure depends on parser and component requirements)
  * @returns React element ready to render
  * @throws Error if rendering fails (converts Result errors to exceptions for React error boundaries)
  */
-export const render = (spec: ComponentSpec, data: unknown[]): ReactElement => {
+export const render = (spec: ComponentSpec, data: unknown): ReactElement => {
 	const renderTreeResult = buildRenderTree(spec, data);
 
 	// Convert Result error to exception for React error boundary handling
 	if (!renderTreeResult.success) {
-		// Handle union type: SpecError[] | string
-		if (Array.isArray(renderTreeResult.error)) {
-			// Structured errors that model can fix - use SpecProcessingError
-			throw new SpecProcessingError(renderTreeResult.error);
-		} else {
-			// Feature limitation - use plain Error
-			throw new Error(`Failed to build render tree: ${renderTreeResult.error}`);
-		}
+		// Structured errors that model can fix - use SpecProcessingError
+		throw new SpecProcessingError(renderTreeResult.error);
 	}
 
 	const renderTree = renderTreeResult.data;

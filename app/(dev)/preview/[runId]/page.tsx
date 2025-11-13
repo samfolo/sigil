@@ -11,7 +11,7 @@ import {useRunList} from '../hooks/useRunList';
 
 interface PreviewPageProps {
 	params: Promise<{
-		runId?: string;
+		runId: string;
 	}>;
 }
 
@@ -41,12 +41,12 @@ const PreviewPage = ({params}: PreviewPageProps): ReactNode => {
 	const [hasSelectedBefore, setHasSelectedBefore] = useState(false);
 
 	const runListQuery = useRunList();
-	const runQuery = useRun(runId ?? null);
+	const runQuery = useRun(runId);
 
 	const runs = runListQuery.data;
 
 	useEffect(() => {
-		if (runId && !hasSelectedBefore) {
+		if (!hasSelectedBefore) {
 			setHasSelectedBefore(true);
 			router.replace(`/preview/${runId}?previewLogsSidepanelState=expanded`);
 		}
@@ -61,10 +61,6 @@ const PreviewPage = ({params}: PreviewPageProps): ReactNode => {
 	};
 
 	const handleToggleSidebar = () => {
-		if (!runId) {
-			return;
-		}
-
 		const newState = sidebarState === 'expanded' ? 'closed' : 'expanded';
 		router.replace(`/preview/${runId}?previewLogsSidepanelState=${newState}`);
 	};
@@ -73,7 +69,7 @@ const PreviewPage = ({params}: PreviewPageProps): ReactNode => {
 		<div className="grid h-screen" style={{gridTemplateColumns: '320px 1fr auto'}}>
 			<FixtureSidebar
 				runs={runs}
-				selectedId={runId ?? null}
+				selectedId={runId}
 				onSelectFixture={handleSelectFixture}
 				isLoading={runListQuery.isLoading}
 				error={runListQuery.error}

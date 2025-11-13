@@ -1,1 +1,1 @@
-export {bindData, enrichColumns, extractColumns} from './binding';
+export {bindTabularData, enrichColumns, extractColumns} from './binding';
