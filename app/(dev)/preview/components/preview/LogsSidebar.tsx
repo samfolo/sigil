@@ -8,7 +8,7 @@ import {ChevronLeft, ChevronRight, FoldVertical, UnfoldVertical} from 'lucide-re
 import type {ReactNode} from 'react';
 import {useState} from 'react';
 
-import type {Fixture} from '@sigil/src/common/fixtures/schemas';
+import type {RunArtifact} from '@sigil/src/common/run/schemas';
 import {Button} from '@sigil/src/ui/primitives/button';
 
 const SIDEBAR_THEME = EditorView.theme(
@@ -142,7 +142,7 @@ const CUSTOM_FOLDING = codeFolding({
 export type LogsSidebarState = 'expanded' | 'closed' | 'hidden';
 
 interface LogsSidebarProps {
-	fixture: Fixture | undefined;
+	run: RunArtifact | undefined;
 	state: LogsSidebarState;
 	onToggle: () => void;
 	isLoading: boolean;
@@ -155,12 +155,12 @@ const SIDEBAR_WIDTHS: Record<LogsSidebarState, number> = {
 };
 
 /**
- * Right sidebar displaying fixture logs with CodeMirror
+ * Right sidebar displaying run logs with CodeMirror
  *
  * Three states: expanded (480px), closed (48px icon only), hidden (0px removed from layout).
  * Animates width transitions with 300ms ease-out.
  */
-export const LogsSidebar = ({fixture, state, onToggle, isLoading}: LogsSidebarProps): ReactNode => {
+export const LogsSidebar = ({run, state, onToggle, isLoading}: LogsSidebarProps): ReactNode => {
 	const width = SIDEBAR_WIDTHS[state];
 	const showBorder = state !== 'hidden';
 	const isExpanded = state === 'expanded';
@@ -247,22 +247,22 @@ export const LogsSidebar = ({fixture, state, onToggle, isLoading}: LogsSidebarPr
 							</div>
 						)}
 
-						{!isLoading && !fixture && (
+						{!isLoading && !run && (
 							<div className="flex h-full items-centre justify-centre">
 								<p className="text-sm opacity-60">No logs to display</p>
 							</div>
 						)}
 
-						{!isLoading && fixture && fixture.logs.length === 0 && (
+						{!isLoading && run && run.logs.length === 0 && (
 							<div className="flex h-full items-centre justify-centre">
 								<p className="text-sm opacity-60">No logs to display</p>
 							</div>
 						)}
 
-						{!isLoading && fixture && fixture.logs.length > 0 && (
+						{!isLoading && run && run.logs.length > 0 && (
 							<div className="h-full overflow-auto">
 								<CodeMirror
-									value={formatLogsAsObjects(fixture.logs)}
+									value={formatLogsAsObjects(run.logs)}
 									extensions={[
 										json(),
 										EditorView.lineWrapping,

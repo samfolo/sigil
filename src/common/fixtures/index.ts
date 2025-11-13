@@ -1,3 +1,7 @@
+// DEPRECATED: Replaced by src/common/run. Remove after Ticket 3 verification.
+// This fixture system scans date-based logs/ and fixtures/ directories.
+// The new run system uses flat runs/ directory with run artifacts.
+
 export {extractSpec} from './extractSpec';
 export {loadFixture} from './loadFixture';
 export {parseLogFile} from './parseLogFile';

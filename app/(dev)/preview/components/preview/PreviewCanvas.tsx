@@ -1,26 +1,27 @@
 import {Loader2} from 'lucide-react';
 import type {ReactNode} from 'react';
 
-import type {Fixture} from '@sigil/src/common/fixtures/schemas';
+import {render} from '@sigil/renderer/react';
+import type {RunArtifact} from '@sigil/src/common/run/schemas';
 
 import {ErrorBox} from './ErrorBox';
 
 interface PreviewCanvasProps {
-	fixture: Fixture | undefined;
+	run: RunArtifact | undefined;
 	isLoading: boolean;
 	error: Error | null;
 }
 
 /**
- * Centre canvas displaying rendered fixture output
+ * Centre canvas displaying rendered run output
  *
- * Shows appropriate states: idle (no fixture), loading, error, or rendered output.
- * All content is centred both horizontally and vertically.
+ * Shows appropriate states: idle (no run), loading, error, or rendered output.
+ * Renders the component spec using run.output and run.data.
  */
-export const PreviewCanvas = ({fixture, isLoading, error}: PreviewCanvasProps): ReactNode => (
+export const PreviewCanvas = ({run, isLoading, error}: PreviewCanvasProps): ReactNode => (
 	<main className="flex items-centre justify-centre bg-preview-canvas text-preview-text">
 		<div className="w-full h-full p-8 flex items-center justify-center">
-			{!fixture && !isLoading && !error && (
+			{!run && !isLoading && !error && (
 				<p className="text-sm opacity-60">No preview loaded</p>
 			)}
 
@@ -28,8 +29,14 @@ export const PreviewCanvas = ({fixture, isLoading, error}: PreviewCanvasProps): 
 
 			{error && <ErrorBox message={error.message} />}
 
-			{fixture && !isLoading && !error && (
-				<p className="text-sm opacity-60">Rendered output will appear here</p>
+			{run && !isLoading && !error && !run.output && (
+				<p className="text-sm opacity-60">Run has no output (may have failed)</p>
+			)}
+
+			{run && !isLoading && !error && run.output && (
+				<div className="w-full h-full overflow-auto">
+					{render(run.output, run.data)}
+				</div>
 			)}
 		</div>
 	</main>
