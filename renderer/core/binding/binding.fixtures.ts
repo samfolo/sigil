@@ -540,3 +540,133 @@ export const INVALID_ACCESSOR_WITH_PATH_CONTEXT = {
 	pathContext: ['$'],
 	expectedResult: 'Error paths should be $[0] and $[1] for rows 0 and 1',
 };
+
+/**
+ * 15. CSV Array-of-arrays data - basic functionality
+ */
+export const CSV_ARRAY_OF_ARRAYS_BASIC = {
+	data: [
+		['Product Name', 'Description', 'Price'],        // Header row
+		['Smart Watch', 'Features: GPS tracking', 299.99], // Data row
+		['Wireless Earbuds', 'Noise cancelling', 149.99],  // Data row
+		['Tablet', '10-inch display', 399.99],              // Data row
+	],
+	columns: [
+		{id: '$[*][0]', label: 'Product Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][1]', label: 'Description', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][2]', label: 'Price (USD)', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*][0]': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*][1]': {
+			data_types: ['string' as const],
+			roles: ['description'],
+		},
+		'$[*][2]': {
+			data_types: ['number' as const],
+			roles: ['value'],
+			format: '$0,0.00',
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'CSV array-of-arrays should skip header row and bind data rows correctly',
+};
+
+/**
+ * 16. CSV Array-of-arrays with value mappings
+ */
+export const CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS = {
+	data: [
+		['Name', 'Status', 'Score'],     // Header row
+		['Alice', 'A', 95],              // Data row
+		['Bob', 'I', 67],                // Data row
+		['Carol', 'A', 89],              // Data row
+	],
+	columns: [
+		{id: '$[*][0]', label: 'Student Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][1]', label: 'Status', dataType: 'string', alignment: 'center' as const},
+		{id: '$[*][2]', label: 'Score', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*][0]': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*][1]': {
+			data_types: ['string' as const],
+			roles: ['category'],
+			value_mappings: {
+				'A': {display_value: 'Active'},
+				'I': {display_value: 'Inactive'},
+			},
+		},
+		'$[*][2]': {
+			data_types: ['number' as const],
+			roles: ['value'],
+			format: '0',
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'CSV data with value mappings should transform status codes to display values',
+};
+
+/**
+ * 17. CSV Array-of-arrays empty data
+ */
+export const CSV_ARRAY_OF_ARRAYS_EMPTY = {
+	data: [
+		['Name', 'Value'],  // Header only, no data rows
+	],
+	columns: [
+		{id: '$[*][0]', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][1]', label: 'Value', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*][0]': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*][1]': {
+			data_types: ['number' as const],
+			roles: ['value'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'CSV with header only should return empty rows array',
+};
+
+/**
+ * 18. CSV Array-of-arrays with missing values
+ */
+export const CSV_ARRAY_OF_ARRAYS_MISSING_VALUES = {
+	data: [
+		['Name', 'Email', 'Phone'],              // Header row
+		['Alice Johnson', 'alice@test.com'],     // Missing phone
+		['Bob Smith', null, '555-0123'],         // null email
+		['Carol'],                               // Missing email and phone
+	],
+	columns: [
+		{id: '$[*][0]', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][1]', label: 'Email', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][2]', label: 'Phone', dataType: 'string', alignment: 'left' as const},
+	],
+	accessorBindings: {
+		'$[*][0]': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*][1]': {
+			data_types: ['string' as const],
+			roles: ['id'],
+		},
+		'$[*][2]': {
+			data_types: ['string' as const],
+			roles: ['contact'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Missing array indices should result in null raw values and empty display strings',
+};

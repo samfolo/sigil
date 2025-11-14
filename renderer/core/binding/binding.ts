@@ -58,27 +58,14 @@ export const enrichColumns = (
 /**
  * Binds tabular data to rows based on column definitions
  *
- * For each row in the data:
- * 1. Validates that data is an array (required for tabular rendering)
- * 2. Generates a unique row ID
- * 3. Extracts values using JSONPath accessors (via queryJSONPath)
- * 4. Applies value_mappings if present in FieldMetadata
- * 5. Returns structured Row objects
- *
- * Handles nested data structures using jsonpath-plus for full JSONPath support.
- * Supports complete JSONPath specification: wildcards, filters, recursive descent.
- *
- * Error handling:
- * - Returns NOT_ARRAY error if data is not an array
- * - Accumulates all errors across rows and columns
- * - Enriches error paths with row context (e.g., '$[0].user.name')
- * - Uses fallback values (raw: null, display: '') when queries fail
- * - Returns all errors at end if any occurred
+ * Detects accessor pattern to determine binding strategy:
+ * - Array-of-arrays: $[*][0], $[*][1] (CSV data) - queries full dataset per column
+ * - Array-of-objects: $.name, $.email (JSON data) - queries per row
  *
  * @param data - Raw data (must be an array for tabular rendering)
  * @param columns - Column definitions with accessors
  * @param accessorBindings - Field metadata containing value_mappings
- * @param pathContext - JSONPath segments representing location in data structure (e.g., ['$'] or ['$', '[0]', '.users'])
+ * @param pathContext - JSONPath segments for error context
  * @returns Result containing array of processed rows, or accumulated errors
  */
 export const bindTabularData = (
@@ -101,6 +88,17 @@ export const bindTabularData = (
 		}]);
 	}
 
+	// Detect accessor pattern to determine binding strategy
+	const hasWildcardAccessors = columns.some(column =>
+		/^\$\[\*\]\[\d+\]$/.test(column.id)
+	);
+
+	if (hasWildcardAccessors) {
+		// Array-of-arrays binding strategy (CSV data)
+		return bindArrayOfArraysData(data, columns, accessorBindings, pathContext);
+	}
+
+	// Array-of-objects binding strategy (existing logic)
 	const errors: SpecError[] = [];
 	const rows: Row[] = [];
 
@@ -181,6 +179,86 @@ export const bindTabularData = (
 	// Return accumulated errors if any occurred
 	if (errors.length > 0) {
 		return err(errors);
+	}
+
+	return ok(rows);
+};
+
+/**
+ * Binds array-of-arrays data (CSV format) to table rows
+ *
+ * Queries full dataset per column, then distributes values to rows. Skips header row.
+ *
+ * @param data - Array of arrays (CSV-style data)
+ * @param columns - Column definitions with $[*][N] style accessors
+ * @param accessorBindings - Field metadata containing value_mappings
+ * @param pathContext - JSONPath segments for error context
+ * @returns Result containing array of processed rows, or accumulated errors
+ */
+const bindArrayOfArraysData = (
+	data: unknown[],
+	columns: Column[],
+	accessorBindings: Record<string, FieldMetadata>,
+	pathContext: string[],
+): Result<Row[], SpecError[]> => {
+	const errors: SpecError[] = [];
+	const rows: Row[] = [];
+
+	// Extract all column values from full dataset
+	const columnValues: Record<string, unknown[]> = {};
+
+	for (const column of columns) {
+		const result = queryJSONPath(data, column.id);
+
+		if (isErr(result)) {
+			// Add errors for this column
+			const enrichedErrors = result.error.map((error) => ({
+				...error,
+				path: pathContext.join('') + (error.path?.startsWith('$') ? error.path.slice(1) : error.path || ''),
+			}));
+			errors.push(...enrichedErrors);
+			columnValues[column.id] = []; // Empty values for failed column
+			continue;
+		}
+
+		// Store column values (should be an array for wildcard accessors)
+		columnValues[column.id] = Array.isArray(result.data) ? result.data : [result.data];
+	}
+
+	// Return errors early if column extraction failed
+	if (errors.length > 0) {
+		return err(errors);
+	}
+
+	// Determine number of data rows (skip header row at index 0)
+	const numRows = Math.max(...Object.values(columnValues).map(values => values.length));
+	const dataRowCount = Math.max(0, numRows - 1); // Subtract 1 for header
+
+	// Create rows from column values (skip index 0 which is header)
+	for (let rowIndex = 0; rowIndex < dataRowCount; rowIndex++) {
+		const actualDataIndex = rowIndex + 1; // Skip header row
+		const rowId = `row-${rowIndex}`;
+		const cells: Record<string, CellValue> = {};
+
+		for (const column of columns) {
+			const metadata = accessorBindings[column.id];
+			const columnData = columnValues[column.id];
+
+			// Get value for this row (accounting for header skip)
+			const rawValue = actualDataIndex < columnData.length ? columnData[actualDataIndex] : null;
+
+			cells[column.id] = {
+				raw: rawValue,
+				display: applyValueMapping(rawValue, metadata),
+				format: metadata?.format,
+				dataType: metadata?.data_types.at(0),
+			};
+		}
+
+		rows.push({
+			id: rowId,
+			cells,
+		});
 	}
 
 	return ok(rows);
