@@ -72,12 +72,10 @@ const PreviewPageContent = (): ReactNode => {
 /**
  * Preview page with Suspense boundary for useSearchParams
  */
-const PreviewPageWrapper = (): ReactNode => {
-	return (
-		<Suspense fallback={<div className="h-screen bg-background" />}>
-			<PreviewPageContent />
-		</Suspense>
-	);
-};
+const PreviewPageWrapper = (): ReactNode => (
+	<Suspense fallback={<div className="h-screen bg-background" />}>
+		<PreviewPageContent />
+	</Suspense>
+);
 
 export default PreviewPageWrapper;
