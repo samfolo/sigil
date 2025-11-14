@@ -561,4 +561,153 @@ describe('executeAgent - Validation', () => {
 			}
 		});
 	});
+
+	describe('Iteration context in lifecycle callbacks', () => {
+		it('should pass correct iteration count to onAttemptComplete on success', async () => {
+			// Mock multiple iterations then success
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
+
+			const tracker = new CallbackTracker();
+
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
+
+			const attemptCompletes = tracker.invocations.filter((i) => i.type === 'onAttemptComplete');
+
+			expect(attemptCompletes.length).toBeGreaterThan(0);
+
+			const lastAttemptComplete = attemptCompletes.at(-1);
+			if (lastAttemptComplete?.type === 'onAttemptComplete') {
+				// iteration should be > 0 (the final iteration count after tool calls)
+				expect(lastAttemptComplete.context.iteration).toBeGreaterThan(0);
+			}
+		});
+
+		it('should pass correct iteration count to onAttemptComplete on failure', async () => {
+			// Mock validation failure to trigger onAttemptComplete with success=false
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
+
+			const tracker = new CallbackTracker();
+
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
+
+			// Find the failed attempt complete (success = false)
+			const failedAttemptComplete = tracker.invocations.find((i) => {
+				if (i.type === 'onAttemptComplete') {
+					return i.success === false;
+				}
+				return false;
+			});
+
+			expect(failedAttemptComplete).toBeDefined();
+
+			if (failedAttemptComplete?.type === 'onAttemptComplete') {
+				// iteration should be > 0 (the final iteration count after tool calls)
+				expect(failedAttemptComplete.context.iteration).toBeGreaterThan(0);
+			}
+		});
+
+		it('should pass correct iteration count to onValidationFailure', async () => {
+			// Mock validation failure
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
+
+			const tracker = new CallbackTracker();
+
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
+
+			const validationFailures = tracker.invocations.filter((i) => i.type === 'onValidationFailure');
+
+			expect(validationFailures.length).toBeGreaterThan(0);
+
+			const failure = validationFailures.at(0);
+			if (failure?.type === 'onValidationFailure') {
+				// iteration should be > 0 (the iteration count when validation failed)
+				expect(failure.context.iteration).toBeGreaterThan(0);
+			}
+		});
+
+		it('should pass correct iteration count to onToolResult for post-validation tool_result', async () => {
+			// Mock validation failure to trigger tool_result after validation
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
+
+			const tracker = new CallbackTracker();
+
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
+
+			const toolResults = tracker.invocations.filter((i) => i.type === 'onToolResult');
+
+			expect(toolResults.length).toBeGreaterThan(0);
+
+			// Find the tool_result that comes after validation failure
+			// It will contain "Validation failed" in the result
+			const postValidationToolResult = toolResults.find((result) => {
+				if (result.type === 'onToolResult') {
+					return result.toolResult.includes('Validation failed');
+				}
+				return false;
+			});
+
+			expect(postValidationToolResult).toBeDefined();
+
+			if (postValidationToolResult?.type === 'onToolResult') {
+				// iteration should be > 0 (the iteration count when output tool was called)
+				expect(postValidationToolResult.context.iteration).toBeGreaterThan(0);
+			}
+		});
+
+		it('should maintain iteration count across validation retries', async () => {
+			// Mock multiple validation failures then success
+			const mock = new AnthropicApiMock();
+			mock
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('short')]})
+				.respondWith({content: [outputToolUse('valid result that is long enough')]})
+				.install(mockMessagesCreate);
+
+			const tracker = new CallbackTracker();
+
+			await executeAgent(VALID_COMPLETE_AGENT, {
+				input: 'test input with callbacks',
+				callbacks: tracker.createCallbacks(),
+			});
+
+			const attemptCompletes = tracker.invocations.filter((i) => i.type === 'onAttemptComplete');
+
+			// Should have 3 attempts
+			expect(attemptCompletes.length).toBe(3);
+
+			// Each attempt complete should have iteration > 0
+			attemptCompletes.forEach((complete) => {
+				if (complete.type === 'onAttemptComplete') {
+					expect(complete.context.iteration).toBeGreaterThan(0);
+				}
+			});
+		});
+	});
 });

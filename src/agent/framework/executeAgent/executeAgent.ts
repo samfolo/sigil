@@ -396,7 +396,7 @@ export const executeAgent = async <
 		if (!isErr(validationResult)) {
 			return handleValidationSuccess({
 				output: validationResult.data,
-				context,
+				context: currentState.context,
 				observability: agent.observability,
 				durationMetrics: {
 					startTime,
@@ -420,7 +420,7 @@ export const executeAgent = async <
 
 		const failureResult = await handleValidationFailure({
 			validationError: validationResult.error,
-			context,
+			context: currentState.context,
 			agent,
 			lastFailedLayer,
 			lastResponse: response!,
