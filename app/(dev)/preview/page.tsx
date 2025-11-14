@@ -2,7 +2,7 @@
 
 import {useRouter, useSearchParams} from 'next/navigation';
 import type {ReactNode} from 'react';
-import {useState} from 'react';
+import {Suspense, useState} from 'react';
 
 import type {LogsSidebarState} from './components/preview';
 import {FixtureSidebar, LogsSidebar, PreviewCanvas} from './components/preview';
@@ -20,12 +20,12 @@ const getSidebarState = (searchParams: URLSearchParams): LogsSidebarState => {
 };
 
 /**
- * Preview development tool page (base route without runId)
+ * Preview development tool page content (base route without runId)
  *
  * Three-panel interface for browsing runs. When a run is selected,
  * navigates to /preview/[runId]
  */
-const PreviewPage = (): ReactNode => {
+const PreviewPageContent = (): ReactNode => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [hasSelectedBefore, setHasSelectedBefore] = useState(false);
@@ -69,4 +69,15 @@ const PreviewPage = (): ReactNode => {
 	);
 };
 
-export default PreviewPage;
+/**
+ * Preview page with Suspense boundary for useSearchParams
+ */
+const PreviewPageWrapper = (): ReactNode => {
+	return (
+		<Suspense fallback={<div className="h-screen bg-background" />}>
+			<PreviewPageContent />
+		</Suspense>
+	);
+};
+
+export default PreviewPageWrapper;
