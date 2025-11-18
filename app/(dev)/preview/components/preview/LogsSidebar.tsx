@@ -5,8 +5,8 @@ import {EditorView} from '@codemirror/view';
 import {tags} from '@lezer/highlight';
 import CodeMirror from '@uiw/react-codemirror';
 import {ChevronLeft, ChevronRight, FoldVertical, UnfoldVertical} from 'lucide-react';
-import type {ReactNode} from 'react';
 import {useState} from 'react';
+import type {ReactNode} from 'react';
 
 import type {RunArtifact} from '@sigil/src/common/run/schemas';
 import {Button} from '@sigil/src/ui/primitives/button';
@@ -128,7 +128,12 @@ const prepareFoldPlaceholder = (state: EditorState, range: {from: number; to: nu
 };
 
 /**
- * Renders fold placeholder with event key if available
+ * Creates fold placeholder DOM element with custom event display
+ *
+ * @param view - CodeMirror editor view (unused but required by API)
+ * @param onclick - Click handler to unfold the section
+ * @param prepared - Prepared event key string from prepareFoldPlaceholder
+ * @returns Span element displaying fold placeholder
  */
 const customFoldPlaceholder = (view: EditorView, onclick: (event: Event) => void, prepared: string | null) => {
 	const element = document.createElement('span');
