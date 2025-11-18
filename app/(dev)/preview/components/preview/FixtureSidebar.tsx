@@ -7,12 +7,28 @@ import {ScrollArea} from '@sigil/src/ui/primitives/scroll-area';
 
 import {ErrorBox} from './ErrorBox';
 
+/**
+ * Extracts error message from unknown error type
+ *
+ * @param error - Error of unknown type
+ * @returns Error message string
+ */
+const getErrorMessage = (error: unknown): string => {
+	if (typeof error === 'string') {
+		return error;
+	}
+	if (error instanceof Error) {
+		return error.message;
+	}
+	return 'Unknown error occurred';
+};
+
 interface FixtureSidebarProps {
 	runs: RunArtifact[] | undefined;
 	selectedId: string | null;
 	onSelectFixture: (id: string) => void;
 	isLoading: boolean;
-	error: Error | null;
+	error: unknown;
 }
 
 /**
@@ -40,13 +56,13 @@ export const FixtureSidebar = ({
 					</div>
 					<div className="px-3 pb-6 min-h-[100px]">
 						{isLoading && (
-							<div className="flex w-full items-centre justify-centre py-8">
+							<div className="flex w-full items-center justify-center py-8">
 								<Loader2 className="h-5 w-5 animate-spin" />
 							</div>
 						)}
-						{error && <ErrorBox message={error.message} />}
+						{error && <ErrorBox message={getErrorMessage(error)} />}
 						{!isLoading && !error && runs && runs.length === 0 && (
-							<p className="w-full px-3 py-4 text-sm opacity-60 text-centre">No runs available</p>
+							<p className="w-full px-3 py-4 text-sm opacity-60 text-center">No runs available</p>
 						)}
 						{!isLoading && !error && runs && runs.length > 0 && (
 							<div className="flex flex-col gap-1">

@@ -127,7 +127,7 @@ export const chain = <T, U, E>(
  * const value = unwrapOr(divide(10, 2), 0); // 5
  * ```
  */
-export const unwrapOr = <T, E>(result: Result<T, E>, defaultValue: T): T => result.success ? result.data : defaultValue;
+export const unwrapOr = <T, E>(result: Result<T, E>, defaultValue: T): T => result?.success ? result.data : defaultValue;
 
 /**
  * Extracts the value from a Result, or computes it from the error
@@ -146,7 +146,7 @@ export const unwrapOr = <T, E>(result: Result<T, E>, defaultValue: T): T => resu
 export const unwrapOrElse = <T, E>(
 	result: Result<T, E>,
 	fn: (error: E) => T
-): T => result.success ? result.data : fn(result.error);
+): T => result?.success ? result.data : fn(result.error);
 
 /**
  * Combines multiple Results into a single Result containing an array
@@ -185,7 +185,7 @@ export const all = <T, E>(results: Result<T, E>[]): Result<T[], E> => {
  * }
  * ```
  */
-export const isOk = <T, E>(result: Result<T, E>): result is Ok<T> => result.success;
+export const isOk = <T, E>(result: Result<T, E>): result is Ok<T> => result?.success;
 
 /**
  * Type guard to check if a Result is an error
@@ -198,4 +198,4 @@ export const isOk = <T, E>(result: Result<T, E>): result is Ok<T> => result.succ
  * }
  * ```
  */
-export const isErr = <T, E>(result: Result<T, E>): result is Err<E> => !result.success;
+export const isErr = <T, E>(result: Result<T, E>): result is Err<E> => !result?.success;

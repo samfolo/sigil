@@ -91,31 +91,36 @@ const MONOCHROME_HIGHLIGHTING = syntaxHighlighting(
 );
 
 /**
- * Formats logs as individual JSON objects instead of an array
+ * Formats logs as line-separated JSON objects for JSONL display
+ *
+ * @param logs - Array of log entries
+ * @returns JSONL-formatted string with each log on a separate line
  */
 const formatLogsAsObjects = (logs: unknown[]): string => logs.map((log) => JSON.stringify(log, null, 2)).join('\n');
 
 /**
- * Extracts event key from folded JSON log object
+ * Extracts event key from folded JSON log object for fold placeholder text
+ *
+ * @param state - CodeMirror editor state
+ * @param range - Character range of the folded text
+ * @returns Event key string if found, otherwise null
  */
 const prepareFoldPlaceholder = (state: EditorState, range: {from: number; to: number}) => {
 	const text = state.doc.sliceString(range.from, range.to);
 
 	try {
-		// Try parsing as-is first (complete object)
 		const parsed = JSON.parse(text);
 		if (parsed && typeof parsed === 'object' && 'event' in parsed) {
 			return parsed.event;
 		}
 	} catch {
-		// If direct parsing fails, try wrapping in braces (object contents only)
 		try {
 			const parsed = JSON.parse(`{${text}}`);
 			if (parsed && typeof parsed === 'object' && 'event' in parsed) {
 				return parsed.event;
 			}
 		} catch {
-			// If both fail, return null
+			// Parsing failed
 		}
 	}
 
@@ -157,8 +162,8 @@ const SIDEBAR_WIDTHS: Record<LogsSidebarState, number> = {
 /**
  * Right sidebar displaying run logs with CodeMirror
  *
- * Three states: expanded (480px), closed (48px icon only), hidden (0px removed from layout).
- * Animates width transitions with 300ms ease-out.
+ * Three states: expanded (full width), closed (icon only), hidden (removed from layout).
+ * Animates width transitions with smooth ease-out.
  */
 export const LogsSidebar = ({run, state, onToggle, isLoading}: LogsSidebarProps): ReactNode => {
 	const width = SIDEBAR_WIDTHS[state];
@@ -188,7 +193,7 @@ export const LogsSidebar = ({run, state, onToggle, isLoading}: LogsSidebarProps)
 		>
 			<div className="flex h-full flex-col">
 				<header
-					className={`flex shrink-0 items-centre border-b items-center px-4 py-2 ${
+					className={`flex shrink-0 items-center border-b px-4 py-2 ${
 						isExpanded
 							? 'justify-between border-white/10'
 							: 'justify-end border-transparent'
@@ -242,19 +247,19 @@ export const LogsSidebar = ({run, state, onToggle, isLoading}: LogsSidebarProps)
 				{isExpanded && (
 					<div className="flex-1 overflow-hidden">
 						{isLoading && (
-							<div className="flex h-full items-centre justify-centre">
+							<div className="flex h-full items-center justify-center">
 								<p className="text-sm opacity-60">Loading logs...</p>
 							</div>
 						)}
 
 						{!isLoading && !run && (
-							<div className="flex h-full items-centre justify-centre">
+							<div className="flex h-full items-center justify-center">
 								<p className="text-sm opacity-60">No logs to display</p>
 							</div>
 						)}
 
 						{!isLoading && run && run.logs.length === 0 && (
-							<div className="flex h-full items-centre justify-centre">
+							<div className="flex h-full items-center justify-center">
 								<p className="text-sm opacity-60">No logs to display</p>
 							</div>
 						)}

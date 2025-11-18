@@ -1,13 +1,13 @@
 'use client';
 
-import {useRouter, useSearchParams} from 'next/navigation';
-import type {ReactNode} from 'react';
 import {use, useEffect, useState} from 'react';
+import {useRouter, useSearchParams} from 'next/navigation';
+
+import type {ReactNode} from 'react';
 
 import type {LogsSidebarState} from '../components/preview';
 import {FixtureSidebar, LogsSidebar, PreviewCanvas} from '../components/preview';
-import {useRun} from '../hooks/useRun';
-import {useRunList} from '../hooks/useRunList';
+import {unwrapQueryResult, useRun, useRunList} from '../hooks';
 
 interface PreviewPageProps {
 	params: Promise<{
@@ -16,7 +16,10 @@ interface PreviewPageProps {
 }
 
 /**
- * Gets the sidebar state from URL search params
+ * Extracts logs sidebar state from URL search parameters
+ *
+ * @param searchParams - URL search parameters from Next.js router
+ * @returns Validated sidebar state, defaulting to 'closed' if invalid or missing
  */
 const getSidebarState = (searchParams: URLSearchParams): LogsSidebarState => {
 	const param = searchParams.get('previewLogsSidepanelState');
@@ -43,7 +46,8 @@ const PreviewPage = ({params}: PreviewPageProps): ReactNode => {
 	const runListQuery = useRunList();
 	const runQuery = useRun(runId);
 
-	const runs = runListQuery.data;
+	const {data: runs, error: runListError} = unwrapQueryResult(runListQuery);
+	const {data: run, error: runError} = unwrapQueryResult(runQuery);
 
 	useEffect(() => {
 		if (!hasSelectedBefore) {
@@ -72,17 +76,17 @@ const PreviewPage = ({params}: PreviewPageProps): ReactNode => {
 				selectedId={runId}
 				onSelectFixture={handleSelectFixture}
 				isLoading={runListQuery.isLoading}
-				error={runListQuery.error}
+				error={runListError}
 			/>
 
 			<PreviewCanvas
-				run={runQuery.data}
+				run={run}
 				isLoading={runQuery.isLoading}
-				error={runQuery.error}
+				error={runError}
 			/>
 
 			<LogsSidebar
-				run={runQuery.data}
+				run={run}
 				state={sidebarState}
 				onToggle={handleToggleSidebar}
 				isLoading={runQuery.isLoading}
