@@ -6,7 +6,7 @@ import {Suspense, useState} from 'react';
 
 import type {LogsSidebarState} from './components/preview';
 import {FixtureSidebar, LogsSidebar, PreviewCanvas} from './components/preview';
-import {useRunList} from './hooks/useRunList';
+import {unwrapQueryResult, useRunList} from './hooks';
 
 /**
  * Gets the sidebar state from URL search params
@@ -31,7 +31,7 @@ const PreviewPageContent = (): ReactNode => {
 	const [hasSelectedBefore, setHasSelectedBefore] = useState(false);
 
 	const runListQuery = useRunList();
-	const runs = runListQuery.data;
+	const {data: runs, error: runListError} = unwrapQueryResult(runListQuery);
 
 	const sidebarState = getSidebarState(searchParams);
 
@@ -50,7 +50,7 @@ const PreviewPageContent = (): ReactNode => {
 				selectedId={null}
 				onSelectFixture={handleSelectFixture}
 				isLoading={runListQuery.isLoading}
-				error={runListQuery.error}
+				error={runListError}
 			/>
 
 			<PreviewCanvas

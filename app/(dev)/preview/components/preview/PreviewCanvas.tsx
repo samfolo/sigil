@@ -43,7 +43,7 @@ export const PreviewCanvas = ({run, isLoading, error}: PreviewCanvasProps): Reac
 
 			{isLoading && <Loader2 className="h-8 w-8 animate-spin" />}
 
-			{error && <ErrorBox message={getErrorMessage(error)} />}
+			{error ? <ErrorBox message={getErrorMessage(error)} /> : null}
 
 			{run && !isLoading && !error && !run.output && (
 				<p className="text-sm opacity-60">Run has no output (may have failed)</p>

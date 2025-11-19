@@ -1,7 +1,7 @@
 import type {UseQueryResult} from '@tanstack/react-query';
 
 import type {Result} from '@sigil/src/common/errors/result';
-import {isErr, unwrapOr} from '@sigil/src/common/errors/result';
+import {isErr, isOk} from '@sigil/src/common/errors/result';
 
 interface UnwrappedQueryResult<Data, Err> {
 	data: Data | undefined;
@@ -20,7 +20,7 @@ export const unwrapQueryResult = <Data, Err>(
 	const result = query.data;
 
 	return {
-		data: unwrapOr(result, undefined),
+		data: result && isOk(result) ? result.data : undefined,
 		error: result && isErr(result) ? result.error : query.error,
 	};
 };

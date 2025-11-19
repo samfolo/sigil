@@ -60,7 +60,7 @@ export const FixtureSidebar = ({
 								<Loader2 className="h-5 w-5 animate-spin" />
 							</div>
 						)}
-						{error && <ErrorBox message={getErrorMessage(error)} />}
+						{error ? <ErrorBox message={getErrorMessage(error)} /> : null}
 						{!isLoading && !error && runs && runs.length === 0 && (
 							<p className="w-full px-3 py-4 text-sm opacity-60 text-center">No runs available</p>
 						)}
