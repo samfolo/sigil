@@ -29,11 +29,13 @@ import {
 	GRID_EXPLICIT_POSITIONING,
 	GRID_SINGLE_CHILD,
 	GRID_WITH_GAPS,
+	GRID_ZERO_COLUMNS,
 	HORIZONTAL_STACK_EMPTY,
 	HORIZONTAL_STACK_MULTIPLE_CHILDREN,
 	HORIZONTAL_STACK_SINGLE_CHILD,
 	HORIZONTAL_STACK_WITH_CONSTRAINTS,
 	HORIZONTAL_STACK_WITH_STYLING,
+	LAYOUT_EMPTY_COMPONENT_ID,
 	LAYOUT_MISSING_COMPONENT,
 	LAYOUT_MULTIPLE_MISSING,
 	LAYOUT_TYPO_COMPONENT,
@@ -591,5 +593,36 @@ describe('walkLayout - error handling', () => {
 			.map((error) => error.context.componentId);
 		expect(componentIds).toContain(innerChild.component_id);
 		expect(componentIds).toContain(secondChild.component_id);
+	});
+});
+
+describe('walkLayout - edge cases', () => {
+	it('should error for grid with zero columns', () => {
+		const spec = createSingleDataTableSpec(GRID_ZERO_COLUMNS);
+		const result = walkLayout(spec);
+
+		expect(isErr(result)).toBe(true);
+		if (!isErr(result)) {
+			return;
+		}
+
+		const firstError = result.error.at(0);
+		expect(firstError?.code).toBeDefined();
+		expect(firstError?.severity).toBe('error');
+		expect(firstError?.category).toBe('spec');
+	});
+
+	it('should error for empty component ID string', () => {
+		const spec = createSingleDataTableSpec(LAYOUT_EMPTY_COMPONENT_ID);
+		const result = walkLayout(spec);
+
+		expect(isErr(result)).toBe(true);
+		if (!isErr(result)) {
+			return;
+		}
+
+		const firstError = result.error.at(0);
+		expect(firstError?.code).toBe(ERROR_CODES.MISSING_COMPONENT);
+		expect(firstError?.severity).toBe('error');
 	});
 });

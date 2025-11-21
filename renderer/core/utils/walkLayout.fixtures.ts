@@ -463,3 +463,24 @@ export const NESTED_LAYOUT_WITH_ERRORS = {
 		{type: 'component', component_id: 'missing-outer'},
 	],
 } as const satisfies StackLayoutNode;
+
+/**
+ * Grid with zero columns (invalid)
+ */
+export const GRID_ZERO_COLUMNS = {
+	id: 'grid-1',
+	type: 'grid',
+	columns: 0,
+	children: [{element: {type: 'component', component_id: 'table-1'}}],
+} as const satisfies GridLayoutNode;
+
+/**
+ * Layout with empty component ID string
+ */
+export const LAYOUT_EMPTY_COMPONENT_ID = {
+	id: 'stack-1',
+	type: 'stack',
+	direction: 'horizontal',
+	spacing: 'normal',
+	children: [{type: 'component', component_id: ''}],
+} as const satisfies StackLayoutNode;

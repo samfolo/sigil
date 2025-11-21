@@ -27,6 +27,11 @@ import type {
 } from '../types';
 
 /**
+ * Minimum number of columns required for grid layouts
+ */
+const MIN_GRID_COLUMNS = 1;
+
+/**
  * Context passed through the walk to avoid recalculation and track position
  */
 interface WalkContext {
