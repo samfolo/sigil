@@ -59,9 +59,6 @@ describe('walkLayout - horizontal stack layouts', () => {
 			return;
 		}
 
-		if (HORIZONTAL_STACK_SINGLE_CHILD.type !== 'stack') {
-			return;
-		}
 
 		expect(result.data.spacing).toBe(HORIZONTAL_STACK_SINGLE_CHILD.spacing);
 		expect(result.data.children).toHaveLength(HORIZONTAL_STACK_SINGLE_CHILD.children.length);
@@ -82,9 +79,6 @@ describe('walkLayout - horizontal stack layouts', () => {
 			return;
 		}
 
-		if (HORIZONTAL_STACK_MULTIPLE_CHILDREN.type !== 'stack') {
-			return;
-		}
 
 		expect(result.data.children).toHaveLength(HORIZONTAL_STACK_MULTIPLE_CHILDREN.children.length);
 		expect(result.data.spacing).toBe(HORIZONTAL_STACK_MULTIPLE_CHILDREN.spacing);
@@ -127,13 +121,7 @@ describe('walkLayout - horizontal stack layouts', () => {
 			return;
 		}
 
-		if (HORIZONTAL_STACK_WITH_STYLING.type !== 'stack') {
-			return;
-		}
 
-		if (HORIZONTAL_STACK_WITH_STYLING.direction !== 'horizontal') {
-			return;
-		}
 
 		expect(result.data.vertical_alignment).toBe(HORIZONTAL_STACK_WITH_STYLING.vertical_alignment);
 		expect(result.data.padding).toEqual(HORIZONTAL_STACK_WITH_STYLING.padding);
@@ -172,9 +160,6 @@ describe('walkLayout - vertical stack layouts', () => {
 			return;
 		}
 
-		if (VERTICAL_STACK_SINGLE_CHILD.type !== 'stack') {
-			return;
-		}
 
 		expect(result.data.spacing).toBe(VERTICAL_STACK_SINGLE_CHILD.spacing);
 		expect(result.data.children).toHaveLength(VERTICAL_STACK_SINGLE_CHILD.children.length);
@@ -194,13 +179,7 @@ describe('walkLayout - vertical stack layouts', () => {
 			return;
 		}
 
-		if (VERTICAL_STACK_WITH_ALIGNMENT.type !== 'stack') {
-			return;
-		}
 
-		if (VERTICAL_STACK_WITH_ALIGNMENT.direction !== 'vertical') {
-			return;
-		}
 
 		expect(result.data.horizontal_alignment).toBe(VERTICAL_STACK_WITH_ALIGNMENT.horizontal_alignment);
 	});
@@ -221,9 +200,6 @@ describe('walkLayout - grid layouts', () => {
 			return;
 		}
 
-		if (GRID_SINGLE_CHILD.type !== 'grid') {
-			return;
-		}
 
 		expect(result.data.columns).toBe(GRID_SINGLE_CHILD.columns);
 		expect(result.data.children).toHaveLength(GRID_SINGLE_CHILD.children.length);
@@ -244,9 +220,6 @@ describe('walkLayout - grid layouts', () => {
 			return;
 		}
 
-		if (GRID_EXPLICIT_POSITIONING.type !== 'grid') {
-			return;
-		}
 
 		const firstChild = result.data.children.at(0);
 		const firstFixture = GRID_EXPLICIT_POSITIONING.children.at(0);
@@ -277,9 +250,6 @@ describe('walkLayout - grid layouts', () => {
 			return;
 		}
 
-		if (GRID_AUTO_FLOW.type !== 'grid') {
-			return;
-		}
 
 		const firstChild = result.data.children.at(0);
 		const secondChild = result.data.children.at(1);
@@ -306,9 +276,6 @@ describe('walkLayout - grid layouts', () => {
 			return;
 		}
 
-		if (GRID_WITH_GAPS.type !== 'grid') {
-			return;
-		}
 
 		expect(result.data.column_gap).toBe(GRID_WITH_GAPS.column_gap);
 		expect(result.data.row_gap).toBe(GRID_WITH_GAPS.row_gap);
@@ -331,9 +298,6 @@ describe('walkLayout - nested layouts', () => {
 			return;
 		}
 
-		if (NESTED_STACK_IN_STACK.type !== 'stack') {
-			return;
-		}
 
 		expect(result.data.children).toHaveLength(NESTED_STACK_IN_STACK.children.length);
 
@@ -521,9 +485,6 @@ describe('walkLayout - error handling', () => {
 			return;
 		}
 
-		if (LAYOUT_MISSING_COMPONENT.type !== 'stack') {
-			return;
-		}
 
 		const firstChild = LAYOUT_MISSING_COMPONENT.children.at(0);
 		expect(firstChild?.type).toBe('component');
@@ -550,9 +511,6 @@ describe('walkLayout - error handling', () => {
 			return;
 		}
 
-		if (LAYOUT_TYPO_COMPONENT.type !== 'stack') {
-			return;
-		}
 
 		const firstChild = LAYOUT_TYPO_COMPONENT.children.at(0);
 		expect(firstChild?.type).toBe('component');
@@ -577,9 +535,6 @@ describe('walkLayout - error handling', () => {
 			return;
 		}
 
-		if (LAYOUT_MULTIPLE_MISSING.type !== 'stack') {
-			return;
-		}
 
 		const firstChild = LAYOUT_MULTIPLE_MISSING.children.at(0);
 		const thirdChild = LAYOUT_MULTIPLE_MISSING.children.at(2);
@@ -611,9 +566,6 @@ describe('walkLayout - error handling', () => {
 
 		expect(result.error.length).toBeGreaterThanOrEqual(2);
 
-		if (NESTED_LAYOUT_WITH_ERRORS.type !== 'stack') {
-			return;
-		}
 
 		const firstChild = NESTED_LAYOUT_WITH_ERRORS.children.at(0);
 		const secondChild = NESTED_LAYOUT_WITH_ERRORS.children.at(1);

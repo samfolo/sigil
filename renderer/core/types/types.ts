@@ -7,11 +7,8 @@
  * - Multiple presentation adapters (React, CLI, SSR, etc.)
  * - Debuggable intermediate state
  *
- * Version 2 Scope:
- * - Supports layout structures (stacks and grids)
- * - Recursive tree processing
- * - data-table component type (Phase 1)
- * - No affordances yet (sorting, pagination, filtering)
+ * Supports layout structures (stacks and grids) and recursive tree processing.
+ * Component types include data-table, hierarchy, composition, and text-insight.
  */
 
 import type {
@@ -358,7 +355,7 @@ export interface Row {
  *
  * This enables:
  * - Displaying transformed values (e.g., "active" → "Active")
- * - Accessing raw values for sorting, filtering (future phases)
+ * - Accessing raw values for operations like sorting and filtering
  * - Debugging value transformations
  */
 export interface CellValue {

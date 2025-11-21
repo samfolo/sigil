@@ -165,7 +165,7 @@ export const createTextInsightComponentSpec = (layout: LayoutNode): ComponentSpe
 /**
  * Simple horizontal stack with one component
  */
-export const HORIZONTAL_STACK_SINGLE_CHILD: HorizontalStackLayoutNode = {
+export const HORIZONTAL_STACK_SINGLE_CHILD = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -176,12 +176,12 @@ export const HORIZONTAL_STACK_SINGLE_CHILD: HorizontalStackLayoutNode = {
 			component_id: 'table-1',
 		},
 	],
-};
+} as const satisfies HorizontalStackLayoutNode;
 
 /**
  * Horizontal stack with multiple components
  */
-export const HORIZONTAL_STACK_MULTIPLE_CHILDREN: HorizontalStackLayoutNode = {
+export const HORIZONTAL_STACK_MULTIPLE_CHILDREN = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -191,12 +191,12 @@ export const HORIZONTAL_STACK_MULTIPLE_CHILDREN: HorizontalStackLayoutNode = {
 		{type: 'component', component_id: 'table-2'},
 		{type: 'component', component_id: 'table-3'},
 	],
-};
+} as const satisfies HorizontalStackLayoutNode;
 
 /**
  * Horizontal stack with size constraints
  */
-export const HORIZONTAL_STACK_WITH_CONSTRAINTS: HorizontalStackLayoutNode = {
+export const HORIZONTAL_STACK_WITH_CONSTRAINTS = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -206,12 +206,12 @@ export const HORIZONTAL_STACK_WITH_CONSTRAINTS: HorizontalStackLayoutNode = {
 	min_width: {type: 'fixed', value: 600},
 	max_width: {type: 'fixed', value: 1200},
 	children: [{type: 'component', component_id: 'table-1'}],
-};
+} as const satisfies HorizontalStackLayoutNode;
 
 /**
  * Horizontal stack with alignment and padding
  */
-export const HORIZONTAL_STACK_WITH_STYLING: HorizontalStackLayoutNode = {
+export const HORIZONTAL_STACK_WITH_STYLING = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -219,46 +219,46 @@ export const HORIZONTAL_STACK_WITH_STYLING: HorizontalStackLayoutNode = {
 	vertical_alignment: 'center',
 	padding: {top: 16, right: 24, bottom: 16, left: 24},
 	children: [{type: 'component', component_id: 'table-1'}],
-};
+} as const satisfies HorizontalStackLayoutNode;
 
 /**
  * Empty horizontal stack
  */
-export const HORIZONTAL_STACK_EMPTY: HorizontalStackLayoutNode = {
+export const HORIZONTAL_STACK_EMPTY = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
 	spacing: 'normal',
 	children: [],
-};
+} as const satisfies HorizontalStackLayoutNode;
 
 /**
  * Vertical stack with one component
  */
-export const VERTICAL_STACK_SINGLE_CHILD: VerticalStackLayoutNode = {
+export const VERTICAL_STACK_SINGLE_CHILD = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'vertical',
 	spacing: 'tight',
 	children: [{type: 'component', component_id: 'table-1'}],
-};
+} as const satisfies VerticalStackLayoutNode;
 
 /**
  * Vertical stack with horizontal alignment
  */
-export const VERTICAL_STACK_WITH_ALIGNMENT: VerticalStackLayoutNode = {
+export const VERTICAL_STACK_WITH_ALIGNMENT = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'vertical',
 	spacing: 'normal',
 	horizontal_alignment: 'end',
 	children: [{type: 'component', component_id: 'table-1'}],
-};
+} as const satisfies VerticalStackLayoutNode;
 
 /**
  * Simple grid with one component
  */
-export const GRID_SINGLE_CHILD: GridLayoutNode = {
+export const GRID_SINGLE_CHILD = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 2,
@@ -267,12 +267,12 @@ export const GRID_SINGLE_CHILD: GridLayoutNode = {
 			element: {type: 'component', component_id: 'table-1'},
 		},
 	],
-};
+} as const satisfies GridLayoutNode;
 
 /**
  * Grid with explicit positioning
  */
-export const GRID_EXPLICIT_POSITIONING: GridLayoutNode = {
+export const GRID_EXPLICIT_POSITIONING = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 3,
@@ -291,12 +291,12 @@ export const GRID_EXPLICIT_POSITIONING: GridLayoutNode = {
 			row_start: 2,
 		},
 	],
-};
+} as const satisfies GridLayoutNode;
 
 /**
  * Grid with auto-flow (no explicit positioning)
  */
-export const GRID_AUTO_FLOW: GridLayoutNode = {
+export const GRID_AUTO_FLOW = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 2,
@@ -304,12 +304,12 @@ export const GRID_AUTO_FLOW: GridLayoutNode = {
 		{element: {type: 'component', component_id: 'table-1'}},
 		{element: {type: 'component', component_id: 'table-2'}},
 	],
-};
+} as const satisfies GridLayoutNode;
 
 /**
  * Grid with gaps and padding
  */
-export const GRID_WITH_GAPS: GridLayoutNode = {
+export const GRID_WITH_GAPS = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 3,
@@ -317,12 +317,12 @@ export const GRID_WITH_GAPS: GridLayoutNode = {
 	row_gap: 'tight',
 	padding: 16,
 	children: [{element: {type: 'component', component_id: 'table-1'}}],
-};
+} as const satisfies GridLayoutNode;
 
 /**
  * Nested layout - stack containing stack
  */
-export const NESTED_STACK_IN_STACK: VerticalStackLayoutNode = {
+export const NESTED_STACK_IN_STACK = {
 	id: 'outer-stack',
 	type: 'stack',
 	direction: 'vertical',
@@ -340,12 +340,12 @@ export const NESTED_STACK_IN_STACK: VerticalStackLayoutNode = {
 		},
 		{type: 'component', component_id: 'table-2'},
 	],
-};
+} as const satisfies VerticalStackLayoutNode;
 
 /**
  * Nested layout - grid containing stack
  */
-export const NESTED_STACK_IN_GRID: GridLayoutNode = {
+export const NESTED_STACK_IN_GRID = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 2,
@@ -368,12 +368,12 @@ export const NESTED_STACK_IN_GRID: GridLayoutNode = {
 			column_start: 2,
 		},
 	],
-};
+} as const satisfies GridLayoutNode;
 
 /**
  * Deeply nested layout (3 levels)
  */
-export const DEEPLY_NESTED_LAYOUT: VerticalStackLayoutNode = {
+export const DEEPLY_NESTED_LAYOUT = {
 	id: 'level-1',
 	type: 'stack',
 	direction: 'vertical',
@@ -402,34 +402,34 @@ export const DEEPLY_NESTED_LAYOUT: VerticalStackLayoutNode = {
 			},
 		},
 	],
-};
+} as const satisfies VerticalStackLayoutNode;
 
 /**
  * Layout with missing component reference
  */
-export const LAYOUT_MISSING_COMPONENT: StackLayoutNode = {
+export const LAYOUT_MISSING_COMPONENT = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
 	spacing: 'normal',
 	children: [{type: 'component', component_id: 'missing-table'}],
-};
+} as const satisfies StackLayoutNode;
 
 /**
  * Layout with typo in component ID (for Levenshtein test)
  */
-export const LAYOUT_TYPO_COMPONENT: StackLayoutNode = {
+export const LAYOUT_TYPO_COMPONENT = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
 	spacing: 'normal',
 	children: [{type: 'component', component_id: 'tabel-1'}],
-};
+} as const satisfies StackLayoutNode;
 
 /**
  * Layout with multiple missing components
  */
-export const LAYOUT_MULTIPLE_MISSING: StackLayoutNode = {
+export const LAYOUT_MULTIPLE_MISSING = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -439,12 +439,12 @@ export const LAYOUT_MULTIPLE_MISSING: StackLayoutNode = {
 		{type: 'component', component_id: 'table-1'},
 		{type: 'component', component_id: 'missing-2'},
 	],
-};
+} as const satisfies StackLayoutNode;
 
 /**
  * Nested layout with missing components at multiple levels
  */
-export const NESTED_LAYOUT_WITH_ERRORS: StackLayoutNode = {
+export const NESTED_LAYOUT_WITH_ERRORS = {
 	id: 'outer-stack',
 	type: 'stack',
 	direction: 'vertical',
@@ -462,4 +462,4 @@ export const NESTED_LAYOUT_WITH_ERRORS: StackLayoutNode = {
 		},
 		{type: 'component', component_id: 'missing-outer'},
 	],
-};
+} as const satisfies StackLayoutNode;
