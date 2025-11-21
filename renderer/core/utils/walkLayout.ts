@@ -48,23 +48,22 @@ interface WalkContext {
  * component references and preserving all metadata needed for rendering.
  * Accumulates all errors encountered during traversal.
  *
- * @param node - Layout node to process
- * @param spec - Component specification containing component definitions
+ * @param spec - Component specification containing layout and component definitions
  * @returns Result containing RenderTree on success, or array of structured errors
  */
-export const walkLayout = (node: LayoutNode, spec: ComponentSpec): Result<RenderTree, SpecError[]> => {
+export const walkLayout = (spec: ComponentSpec): Result<RenderTree, SpecError[]> => {
 	const context: WalkContext = {
 		componentIds: Object.keys(spec.root.nodes),
 		path: '$.root.layout',
 	};
 
-	return walkLayoutWithContext(node, spec, context);
+	return walkLayoutNode(spec.root.layout, spec, context);
 };
 
 /**
- * Internal walk function that uses context for efficiency
+ * Internal recursive function that processes a single layout node
  */
-const walkLayoutWithContext = (
+const walkLayoutNode = (
 	node: LayoutNode,
 	spec: ComponentSpec,
 	context: WalkContext
@@ -286,7 +285,7 @@ const processLayoutChild = (
 ): Result<RenderTree, SpecError[]> => {
 	switch (child.type) {
 		case 'layout': {
-			return walkLayoutWithContext(child.node, spec, context);
+			return walkLayoutNode(child.node, spec, context);
 		}
 
 		case 'component': {
