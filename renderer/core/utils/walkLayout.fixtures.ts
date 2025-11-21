@@ -10,7 +10,14 @@
  * - Error cases (missing components, invalid types)
  */
 
-import type {ComponentSpec, LayoutNode} from '@sigil/src/lib/generated/types/specification';
+import type {
+	ComponentSpec,
+	GridLayoutNode,
+	HorizontalStackLayoutNode,
+	LayoutNode,
+	StackLayoutNode,
+	VerticalStackLayoutNode,
+} from '@sigil/src/lib/generated/types/specification';
 
 /**
  * Creates spec with single data-table component
@@ -158,7 +165,7 @@ export const createTextInsightComponentSpec = (layout: LayoutNode): ComponentSpe
 /**
  * Simple horizontal stack with one component
  */
-export const HORIZONTAL_STACK_SINGLE_CHILD: LayoutNode = {
+export const HORIZONTAL_STACK_SINGLE_CHILD: HorizontalStackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -174,7 +181,7 @@ export const HORIZONTAL_STACK_SINGLE_CHILD: LayoutNode = {
 /**
  * Horizontal stack with multiple components
  */
-export const HORIZONTAL_STACK_MULTIPLE_CHILDREN: LayoutNode = {
+export const HORIZONTAL_STACK_MULTIPLE_CHILDREN: HorizontalStackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -189,7 +196,7 @@ export const HORIZONTAL_STACK_MULTIPLE_CHILDREN: LayoutNode = {
 /**
  * Horizontal stack with size constraints
  */
-export const HORIZONTAL_STACK_WITH_CONSTRAINTS: LayoutNode = {
+export const HORIZONTAL_STACK_WITH_CONSTRAINTS: HorizontalStackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -204,7 +211,7 @@ export const HORIZONTAL_STACK_WITH_CONSTRAINTS: LayoutNode = {
 /**
  * Horizontal stack with alignment and padding
  */
-export const HORIZONTAL_STACK_WITH_STYLING: LayoutNode = {
+export const HORIZONTAL_STACK_WITH_STYLING: HorizontalStackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -217,7 +224,7 @@ export const HORIZONTAL_STACK_WITH_STYLING: LayoutNode = {
 /**
  * Empty horizontal stack
  */
-export const HORIZONTAL_STACK_EMPTY: LayoutNode = {
+export const HORIZONTAL_STACK_EMPTY: HorizontalStackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -228,7 +235,7 @@ export const HORIZONTAL_STACK_EMPTY: LayoutNode = {
 /**
  * Vertical stack with one component
  */
-export const VERTICAL_STACK_SINGLE_CHILD: LayoutNode = {
+export const VERTICAL_STACK_SINGLE_CHILD: VerticalStackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'vertical',
@@ -239,7 +246,7 @@ export const VERTICAL_STACK_SINGLE_CHILD: LayoutNode = {
 /**
  * Vertical stack with horizontal alignment
  */
-export const VERTICAL_STACK_WITH_ALIGNMENT: LayoutNode = {
+export const VERTICAL_STACK_WITH_ALIGNMENT: VerticalStackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'vertical',
@@ -251,7 +258,7 @@ export const VERTICAL_STACK_WITH_ALIGNMENT: LayoutNode = {
 /**
  * Simple grid with one component
  */
-export const GRID_SINGLE_CHILD: LayoutNode = {
+export const GRID_SINGLE_CHILD: GridLayoutNode = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 2,
@@ -265,7 +272,7 @@ export const GRID_SINGLE_CHILD: LayoutNode = {
 /**
  * Grid with explicit positioning
  */
-export const GRID_EXPLICIT_POSITIONING: LayoutNode = {
+export const GRID_EXPLICIT_POSITIONING: GridLayoutNode = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 3,
@@ -289,7 +296,7 @@ export const GRID_EXPLICIT_POSITIONING: LayoutNode = {
 /**
  * Grid with auto-flow (no explicit positioning)
  */
-export const GRID_AUTO_FLOW: LayoutNode = {
+export const GRID_AUTO_FLOW: GridLayoutNode = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 2,
@@ -302,7 +309,7 @@ export const GRID_AUTO_FLOW: LayoutNode = {
 /**
  * Grid with gaps and padding
  */
-export const GRID_WITH_GAPS: LayoutNode = {
+export const GRID_WITH_GAPS: GridLayoutNode = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 3,
@@ -315,7 +322,7 @@ export const GRID_WITH_GAPS: LayoutNode = {
 /**
  * Nested layout - stack containing stack
  */
-export const NESTED_STACK_IN_STACK: LayoutNode = {
+export const NESTED_STACK_IN_STACK: VerticalStackLayoutNode = {
 	id: 'outer-stack',
 	type: 'stack',
 	direction: 'vertical',
@@ -338,7 +345,7 @@ export const NESTED_STACK_IN_STACK: LayoutNode = {
 /**
  * Nested layout - grid containing stack
  */
-export const NESTED_STACK_IN_GRID: LayoutNode = {
+export const NESTED_STACK_IN_GRID: GridLayoutNode = {
 	id: 'grid-1',
 	type: 'grid',
 	columns: 2,
@@ -366,7 +373,7 @@ export const NESTED_STACK_IN_GRID: LayoutNode = {
 /**
  * Deeply nested layout (3 levels)
  */
-export const DEEPLY_NESTED_LAYOUT: LayoutNode = {
+export const DEEPLY_NESTED_LAYOUT: VerticalStackLayoutNode = {
 	id: 'level-1',
 	type: 'stack',
 	direction: 'vertical',
@@ -400,7 +407,7 @@ export const DEEPLY_NESTED_LAYOUT: LayoutNode = {
 /**
  * Layout with missing component reference
  */
-export const LAYOUT_MISSING_COMPONENT: LayoutNode = {
+export const LAYOUT_MISSING_COMPONENT: StackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -411,7 +418,7 @@ export const LAYOUT_MISSING_COMPONENT: LayoutNode = {
 /**
  * Layout with typo in component ID (for Levenshtein test)
  */
-export const LAYOUT_TYPO_COMPONENT: LayoutNode = {
+export const LAYOUT_TYPO_COMPONENT: StackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -422,7 +429,7 @@ export const LAYOUT_TYPO_COMPONENT: LayoutNode = {
 /**
  * Layout with multiple missing components
  */
-export const LAYOUT_MULTIPLE_MISSING: LayoutNode = {
+export const LAYOUT_MULTIPLE_MISSING: StackLayoutNode = {
 	id: 'stack-1',
 	type: 'stack',
 	direction: 'horizontal',
@@ -437,7 +444,7 @@ export const LAYOUT_MULTIPLE_MISSING: LayoutNode = {
 /**
  * Nested layout with missing components at multiple levels
  */
-export const NESTED_LAYOUT_WITH_ERRORS: LayoutNode = {
+export const NESTED_LAYOUT_WITH_ERRORS: StackLayoutNode = {
 	id: 'outer-stack',
 	type: 'stack',
 	direction: 'vertical',

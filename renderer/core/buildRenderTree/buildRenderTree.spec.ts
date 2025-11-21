@@ -37,6 +37,9 @@ describe('buildRenderTree - successful rendering', () => {
 
 		// Verify RenderTree structure
 		expect(result.data.type).toBe('data-table');
+		if (result.data.type !== 'data-table') {
+			return;
+		}
 		expect(result.data.props.title).toBe('Users');
 		expect(result.data.props.description).toBe('List of users');
 
@@ -78,6 +81,9 @@ describe('buildRenderTree - successful rendering', () => {
 
 		// Verify RenderTree structure is correct even with no rows
 		expect(result.data.type).toBe('data-table');
+		if (result.data.type !== 'data-table') {
+			return;
+		}
 		expect(result.data.props.title).toBe('Empty');
 		expect(result.data.props.columns).toHaveLength(2);
 
@@ -90,6 +96,10 @@ describe('buildRenderTree - successful rendering', () => {
 
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {
+			return;
+		}
+
+		if (result.data.type !== 'data-table') {
 			return;
 		}
 
@@ -421,6 +431,10 @@ describe('buildRenderTree - edge cases', () => {
 			return;
 		}
 
+		if (result.data.type !== 'data-table') {
+			return;
+		}
+
 		// Null values should be handled gracefully
 		expect(result.data.props.data.at(0)?.cells['$.name'].raw).toBeNull();
 		expect(result.data.props.data.at(0)?.cells['$.name'].display).toBe('');
@@ -439,6 +453,10 @@ describe('buildRenderTree - edge cases', () => {
 
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {
+			return;
+		}
+
+		if (result.data.type !== 'data-table') {
 			return;
 		}
 
@@ -463,6 +481,10 @@ describe('buildRenderTree - edge cases', () => {
 			return;
 		}
 
+		if (result.data.type !== 'data-table') {
+			return;
+		}
+
 		expect(result.data.props.data).toHaveLength(1);
 		expect(result.data.props.data.at(0)?.cells['$.name'].raw).toBe('Alice');
 		expect(result.data.props.data.at(0)?.cells['$.age'].raw).toBe(30);
@@ -476,6 +498,10 @@ describe('buildRenderTree - edge cases', () => {
 
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {
+			return;
+		}
+
+		if (result.data.type !== 'data-table') {
 			return;
 		}
 

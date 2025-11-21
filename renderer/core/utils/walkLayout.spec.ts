@@ -59,6 +59,10 @@ describe('walkLayout - horizontal stack layouts', () => {
 			return;
 		}
 
+		if (HORIZONTAL_STACK_SINGLE_CHILD.type !== 'stack') {
+			return;
+		}
+
 		expect(result.data.spacing).toBe(HORIZONTAL_STACK_SINGLE_CHILD.spacing);
 		expect(result.data.children).toHaveLength(HORIZONTAL_STACK_SINGLE_CHILD.children.length);
 		expect(result.data.children.at(0)?.type).toBe('data-table');
@@ -75,6 +79,10 @@ describe('walkLayout - horizontal stack layouts', () => {
 
 		expect(result.data.type).toBe('horizontal-stack');
 		if (result.data.type !== 'horizontal-stack') {
+			return;
+		}
+
+		if (HORIZONTAL_STACK_MULTIPLE_CHILDREN.type !== 'stack') {
 			return;
 		}
 
@@ -119,6 +127,14 @@ describe('walkLayout - horizontal stack layouts', () => {
 			return;
 		}
 
+		if (HORIZONTAL_STACK_WITH_STYLING.type !== 'stack') {
+			return;
+		}
+
+		if (HORIZONTAL_STACK_WITH_STYLING.direction !== 'horizontal') {
+			return;
+		}
+
 		expect(result.data.vertical_alignment).toBe(HORIZONTAL_STACK_WITH_STYLING.vertical_alignment);
 		expect(result.data.padding).toEqual(HORIZONTAL_STACK_WITH_STYLING.padding);
 	});
@@ -156,6 +172,10 @@ describe('walkLayout - vertical stack layouts', () => {
 			return;
 		}
 
+		if (VERTICAL_STACK_SINGLE_CHILD.type !== 'stack') {
+			return;
+		}
+
 		expect(result.data.spacing).toBe(VERTICAL_STACK_SINGLE_CHILD.spacing);
 		expect(result.data.children).toHaveLength(VERTICAL_STACK_SINGLE_CHILD.children.length);
 	});
@@ -171,6 +191,14 @@ describe('walkLayout - vertical stack layouts', () => {
 
 		expect(result.data.type).toBe('vertical-stack');
 		if (result.data.type !== 'vertical-stack') {
+			return;
+		}
+
+		if (VERTICAL_STACK_WITH_ALIGNMENT.type !== 'stack') {
+			return;
+		}
+
+		if (VERTICAL_STACK_WITH_ALIGNMENT.direction !== 'vertical') {
 			return;
 		}
 
@@ -193,6 +221,10 @@ describe('walkLayout - grid layouts', () => {
 			return;
 		}
 
+		if (GRID_SINGLE_CHILD.type !== 'grid') {
+			return;
+		}
+
 		expect(result.data.columns).toBe(GRID_SINGLE_CHILD.columns);
 		expect(result.data.children).toHaveLength(GRID_SINGLE_CHILD.children.length);
 		expect(result.data.children.at(0)?.element.type).toBe('data-table');
@@ -209,6 +241,10 @@ describe('walkLayout - grid layouts', () => {
 
 		expect(result.data.type).toBe('grid');
 		if (result.data.type !== 'grid') {
+			return;
+		}
+
+		if (GRID_EXPLICIT_POSITIONING.type !== 'grid') {
 			return;
 		}
 
@@ -241,6 +277,10 @@ describe('walkLayout - grid layouts', () => {
 			return;
 		}
 
+		if (GRID_AUTO_FLOW.type !== 'grid') {
+			return;
+		}
+
 		const firstChild = result.data.children.at(0);
 		const secondChild = result.data.children.at(1);
 		const firstFixture = GRID_AUTO_FLOW.children.at(0);
@@ -266,6 +306,10 @@ describe('walkLayout - grid layouts', () => {
 			return;
 		}
 
+		if (GRID_WITH_GAPS.type !== 'grid') {
+			return;
+		}
+
 		expect(result.data.column_gap).toBe(GRID_WITH_GAPS.column_gap);
 		expect(result.data.row_gap).toBe(GRID_WITH_GAPS.row_gap);
 		expect(result.data.padding).toBe(GRID_WITH_GAPS.padding);
@@ -287,6 +331,10 @@ describe('walkLayout - nested layouts', () => {
 			return;
 		}
 
+		if (NESTED_STACK_IN_STACK.type !== 'stack') {
+			return;
+		}
+
 		expect(result.data.children).toHaveLength(NESTED_STACK_IN_STACK.children.length);
 
 		const innerStack = result.data.children.at(0);
@@ -297,6 +345,10 @@ describe('walkLayout - nested layouts', () => {
 
 		const innerFixture = NESTED_STACK_IN_STACK.children.at(0);
 		if (innerFixture?.type !== 'layout') {
+			return;
+		}
+
+		if (innerFixture.node.type !== 'stack') {
 			return;
 		}
 
@@ -469,6 +521,10 @@ describe('walkLayout - error handling', () => {
 			return;
 		}
 
+		if (LAYOUT_MISSING_COMPONENT.type !== 'stack') {
+			return;
+		}
+
 		const firstChild = LAYOUT_MISSING_COMPONENT.children.at(0);
 		expect(firstChild?.type).toBe('component');
 		if (firstChild?.type !== 'component') {
@@ -476,9 +532,13 @@ describe('walkLayout - error handling', () => {
 		}
 
 		expect(result.error).toHaveLength(1);
-		expect(result.error.at(0)?.code).toBe(ERROR_CODES.MISSING_COMPONENT);
-		expect(result.error.at(0)?.context.componentId).toBe(firstChild.component_id);
-		expect(result.error.at(0)?.path).toBe('$.root.layout.children[0].component_id');
+		const firstError = result.error.at(0);
+		expect(firstError?.code).toBe(ERROR_CODES.MISSING_COMPONENT);
+		if (firstError?.code !== ERROR_CODES.MISSING_COMPONENT) {
+			return;
+		}
+		expect(firstError.context.componentId).toBe(firstChild.component_id);
+		expect(firstError.path).toBe('$.root.layout.children[0].component_id');
 	});
 
 	it('should provide Levenshtein suggestion for typo in component ID', () => {
@@ -490,14 +550,22 @@ describe('walkLayout - error handling', () => {
 			return;
 		}
 
+		if (LAYOUT_TYPO_COMPONENT.type !== 'stack') {
+			return;
+		}
+
 		const firstChild = LAYOUT_TYPO_COMPONENT.children.at(0);
 		expect(firstChild?.type).toBe('component');
 		if (firstChild?.type !== 'component') {
 			return;
 		}
 
-		expect(result.error.at(0)?.suggestion).toBeDefined();
-		expect(result.error.at(0)?.context.componentId).toBe(firstChild.component_id);
+		const firstError = result.error.at(0);
+		expect(firstError?.suggestion).toBeDefined();
+		if (firstError?.code !== ERROR_CODES.MISSING_COMPONENT) {
+			return;
+		}
+		expect(firstError.context.componentId).toBe(firstChild.component_id);
 	});
 
 	it('should accumulate errors for multiple missing components', () => {
@@ -506,6 +574,10 @@ describe('walkLayout - error handling', () => {
 
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {
+			return;
+		}
+
+		if (LAYOUT_MULTIPLE_MISSING.type !== 'stack') {
 			return;
 		}
 
@@ -519,8 +591,13 @@ describe('walkLayout - error handling', () => {
 		}
 
 		expect(result.error).toHaveLength(2);
-		expect(result.error.at(0)?.context.componentId).toBe(firstChild.component_id);
-		expect(result.error.at(1)?.context.componentId).toBe(thirdChild.component_id);
+		const firstError = result.error.at(0);
+		const secondError = result.error.at(1);
+		if (firstError?.code !== ERROR_CODES.MISSING_COMPONENT || secondError?.code !== ERROR_CODES.MISSING_COMPONENT) {
+			return;
+		}
+		expect(firstError.context.componentId).toBe(firstChild.component_id);
+		expect(secondError.context.componentId).toBe(thirdChild.component_id);
 	});
 
 	it('should accumulate errors from nested layouts', () => {
@@ -534,6 +611,10 @@ describe('walkLayout - error handling', () => {
 
 		expect(result.error.length).toBeGreaterThanOrEqual(2);
 
+		if (NESTED_LAYOUT_WITH_ERRORS.type !== 'stack') {
+			return;
+		}
+
 		const firstChild = NESTED_LAYOUT_WITH_ERRORS.children.at(0);
 		const secondChild = NESTED_LAYOUT_WITH_ERRORS.children.at(1);
 
@@ -543,13 +624,19 @@ describe('walkLayout - error handling', () => {
 			return;
 		}
 
+		if (firstChild.node.type !== 'stack') {
+			return;
+		}
+
 		const innerChild = firstChild.node.children.at(0);
 		expect(innerChild?.type).toBe('component');
 		if (innerChild?.type !== 'component') {
 			return;
 		}
 
-		const componentIds = result.error.map((error) => error.context.componentId);
+		const componentIds = result.error
+			.filter((error) => error.code === ERROR_CODES.MISSING_COMPONENT)
+			.map((error) => error.context.componentId);
 		expect(componentIds).toContain(innerChild.component_id);
 		expect(componentIds).toContain(secondChild.component_id);
 	});
