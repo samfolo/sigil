@@ -40,10 +40,9 @@ export type RenderLayout = RenderHorizontalStackLayout | RenderVerticalStackLayo
 /**
  * RenderComponent represents processed components ready for rendering
  *
- * Currently supports data-table only.
- * Future: hierarchy, composition, text-insight
+ * Discriminated union of all component types.
  */
-export type RenderComponent = RenderDataTable;
+export type RenderComponent = RenderDataTable | RenderHierarchy | RenderComposition | RenderTextInsight;
 
 /**
  * Common size constraint fields for layout nodes
@@ -239,6 +238,51 @@ export interface RenderDataTable {
 	 * Processed table properties
 	 */
 	props: TableProps;
+}
+
+/**
+ * Hierarchy component with processed props
+ */
+export interface RenderHierarchy {
+	/**
+	 * Discriminator for hierarchy components
+	 */
+	type: 'hierarchy';
+
+	/**
+	 * Processed hierarchy properties
+	 */
+	props: Record<string, never>;
+}
+
+/**
+ * Composition component with processed props
+ */
+export interface RenderComposition {
+	/**
+	 * Discriminator for composition components
+	 */
+	type: 'composition';
+
+	/**
+	 * Processed composition properties
+	 */
+	props: Record<string, never>;
+}
+
+/**
+ * Text insight component with processed props
+ */
+export interface RenderTextInsight {
+	/**
+	 * Discriminator for text insight components
+	 */
+	type: 'text-insight';
+
+	/**
+	 * Processed text insight properties
+	 */
+	props: Record<string, never>;
 }
 
 /**
