@@ -223,19 +223,17 @@ describe('walkLayout - grid layouts', () => {
 		}
 
 
+		const [firstFixture, secondFixture] = GRID_EXPLICIT_POSITIONING.children;
 		const firstChild = result.data.children.at(0);
-		const firstFixture = GRID_EXPLICIT_POSITIONING.children.at(0);
-
-		expect(firstChild?.column_start).toBe(firstFixture?.column_start);
-		expect(firstChild?.row_start).toBe(firstFixture?.row_start);
-		expect(firstChild?.column_span).toBe(firstFixture?.column_span);
-		expect(firstChild?.row_span).toBe(firstFixture?.row_span);
-
 		const secondChild = result.data.children.at(1);
-		const secondFixture = GRID_EXPLICIT_POSITIONING.children.at(1);
 
-		expect(secondChild?.column_start).toBe(secondFixture?.column_start);
-		expect(secondChild?.row_start).toBe(secondFixture?.row_start);
+		expect(firstChild?.column_start).toBe(firstFixture.column_start);
+		expect(firstChild?.row_start).toBe(firstFixture.row_start);
+		expect(firstChild?.column_span).toBe(firstFixture.column_span);
+		expect(firstChild?.row_span).toBe(firstFixture.row_span);
+
+		expect(secondChild?.column_start).toBe(secondFixture.column_start);
+		expect(secondChild?.row_start).toBe(secondFixture.row_start);
 	});
 
 	it('should support auto-flow grid children with omitted positioning', () => {
@@ -255,13 +253,11 @@ describe('walkLayout - grid layouts', () => {
 
 		const firstChild = result.data.children.at(0);
 		const secondChild = result.data.children.at(1);
-		const firstFixture = GRID_AUTO_FLOW.children.at(0);
-		const secondFixture = GRID_AUTO_FLOW.children.at(1);
 
-		expect(firstChild?.column_start).toBe(firstFixture?.column_start);
-		expect(firstChild?.row_start).toBe(firstFixture?.row_start);
-		expect(secondChild?.column_start).toBe(secondFixture?.column_start);
-		expect(secondChild?.row_start).toBe(secondFixture?.row_start);
+		expect(firstChild?.column_start).toBeUndefined();
+		expect(firstChild?.row_start).toBeUndefined();
+		expect(secondChild?.column_start).toBeUndefined();
+		expect(secondChild?.row_start).toBeUndefined();
 	});
 
 	it('should preserve grid gaps and padding', () => {

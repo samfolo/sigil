@@ -123,6 +123,17 @@ const walkLayoutNode = (
 		}
 
 		case 'grid': {
+			if (node.columns < MIN_GRID_COLUMNS) {
+				return err([{
+					code: ERROR_CODES.FIELD_REQUIRED,
+					severity: 'error',
+					category: 'spec',
+					path: `${context.path}.columns`,
+					context: {},
+					suggestion: `Grid columns must be at least ${MIN_GRID_COLUMNS}, got ${node.columns}`,
+				}]);
+			}
+
 			const bounds = extractBounds(node);
 			const children: RenderGridChild[] = [];
 
