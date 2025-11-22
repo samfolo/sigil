@@ -31,12 +31,31 @@ Examples:
 
 ACCESSOR BINDINGS
 
-keyFields in AnalysisOutput already contain JSONPath accessors. Use these directly for column accessors without modification.
+All tabular accessors must use wildcard notation for column-oriented data extraction.
+
+Converting keyFields to column accessors:
+
+JSON data (array-of-objects or object-of-objects):
+- keyFields contain paths like `$.users[0].name` or `$.data.items[0].price`
+- Convert to wildcard accessor: replace specific index with `[*]`
+- Example: `$.users[0].name` → `$[*].name`
+- Example: `$.data.items[0].price` → `$[*].price`
+- Nested paths: `$.company.employees[0].profile.email` → `$[*].profile.email`
+
+CSV data (array-of-arrays or object-of-arrays):
+- keyFields already use `$[*][N]` notation
+- Use directly without modification
+- Example: `$[*][0]`, `$[*][1]`, `$[*][2]`
+
+Object keys column:
+- To access object property names, use tilde operator: `$[*]~`
+- Example: for `{user_123: {...}, user_456: {...}}` → accessor `$[*]~` extracts keys
 
 Role heuristics for accessor_bindings:
 - String fields → roles: ["label"]
 - Number fields → roles: ["value"]
 - Enum/categorical fields → roles: ["categorical"]
+- Object keys → roles: ["identifier"]
 
 DATA SHAPE
 
@@ -67,9 +86,9 @@ MINIMAL VALID EXAMPLE
           "type": "data-table",
           "title": "Users",
           "columns": [
-            {"accessor": "$.name", "label": "Name"},
-            {"accessor": "$.email", "label": "Email"},
-            {"accessor": "$.status", "label": "Status"}
+            {"accessor": "$[*].name", "label": "Name"},
+            {"accessor": "$[*].email", "label": "Email"},
+            {"accessor": "$[*].status", "label": "Status"}
           ],
           "affordances": []
         }
@@ -77,9 +96,9 @@ MINIMAL VALID EXAMPLE
     },
     "accessor_bindings": {
       "table-1": {
-        "$.name": {"roles": ["label"], "data_types": ["string"]},
-        "$.email": {"roles": ["label"], "data_types": ["string"]},
-        "$.status": {"roles": ["categorical"], "data_types": ["string"]}
+        "$[*].name": {"roles": ["label"], "data_types": ["string"]},
+        "$[*].email": {"roles": ["label"], "data_types": ["string"]},
+        "$[*].status": {"roles": ["categorical"], "data_types": ["string"]}
       }
     }
   }

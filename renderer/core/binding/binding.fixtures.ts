@@ -224,11 +224,11 @@ export const INVALID_ACCESSOR_ARRAY_INDEX = {
 		{id: '$[*].items[5]', label: 'Sixth Item', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.items[0]': {
+		'$[*].items[0]': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.items[5]': {
+		'$[*].items[5]': {
 			data_types: ['string' as const],
 			roles: ['value'],
 		},
@@ -249,7 +249,7 @@ export const INVALID_ACCESSOR_ARRAY_RETURNED = {
 		{id: '$[*].tags', label: 'Tags', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.tags': {
+		'$[*].tags': {
 			data_types: ['string' as const],
 			roles: ['category'],
 		},
@@ -274,15 +274,15 @@ export const MIXED_SUCCESS_FAILURE_DATA = {
 		{id: '$[*].optionalField', label: 'Optional', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.id': {
+		'$[*].id': {
 			data_types: ['number' as const],
 			roles: ['id'],
 		},
-		'$.name': {
+		'$[*].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.optionalField': {
+		'$[*].optionalField': {
 			data_types: ['string' as const],
 			roles: ['value'],
 		},
@@ -301,11 +301,11 @@ export const EMPTY_DATA_ARRAY = {
 		{id: '$[*].value', label: 'Value', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
-		'$.name': {
+		'$[*].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.value': {
+		'$[*].value': {
 			data_types: ['number' as const],
 			roles: ['value'],
 		},
@@ -329,15 +329,15 @@ export const DATA_WITH_NULL_VALUES = {
 		{id: '$[*].status', label: 'Status', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.id': {
+		'$[*].id': {
 			data_types: ['number' as const],
 			roles: ['id'],
 		},
-		'$.name': {
+		'$[*].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.status': {
+		'$[*].status': {
 			data_types: ['string' as const],
 			roles: ['category'],
 		},
@@ -360,15 +360,15 @@ export const DATA_WITH_UNDEFINED_VALUES = {
 		{id: '$[*].value', label: 'Value', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
-		'$.id': {
+		'$[*].id': {
 			data_types: ['number' as const],
 			roles: ['id'],
 		},
-		'$.name': {
+		'$[*].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.value': {
+		'$[*].value': {
 			data_types: ['number' as const],
 			roles: ['value'],
 		},
@@ -390,11 +390,11 @@ export const NESTED_PATH_CONTEXT = {
 		{id: '$[*].userName', label: 'User Name', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.userId': {
+		'$[*].userId': {
 			data_types: ['number' as const],
 			roles: ['id'],
 		},
-		'$.userName': {
+		'$[*].userName': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
@@ -418,7 +418,7 @@ export const COMPLEX_VALUE_MAPPINGS = {
 		{id: '$[*].count', label: 'Count', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
-		'$.priority': {
+		'$[*].priority': {
 			data_types: ['number' as const],
 			roles: ['category'],
 			value_mappings: {
@@ -427,7 +427,7 @@ export const COMPLEX_VALUE_MAPPINGS = {
 				'3': {display_value: 'Normal'},
 			},
 		},
-		'$.severity': {
+		'$[*].severity': {
 			data_types: ['string' as const],
 			roles: ['category'],
 			value_mappings: {
@@ -436,7 +436,7 @@ export const COMPLEX_VALUE_MAPPINGS = {
 				'low': {display_value: 'Low Risk'},
 			},
 		},
-		'$.count': {
+		'$[*].count': {
 			data_types: ['number' as const],
 			roles: ['value'],
 			format: '0,0',
@@ -455,7 +455,7 @@ export const SINGLE_ROW_SINGLE_COLUMN = {
 		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.name': {
+		'$[*].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
@@ -474,11 +474,11 @@ export const ALL_COLUMNS_UNDEFINED = {
 		{id: '$[*].missing2', label: 'Missing 2', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.missing1': {
+		'$[*].missing1': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.missing2': {
+		'$[*].missing2': {
 			data_types: ['string' as const],
 			roles: ['value'],
 		},
@@ -669,4 +669,164 @@ export const CSV_ARRAY_OF_ARRAYS_MISSING_VALUES = {
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: ['$'],
 	expectedResult: 'Missing array indices should result in null raw values and empty display strings',
+};
+
+/**
+ * 19. Object-of-objects basic - homogenous key-value data with property name column
+ */
+export const OBJECT_OF_OBJECTS_BASIC = {
+	data: {
+		user_123: {name: 'Alice Johnson', role: 'Admin', active: true},
+		user_456: {name: 'Bob Smith', role: 'User', active: false},
+		user_789: {name: 'Carol Williams', role: 'Editor', active: true},
+	},
+	columns: [
+		{id: '$[*]~', label: 'User ID', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].role', label: 'Role', dataType: 'string', alignment: 'center' as const},
+		{id: '$[*].active', label: 'Status', dataType: 'boolean', alignment: 'center' as const},
+	],
+	accessorBindings: {
+		'$[*]~': {
+			data_types: ['string' as const],
+			roles: ['identifier'],
+		},
+		'$[*].name': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].role': {
+			data_types: ['string' as const],
+			roles: ['categorical'],
+		},
+		'$[*].active': {
+			data_types: ['boolean' as const],
+			roles: ['categorical'],
+			value_mappings: {
+				'true': {display_value: 'Active'},
+				'false': {display_value: 'Inactive'},
+			},
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Object-of-objects should extract property names with ~ and values with property accessors',
+};
+
+/**
+ * 20. Object-of-objects without keys column - just value properties
+ */
+export const OBJECT_OF_OBJECTS_NO_KEYS = {
+	data: {
+		product_1: {name: 'Laptop', price: 999.99, inStock: true},
+		product_2: {name: 'Mouse', price: 29.99, inStock: false},
+		product_3: {name: 'Keyboard', price: 79.99, inStock: true},
+	},
+	columns: [
+		{id: '$[*].name', label: 'Product Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].price', label: 'Price', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].inStock', label: 'Availability', dataType: 'boolean', alignment: 'center' as const},
+	],
+	accessorBindings: {
+		'$[*].name': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].price': {
+			data_types: ['number' as const],
+			roles: ['value'],
+			format: '$0,0.00',
+		},
+		'$[*].inStock': {
+			data_types: ['boolean' as const],
+			roles: ['categorical'],
+			value_mappings: {
+				'true': {display_value: 'In Stock'},
+				'false': {display_value: 'Out of Stock'},
+			},
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Object values should be extracted correctly without keys column',
+};
+
+/**
+ * 21. Object-of-objects nested properties
+ */
+export const OBJECT_OF_OBJECTS_NESTED = {
+	data: {
+		dept_eng: {
+			name: 'Engineering',
+			lead: {name: 'Alice Chen', email: 'alice@example.com'},
+			budget: 500000,
+		},
+		dept_sales: {
+			name: 'Sales',
+			lead: {name: 'Bob Martinez', email: 'bob@example.com'},
+			budget: 300000,
+		},
+	},
+	columns: [
+		{id: '$[*]~', label: 'Department ID', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].name', label: 'Department Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].lead.name', label: 'Department Lead', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].budget', label: 'Budget', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*]~': {
+			data_types: ['string' as const],
+			roles: ['identifier'],
+		},
+		'$[*].name': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].lead.name': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].budget': {
+			data_types: ['number' as const],
+			roles: ['value'],
+			format: '$0,0',
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Nested properties within object values should be accessible',
+};
+
+/**
+ * 22. Object-of-arrays - mixed data structure
+ */
+export const OBJECT_OF_ARRAYS = {
+	data: {
+		row_1: ['Alice Johnson', 'alice@example.com', 28],
+		row_2: ['Bob Smith', 'bob@example.com', 34],
+		row_3: ['Carol Williams', 'carol@example.com', 42],
+	},
+	columns: [
+		{id: '$[*]~', label: 'Row ID', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][0]', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][1]', label: 'Email', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][2]', label: 'Age', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*]~': {
+			data_types: ['string' as const],
+			roles: ['identifier'],
+		},
+		'$[*][0]': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*][1]': {
+			data_types: ['string' as const],
+			roles: ['id'],
+		},
+		'$[*][2]': {
+			data_types: ['number' as const],
+			roles: ['value'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Object-of-arrays should support both property name column and positional array access',
 };

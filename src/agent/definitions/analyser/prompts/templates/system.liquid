@@ -48,29 +48,50 @@ Review initial vignettes → request_more_samples(count: 20) → observe edge ca
 
 Sampling diverse column types gives better understanding than querying every column.
 
-CSV DATA STRUCTURE
+DATA ACCESSOR PATTERNS
 
-CSV parsing produces 2D arrays, not objects. The first row may or may not be headers depending on the data.
+All tabular data uses column-oriented wildcard accessors for uniform data extraction.
 
-Structure: `[[value, value, ...], [value, value, ...]]`
-- Outer array: rows
-- Inner arrays: column values at each position
+JSON/OBJECT DATA STRUCTURES
 
-JSONPath access patterns:
-- All rows: `$[*]`
-- Specific row: `$[0]` (first row), `$[1]` (second row)
-- Specific cell: `$[row_index][column_index]`
-- Column values: `$[*][column_index]` (all values in column at index)
+Array-of-objects structure: `[{name: 'Alice', age: 30}, {name: 'Bob', age: 25}]`
+- Column accessor: `$[*].property_name`
+- Example: `$[*].name` extracts `['Alice', 'Bob']`
+- Nested properties: `$[*].user.profile.email`
+- Array elements: `$[*].tags[0]`, `$[*].scores[1]`
 
-parse_csv returns columns with indices. Use these to construct paths:
-Column "order_id" at index 0 → path: $[*][0]
+Object-of-objects structure: `{id1: {name: 'Alice'}, id2: {name: 'Bob'}}`
+- Key column accessor: `$[*]~` (property names using tilde operator)
+- Value column accessor: `$[*].property_name`
+- Example: `$[*]~` extracts `['id1', 'id2']`
+- Example: `$[*].name` extracts `['Alice', 'Bob']`
 
-Workflow for CSV:
+Workflow for JSON/object data:
+1. parse_json → check structure metadata
+2. explore_structure → discover available fields
+3. Generate wildcard accessors:
+   - For object properties: prefix with `$[*].`
+   - For object keys column: use `$[*]~`
+
+CSV DATA STRUCTURES
+
+Array-of-arrays structure: `[['Name', 'Age'], ['Alice', 30], ['Bob', 25]]`
+- Column accessor: `$[*][column_index]`
+- Example: `$[*][0]` extracts `['Name', 'Alice', 'Bob']` (includes header)
+- Renderer automatically skips first row as header
+
+Object-of-arrays structure: `{row1: ['Alice', 30], row2: ['Bob', 25]}`
+- Key column accessor: `$[*]~`
+- Value column accessor: `$[*][column_index]`
+- Example: `$[*][0]` extracts `['Alice', 'Bob']`
+
+parse_csv returns columns with indices. Construct paths as `$[*][index]`:
+Column "order_id" at index 0 → path: `$[*][0]`
+
+Workflow for CSV data:
 1. parse_csv → check metadata for rowCount, columnCount, columns array
-2. explore_structure → see available paths like `$[0][0]`, `$[0][1]`, etc.
-3. query_json_path with index notation → examine values: `$[*][0]` for first column
-
-Do not attempt object-style paths like `$[*].column_name` - these will return 0 matches.
+2. explore_structure → see available paths
+3. query_json_path with wildcard index notation: `$[*][0]` for first column
 
 WORKFLOW METHODOLOGY
 

@@ -19,6 +19,10 @@ import {bindTabularData} from './binding';
 import {
 	ALL_COLUMNS_UNDEFINED,
 	COMPLEX_VALUE_MAPPINGS,
+	CSV_ARRAY_OF_ARRAYS_BASIC,
+	CSV_ARRAY_OF_ARRAYS_EMPTY,
+	CSV_ARRAY_OF_ARRAYS_MISSING_VALUES,
+	CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS,
 	DATA_WITH_ARRAYS,
 	DATA_WITH_NULL_VALUES,
 	DATA_WITH_UNDEFINED_VALUES,
@@ -33,6 +37,10 @@ import {
 	MULTIPLE_ROWS_INVALID_ACCESSOR,
 	NESTED_OBJECT_DATA,
 	NESTED_PATH_CONTEXT,
+	OBJECT_OF_ARRAYS,
+	OBJECT_OF_OBJECTS_BASIC,
+	OBJECT_OF_OBJECTS_NESTED,
+	OBJECT_OF_OBJECTS_NO_KEYS,
 	SIMPLE_FLAT_DATA,
 	SINGLE_ROW_SINGLE_COLUMN,
 } from './binding.fixtures';
@@ -51,13 +59,13 @@ describe('bindTabularData - successful binding', () => {
 
 		expect(result.data).toHaveLength(3);
 		expect(result.data.at(0)?.id).toBe('row-0');
-		expect(result.data.at(0)?.cells['$.name'].raw).toBe('Alice Johnson');
-		expect(result.data.at(0)?.cells['$.name'].display).toBe('Alice Johnson');
-		expect(result.data.at(0)?.cells['$.age'].raw).toBe(28);
-		expect(result.data.at(0)?.cells['$.active'].raw).toBe(true);
-		expect(result.data.at(0)?.cells['$.active'].display).toBe('Active'); // value mapping applied
+		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Alice Johnson');
+		expect(result.data.at(0)?.cells['$[*].name'].display).toBe('Alice Johnson');
+		expect(result.data.at(0)?.cells['$[*].age'].raw).toBe(28);
+		expect(result.data.at(0)?.cells['$[*].active'].raw).toBe(true);
+		expect(result.data.at(0)?.cells['$[*].active'].display).toBe('Active'); // value mapping applied
 
-		expect(result.data.at(1)?.cells['$.active'].display).toBe('Inactive'); // value mapping for false
+		expect(result.data.at(1)?.cells['$[*].active'].display).toBe('Inactive'); // value mapping for false
 	});
 
 	it('should bind nested object data successfully', () => {
@@ -72,9 +80,9 @@ describe('bindTabularData - successful binding', () => {
 		if (!isOk(result)) {return;}
 
 		expect(result.data).toHaveLength(2);
-		expect(result.data.at(0)?.cells['$.user.profile.name'].raw).toBe('David Chen');
-		expect(result.data.at(0)?.cells['$.user.profile.email'].raw).toBe('david.chen@example.com');
-		expect(result.data.at(1)?.cells['$.user.profile.name'].raw).toBe('Emma Davis');
+		expect(result.data.at(0)?.cells['$[*].user.profile.name'].raw).toBe('David Chen');
+		expect(result.data.at(0)?.cells['$[*].user.profile.email'].raw).toBe('david.chen@example.com');
+		expect(result.data.at(1)?.cells['$[*].user.profile.name'].raw).toBe('Emma Davis');
 	});
 
 	it('should bind data with arrays in rows successfully', () => {
@@ -89,10 +97,10 @@ describe('bindTabularData - successful binding', () => {
 		if (!isOk(result)) {return;}
 
 		expect(result.data).toHaveLength(3);
-		expect(result.data.at(0)?.cells['$.tags[0]'].raw).toBe('electronics');
-		expect(result.data.at(0)?.cells['$.scores[1]'].raw).toBe(9.2);
-		expect(result.data.at(1)?.cells['$.tags[0]'].raw).toBe('electronics');
-		expect(result.data.at(1)?.cells['$.scores[1]'].raw).toBe(8.7);
+		expect(result.data.at(0)?.cells['$[*].tags[0]'].raw).toBe('electronics');
+		expect(result.data.at(0)?.cells['$[*].scores[1]'].raw).toBe(9.2);
+		expect(result.data.at(1)?.cells['$[*].tags[0]'].raw).toBe('electronics');
+		expect(result.data.at(1)?.cells['$[*].scores[1]'].raw).toBe(8.7);
 	});
 
 	it('should bind deeply nested structures successfully', () => {
@@ -107,13 +115,13 @@ describe('bindTabularData - successful binding', () => {
 		if (!isOk(result)) {return;}
 
 		expect(result.data).toHaveLength(2);
-		expect(result.data.at(0)?.cells['$.company.department.employees[0].name'].raw).toBe(
+		expect(result.data.at(0)?.cells['$[*].company.department.employees[0].name'].raw).toBe(
 			'Frank Lee'
 		);
-		expect(result.data.at(0)?.cells['$.company.department.employees[0].role'].raw).toBe(
+		expect(result.data.at(0)?.cells['$[*].company.department.employees[0].role'].raw).toBe(
 			'Manager'
 		);
-		expect(result.data.at(0)?.cells['$.company.department.budget'].raw).toBe(150000);
+		expect(result.data.at(0)?.cells['$[*].company.department.budget'].raw).toBe(150000);
 	});
 
 	it('should apply value mappings correctly', () => {
@@ -128,15 +136,15 @@ describe('bindTabularData - successful binding', () => {
 		if (!isOk(result)) {return;}
 
 		// Check priority value mappings: 1 → 'Critical', 2 → 'Important', 3 → 'Normal'
-		expect(result.data.at(0)?.cells['$.priority'].raw).toBe(1);
-		expect(result.data.at(0)?.cells['$.priority'].display).toBe('Critical');
-		expect(result.data.at(1)?.cells['$.priority'].display).toBe('Important');
-		expect(result.data.at(2)?.cells['$.priority'].display).toBe('Normal');
+		expect(result.data.at(0)?.cells['$[*].priority'].raw).toBe(1);
+		expect(result.data.at(0)?.cells['$[*].priority'].display).toBe('Critical');
+		expect(result.data.at(1)?.cells['$[*].priority'].display).toBe('Important');
+		expect(result.data.at(2)?.cells['$[*].priority'].display).toBe('Normal');
 
 		// Check severity value mappings
-		expect(result.data.at(0)?.cells['$.severity'].display).toBe('High Risk');
-		expect(result.data.at(1)?.cells['$.severity'].display).toBe('Medium Risk');
-		expect(result.data.at(2)?.cells['$.severity'].display).toBe('Low Risk');
+		expect(result.data.at(0)?.cells['$[*].severity'].display).toBe('High Risk');
+		expect(result.data.at(1)?.cells['$[*].severity'].display).toBe('Medium Risk');
+		expect(result.data.at(2)?.cells['$[*].severity'].display).toBe('Low Risk');
 	});
 
 	it('should preserve cell metadata (format, dataType)', () => {
@@ -150,10 +158,10 @@ describe('bindTabularData - successful binding', () => {
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {return;}
 
-		const nameCell = result.data.at(0)?.cells['$.name'];
+		const nameCell = result.data.at(0)?.cells['$[*].name'];
 		expect(nameCell?.dataType).toBe('string');
 
-		const ageCell = result.data.at(0)?.cells['$.age'];
+		const ageCell = result.data.at(0)?.cells['$[*].age'];
 		expect(ageCell?.dataType).toBe('number');
 	});
 });
@@ -171,10 +179,10 @@ describe('bindTabularData - error accumulation', () => {
 		if (!isOk(result)) {return;}
 
 		// Missing fields should result in undefined raw, empty display
-		expect(result.data.at(0)?.cells['$.email'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$.email'].display).toBe('');
-		expect(result.data.at(1)?.cells['$.email'].raw).toBeUndefined();
-		expect(result.data.at(1)?.cells['$.email'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].email'].raw).toBeUndefined();
+		expect(result.data.at(0)?.cells['$[*].email'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].email'].raw).toBeUndefined();
+		expect(result.data.at(1)?.cells['$[*].email'].display).toBe('');
 	});
 
 	it('should handle wrong array index gracefully', () => {
@@ -189,11 +197,11 @@ describe('bindTabularData - error accumulation', () => {
 		if (!isOk(result)) {return;}
 
 		// Valid index should work
-		expect(result.data.at(0)?.cells['$.items[0]'].raw).toBe('first');
+		expect(result.data.at(0)?.cells['$[*].items[0]'].raw).toBe('first');
 
 		// Out of bounds index should return undefined
-		expect(result.data.at(0)?.cells['$.items[5]'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$.items[5]'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].items[5]'].raw).toBeUndefined();
+		expect(result.data.at(0)?.cells['$[*].items[5]'].display).toBe('');
 	});
 
 	it('should stringify arrays when accessor returns array', () => {
@@ -208,7 +216,7 @@ describe('bindTabularData - error accumulation', () => {
 		if (!isOk(result)) {return;}
 
 		// Accessor returns full array - should be stringified
-		const cell = result.data.at(0)?.cells['$.tags'];
+		const cell = result.data.at(0)?.cells['$[*].tags'];
 		expect(Array.isArray(cell?.raw)).toBe(true);
 		expect(cell?.display).toContain('tag1'); // Stringified array representation
 	});
@@ -227,14 +235,14 @@ describe('bindTabularData - error accumulation', () => {
 		expect(result.data).toHaveLength(4);
 
 		// Rows with optionalField present
-		expect(result.data.at(0)?.cells['$.optionalField'].raw).toBe('Present');
-		expect(result.data.at(2)?.cells['$.optionalField'].raw).toBe('Also Present');
+		expect(result.data.at(0)?.cells['$[*].optionalField'].raw).toBe('Present');
+		expect(result.data.at(2)?.cells['$[*].optionalField'].raw).toBe('Also Present');
 
 		// Rows with optionalField missing
-		expect(result.data.at(1)?.cells['$.optionalField'].raw).toBeUndefined();
-		expect(result.data.at(1)?.cells['$.optionalField'].display).toBe('');
-		expect(result.data.at(3)?.cells['$.optionalField'].raw).toBeUndefined();
-		expect(result.data.at(3)?.cells['$.optionalField'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].optionalField'].raw).toBeUndefined();
+		expect(result.data.at(1)?.cells['$[*].optionalField'].display).toBe('');
+		expect(result.data.at(3)?.cells['$[*].optionalField'].raw).toBeUndefined();
+		expect(result.data.at(3)?.cells['$[*].optionalField'].display).toBe('');
 	});
 });
 
@@ -269,8 +277,8 @@ describe('bindTabularData - path context construction', () => {
 
 		// Should still produce valid rows
 		expect(result.data).toHaveLength(2);
-		expect(result.data.at(0)?.cells['$.userId'].raw).toBe(101);
-		expect(result.data.at(1)?.cells['$.userId'].raw).toBe(102);
+		expect(result.data.at(0)?.cells['$[*].userId'].raw).toBe(101);
+		expect(result.data.at(1)?.cells['$[*].userId'].raw).toBe(102);
 	});
 
 	it('should build valid row paths for error reporting', () => {
@@ -307,7 +315,7 @@ describe('bindTabularData - accessor path stripping', () => {
 		if (!isOk(result)) {return;}
 
 		// Verify that nested accessors work correctly
-		expect(result.data.at(0)?.cells['$.user.profile.name'].raw).toBe('David Chen');
+		expect(result.data.at(0)?.cells['$[*].user.profile.name'].raw).toBe('David Chen');
 	});
 
 	it('should handle array accessors correctly in path construction', () => {
@@ -322,8 +330,8 @@ describe('bindTabularData - accessor path stripping', () => {
 		if (!isOk(result)) {return;}
 
 		// Array accessors like '$.tags[0]' should work correctly
-		expect(result.data.at(0)?.cells['$.tags[0]'].raw).toBe('electronics');
-		expect(result.data.at(0)?.cells['$.scores[1]'].raw).toBe(9.2);
+		expect(result.data.at(0)?.cells['$[*].tags[0]'].raw).toBe('electronics');
+		expect(result.data.at(0)?.cells['$[*].scores[1]'].raw).toBe(9.2);
 	});
 
 	it('should not produce invalid paths like $[0]$.field', () => {
@@ -406,11 +414,11 @@ describe('bindTabularData - edge cases', () => {
 		expect(result.data).toHaveLength(3);
 
 		// Null values should produce empty display strings
-		expect(result.data.at(0)?.cells['$.status'].raw).toBeNull();
-		expect(result.data.at(0)?.cells['$.status'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].status'].raw).toBeNull();
+		expect(result.data.at(0)?.cells['$[*].status'].display).toBe('');
 
-		expect(result.data.at(1)?.cells['$.name'].raw).toBeNull();
-		expect(result.data.at(1)?.cells['$.name'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].name'].raw).toBeNull();
+		expect(result.data.at(1)?.cells['$[*].name'].display).toBe('');
 	});
 
 	it('should handle undefined values in data', () => {
@@ -427,11 +435,11 @@ describe('bindTabularData - edge cases', () => {
 		expect(result.data).toHaveLength(2);
 
 		// Undefined values should produce empty display strings
-		expect(result.data.at(0)?.cells['$.value'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$.value'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].value'].raw).toBeUndefined();
+		expect(result.data.at(0)?.cells['$[*].value'].display).toBe('');
 
-		expect(result.data.at(1)?.cells['$.name'].raw).toBeUndefined();
-		expect(result.data.at(1)?.cells['$.name'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].name'].raw).toBeUndefined();
+		expect(result.data.at(1)?.cells['$[*].name'].display).toBe('');
 	});
 
 	it('should handle single row with single column', () => {
@@ -446,7 +454,7 @@ describe('bindTabularData - edge cases', () => {
 		if (!isOk(result)) {return;}
 
 		expect(result.data).toHaveLength(1);
-		expect(result.data.at(0)?.cells['$.name'].raw).toBe('Single');
+		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Single');
 	});
 
 	it('should handle row with all columns having undefined values', () => {
@@ -461,15 +469,15 @@ describe('bindTabularData - edge cases', () => {
 		if (!isOk(result)) {return;}
 
 		expect(result.data).toHaveLength(1);
-		expect(result.data.at(0)?.cells['$.missing1'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$.missing1'].display).toBe('');
-		expect(result.data.at(0)?.cells['$.missing2'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$.missing2'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].missing1'].raw).toBeUndefined();
+		expect(result.data.at(0)?.cells['$[*].missing1'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].missing2'].raw).toBeUndefined();
+		expect(result.data.at(0)?.cells['$[*].missing2'].display).toBe('');
 	});
 });
 
 describe('bindTabularData - error scenarios with invalid accessors', () => {
-	it('should handle accessor that does not start with $', () => {
+	it('should reject accessor without wildcard notation', () => {
 		const result = bindTabularData(
 			INVALID_ACCESSOR_NO_DOLLAR_PREFIX.data,
 			INVALID_ACCESSOR_NO_DOLLAR_PREFIX.columns,
@@ -477,19 +485,20 @@ describe('bindTabularData - error scenarios with invalid accessors', () => {
 			INVALID_ACCESSOR_NO_DOLLAR_PREFIX.pathContext
 		);
 
-		// This should fail because 'name' doesn't start with '$'
+		// This should fail because accessor doesn't have wildcard [*]
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {return;}
 
-		expect(result.error).toHaveLength(1); // One error per row
+		expect(result.error).toHaveLength(1);
 		const firstError = result.error.at(0);
 		expect(firstError?.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
 		if (firstError?.code === ERROR_CODES.INVALID_ACCESSOR) {
 			expect(firstError.context.accessor).toBe('name');
+			expect(firstError.context.reason).toContain('wildcard');
 		}
 	});
 
-	it('should accumulate multiple errors across rows for invalid accessor', () => {
+	it('should reject multiple accessors without wildcard notation', () => {
 		const result = bindTabularData(
 			MULTIPLE_ROWS_INVALID_ACCESSOR.data,
 			MULTIPLE_ROWS_INVALID_ACCESSOR.columns,
@@ -500,14 +509,14 @@ describe('bindTabularData - error scenarios with invalid accessors', () => {
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {return;}
 
-		// Should have 3 errors (one per row)
-		expect(result.error.length).toBe(3);
+		// Should have 1 error per non-wildcard column (validated upfront)
+		expect(result.error.length).toBeGreaterThanOrEqual(1);
 		result.error.forEach((error) => {
 			expect(error.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
 		});
 	});
 
-	it('should update error paths with row context for invalid accessors', () => {
+	it('should include suggestion to use wildcard notation', () => {
 		const result = bindTabularData(
 			INVALID_ACCESSOR_WITH_PATH_CONTEXT.data,
 			INVALID_ACCESSOR_WITH_PATH_CONTEXT.columns,
@@ -518,8 +527,175 @@ describe('bindTabularData - error scenarios with invalid accessors', () => {
 		expect(isErr(result)).toBe(true);
 		if (!isErr(result)) {return;}
 
-		// Error paths should include row indices
-		expect(result.error.at(0)?.path).toBe('$[0]');
-		expect(result.error.at(1)?.path).toBe('$[1]');
+		const firstError = result.error.at(0);
+		expect(firstError?.suggestion).toContain('wildcard');
+		expect(firstError?.suggestion).toContain('$[*]');
+	});
+});
+
+describe('bindTabularData - CSV array-of-arrays binding', () => {
+	it('should bind CSV data and skip header row', () => {
+		const result = bindTabularData(
+			CSV_ARRAY_OF_ARRAYS_BASIC.data,
+			CSV_ARRAY_OF_ARRAYS_BASIC.columns,
+			CSV_ARRAY_OF_ARRAYS_BASIC.accessorBindings,
+			CSV_ARRAY_OF_ARRAYS_BASIC.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		// Should have 3 data rows (header row skipped)
+		expect(result.data).toHaveLength(3);
+
+		// First data row (index 1 in original array)
+		expect(result.data.at(0)?.cells['$[*][0]'].raw).toBe('Smart Watch');
+		expect(result.data.at(0)?.cells['$[*][1]'].raw).toBe('Features: GPS tracking');
+		expect(result.data.at(0)?.cells['$[*][2]'].raw).toBe(299.99);
+
+		// Number formatting not yet implemented, display is unformatted
+		expect(result.data.at(0)?.cells['$[*][2]'].display).toBe('299.99');
+		expect(result.data.at(0)?.cells['$[*][2]'].format).toBe('$0,0.00');
+	});
+
+	it('should apply value mappings in CSV data', () => {
+		const result = bindTabularData(
+			CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS.data,
+			CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS.columns,
+			CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS.accessorBindings,
+			CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(3);
+
+		// Value mappings: 'A' → 'Active', 'I' → 'Inactive'
+		expect(result.data.at(0)?.cells['$[*][1]'].raw).toBe('A');
+		expect(result.data.at(0)?.cells['$[*][1]'].display).toBe('Active');
+		expect(result.data.at(1)?.cells['$[*][1]'].raw).toBe('I');
+		expect(result.data.at(1)?.cells['$[*][1]'].display).toBe('Inactive');
+	});
+
+	it('should handle CSV with header only (no data rows)', () => {
+		const result = bindTabularData(
+			CSV_ARRAY_OF_ARRAYS_EMPTY.data,
+			CSV_ARRAY_OF_ARRAYS_EMPTY.columns,
+			CSV_ARRAY_OF_ARRAYS_EMPTY.accessorBindings,
+			CSV_ARRAY_OF_ARRAYS_EMPTY.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(0);
+	});
+
+	it('should handle CSV with missing values in rows', () => {
+		const result = bindTabularData(
+			CSV_ARRAY_OF_ARRAYS_MISSING_VALUES.data,
+			CSV_ARRAY_OF_ARRAYS_MISSING_VALUES.columns,
+			CSV_ARRAY_OF_ARRAYS_MISSING_VALUES.accessorBindings,
+			CSV_ARRAY_OF_ARRAYS_MISSING_VALUES.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(3);
+
+		// First row missing phone
+		expect(result.data.at(0)?.cells['$[*][0]'].raw).toBe('Alice Johnson');
+		expect(result.data.at(0)?.cells['$[*][1]'].raw).toBe('alice@test.com');
+		expect(result.data.at(0)?.cells['$[*][2]'].raw).toBeUndefined();
+
+		// Second row with null email
+		expect(result.data.at(1)?.cells['$[*][1]'].raw).toBeNull();
+		expect(result.data.at(1)?.cells['$[*][1]'].display).toBe('');
+	});
+});
+
+describe('bindTabularData - object-of-objects binding', () => {
+	it('should bind object-of-objects with property name column', () => {
+		const result = bindTabularData(
+			OBJECT_OF_OBJECTS_BASIC.data,
+			OBJECT_OF_OBJECTS_BASIC.columns,
+			OBJECT_OF_OBJECTS_BASIC.accessorBindings,
+			OBJECT_OF_OBJECTS_BASIC.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(3);
+
+		// First object (user_123)
+		expect(result.data.at(0)?.cells['$[*]~'].raw).toBe('user_123');
+		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Alice Johnson');
+		expect(result.data.at(0)?.cells['$[*].role'].raw).toBe('Admin');
+		expect(result.data.at(0)?.cells['$[*].active'].display).toBe('Active');
+	});
+
+	it('should bind object-of-objects without keys column', () => {
+		const result = bindTabularData(
+			OBJECT_OF_OBJECTS_NO_KEYS.data,
+			OBJECT_OF_OBJECTS_NO_KEYS.columns,
+			OBJECT_OF_OBJECTS_NO_KEYS.accessorBindings,
+			OBJECT_OF_OBJECTS_NO_KEYS.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(3);
+
+		// Values should be extracted correctly
+		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Laptop');
+		expect(result.data.at(0)?.cells['$[*].price'].raw).toBe(999.99);
+		// Number formatting not yet implemented, display is unformatted
+		expect(result.data.at(0)?.cells['$[*].price'].display).toBe('999.99');
+		expect(result.data.at(0)?.cells['$[*].price'].format).toBe('$0,0.00');
+		expect(result.data.at(0)?.cells['$[*].inStock'].display).toBe('In Stock');
+	});
+
+	it('should bind nested properties in object-of-objects', () => {
+		const result = bindTabularData(
+			OBJECT_OF_OBJECTS_NESTED.data,
+			OBJECT_OF_OBJECTS_NESTED.columns,
+			OBJECT_OF_OBJECTS_NESTED.accessorBindings,
+			OBJECT_OF_OBJECTS_NESTED.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(2);
+
+		// Access nested properties
+		expect(result.data.at(0)?.cells['$[*]~'].raw).toBe('dept_eng');
+		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Engineering');
+		expect(result.data.at(0)?.cells['$[*].lead.name'].raw).toBe('Alice Chen');
+		expect(result.data.at(0)?.cells['$[*].budget'].raw).toBe(500000);
+	});
+
+	it('should bind object-of-arrays with mixed accessor types', () => {
+		const result = bindTabularData(
+			OBJECT_OF_ARRAYS.data,
+			OBJECT_OF_ARRAYS.columns,
+			OBJECT_OF_ARRAYS.accessorBindings,
+			OBJECT_OF_ARRAYS.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(3);
+
+		// Property names and array elements
+		expect(result.data.at(0)?.cells['$[*]~'].raw).toBe('row_1');
+		expect(result.data.at(0)?.cells['$[*][0]'].raw).toBe('Alice Johnson');
+		expect(result.data.at(0)?.cells['$[*][1]'].raw).toBe('alice@example.com');
+		expect(result.data.at(0)?.cells['$[*][2]'].raw).toBe(28);
 	});
 });

@@ -1061,7 +1061,7 @@ export interface SearchAffordance {
  */
 export interface DataTableColumn {
 	/**
-	 * JSONPath accessor referencing a field in accessor_bindings (must start with `$`). Examples: '$.name', '$.user.email', '$.metadata.created_at'
+	 * JSONPath column accessor with wildcard notation (must start with `$` and include `[*]`). Examples: '$[*].name' (object property), '$[*][0]' (array index), '$[*].user.email' (nested property), '$[*]~' (object keys)
 	 */
 	accessor: string;
 	/**
