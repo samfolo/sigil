@@ -29,9 +29,15 @@ interface ComponentBuilderRegistry {
  */
 export const componentBuilders: ComponentBuilderRegistry = {
 	'data-table': new DataTableBuilder(),
-	'hierarchy': null as never, // TODO: Implement HierarchyBuilder
-	'composition': null as never, // TODO: Implement CompositionBuilder
-	'text-insight': null as never, // TODO: Implement TextInsightBuilder
+	get 'hierarchy'(): never {
+		throw new Error('HierarchyBuilder not yet implemented');
+	},
+	get 'composition'(): never {
+		throw new Error('CompositionBuilder not yet implemented');
+	},
+	get 'text-insight'(): never {
+		throw new Error('TextInsightBuilder not yet implemented');
+	},
 };
 
 /**

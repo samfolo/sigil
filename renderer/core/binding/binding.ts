@@ -108,13 +108,18 @@ export const bindTabularData = (
 	// Dispatch to appropriate binding strategy based on data structure
 	if (Array.isArray(data)) {
 		// Detect CSV array-of-arrays vs array-of-objects
-		const hasIndexAccessors = columns.some(col => /^\$\[\*\]\[\d+\]$/.test(col.id));
+		// Array-of-arrays: ALL columns have index accessor immediately after wildcard
+		// Supports: $[*][0], $[*][1], $[*][0].property (array of arrays of objects)
+		const allColumnsHaveIndexAccessors = columns.every(col =>
+			/\$\[\*\]\[\d+\]/.test(col.id)
+		);
 
-		if (hasIndexAccessors) {
+		if (allColumnsHaveIndexAccessors) {
 			// CSV array-of-arrays: column-oriented (preserves structure)
 			return bindArrayOfArrays(data, columns, accessorBindings, pathContext);
 		} else {
 			// Array-of-objects: row-oriented (handles missing properties)
+			// Supports: $[*].name, $[*].user.email, $[*].items[0] (nested arrays)
 			return bindArrayOfObjects(data, columns, accessorBindings, pathContext);
 		}
 	} else if (isRecord(data)) {

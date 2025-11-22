@@ -830,3 +830,50 @@ export const OBJECT_OF_ARRAYS = {
 	pathContext: ['$'],
 	expectedResult: 'Object-of-arrays should support both property name column and positional array access',
 };
+
+/**
+ * 23. Array-of-arrays with object properties - mixed accessor pattern
+ *
+ * Tests the pattern $[*][N].property where array elements are objects.
+ * This verifies that the regex correctly identifies this as array-of-arrays binding
+ * while supporting property access on the nested objects.
+ */
+export const ARRAY_OF_ARRAYS_WITH_OBJECTS = {
+	data: [
+		['Product', 'Details', 'Status'], // Header row
+		[{name: 'Laptop', sku: 'LAP-001'}, {description: 'High-performance laptop', price: 1299.99}, {active: true, stock: 5}],
+		[{name: 'Mouse', sku: 'MOU-001'}, {description: 'Wireless mouse', price: 29.99}, {active: true, stock: 50}],
+		[{name: 'Keyboard', sku: 'KEY-001'}, {description: 'Mechanical keyboard', price: 129.99}, {active: false, stock: 0}],
+	],
+	columns: [
+		{id: '$[*][0].name', label: 'Product Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][0].sku', label: 'SKU', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*][1].price', label: 'Price', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*][2].active', label: 'Status', dataType: 'boolean', alignment: 'center' as const},
+	],
+	accessorBindings: {
+		'$[*][0].name': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*][0].sku': {
+			data_types: ['string' as const],
+			roles: ['identifier'],
+		},
+		'$[*][1].price': {
+			data_types: ['number' as const],
+			roles: ['value'],
+			format: '$0,0.00',
+		},
+		'$[*][2].active': {
+			data_types: ['boolean' as const],
+			roles: ['categorical'],
+			value_mappings: {
+				'true': {display_value: 'Active'},
+				'false': {display_value: 'Inactive'},
+			},
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: ['$'],
+	expectedResult: 'Array-of-arrays with nested objects should support mixed accessor patterns like $[*][0].property',
+};

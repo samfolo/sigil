@@ -18,6 +18,7 @@ import {isErr, isOk} from '@sigil/src/common/errors/result';
 import {bindTabularData} from './binding';
 import {
 	ALL_COLUMNS_UNDEFINED,
+	ARRAY_OF_ARRAYS_WITH_OBJECTS,
 	COMPLEX_VALUE_MAPPINGS,
 	CSV_ARRAY_OF_ARRAYS_BASIC,
 	CSV_ARRAY_OF_ARRAYS_EMPTY,
@@ -613,6 +614,38 @@ describe('bindTabularData - CSV array-of-arrays binding', () => {
 		// Second row with null email
 		expect(result.data.at(1)?.cells['$[*][1]'].raw).toBeNull();
 		expect(result.data.at(1)?.cells['$[*][1]'].display).toBe('');
+	});
+
+	it('should bind array-of-arrays with nested object properties', () => {
+		const result = bindTabularData(
+			ARRAY_OF_ARRAYS_WITH_OBJECTS.data,
+			ARRAY_OF_ARRAYS_WITH_OBJECTS.columns,
+			ARRAY_OF_ARRAYS_WITH_OBJECTS.accessorBindings,
+			ARRAY_OF_ARRAYS_WITH_OBJECTS.pathContext
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		// Should have 3 data rows (header row skipped)
+		expect(result.data).toHaveLength(3);
+
+		// First row - verify mixed accessor pattern $[*][N].property
+		expect(result.data.at(0)?.cells['$[*][0].name'].raw).toBe('Laptop');
+		expect(result.data.at(0)?.cells['$[*][0].sku'].raw).toBe('LAP-001');
+		expect(result.data.at(0)?.cells['$[*][1].price'].raw).toBe(1299.99);
+		expect(result.data.at(0)?.cells['$[*][2].active'].raw).toBe(true);
+		expect(result.data.at(0)?.cells['$[*][2].active'].display).toBe('Active');
+
+		// Second row
+		expect(result.data.at(1)?.cells['$[*][0].name'].raw).toBe('Mouse');
+		expect(result.data.at(1)?.cells['$[*][1].price'].raw).toBe(29.99);
+
+		// Third row - inactive product
+		expect(result.data.at(2)?.cells['$[*][0].name'].raw).toBe('Keyboard');
+		expect(result.data.at(2)?.cells['$[*][2].active'].display).toBe('Inactive');
 	});
 });
 

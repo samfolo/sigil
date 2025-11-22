@@ -29,7 +29,8 @@ export const hasWildcardAccessor = (accessor: string): boolean => accessor.inclu
 /**
  * Detects if data represents CSV with header row
  *
- * CSV data is array-of-arrays where first element contains column headers
+ * CSV data is array-of-arrays where first element contains column headers.
+ * Matches patterns like $[*][0], $[*][1], and $[*][0].property
  *
  * @param data - Raw data
  * @param columns - Column definitions with accessors
@@ -38,7 +39,7 @@ export const hasWildcardAccessor = (accessor: string): boolean => accessor.inclu
 export const isCSVWithHeader = (data: unknown, columns: Column[]): boolean => Array.isArray(data) &&
 		data.length > 0 &&
 		Array.isArray(data[0]) &&
-		columns.some(col => /^\$\[\*\]\[\d+\]$/.test(col.id));
+		columns.some(col => /\$\[\*\]\[\d+\]/.test(col.id));
 
 /**
  * Converts wildcard accessor to row-level accessor
