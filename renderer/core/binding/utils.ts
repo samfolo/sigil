@@ -2,13 +2,21 @@
  * Utility functions for data binding
  */
 
+import type {SpecError} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import type {Result} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors';
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {Column} from '../types';
 import {stringifyCellValue} from '../utils/stringifyCellValue';
+
+/**
+ * Type guard to check if value is a Record<string, unknown>
+ *
+ * @param value - Value to check
+ * @returns True if value is a non-null object
+ */
+export const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * Checks if accessor contains wildcard notation
@@ -27,12 +35,10 @@ export const hasWildcardAccessor = (accessor: string): boolean => accessor.inclu
  * @param columns - Column definitions with accessors
  * @returns True if data is CSV with header row pattern
  */
-export const isCSVWithHeader = (data: unknown, columns: Column[]): boolean => {
-	return Array.isArray(data) &&
+export const isCSVWithHeader = (data: unknown, columns: Column[]): boolean => Array.isArray(data) &&
 		data.length > 0 &&
 		Array.isArray(data[0]) &&
 		columns.some(col => /^\$\[\*\]\[\d+\]$/.test(col.id));
-};
 
 /**
  * Converts wildcard accessor to row-level accessor

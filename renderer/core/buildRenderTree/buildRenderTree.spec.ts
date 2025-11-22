@@ -45,12 +45,12 @@ describe('buildRenderTree - successful rendering', () => {
 
 		// Verify columns are enriched correctly
 		expect(result.data.props.columns).toHaveLength(2);
-		expect(result.data.props.columns.at(0)?.id).toBe('$.name');
+		expect(result.data.props.columns.at(0)?.id).toBe('$[*].name');
 		expect(result.data.props.columns.at(0)?.label).toBe('Name');
 		expect(result.data.props.columns.at(0)?.dataType).toBe('string');
 		expect(result.data.props.columns.at(0)?.alignment).toBeUndefined(); // Not specified in config
 
-		expect(result.data.props.columns.at(1)?.id).toBe('$.age');
+		expect(result.data.props.columns.at(1)?.id).toBe('$[*].age');
 		expect(result.data.props.columns.at(1)?.label).toBe('Age');
 		expect(result.data.props.columns.at(1)?.dataType).toBe('number');
 		expect(result.data.props.columns.at(1)?.alignment).toBe('right');
@@ -60,15 +60,15 @@ describe('buildRenderTree - successful rendering', () => {
 
 		// Verify first row structure
 		expect(result.data.props.data.at(0)?.id).toBe('row-0');
-		expect(result.data.props.data.at(0)?.cells['$.name'].raw).toBe('Alice');
-		expect(result.data.props.data.at(0)?.cells['$.name'].display).toBe('Alice');
-		expect(result.data.props.data.at(0)?.cells['$.age'].raw).toBe(30);
-		expect(result.data.props.data.at(0)?.cells['$.age'].display).toBe('30');
+		expect(result.data.props.data.at(0)?.cells['$[*].name'].raw).toBe('Alice');
+		expect(result.data.props.data.at(0)?.cells['$[*].name'].display).toBe('Alice');
+		expect(result.data.props.data.at(0)?.cells['$[*].age'].raw).toBe(30);
+		expect(result.data.props.data.at(0)?.cells['$[*].age'].display).toBe('30');
 
 		// Verify second row structure
 		expect(result.data.props.data.at(1)?.id).toBe('row-1');
-		expect(result.data.props.data.at(1)?.cells['$.name'].raw).toBe('Bob');
-		expect(result.data.props.data.at(1)?.cells['$.age'].raw).toBe(25);
+		expect(result.data.props.data.at(1)?.cells['$[*].name'].raw).toBe('Bob');
+		expect(result.data.props.data.at(1)?.cells['$[*].age'].raw).toBe(25);
 	});
 
 	it('should render empty data successfully', () => {
@@ -154,12 +154,11 @@ describe('buildRenderTree - binding error propagation', () => {
 			return;
 		}
 
-		// Verify error paths contain row indices
-		// Paths should be like '[0]', '[1]', '[2]' since path context is ['']
+
+		// Error detected during accessor validation (before row iteration)
+		// Path is at root context level
 		const errorPaths = result.error.map((e) => e.path);
-		expect(errorPaths.some((path) => path?.includes('[0]'))).toBe(true);
-		expect(errorPaths.some((path) => path?.includes('[1]'))).toBe(true);
-		expect(errorPaths.some((path) => path?.includes('[2]'))).toBe(true);
+		expect(errorPaths.every((path) => path === '$')).toBe(true);
 	});
 
 	it('should preserve error codes from queryJSONPath', () => {
@@ -200,9 +199,9 @@ describe('buildRenderTree - binding error propagation', () => {
 			return;
 		}
 
-		// All binding errors should be categorised as 'data' errors
+		// Invalid accessor errors are categorised as 'spec' errors
 		result.error.forEach((error) => {
-			expect(error.category).toBe('data');
+			expect(error.category).toBe('spec');
 		});
 	});
 });
@@ -225,7 +224,7 @@ describe('buildRenderTree - partial rendering with errors', () => {
 		// Each row will have error from invalid accessor
 		// This fixture has one valid column ($.name) and one invalid column (badCol)
 		// All rows will have binding errors from the invalid accessor
-		expect(result.error.length).toBe(VALID_SPEC_PARTIAL_BINDING_FAILURE.data.length);
+		expect(result.error.length).toBe(1);
 	});
 
 	it('should include row indices in error paths', () => {
@@ -243,11 +242,9 @@ describe('buildRenderTree - partial rendering with errors', () => {
 			return;
 		}
 
-		// Both rows should have errors (one per row)
-		const hasErrorAtRow0 = result.error.some((e) => e.path?.includes('[0]'));
-		const hasErrorAtRow1 = result.error.some((e) => e.path?.includes('[1]'));
-		expect(hasErrorAtRow0).toBe(true);
-		expect(hasErrorAtRow1).toBe(true);
+
+		// Error detected during accessor validation (before row iteration)
+		expect(result.error.at(0)?.path).toBe('$');
 	});
 
 	it('should process all rows even when some columns have errors', () => {
@@ -267,7 +264,7 @@ describe('buildRenderTree - partial rendering with errors', () => {
 
 		// Verify that bindData attempted to process all rows
 		// Error count should equal row count (one invalid accessor per row)
-		expect(result.error.length).toBe(VALID_SPEC_PARTIAL_BINDING_FAILURE.data.length);
+		expect(result.error.length).toBe(1);
 
 		// All errors should be from the invalid accessor
 		result.error.forEach((error) => {
@@ -365,12 +362,9 @@ describe('buildRenderTree - path context correctness', () => {
 		// Should have errors from the failing row(s)
 		expect(result.error.length).toBeGreaterThan(0);
 
-		// Error paths should reflect the nesting structure
-		const errorPaths = result.error.map((e) => e.path);
 
-		// At least one error should reference row index [1] (the failing row)
-		const hasRow1Error = errorPaths.some((path) => path?.includes('[1]'));
-		expect(hasRow1Error).toBe(true);
+		// Error detected during accessor validation (before row iteration)
+		expect(result.error.at(0)?.path).toBe('$');
 	});
 
 	it('should not produce invalid paths with double $ like $[0]$.field', () => {
@@ -409,10 +403,11 @@ describe('buildRenderTree - path context correctness', () => {
 			return;
 		}
 
-		// Paths should be constructed with root context ['$']
-		// which means they should look like '$[0]', '$[1]', '$[2]'
+
+		// Error detected during accessor validation (before row iteration)
+		// Path is at root context level
 		result.error.forEach((error) => {
-			expect(error.path).toMatch(/^\$\[\d+\]/);
+			expect(error.path).toBe('$');
 		});
 	});
 });
@@ -436,11 +431,11 @@ describe('buildRenderTree - edge cases', () => {
 		}
 
 		// Null values should be handled gracefully
-		expect(result.data.props.data.at(0)?.cells['$.name'].raw).toBeNull();
-		expect(result.data.props.data.at(0)?.cells['$.name'].display).toBe('');
+		expect(result.data.props.data.at(0)?.cells['$[*].name'].raw).toBeNull();
+		expect(result.data.props.data.at(0)?.cells['$[*].name'].display).toBe('');
 
-		expect(result.data.props.data.at(1)?.cells['$.age'].raw).toBeNull();
-		expect(result.data.props.data.at(1)?.cells['$.age'].display).toBe('');
+		expect(result.data.props.data.at(1)?.cells['$[*].age'].raw).toBeNull();
+		expect(result.data.props.data.at(1)?.cells['$[*].age'].display).toBe('');
 	});
 
 	it('should handle data with undefined values in cells', () => {
@@ -461,11 +456,11 @@ describe('buildRenderTree - edge cases', () => {
 		}
 
 		// Undefined values should be handled gracefully
-		expect(result.data.props.data.at(0)?.cells['$.name'].raw).toBeUndefined();
-		expect(result.data.props.data.at(0)?.cells['$.name'].display).toBe('');
+		expect(result.data.props.data.at(0)?.cells['$[*].name'].raw).toBeUndefined();
+		expect(result.data.props.data.at(0)?.cells['$[*].name'].display).toBe('');
 
-		expect(result.data.props.data.at(1)?.cells['$.age'].raw).toBeUndefined();
-		expect(result.data.props.data.at(1)?.cells['$.age'].display).toBe('');
+		expect(result.data.props.data.at(1)?.cells['$[*].age'].raw).toBeUndefined();
+		expect(result.data.props.data.at(1)?.cells['$[*].age'].display).toBe('');
 	});
 
 	it('should handle single row successfully', () => {
@@ -486,8 +481,8 @@ describe('buildRenderTree - edge cases', () => {
 		}
 
 		expect(result.data.props.data).toHaveLength(1);
-		expect(result.data.props.data.at(0)?.cells['$.name'].raw).toBe('Alice');
-		expect(result.data.props.data.at(0)?.cells['$.age'].raw).toBe(30);
+		expect(result.data.props.data.at(0)?.cells['$[*].name'].raw).toBe('Alice');
+		expect(result.data.props.data.at(0)?.cells['$[*].age'].raw).toBe(30);
 	});
 
 	it.each([

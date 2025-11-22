@@ -53,11 +53,11 @@ export const VALID_SPEC_VALID_DATA = {
 						description: 'List of users',
 						columns: [
 							{
-								accessor: '$.name',
+								accessor: '$[*].name',
 								label: 'Name',
 							},
 							{
-								accessor: '$.age',
+								accessor: '$[*].age',
 								label: 'Age',
 								alignment: 'right' as const,
 							},
@@ -68,11 +68,11 @@ export const VALID_SPEC_VALID_DATA = {
 			},
 			accessor_bindings: {
 				'users-table': {
-					'$.name': {
+					'$[*].name': {
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
-					'$.age': {
+					'$[*].age': {
 						roles: ['value'],
 						data_types: ['number' as const],
 					},
@@ -124,7 +124,7 @@ export const VALID_SPEC_PARTIAL_BINDING_FAILURE = {
 						title: 'Mixed Columns',
 						columns: [
 							{
-								accessor: '$.name', // Valid
+								accessor: '$[*].name', // Valid
 								label: 'Name',
 							},
 							{
@@ -138,7 +138,7 @@ export const VALID_SPEC_PARTIAL_BINDING_FAILURE = {
 			},
 			accessor_bindings: {
 				'mixed-table': {
-					'$.name': {
+					'$[*].name': {
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
@@ -254,7 +254,7 @@ export const SPEC_ERROR_AND_BINDING_ERROR = {
 						title: 'Users',
 						columns: [
 							{
-								accessor: '$.name',
+								accessor: '$[*].name',
 								label: 'Name',
 							},
 						],
@@ -264,7 +264,7 @@ export const SPEC_ERROR_AND_BINDING_ERROR = {
 			},
 			accessor_bindings: {
 				'actual-component': {
-					'$.name': {
+					'$[*].name': {
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
@@ -313,7 +313,7 @@ export const NESTED_DATA_MIXED_SUCCESS = {
 						title: 'Nested Data',
 						columns: [
 							{
-								accessor: '$.company.department.name', // Valid
+								accessor: '$[*].company.department.name', // Valid
 								label: 'Department',
 							},
 							{
@@ -327,7 +327,7 @@ export const NESTED_DATA_MIXED_SUCCESS = {
 			},
 			accessor_bindings: {
 				'nested-table': {
-					'$.company.department.name': {
+					'$[*].company.department.name': {
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
@@ -383,11 +383,11 @@ export const EMPTY_DATA = {
 						title: 'Empty',
 						columns: [
 							{
-								accessor: '$.name',
+								accessor: '$[*].name',
 								label: 'Name',
 							},
 							{
-								accessor: '$.value',
+								accessor: '$[*].value',
 								label: 'Value',
 								alignment: 'right' as const,
 							},
@@ -398,11 +398,11 @@ export const EMPTY_DATA = {
 			},
 			accessor_bindings: {
 				'empty-table': {
-					'$.name': {
+					'$[*].name': {
 						roles: ['label'],
 						data_types: ['string' as const],
 					},
-					'$.value': {
+					'$[*].value': {
 						roles: ['value'],
 						data_types: ['number' as const],
 					},
@@ -427,13 +427,13 @@ export const EXPECTED_VALID_RENDER_TREE: RenderTree = {
 		description: 'List of users',
 		columns: [
 			{
-				id: '$.name',
+				id: '$[*].name',
 				label: 'Name',
 				dataType: 'string',
 				alignment: undefined,
 			},
 			{
-				id: '$.age',
+				id: '$[*].age',
 				label: 'Age',
 				dataType: 'number',
 				alignment: 'right',
@@ -443,13 +443,13 @@ export const EXPECTED_VALID_RENDER_TREE: RenderTree = {
 			{
 				id: 'row-0',
 				cells: {
-					'$.name': {
+					'$[*].name': {
 						raw: 'Alice',
 						display: 'Alice',
 						dataType: 'string',
 						format: undefined,
 					},
-					'$.age': {
+					'$[*].age': {
 						raw: 30,
 						display: '30',
 						dataType: 'number',
@@ -460,13 +460,13 @@ export const EXPECTED_VALID_RENDER_TREE: RenderTree = {
 			{
 				id: 'row-1',
 				cells: {
-					'$.name': {
+					'$[*].name': {
 						raw: 'Bob',
 						display: 'Bob',
 						dataType: 'string',
 						format: undefined,
 					},
-					'$.age': {
+					'$[*].age': {
 						raw: 25,
 						display: '25',
 						dataType: 'number',

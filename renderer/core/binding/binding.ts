@@ -21,7 +21,7 @@ import type {Column, Row} from '../types';
 import {bindArrayOfArrays} from './bindArrayOfArrays';
 import {bindArrayOfObjects} from './bindArrayOfObjects';
 import {bindObjectBased} from './bindObjectBased';
-import {hasWildcardAccessor} from './utils';
+import {hasWildcardAccessor, isRecord} from './utils';
 
 /**
  * Extracts column definitions from DataTableColumn configs
@@ -117,7 +117,7 @@ export const bindTabularData = (
 			// Array-of-objects: row-oriented (handles missing properties)
 			return bindArrayOfObjects(data, columns, accessorBindings, pathContext);
 		}
-	} else if (typeof data === 'object' && data !== null) {
+	} else if (isRecord(data)) {
 		// Object-based (object-of-objects, object-of-arrays): row-oriented
 		return bindObjectBased(data, columns, accessorBindings, pathContext);
 	}

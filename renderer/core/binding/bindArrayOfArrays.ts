@@ -2,9 +2,9 @@
  * Row-oriented binding strategy for CSV array-of-arrays data
  */
 
+import type {SpecError} from '@sigil/src/common/errors';
 import {err, isErr, ok} from '@sigil/src/common/errors/result';
 import type {Result} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors';
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {CellValue, Column, Row} from '../types';

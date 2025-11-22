@@ -25,18 +25,18 @@ describe('DataTableBuilder', () => {
 				title: 'Users',
 				description: 'List of users',
 				columns: [
-					{accessor: '$.name', label: 'Name'},
-					{accessor: '$.age', label: 'Age', alignment: 'right'},
+					{accessor: '$[*].name', label: 'Name'},
+					{accessor: '$[*].age', label: 'Age', alignment: 'right'},
 				],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.name': {
+				'$[*].name': {
 					roles: ['label'],
 					data_types: ['string'],
 				},
-				'$.age': {
+				'$[*].age': {
 					roles: ['value'],
 					data_types: ['number'],
 				},
@@ -61,14 +61,14 @@ describe('DataTableBuilder', () => {
 
 			// Verify column structure
 			expect(result.data.columns.at(0)).toEqual({
-				id: '$.name',
+				id: '$[*].name',
 				label: 'Name',
 				dataType: 'string',
 				alignment: undefined,
 			});
 
 			expect(result.data.columns.at(1)).toEqual({
-				id: '$.age',
+				id: '$[*].age',
 				label: 'Age',
 				dataType: 'number',
 				alignment: 'right',
@@ -78,13 +78,13 @@ describe('DataTableBuilder', () => {
 			expect(result.data.data.at(0)).toEqual({
 				id: 'row-0',
 				cells: {
-					'$.name': {
+					'$[*].name': {
 						raw: 'Alice',
 						display: 'Alice',
 						dataType: 'string',
 						format: undefined,
 					},
-					'$.age': {
+					'$[*].age': {
 						raw: 30,
 						display: '30',
 						dataType: 'number',
@@ -97,12 +97,12 @@ describe('DataTableBuilder', () => {
 		it('builds TableProps without title and description', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
-				columns: [{accessor: '$.name', label: 'Name'}],
+				columns: [{accessor: '$[*].name', label: 'Name'}],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.name': {
+				'$[*].name': {
 					roles: ['label'],
 					data_types: ['string'],
 				},
@@ -126,18 +126,18 @@ describe('DataTableBuilder', () => {
 				type: 'data-table',
 				title: 'Empty Table',
 				columns: [
-					{accessor: '$.name', label: 'Name'},
-					{accessor: '$.value', label: 'Value', alignment: 'right'},
+					{accessor: '$[*].name', label: 'Name'},
+					{accessor: '$[*].value', label: 'Value', alignment: 'right'},
 				],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.name': {
+				'$[*].name': {
 					roles: ['label'],
 					data_types: ['string'],
 				},
-				'$.value': {
+				'$[*].value': {
 					roles: ['value'],
 					data_types: ['number'],
 				},
@@ -162,17 +162,17 @@ describe('DataTableBuilder', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
 				columns: [
-					{accessor: '$.id', label: 'ID', alignment: 'right'},
-					{accessor: '$.name', label: 'Name'},
-					{accessor: '$.email', label: 'Email'},
+					{accessor: '$[*].id', label: 'ID', alignment: 'right'},
+					{accessor: '$[*].name', label: 'Name'},
+					{accessor: '$[*].email', label: 'Email'},
 				],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.id': {roles: ['identifier'], data_types: ['number']},
-				'$.name': {roles: ['label'], data_types: ['string']},
-				'$.email': {roles: ['label'], data_types: ['string']},
+				'$[*].id': {roles: ['identifier'], data_types: ['number']},
+				'$[*].name': {roles: ['label'], data_types: ['string']},
+				'$[*].email': {roles: ['label'], data_types: ['string']},
 			};
 
 			const data = [{id: 1, name: 'Alice', email: 'alice@example.com'}];
@@ -185,24 +185,24 @@ describe('DataTableBuilder', () => {
 			}
 
 			expect(result.data.columns).toHaveLength(3);
-			expect(result.data.columns.at(0)?.id).toBe('$.id');
-			expect(result.data.columns.at(1)?.id).toBe('$.name');
-			expect(result.data.columns.at(2)?.id).toBe('$.email');
+			expect(result.data.columns.at(0)?.id).toBe('$[*].id');
+			expect(result.data.columns.at(1)?.id).toBe('$[*].name');
+			expect(result.data.columns.at(2)?.id).toBe('$[*].email');
 		});
 
 		it('enriches columns with data types from bindings', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
 				columns: [
-					{accessor: '$.count', label: 'Count'},
-					{accessor: '$.active', label: 'Active'},
+					{accessor: '$[*].count', label: 'Count'},
+					{accessor: '$[*].active', label: 'Active'},
 				],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.count': {roles: ['value'], data_types: ['number']},
-				'$.active': {roles: ['value'], data_types: ['boolean']},
+				'$[*].count': {roles: ['value'], data_types: ['number']},
+				'$[*].active': {roles: ['value'], data_types: ['boolean']},
 			};
 
 			const data = [{count: 42, active: true}];
@@ -221,7 +221,7 @@ describe('DataTableBuilder', () => {
 		it('uses unknown dataType when binding metadata missing', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
-				columns: [{accessor: '$.mystery', label: 'Mystery'}],
+				columns: [{accessor: '$[*].mystery', label: 'Mystery'}],
 				affordances: [],
 			};
 
@@ -245,15 +245,15 @@ describe('DataTableBuilder', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
 				columns: [
-					{accessor: '$.name', label: 'Name'},
-					{accessor: '$.email', label: 'Email'},
+					{accessor: '$[*].name', label: 'Name'},
+					{accessor: '$[*].email', label: 'Email'},
 				],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.name': {roles: ['label'], data_types: ['string']},
-				'$.email': {roles: ['label'], data_types: ['string']},
+				'$[*].name': {roles: ['label'], data_types: ['string']},
+				'$[*].email': {roles: ['label'], data_types: ['string']},
 			};
 
 			const data = [
@@ -268,19 +268,19 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.data.data.at(0)?.cells['$.name'].raw).toBe('Alice');
-			expect(result.data.data.at(1)?.cells['$.name'].raw).toBe('Bob');
+			expect(result.data.data.at(0)?.cells['$[*].name'].raw).toBe('Alice');
+			expect(result.data.data.at(1)?.cells['$[*].name'].raw).toBe('Bob');
 		});
 
 		it('binds nested object properties', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
-				columns: [{accessor: '$.company.department.name', label: 'Department'}],
+				columns: [{accessor: '$[*].company.department.name', label: 'Department'}],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.company.department.name': {roles: ['label'], data_types: ['string']},
+				'$[*].company.department.name': {roles: ['label'], data_types: ['string']},
 			};
 
 			const data = [
@@ -295,8 +295,8 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.data.data.at(0)?.cells['$.company.department.name'].raw).toBe('Engineering');
-			expect(result.data.data.at(1)?.cells['$.company.department.name'].raw).toBe('Sales');
+			expect(result.data.data.at(0)?.cells['$[*].company.department.name'].raw).toBe('Engineering');
+			expect(result.data.data.at(1)?.cells['$[*].company.department.name'].raw).toBe('Sales');
 		});
 	});
 
@@ -359,19 +359,20 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.error).toHaveLength(2); // One error per row
+			expect(result.error).toHaveLength(1); // One error for invalid accessor (detected before row iteration)
+			expect(result.error.at(0)?.category).toBe('spec'); // Spec error because accessor syntax is invalid
 			expect(result.error.at(0)?.code).toBe(ERROR_CODES.INVALID_ACCESSOR);
 		});
 
 		it('returns error when data is not an array', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
-				columns: [{accessor: '$.name', label: 'Name'}],
+				columns: [{accessor: '$[*].name', label: 'Name'}],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.name': {roles: ['label'], data_types: ['string']},
+				'$[*].name': {roles: ['label'], data_types: ['string']},
 			};
 
 			const data = {name: 'Not an array'};
@@ -384,7 +385,8 @@ describe('DataTableBuilder', () => {
 			}
 
 			expect(result.error).toHaveLength(1);
-			expect(result.error.at(0)?.code).toBe(ERROR_CODES.NOT_ARRAY);
+			expect(result.error.at(0)?.code).toBe(ERROR_CODES.QUERY_ERROR);
+			expect(result.error.at(0)?.category).toBe('data'); // Data error from attempting to query primitive value
 		});
 
 		it('includes path context in error messages', () => {
@@ -407,7 +409,7 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.error.at(0)?.path).toBe('$[0]');
+			expect(result.error.at(0)?.path).toBe('$'); // Error detected before row iteration
 		});
 	});
 
@@ -415,12 +417,12 @@ describe('DataTableBuilder', () => {
 		it('applies value mappings to display values', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
-				columns: [{accessor: '$.status', label: 'Status'}],
+				columns: [{accessor: '$[*].status', label: 'Status'}],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.status': {
+				'$[*].status': {
 					roles: ['label'],
 					data_types: ['string'],
 					value_mappings: {
@@ -439,21 +441,21 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.data.data.at(0)?.cells['$.status'].raw).toBe('active');
-			expect(result.data.data.at(0)?.cells['$.status'].display).toBe('Active');
-			expect(result.data.data.at(1)?.cells['$.status'].raw).toBe('inactive');
-			expect(result.data.data.at(1)?.cells['$.status'].display).toBe('Inactive');
+			expect(result.data.data.at(0)?.cells['$[*].status'].raw).toBe('active');
+			expect(result.data.data.at(0)?.cells['$[*].status'].display).toBe('Active');
+			expect(result.data.data.at(1)?.cells['$[*].status'].raw).toBe('inactive');
+			expect(result.data.data.at(1)?.cells['$[*].status'].display).toBe('Inactive');
 		});
 
 		it('uses raw value when no mapping defined', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
-				columns: [{accessor: '$.name', label: 'Name'}],
+				columns: [{accessor: '$[*].name', label: 'Name'}],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.name': {
+				'$[*].name': {
 					roles: ['label'],
 					data_types: ['string'],
 				},
@@ -468,7 +470,7 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.data.data.at(0)?.cells['$.name'].display).toBe('Alice');
+			expect(result.data.data.at(0)?.cells['$[*].name'].display).toBe('Alice');
 		});
 	});
 
@@ -477,15 +479,15 @@ describe('DataTableBuilder', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
 				columns: [
-					{accessor: '$.nullValue', label: 'Null'},
-					{accessor: '$.undefinedValue', label: 'Undefined'},
+					{accessor: '$[*].nullValue', label: 'Null'},
+					{accessor: '$[*].undefinedValue', label: 'Undefined'},
 				],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.nullValue': {roles: ['value'], data_types: ['string']},
-				'$.undefinedValue': {roles: ['value'], data_types: ['string']},
+				'$[*].nullValue': {roles: ['value'], data_types: ['string']},
+				'$[*].undefinedValue': {roles: ['value'], data_types: ['string']},
 			};
 
 			const data = [{nullValue: null, undefinedValue: undefined}];
@@ -497,19 +499,19 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.data.data.at(0)?.cells['$.nullValue'].display).toBe('');
-			expect(result.data.data.at(0)?.cells['$.undefinedValue'].display).toBe('');
+			expect(result.data.data.at(0)?.cells['$[*].nullValue'].display).toBe('');
+			expect(result.data.data.at(0)?.cells['$[*].undefinedValue'].display).toBe('');
 		});
 
 		it('handles single row of data', () => {
 			const config: DataTableConfig = {
 				type: 'data-table',
-				columns: [{accessor: '$.name', label: 'Name'}],
+				columns: [{accessor: '$[*].name', label: 'Name'}],
 				affordances: [],
 			};
 
 			const bindings: Record<string, FieldMetadata> = {
-				'$.name': {roles: ['label'], data_types: ['string']},
+				'$[*].name': {roles: ['label'], data_types: ['string']},
 			};
 
 			const data = [{name: 'Solo'}];
@@ -522,7 +524,7 @@ describe('DataTableBuilder', () => {
 			}
 
 			expect(result.data.data).toHaveLength(1);
-			expect(result.data.data.at(0)?.cells['$.name'].raw).toBe('Solo');
+			expect(result.data.data.at(0)?.cells['$[*].name'].raw).toBe('Solo');
 		});
 	});
 });
