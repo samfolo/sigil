@@ -2,6 +2,9 @@
  * Utility functions for data binding
  */
 
+import {isErr} from '@sigil/src/common/errors/result';
+import type {Result} from '@sigil/src/common/errors/result';
+import type {SpecError} from '@sigil/src/common/errors';
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import type {Column} from '../types';
@@ -24,7 +27,7 @@ export const hasWildcardAccessor = (accessor: string): boolean => accessor.inclu
  * @param columns - Column definitions with accessors
  * @returns True if data is CSV with header row pattern
  */
-export const isCsvWithHeader = (data: unknown, columns: Column[]): boolean => {
+export const isCSVWithHeader = (data: unknown, columns: Column[]): boolean => {
 	return Array.isArray(data) &&
 		data.length > 0 &&
 		Array.isArray(data[0]) &&
@@ -43,6 +46,39 @@ export const isCsvWithHeader = (data: unknown, columns: Column[]): boolean => {
  * @returns Row-level accessor
  */
 export const convertWildcardToRowAccessor = (accessor: string): string => accessor.replace(/^\$\[\*\]/, '$');
+
+/**
+ * Enriches query errors with path context
+ *
+ * Extracts errors from failed query result and enriches them with full path context.
+ * Path format depends on row identifier type:
+ * - Array index: `pathContext[rowIndex].fieldPath`
+ * - Object key: `pathContext['keyName'].fieldPath`
+ *
+ * @param result - Query result (ok or error)
+ * @param pathContext - Base path context segments
+ * @param rowIdentifier - Row identifier (array index or object key)
+ * @returns Enriched errors array (empty if result is ok)
+ */
+export const enrichQueryErrors = (
+	result: Result<unknown, SpecError[]>,
+	pathContext: string[],
+	rowIdentifier: string | number,
+): SpecError[] => {
+	if (!isErr(result)) {
+		return [];
+	}
+
+	// Format row path based on identifier type
+	const rowPath = typeof rowIdentifier === 'string'
+		? `['${rowIdentifier}']`  // Object key: ['user_123']
+		: `[${rowIdentifier}]`;   // Array index: [0]
+
+	return result.error.map((error) => ({
+		...error,
+		path: pathContext.join('') + rowPath + (error.path?.startsWith('$') ? error.path.slice(1) : error.path || ''),
+	}));
+};
 
 /**
  * Applies value mapping transformation if defined in FieldMetadata

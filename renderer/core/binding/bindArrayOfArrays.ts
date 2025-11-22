@@ -10,7 +10,7 @@ import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 import type {CellValue, Column, Row} from '../types';
 import {queryJSONPath} from '../utils/queryJSONPath';
 
-import {applyValueMapping, convertWildcardToRowAccessor, isCsvWithHeader} from './utils';
+import {applyValueMapping, convertWildcardToRowAccessor, enrichQueryErrors, isCSVWithHeader} from './utils';
 
 /**
  * Binds array-of-arrays (CSV) data using row-oriented strategy
@@ -40,7 +40,7 @@ export const bindArrayOfArrays = (
 	const rows: Row[] = [];
 
 	// Detect CSV header row
-	const hasHeader = isCsvWithHeader(data, columns);
+	const hasHeader = isCSVWithHeader(data, columns);
 	const startIndex = hasHeader ? 1 : 0;
 	const dataRowCount = hasHeader ? Math.max(0, data.length - 1) : data.length;
 
@@ -59,18 +59,11 @@ export const bindArrayOfArrays = (
 			// Query this specific row
 			const result = queryJSONPath(rowData, rowAccessor);
 
-			let rawValue: unknown;
-			if (isErr(result)) {
-				// Collect errors but continue processing
-				const enrichedErrors = result.error.map((error) => ({
-					...error,
-					path: pathContext.join('') + `[${actualDataIndex}]` + (error.path?.startsWith('$') ? error.path.slice(1) : error.path || ''),
-				}));
-				errors.push(...enrichedErrors);
-				rawValue = undefined;
-			} else {
-				rawValue = result.data;
-			}
+			// Collect errors (continues processing with undefined)
+			const queryErrors = enrichQueryErrors(result, pathContext, actualDataIndex);
+			errors.push(...queryErrors);
+
+			const rawValue = isErr(result) ? undefined : result.data;
 
 			cells[column.id] = {
 				raw: rawValue,

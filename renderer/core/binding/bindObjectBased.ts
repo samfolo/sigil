@@ -10,7 +10,7 @@ import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 import type {CellValue, Column, Row} from '../types';
 import {queryJSONPath} from '../utils/queryJSONPath';
 
-import {applyValueMapping, convertWildcardToRowAccessor} from './utils';
+import {applyValueMapping, convertWildcardToRowAccessor, enrichQueryErrors} from './utils';
 
 /**
  * Binds object-based data (object-of-objects, object-of-arrays) using row-oriented strategy
@@ -53,17 +53,11 @@ export const bindObjectBased = (
 				const rowAccessor = convertWildcardToRowAccessor(column.id);
 				const result = queryJSONPath(rowData, rowAccessor);
 
-				if (isErr(result)) {
-					// Collect errors but continue processing
-					const enrichedErrors = result.error.map((error) => ({
-						...error,
-						path: pathContext.join('') + `['${key}']` + (error.path?.startsWith('$') ? error.path.slice(1) : error.path || ''),
-					}));
-					errors.push(...enrichedErrors);
-					rawValue = undefined;
-				} else {
-					rawValue = result.data;
-				}
+				// Collect errors (continues processing with undefined)
+				const queryErrors = enrichQueryErrors(result, pathContext, key);
+				errors.push(...queryErrors);
+
+				rawValue = isErr(result) ? undefined : result.data;
 			}
 
 			cells[column.id] = {

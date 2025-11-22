@@ -31,7 +31,7 @@ Examples:
 
 ACCESSOR BINDINGS
 
-All tabular accessors must use wildcard notation for column-oriented data extraction.
+All tabular accessors must use wildcard notation. The renderer correctly handles missing values and maintains row alignment across all data structures.
 
 Converting keyFields to column accessors:
 
@@ -49,7 +49,8 @@ CSV data (array-of-arrays or object-of-arrays):
 
 Object keys column:
 - To access object property names, use tilde operator: `$[*]~`
-- Example: for `{user_123: {...}, user_456: {...}}` → accessor `$[*]~` extracts keys
+- Example: for `{user_123: {...}, user_456: {...}}` → accessor `$[*]~` represents the keys column
+- The renderer extracts `['user_123', 'user_456', ...]` for this column
 
 Role heuristics for accessor_bindings:
 - String fields → roles: ["label"]
