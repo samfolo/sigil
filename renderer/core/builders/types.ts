@@ -1,5 +1,5 @@
-import type {Result} from '@sigil/src/common/errors/result';
 import type {SpecError} from '@sigil/src/common/errors';
+import type {Result} from '@sigil/src/common/errors/result';
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 /**
@@ -21,10 +21,10 @@ export interface ComponentBuilder<Config, Props> {
 	 * @param pathContext - JSONPath segments for error context
 	 * @returns Result containing props or accumulated binding errors
 	 */
-	build(
+	build: (
 		config: Config,
 		data: unknown,
 		bindings: Record<string, FieldMetadata>,
 		pathContext: string[]
-	): Result<Props, SpecError[]>;
+	) => Result<Props, SpecError[]>;
 }

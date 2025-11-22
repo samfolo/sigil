@@ -7,30 +7,9 @@ import type {
 } from '@sigil/src/lib/generated/types/specification';
 
 import type {TableProps} from '../types';
-import type {ComponentBuilder} from './types';
-import {DataTableBuilder} from './DataTableBuilder/DataTableBuilder';
 
-/**
- * Maps ComponentType to its configuration and props types
- */
-interface ComponentTypeMap {
-	'data-table': {
-		config: DataTableConfig;
-		props: TableProps;
-	};
-	'hierarchy': {
-		config: HierarchyConfig;
-		props: Record<string, never>;
-	};
-	'composition': {
-		config: CompositionConfig;
-		props: Record<string, never>;
-	};
-	'text-insight': {
-		config: TextInsightConfig;
-		props: Record<string, never>;
-	};
-}
+import {DataTableBuilder} from './dataTable';
+import type {ComponentBuilder} from './types';
 
 /**
  * Registry interface mapping each ComponentType to its specific builder
@@ -71,6 +50,4 @@ export const componentBuilders: ComponentBuilderRegistry = {
  */
 export const getBuilder = <Type extends ComponentType>(
 	type: Type
-): ComponentBuilderRegistry[Type] => {
-	return componentBuilders[type];
-};
+): ComponentBuilderRegistry[Type] => componentBuilders[type];

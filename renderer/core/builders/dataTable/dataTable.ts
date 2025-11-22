@@ -1,10 +1,11 @@
+import type {SpecError} from '@sigil/src/common/errors';
 import {isErr, ok} from '@sigil/src/common/errors/result';
 import type {Result} from '@sigil/src/common/errors/result';
-import type {SpecError} from '@sigil/src/common/errors';
 import type {DataTableConfig, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import {bindTabularData, enrichColumns, extractColumns} from '../../binding';
 import type {TableProps} from '../../types';
+
 import type {ComponentBuilder} from '../types';
 
 /**
