@@ -22,20 +22,20 @@ export const SIMPLE_FLAT_DATA = {
 		{name: 'Carol Williams', age: 42, active: true},
 	],
 	columns: [
-		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
-		{id: '$.age', label: 'Age', dataType: 'number', alignment: 'right' as const},
-		{id: '$.active', label: 'Status', dataType: 'boolean', alignment: 'center' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].age', label: 'Age', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].active', label: 'Status', dataType: 'boolean', alignment: 'center' as const},
 	],
 	accessorBindings: {
-		'$.name': {
+		'$[*].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.age': {
+		'$[*].age': {
 			data_types: ['number' as const],
 			roles: ['value'],
 		},
-		'$.active': {
+		'$[*].active': {
 			data_types: ['boolean' as const],
 			roles: ['category'],
 			value_mappings: {
@@ -71,15 +71,15 @@ export const NESTED_OBJECT_DATA = {
 		},
 	],
 	columns: [
-		{id: '$.user.profile.name', label: 'Full Name', dataType: 'string', alignment: 'left' as const},
-		{id: '$.user.profile.email', label: 'Email Address', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].user.profile.name', label: 'Full Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].user.profile.email', label: 'Email Address', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.user.profile.name': {
+		'$[*].user.profile.name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.user.profile.email': {
+		'$[*].user.profile.email': {
 			data_types: ['string' as const],
 			roles: ['id'],
 		},
@@ -110,20 +110,20 @@ export const DATA_WITH_ARRAYS = {
 		},
 	],
 	columns: [
-		{id: '$.product', label: 'Product', dataType: 'string', alignment: 'left' as const},
-		{id: '$.tags[0]', label: 'Primary Tag', dataType: 'string', alignment: 'left' as const},
-		{id: '$.scores[1]', label: 'Quality Score', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].product', label: 'Product', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].tags[0]', label: 'Primary Tag', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].scores[1]', label: 'Quality Score', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
-		'$.product': {
+		'$[*].product': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.tags[0]': {
+		'$[*].tags[0]': {
 			data_types: ['string' as const],
 			roles: ['category'],
 		},
-		'$.scores[1]': {
+		'$[*].scores[1]': {
 			data_types: ['number' as const],
 			roles: ['value'],
 			format: '0.0',
@@ -162,20 +162,20 @@ export const DEEPLY_NESTED_DATA = {
 		},
 	],
 	columns: [
-		{id: '$.company.department.employees[0].name', label: 'Lead Employee', dataType: 'string', alignment: 'left' as const},
-		{id: '$.company.department.employees[0].role', label: 'Lead Role', dataType: 'string', alignment: 'left' as const},
-		{id: '$.company.department.budget', label: 'Budget', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].company.department.employees[0].name', label: 'Lead Employee', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].company.department.employees[0].role', label: 'Lead Role', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].company.department.budget', label: 'Budget', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
-		'$.company.department.employees[0].name': {
+		'$[*].company.department.employees[0].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.company.department.employees[0].role': {
+		'$[*].company.department.employees[0].role': {
 			data_types: ['string' as const],
 			roles: ['category'],
 		},
-		'$.company.department.budget': {
+		'$[*].company.department.budget': {
 			data_types: ['number' as const],
 			roles: ['value'],
 			format: '£0,0',
@@ -194,15 +194,15 @@ export const INVALID_ACCESSOR_MISSING_FIELD = {
 		{name: 'Jane Smith', age: 25},
 	],
 	columns: [
-		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
-		{id: '$.email', label: 'Email', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].email', label: 'Email', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
-		'$.name': {
+		'$[*].name': {
 			data_types: ['string' as const],
 			roles: ['label'],
 		},
-		'$.email': {
+		'$[*].email': {
 			data_types: ['string' as const],
 			roles: ['id'],
 		},
@@ -220,8 +220,8 @@ export const INVALID_ACCESSOR_ARRAY_INDEX = {
 		{items: ['alpha', 'beta']},
 	],
 	columns: [
-		{id: '$.items[0]', label: 'First Item', dataType: 'string', alignment: 'left' as const},
-		{id: '$.items[5]', label: 'Sixth Item', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].items[0]', label: 'First Item', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].items[5]', label: 'Sixth Item', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
 		'$.items[0]': {
@@ -246,7 +246,7 @@ export const INVALID_ACCESSOR_ARRAY_RETURNED = {
 		{tags: ['alpha', 'beta']},
 	],
 	columns: [
-		{id: '$.tags', label: 'Tags', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].tags', label: 'Tags', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
 		'$.tags': {
@@ -269,9 +269,9 @@ export const MIXED_SUCCESS_FAILURE_DATA = {
 		{id: 4, name: 'Another Partial'}, // optionalField missing
 	],
 	columns: [
-		{id: '$.id', label: 'ID', dataType: 'number', alignment: 'right' as const},
-		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
-		{id: '$.optionalField', label: 'Optional', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].id', label: 'ID', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].optionalField', label: 'Optional', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
 		'$.id': {
@@ -297,8 +297,8 @@ export const MIXED_SUCCESS_FAILURE_DATA = {
 export const EMPTY_DATA_ARRAY = {
 	data: [],
 	columns: [
-		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
-		{id: '$.value', label: 'Value', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].value', label: 'Value', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
 		'$.name': {
@@ -324,9 +324,9 @@ export const DATA_WITH_NULL_VALUES = {
 		{id: 3, name: 'Charlie', status: null},
 	],
 	columns: [
-		{id: '$.id', label: 'ID', dataType: 'number', alignment: 'right' as const},
-		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
-		{id: '$.status', label: 'Status', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].id', label: 'ID', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].status', label: 'Status', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
 		'$.id': {
@@ -355,9 +355,9 @@ export const DATA_WITH_UNDEFINED_VALUES = {
 		{id: 2, name: undefined, value: 42},
 	],
 	columns: [
-		{id: '$.id', label: 'ID', dataType: 'number', alignment: 'right' as const},
-		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
-		{id: '$.value', label: 'Value', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].id', label: 'ID', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].value', label: 'Value', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
 		'$.id': {
@@ -386,8 +386,8 @@ export const NESTED_PATH_CONTEXT = {
 		{userId: 102, userName: 'Bob'},
 	],
 	columns: [
-		{id: '$.userId', label: 'User ID', dataType: 'number', alignment: 'right' as const},
-		{id: '$.userName', label: 'User Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].userId', label: 'User ID', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].userName', label: 'User Name', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
 		'$.userId': {
@@ -413,9 +413,9 @@ export const COMPLEX_VALUE_MAPPINGS = {
 		{priority: 3, severity: 'low', count: 28},
 	],
 	columns: [
-		{id: '$.priority', label: 'Priority', dataType: 'number', alignment: 'center' as const},
-		{id: '$.severity', label: 'Severity', dataType: 'string', alignment: 'center' as const},
-		{id: '$.count', label: 'Count', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].priority', label: 'Priority', dataType: 'number', alignment: 'center' as const},
+		{id: '$[*].severity', label: 'Severity', dataType: 'string', alignment: 'center' as const},
+		{id: '$[*].count', label: 'Count', dataType: 'number', alignment: 'right' as const},
 	],
 	accessorBindings: {
 		'$.priority': {
@@ -452,7 +452,7 @@ export const COMPLEX_VALUE_MAPPINGS = {
 export const SINGLE_ROW_SINGLE_COLUMN = {
 	data: [{name: 'Single'}],
 	columns: [
-		{id: '$.name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
 		'$.name': {
@@ -470,8 +470,8 @@ export const SINGLE_ROW_SINGLE_COLUMN = {
 export const ALL_COLUMNS_UNDEFINED = {
 	data: [{}],
 	columns: [
-		{id: '$.missing1', label: 'Missing 1', dataType: 'string', alignment: 'left' as const},
-		{id: '$.missing2', label: 'Missing 2', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].missing1', label: 'Missing 1', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].missing2', label: 'Missing 2', dataType: 'string', alignment: 'left' as const},
 	],
 	accessorBindings: {
 		'$.missing1': {
