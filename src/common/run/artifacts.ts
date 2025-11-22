@@ -147,6 +147,9 @@ export const saveInput = (runId: string, data: unknown): Result<void, string> =>
 /**
  * Saves parsed data to data.json
  *
+ * Converts undefined to null before stringifying to ensure valid JSON output.
+ * This handles cases where agent state projection returns undefined parsedData.
+ *
  * @param runId - Run identifier
  * @param data - Parsed data from Analyser agent state projection
  * @returns Result indicating success or failure
@@ -161,7 +164,8 @@ export const saveData = (runId: string, data: unknown): Result<void, string> => 
 	const dataPath = join(runDir, DATA_FILENAME);
 
 	try {
-		writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
+		const content = data === undefined ? 'null' : JSON.stringify(data, null, 2);
+		writeFileSync(dataPath, content, 'utf-8');
 		return ok(undefined);
 	} catch (error) {
 		if (isNodeError(error)) {

@@ -359,13 +359,20 @@ export const POST = async (request: NextRequest) => {
 		);
 
 		// Save data artifact (parsed data from state projection)
-		const dataResult = saveData(runId, parsedData);
-		if (isErr(dataResult)) {
-			logger.error(
-				{event: 'unexpected_error', data: {error: dataResult.error}},
-				'Failed to save data'
+		if (parsedData === undefined) {
+			logger.warn(
+				{event: 'missing_parsed_data'},
+				'Skipping data save: parsedData is undefined'
 			);
-			// Continue execution - don't fail the request if data save fails
+		} else {
+			const dataResult = saveData(runId, parsedData);
+			if (isErr(dataResult)) {
+				logger.error(
+					{event: 'unexpected_error', data: {error: dataResult.error}},
+					'Failed to save data'
+				);
+				// Continue execution - don't fail the request if data save fails
+			}
 		}
 
 		// Save analysis artifact

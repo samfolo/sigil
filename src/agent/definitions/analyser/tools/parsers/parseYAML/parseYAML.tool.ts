@@ -67,17 +67,19 @@ export const createParseYAMLTool = <Run extends ParserState, Attempt extends Emp
 			: {valid: false, error: result.data.error};
 
 		return ok({
-			newState: {
-				...state,
-				run: {
-					...state.run,
-					structureMetadata: {
-						tool: 'parse_yaml',
-						details,
+			newState: result.data.valid
+				? {
+					...state,
+					run: {
+						...state.run,
+						structureMetadata: {
+							tool: 'parse_yaml',
+							details,
+						},
+						parsedData: result.data.parsedData,
 					},
-					parsedData: result.data.valid ? result.data.parsedData : undefined,
-				},
-			},
+				}
+				: state,
 			toolResult: details,
 		});
 	};
