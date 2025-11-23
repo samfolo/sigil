@@ -7,7 +7,7 @@ import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {bindTabularData, enrichColumns, extractColumns} from '../binding';
-import {VALID_LAYOUT_CHILD_TYPES} from '../constants/constants';
+import {JSONPATH_ROOT, VALID_LAYOUT_CHILD_TYPES} from '../constants/constants';
 import type {RenderTree, Row} from '../types';
 import {extractFirstLayoutChild} from '../utils/layout';
 
@@ -99,7 +99,7 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown): Result<Rend
 					const enrichedColumns = enrichColumns(columns, accessorBindings);
 
 					// Bind data to rows with path context
-					const bindResult = bindTabularData(data, enrichedColumns, accessorBindings, ['$']);
+					const bindResult = bindTabularData(data, enrichedColumns, accessorBindings, [JSONPATH_ROOT]);
 
 					// Handle binding errors
 					let rows: Row[];

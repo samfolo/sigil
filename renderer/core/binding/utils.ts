@@ -7,6 +7,7 @@ import {isErr} from '@sigil/src/common/errors/result';
 import type {Result} from '@sigil/src/common/errors/result';
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
+import {JSONPATH_ROOT} from '../constants';
 import type {Column} from '../types';
 import {stringifyCellValue} from '../utils/stringifyCellValue';
 
@@ -52,7 +53,7 @@ export const isCSVWithHeader = (data: unknown, columns: Column[]): boolean => Ar
  * @param accessor - Wildcard accessor
  * @returns Row-level accessor
  */
-export const convertWildcardToRowAccessor = (accessor: string): string => accessor.replace(/^\$\[\*\]/, '$');
+export const convertWildcardToRowAccessor = (accessor: string): string => accessor.replace(/^\$\[\*\]/, JSONPATH_ROOT);
 
 /**
  * Enriches query errors with path context
@@ -83,7 +84,7 @@ export const enrichQueryErrors = (
 
 	return result.error.map((error) => ({
 		...error,
-		path: pathContext.join('') + rowPath + (error.path?.startsWith('$') ? error.path.slice(1) : error.path || ''),
+		path: pathContext.join('') + rowPath + (error.path?.startsWith(JSONPATH_ROOT) ? error.path.slice(1) : error.path || ''),
 	}));
 };
 

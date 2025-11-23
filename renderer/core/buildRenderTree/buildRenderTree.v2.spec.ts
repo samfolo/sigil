@@ -19,6 +19,8 @@ import {describe, expect, it} from 'vitest';
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
+import {JSONPATH_ROOT} from '../constants';
+
 import {SPEC_ERROR_AND_BINDING_ERROR} from './buildRenderTree.fixtures';
 import {buildRenderTree} from './buildRenderTree.v2';
 import {
@@ -437,7 +439,7 @@ describe('buildRenderTree - pathContext threading', () => {
 		// Path should be: $.layout.children[0].layout.children[0]
 		// The path shows we went through the outer stack's first child (the nested stack)
 		// and then the nested stack's first child (the component)
-		expect(accessorError?.path).toContain('$');
+		expect(accessorError?.path).toContain(JSONPATH_ROOT);
 		expect(accessorError?.path).toContain('.layout.children[0]');
 
 		// Verify the accessor in context
@@ -482,7 +484,7 @@ describe('buildRenderTree - pathContext threading', () => {
 
 		// Path should show multiple levels of nesting
 		// $.layout.children[0].layout.children[0].element.layout.children[0]
-		expect(accessorError?.path).toContain('$');
+		expect(accessorError?.path).toContain(JSONPATH_ROOT);
 		expect(accessorError?.path).toContain('.layout.children[0]');
 
 		// Verify context

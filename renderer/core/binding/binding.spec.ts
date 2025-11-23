@@ -15,6 +15,8 @@ import {describe, expect, it} from 'vitest';
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
+import {JSONPATH_ROOT} from '../constants';
+
 import {bindTabularData} from './binding';
 import {
 	ALL_COLUMNS_UNDEFINED,
@@ -253,7 +255,7 @@ describe('bindTabularData - path context construction', () => {
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
-			['$']
+			[JSONPATH_ROOT]
 		);
 
 		expect(isOk(result)).toBe(true);
@@ -285,7 +287,7 @@ describe('bindTabularData - path context construction', () => {
 	it('should build valid row paths for error reporting', () => {
 		// This test will be more meaningful once we implement error path construction
 		// For now, verify that row paths are constructed correctly in the implementation
-		const pathContext = ['$', '.data'];
+		const pathContext = [JSONPATH_ROOT, '.data'];
 		const result = bindTabularData(
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
@@ -309,7 +311,7 @@ describe('bindTabularData - accessor path stripping', () => {
 			NESTED_OBJECT_DATA.data,
 			NESTED_OBJECT_DATA.columns,
 			NESTED_OBJECT_DATA.accessorBindings,
-			['$']
+			[JSONPATH_ROOT]
 		);
 
 		expect(isOk(result)).toBe(true);
@@ -324,7 +326,7 @@ describe('bindTabularData - accessor path stripping', () => {
 			DATA_WITH_ARRAYS.data,
 			DATA_WITH_ARRAYS.columns,
 			DATA_WITH_ARRAYS.accessorBindings,
-			['$']
+			[JSONPATH_ROOT]
 		);
 
 		expect(isOk(result)).toBe(true);
@@ -341,7 +343,7 @@ describe('bindTabularData - accessor path stripping', () => {
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
-			['$']
+			[JSONPATH_ROOT]
 		);
 
 		expect(isOk(result)).toBe(true);
@@ -360,7 +362,7 @@ describe('bindTabularData - error context preservation', () => {
 			SIMPLE_FLAT_DATA.data,
 			SIMPLE_FLAT_DATA.columns,
 			SIMPLE_FLAT_DATA.accessorBindings,
-			['$']
+			[JSONPATH_ROOT]
 		);
 
 		expect(isOk(result)).toBe(true);
@@ -378,7 +380,7 @@ describe('bindTabularData - error context preservation', () => {
 			INVALID_ACCESSOR_MISSING_FIELD.data,
 			INVALID_ACCESSOR_MISSING_FIELD.columns,
 			INVALID_ACCESSOR_MISSING_FIELD.accessorBindings,
-			['$']
+			[JSONPATH_ROOT]
 		);
 
 		// The result should still be ok for missing fields (they return undefined)

@@ -15,6 +15,8 @@ import {describe, expect, it} from 'vitest';
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
+import {JSONPATH_ROOT} from '../constants';
+
 import {buildRenderTree} from './buildRenderTree';
 import {
 	EMPTY_DATA,
@@ -158,7 +160,7 @@ describe('buildRenderTree - binding error propagation', () => {
 		// Error detected during accessor validation (before row iteration)
 		// Path is at root context level
 		const errorPaths = result.error.map((e) => e.path);
-		expect(errorPaths.every((path) => path === '$')).toBe(true);
+		expect(errorPaths.every((path) => path === JSONPATH_ROOT)).toBe(true);
 	});
 
 	it('should preserve error codes from queryJSONPath', () => {
@@ -244,7 +246,7 @@ describe('buildRenderTree - partial rendering with errors', () => {
 
 
 		// Error detected during accessor validation (before row iteration)
-		expect(result.error.at(0)?.path).toBe('$');
+		expect(result.error.at(0)?.path).toBe(JSONPATH_ROOT);
 	});
 
 	it('should process all rows even when some columns have errors', () => {
@@ -364,7 +366,7 @@ describe('buildRenderTree - path context correctness', () => {
 
 
 		// Error detected during accessor validation (before row iteration)
-		expect(result.error.at(0)?.path).toBe('$');
+		expect(result.error.at(0)?.path).toBe(JSONPATH_ROOT);
 	});
 
 	it('should not produce invalid paths with double $ like $[0]$.field', () => {
@@ -407,7 +409,7 @@ describe('buildRenderTree - path context correctness', () => {
 		// Error detected during accessor validation (before row iteration)
 		// Path is at root context level
 		result.error.forEach((error) => {
-			expect(error.path).toBe('$');
+			expect(error.path).toBe(JSONPATH_ROOT);
 		});
 	});
 });

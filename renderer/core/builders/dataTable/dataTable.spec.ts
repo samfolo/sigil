@@ -11,9 +11,11 @@ import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 import type {DataTableConfig, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
+import {JSONPATH_ROOT} from '../../constants';
+
 import {DataTableBuilder} from './dataTable';
 
-const INITIAL_PATH_CONTEXT = ['$'];
+const INITIAL_PATH_CONTEXT = [JSONPATH_ROOT];
 
 describe('DataTableBuilder', () => {
 	const builder = new DataTableBuilder();
@@ -409,7 +411,7 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.error.at(0)?.path).toBe('$'); // Error detected before row iteration
+			expect(result.error.at(0)?.path).toBe(JSONPATH_ROOT); // Error detected before row iteration
 		});
 	});
 

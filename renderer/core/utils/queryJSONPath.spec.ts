@@ -3,6 +3,8 @@ import {describe, expect, it} from 'vitest';
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
 
+import {JSONPATH_ROOT} from '../constants';
+
 import {queryJSONPath, queryMultipleValues, querySingleValue} from './queryJSONPath';
 
 describe('queryJSONPath', () => {
@@ -242,7 +244,7 @@ describe('queryJSONPath', () => {
 					reason: 'JSONPath must start with $',
 				});
 				expect(result.error.at(0)?.suggestion).toContain('prepend');
-				expect(result.error.at(0)?.suggestion).toContain('$');
+				expect(result.error.at(0)?.suggestion).toContain(JSONPATH_ROOT);
 			}
 		});
 
@@ -267,7 +269,7 @@ describe('queryJSONPath', () => {
 				expect(result.error.at(0)?.code).toBe(ERROR_CODES.QUERY_ERROR);
 				expect(result.error.at(0)?.severity).toBe('error');
 				expect(result.error.at(0)?.category).toBe('data');
-				expect(result.error.at(0)?.path).toBe('$');
+				expect(result.error.at(0)?.path).toBe(JSONPATH_ROOT);
 				expect(result.error.at(0)?.context).toHaveProperty('jsonPath', accessor);
 				expect(result.error.at(0)?.context).toHaveProperty('reason');
 				expect(result.error.at(0)?.context).toHaveProperty('dataType', 'object');

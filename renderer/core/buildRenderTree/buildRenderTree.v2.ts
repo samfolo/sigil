@@ -13,6 +13,7 @@ import {err, isErr, ok, type Result, type SpecError} from '@sigil/src/common/err
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {getBuilder} from '../builders/registry';
+import {JSONPATH_ROOT} from '../constants';
 import type {
 	RenderComponent,
 	RenderGridChild,
@@ -50,7 +51,7 @@ export const buildRenderTree = (spec: ComponentSpec, data: unknown): Result<Rend
 	}
 
 	// Phase 2: Recursively replace placeholders with built components
-	const pathContext = ['$'];
+	const pathContext = [JSONPATH_ROOT];
 	const processedResult = processRenderTree(layoutResult.data, spec, data, pathContext);
 
 	return processedResult;
@@ -213,8 +214,7 @@ const replaceComponentPlaceholder = (
 		throw new Error(`Component "${componentId}" not found in spec.root.nodes - this is a bug in walkLayout`);
 	}
 
-	// Type assertion needed here because componentNode.config is a union type
-	// Switch on component type for type narrowing
+	// Switch on component type for type narrowing and builder dispatch
 	switch (placeholder.type) {
 		case 'data-table': {
 			// Verify config type matches component type

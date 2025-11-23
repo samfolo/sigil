@@ -23,6 +23,8 @@ import type {SpecError} from '@sigil/src/common/errors';
 import type {Result} from '@sigil/src/common/errors/result';
 import {err, isErr, ok} from '@sigil/src/common/errors/result';
 
+import {JSONPATH_ROOT} from '../constants';
+
 /**
  * Query data using a JSONPath expression
  *
@@ -60,7 +62,7 @@ import {err, isErr, ok} from '@sigil/src/common/errors/result';
  */
 export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, SpecError[]> => {
 	// Validate accessor format
-	if (!accessor.startsWith('$')) {
+	if (!accessor.startsWith(JSONPATH_ROOT)) {
 		return err([
 			{
 				code: ERROR_CODES.INVALID_ACCESSOR,
@@ -83,7 +85,7 @@ export const queryJSONPath = (data: unknown, accessor: string): Result<unknown, 
 				code: ERROR_CODES.QUERY_ERROR,
 				severity: 'error',
 				category: 'data',
-				path: '$',
+				path: JSONPATH_ROOT,
 				context: {
 					jsonPath: accessor,
 					reason: 'Cannot query non-object data',

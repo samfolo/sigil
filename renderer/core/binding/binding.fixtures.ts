@@ -12,6 +12,8 @@
 
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
+import {JSONPATH_ROOT} from '../constants';
+
 /**
  * 1. Simple flat data - basic object properties
  */
@@ -44,7 +46,7 @@ export const SIMPLE_FLAT_DATA = {
 			},
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'All rows should bind successfully with value mappings applied to active field',
 };
 
@@ -84,7 +86,7 @@ export const NESTED_OBJECT_DATA = {
 			roles: ['id'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Nested object properties should be accessed correctly via JSONPath',
 };
 
@@ -129,7 +131,7 @@ export const DATA_WITH_ARRAYS = {
 			format: '0.0',
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Array indices should be accessed correctly, returning specific elements',
 };
 
@@ -181,7 +183,7 @@ export const DEEPLY_NESTED_DATA = {
 			format: '£0,0',
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Deep nesting with array access should work, format should be applied to budget',
 };
 
@@ -207,7 +209,7 @@ export const INVALID_ACCESSOR_MISSING_FIELD = {
 			roles: ['id'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Email field does not exist - should return undefined for email cells',
 };
 
@@ -233,7 +235,7 @@ export const INVALID_ACCESSOR_ARRAY_INDEX = {
 			roles: ['value'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Index 5 is out of bounds - should return undefined for second column',
 };
 
@@ -254,7 +256,7 @@ export const INVALID_ACCESSOR_ARRAY_RETURNED = {
 			roles: ['category'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Accessor returns full array - should stringify array as display value',
 };
 
@@ -287,7 +289,7 @@ export const MIXED_SUCCESS_FAILURE_DATA = {
 			roles: ['value'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Rows with missing optionalField should have undefined raw value and empty display string',
 };
 
@@ -310,7 +312,7 @@ export const EMPTY_DATA_ARRAY = {
 			roles: ['value'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Empty data array should return empty rows array',
 };
 
@@ -342,7 +344,7 @@ export const DATA_WITH_NULL_VALUES = {
 			roles: ['category'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Null values should result in empty display strings',
 };
 
@@ -373,7 +375,7 @@ export const DATA_WITH_UNDEFINED_VALUES = {
 			roles: ['value'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Undefined values should result in empty display strings',
 };
 
@@ -399,7 +401,7 @@ export const NESTED_PATH_CONTEXT = {
 			roles: ['label'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$', '.data', '.users'],
+	pathContext: [JSONPATH_ROOT, '.data', '.users'],
 	expectedResult: 'Path context should build row paths like ["$", ".data", ".users", "[0]"]',
 };
 
@@ -442,7 +444,7 @@ export const COMPLEX_VALUE_MAPPINGS = {
 			format: '0,0',
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Multiple value mappings should be applied correctly, numbers should be formatted',
 };
 
@@ -460,7 +462,7 @@ export const SINGLE_ROW_SINGLE_COLUMN = {
 			roles: ['label'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Single row with single column should bind successfully',
 };
 
@@ -483,7 +485,7 @@ export const ALL_COLUMNS_UNDEFINED = {
 			roles: ['value'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'All columns returning undefined should produce empty display strings',
 };
 
@@ -501,7 +503,7 @@ export const INVALID_ACCESSOR_NO_DOLLAR_PREFIX = {
 			roles: ['label'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Accessor without $ prefix should produce INVALID_ACCESSOR error',
 };
 
@@ -519,7 +521,7 @@ export const MULTIPLE_ROWS_INVALID_ACCESSOR = {
 			roles: ['label'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Should accumulate one error per row for invalid accessor',
 };
 
@@ -537,7 +539,7 @@ export const INVALID_ACCESSOR_WITH_PATH_CONTEXT = {
 			roles: ['label'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Error paths should be $[0] and $[1] for rows 0 and 1',
 };
 
@@ -571,7 +573,7 @@ export const CSV_ARRAY_OF_ARRAYS_BASIC = {
 			format: '$0,0.00',
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'CSV array-of-arrays should skip header row and bind data rows correctly',
 };
 
@@ -609,7 +611,7 @@ export const CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS = {
 			format: '0',
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'CSV data with value mappings should transform status codes to display values',
 };
 
@@ -634,7 +636,7 @@ export const CSV_ARRAY_OF_ARRAYS_EMPTY = {
 			roles: ['value'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'CSV with header only should return empty rows array',
 };
 
@@ -667,7 +669,7 @@ export const CSV_ARRAY_OF_ARRAYS_MISSING_VALUES = {
 			roles: ['contact'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Missing array indices should result in null raw values and empty display strings',
 };
 
@@ -708,7 +710,7 @@ export const OBJECT_OF_OBJECTS_BASIC = {
 			},
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Object-of-objects should extract property names with ~ and values with property accessors',
 };
 
@@ -745,7 +747,7 @@ export const OBJECT_OF_OBJECTS_NO_KEYS = {
 			},
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Object values should be extracted correctly without keys column',
 };
 
@@ -790,7 +792,7 @@ export const OBJECT_OF_OBJECTS_NESTED = {
 			format: '$0,0',
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Nested properties within object values should be accessible',
 };
 
@@ -827,7 +829,7 @@ export const OBJECT_OF_ARRAYS = {
 			roles: ['value'],
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Object-of-arrays should support both property name column and positional array access',
 };
 
@@ -874,6 +876,6 @@ export const ARRAY_OF_ARRAYS_WITH_OBJECTS = {
 			},
 		},
 	} satisfies Record<string, FieldMetadata>,
-	pathContext: ['$'],
+	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Array-of-arrays with nested objects should support mixed accessor patterns like $[*][0].property',
 };

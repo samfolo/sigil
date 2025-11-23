@@ -7,6 +7,14 @@
 import type {LayoutChild, LayoutNode} from '@sigil/src/lib/generated/types/specification';
 
 /**
+ * JSONPath root prefix
+ *
+ * All JSONPath expressions must start with this prefix.
+ * Used as initial pathContext in error reporting and data binding.
+ */
+export const JSONPATH_ROOT = '$';
+
+/**
  * Maximum length for stringified complex values (objects/arrays) before truncation
  *
  * Prevents UI overflow when displaying nested data structures.
