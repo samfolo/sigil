@@ -232,6 +232,12 @@ export interface RenderDataTable {
 	type: 'data-table';
 
 	/**
+	 * Component ID from spec.root.nodes
+	 * Used to look up configuration and bindings during rendering
+	 */
+	componentId?: string;
+
+	/**
 	 * Processed table properties
 	 */
 	props: TableProps;
@@ -245,6 +251,12 @@ export interface RenderHierarchy {
 	 * Discriminator for hierarchy components
 	 */
 	type: 'hierarchy';
+
+	/**
+	 * Component ID from spec.root.nodes
+	 * Used to look up configuration and bindings during rendering
+	 */
+	componentId?: string;
 
 	/**
 	 * Processed hierarchy properties
@@ -262,6 +274,12 @@ export interface RenderComposition {
 	type: 'composition';
 
 	/**
+	 * Component ID from spec.root.nodes
+	 * Used to look up configuration and bindings during rendering
+	 */
+	componentId?: string;
+
+	/**
 	 * Processed composition properties
 	 */
 	props: Record<string, never>;
@@ -275,6 +293,12 @@ export interface RenderTextInsight {
 	 * Discriminator for text insight components
 	 */
 	type: 'text-insight';
+
+	/**
+	 * Component ID from spec.root.nodes
+	 * Used to look up configuration and bindings during rendering
+	 */
+	componentId?: string;
 
 	/**
 	 * Processed text insight properties

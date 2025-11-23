@@ -242,6 +242,7 @@ const createComponentPlaceholder = (
 		case 'data-table':
 			return ok({
 				type: 'data-table',
+				componentId,
 				props: {
 					columns: [],
 					data: [],
@@ -251,18 +252,21 @@ const createComponentPlaceholder = (
 		case 'hierarchy':
 			return ok({
 				type: 'hierarchy',
+				componentId,
 				props: {},
 			});
 
 		case 'composition':
 			return ok({
 				type: 'composition',
+				componentId,
 				props: {},
 			});
 
 		case 'text-insight':
 			return ok({
 				type: 'text-insight',
+				componentId,
 				props: {},
 			});
 
