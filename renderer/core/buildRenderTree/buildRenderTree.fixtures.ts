@@ -1,479 +1,735 @@
 /**
- * Test fixtures for buildRenderTree function
+ * Test fixtures for buildRenderTree v2
  *
- * Comprehensive test cases covering:
- * - Valid specs with successful data binding
- * - Partial binding failures (some rows succeed, some fail)
- * - Complete binding failures (all rows fail)
- * - Spec errors that prevent binding
- * - Nested data with mixed success
- * - Edge cases (empty data)
+ * Comprehensive fixtures covering:
+ * - Single component specs
+ * - Multi-component stack layouts
+ * - Grid layouts with positioning
+ * - Nested layouts at multiple depths
+ * - Error cases for testing error accumulation
  */
 
-import type {ComponentSpec, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
-
-import type {RenderTree} from '../types';
+import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 /**
- * 1. Valid spec with valid flat data - all rows bind successfully
- *
- * Scenario:
- * - Simple ComponentSpec with single data-table component
- * - Flat data array with two users
- * - All columns have matching accessors in the data
- * - Expected: Successful RenderTree with 2 rows, no errors
+ * Spec with single data-table in vertical stack
  */
-export const VALID_SPEC_VALID_DATA = {
-	spec: {
-		id: 'test-valid-spec',
-		title: 'User List',
-		description: 'Simple user table',
-		created_at: '2025-10-18T00:00:00Z',
-		data_shape: 'tabular' as const,
-		root: {
-			layout: {
-				type: 'stack' as const,
-				direction: 'vertical' as const,
-				id: 'root-layout',
-				spacing: 'normal' as const,
-				children: [
-					{
-						type: 'component' as const,
-						component_id: 'users-table',
-					},
-				],
-			},
-			nodes: {
-				'users-table': {
-					id: 'users-table',
-					type: 'data-table' as const,
-					config: {
-						type: 'data-table' as const,
-						title: 'Users',
-						description: 'List of users',
-						columns: [
-							{
-								accessor: '$[*].name',
-								label: 'Name',
-							},
-							{
-								accessor: '$[*].age',
-								label: 'Age',
-								alignment: 'right' as const,
-							},
-						],
-						affordances: [],
-					},
+export const SINGLE_DATA_TABLE_SPEC: ComponentSpec = {
+	id: 'single-table',
+	title: 'Single Table',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [
+				{type: 'component', component_id: 'users-table'},
+			],
+		},
+		nodes: {
+			'users-table': {
+				id: 'users-table',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Users',
+					description: 'List of users',
+					columns: [
+						{accessor: '$[*].name', label: 'Name'},
+						{accessor: '$[*].age', label: 'Age', alignment: 'right'},
+					],
+					affordances: [],
 				},
-			},
-			accessor_bindings: {
-				'users-table': {
-					'$[*].name': {
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-					'$[*].age': {
-						roles: ['value'],
-						data_types: ['number' as const],
-					},
-				} satisfies Record<string, FieldMetadata>,
 			},
 		},
-	} satisfies ComponentSpec,
-	data: [
-		{name: 'Alice', age: 30},
-		{name: 'Bob', age: 25},
-	],
-	expectedResult: 'Successful RenderTree with 2 rows, no errors',
-};
-
-/**
- * 2. Valid spec with partial binding failure - some rows succeed, some fail
- *
- * Scenario:
- * - ComponentSpec with two columns: valid '$.name' and invalid 'badCol'
- * - All rows will have binding errors from 'badCol' accessor
- * - Expected: Binding errors for each row from the invalid accessor
- */
-export const VALID_SPEC_PARTIAL_BINDING_FAILURE = {
-	spec: {
-		id: 'test-partial-failure',
-		title: 'Mixed Valid/Invalid',
-		description: 'Table with one valid and one invalid accessor',
-		created_at: '2025-10-18T00:00:00Z',
-		data_shape: 'tabular' as const,
-		root: {
-			layout: {
-				type: 'stack' as const,
-				direction: 'vertical' as const,
-				id: 'root-layout',
-				spacing: 'normal' as const,
-				children: [
-					{
-						type: 'component' as const,
-						component_id: 'mixed-table',
-					},
-				],
-			},
-			nodes: {
-				'mixed-table': {
-					id: 'mixed-table',
-					type: 'data-table' as const,
-					config: {
-						type: 'data-table' as const,
-						title: 'Mixed Columns',
-						columns: [
-							{
-								accessor: '$[*].name', // Valid
-								label: 'Name',
-							},
-							{
-								accessor: 'badCol', // Invalid: no $
-								label: 'Bad Column',
-							},
-						],
-						affordances: [],
-					},
-				},
-			},
-			accessor_bindings: {
-				'mixed-table': {
-					'$[*].name': {
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-					badCol: { // Invalid accessor
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-				} satisfies Record<string, FieldMetadata>,
+		accessor_bindings: {
+			'users-table': {
+				'$[*].name': {roles: ['label'], data_types: ['string']},
+				'$[*].age': {roles: ['value'], data_types: ['number']},
 			},
 		},
-	} satisfies ComponentSpec,
-	data: [{name: 'Alice'}, {name: 'Bob'}],
-	expectedResult: '2 INVALID_ACCESSOR errors (one per row), RenderTree with errors',
-};
-
-/**
- * 3. Valid spec with all binding failures - invalid accessor syntax
- *
- * Scenario:
- * - ComponentSpec with INVALID accessor 'badAccessor' (doesn't start with $)
- * - Data array with 3 rows
- * - Expected: 3 binding errors (INVALID_ACCESSOR), error result returned
- */
-export const VALID_SPEC_ALL_BINDING_FAILURE = {
-	spec: {
-		id: 'test-all-failures',
-		title: 'Invalid Accessor Table',
-		description: 'Table with invalid accessor syntax',
-		created_at: '2025-10-18T00:00:00Z',
-		data_shape: 'tabular' as const,
-		root: {
-			layout: {
-				type: 'stack' as const,
-				direction: 'vertical' as const,
-				id: 'root-layout',
-				spacing: 'normal' as const,
-				children: [
-					{
-						type: 'component' as const,
-						component_id: 'invalid-table',
-					},
-				],
-			},
-			nodes: {
-				'invalid-table': {
-					id: 'invalid-table',
-					type: 'data-table' as const,
-					config: {
-						type: 'data-table' as const,
-						title: 'Invalid Accessor',
-						columns: [
-							{
-								accessor: 'badAccessor', // Invalid: doesn't start with $
-								label: 'Bad Accessor',
-							},
-						],
-						affordances: [],
-					},
-				},
-			},
-			accessor_bindings: {
-				'invalid-table': {
-					badAccessor: { // Invalid accessor
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-				} satisfies Record<string, FieldMetadata>,
-			},
-		},
-	} satisfies ComponentSpec,
-	data: [
-		{name: 'Alice', age: 30},
-		{name: 'Bob', age: 25},
-		{name: 'Carol', age: 28},
-	],
-	expectedResult: '3 INVALID_ACCESSOR errors (one per row), error result returned',
-};
-
-/**
- * 4. Spec error prevents binding - invalid component_id
- *
- * Scenario:
- * - ComponentSpec references 'missing-component' that doesn't exist in nodes
- * - Valid data provided
- * - Expected: Spec error returned, binding never attempted
- */
-export const SPEC_ERROR_AND_BINDING_ERROR = {
-	spec: {
-		id: 'test-spec-error',
-		title: 'Invalid Component Reference',
-		description: 'Spec with missing component',
-		created_at: '2025-10-18T00:00:00Z',
-		data_shape: 'tabular' as const,
-		root: {
-			layout: {
-				type: 'stack' as const,
-				direction: 'vertical' as const,
-				id: 'root-layout',
-				spacing: 'normal' as const,
-				children: [
-					{
-						type: 'component' as const,
-						component_id: 'missing-component', // Does not exist in nodes
-					},
-				],
-			},
-			nodes: {
-				'actual-component': {
-					id: 'actual-component',
-					type: 'data-table' as const,
-					config: {
-						type: 'data-table' as const,
-						title: 'Users',
-						columns: [
-							{
-								accessor: '$[*].name',
-								label: 'Name',
-							},
-						],
-						affordances: [],
-					},
-				},
-			},
-			accessor_bindings: {
-				'actual-component': {
-					'$[*].name': {
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-				} satisfies Record<string, FieldMetadata>,
-			},
-		},
-	} satisfies ComponentSpec,
-	data: [{name: 'Alice'}, {name: 'Bob'}],
-	expectedResult: 'MISSING_COMPONENT spec error, binding never attempted',
-};
-
-/**
- * 5. Nested data with invalid accessor - verify path context handling
- *
- * Scenario:
- * - ComponentSpec with nested VALID accessor and INVALID accessor
- * - Testing that error paths are constructed correctly with nesting
- * - Expected: Binding errors with properly constructed paths
- */
-export const NESTED_DATA_MIXED_SUCCESS = {
-	spec: {
-		id: 'test-nested-mixed',
-		title: 'Nested with Invalid',
-		description: 'Table with nested valid accessor and invalid accessor',
-		created_at: '2025-10-18T00:00:00Z',
-		data_shape: 'tabular' as const,
-		root: {
-			layout: {
-				type: 'stack' as const,
-				direction: 'vertical' as const,
-				id: 'root-layout',
-				spacing: 'normal' as const,
-				children: [
-					{
-						type: 'component' as const,
-						component_id: 'nested-table',
-					},
-				],
-			},
-			nodes: {
-				'nested-table': {
-					id: 'nested-table',
-					type: 'data-table' as const,
-					config: {
-						type: 'data-table' as const,
-						title: 'Nested Data',
-						columns: [
-							{
-								accessor: '$[*].company.department.name', // Valid
-								label: 'Department',
-							},
-							{
-								accessor: 'invalid', // Invalid: no $
-								label: 'Bad Accessor',
-							},
-						],
-						affordances: [],
-					},
-				},
-			},
-			accessor_bindings: {
-				'nested-table': {
-					'$[*].company.department.name': {
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-					invalid: { // Invalid accessor
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-				} satisfies Record<string, FieldMetadata>,
-			},
-		},
-	} satisfies ComponentSpec,
-	data: [
-		{company: {department: {name: 'Engineering'}}},
-		{company: {department: {name: 'Sales'}}},
-	],
-	expectedResult: 'Binding errors with correctly constructed error paths',
-};
-
-/**
- * 6. Valid spec with empty data array - edge case
- *
- * Scenario:
- * - Valid ComponentSpec with proper structure
- * - Empty data array []
- * - Expected: Successful RenderTree with 0 rows, no errors
- */
-export const EMPTY_DATA = {
-	spec: {
-		id: 'test-empty-data',
-		title: 'Empty Table',
-		description: 'Table with no data',
-		created_at: '2025-10-18T00:00:00Z',
-		data_shape: 'tabular' as const,
-		root: {
-			layout: {
-				type: 'stack' as const,
-				direction: 'vertical' as const,
-				id: 'root-layout',
-				spacing: 'normal' as const,
-				children: [
-					{
-						type: 'component' as const,
-						component_id: 'empty-table',
-					},
-				],
-			},
-			nodes: {
-				'empty-table': {
-					id: 'empty-table',
-					type: 'data-table' as const,
-					config: {
-						type: 'data-table' as const,
-						title: 'Empty',
-						columns: [
-							{
-								accessor: '$[*].name',
-								label: 'Name',
-							},
-							{
-								accessor: '$[*].value',
-								label: 'Value',
-								alignment: 'right' as const,
-							},
-						],
-						affordances: [],
-					},
-				},
-			},
-			accessor_bindings: {
-				'empty-table': {
-					'$[*].name': {
-						roles: ['label'],
-						data_types: ['string' as const],
-					},
-					'$[*].value': {
-						roles: ['value'],
-						data_types: ['number' as const],
-					},
-				} satisfies Record<string, FieldMetadata>,
-			},
-		},
-	} satisfies ComponentSpec,
-	data: [],
-	expectedResult: 'Successful RenderTree with 0 rows, no errors',
-};
-
-/**
- * Expected RenderTree for VALID_SPEC_VALID_DATA fixture
- *
- * This shows the complete expected output structure after buildRenderTree
- * successfully processes the spec and data.
- */
-export const EXPECTED_VALID_RENDER_TREE: RenderTree = {
-	type: 'data-table',
-	props: {
-		title: 'Users',
-		description: 'List of users',
-		columns: [
-			{
-				id: '$[*].name',
-				label: 'Name',
-				dataType: 'string',
-				alignment: undefined,
-			},
-			{
-				id: '$[*].age',
-				label: 'Age',
-				dataType: 'number',
-				alignment: 'right',
-			},
-		],
-		data: [
-			{
-				id: 'row-0',
-				cells: {
-					'$[*].name': {
-						raw: 'Alice',
-						display: 'Alice',
-						dataType: 'string',
-						format: undefined,
-					},
-					'$[*].age': {
-						raw: 30,
-						display: '30',
-						dataType: 'number',
-						format: undefined,
-					},
-				},
-			},
-			{
-				id: 'row-1',
-				cells: {
-					'$[*].name': {
-						raw: 'Bob',
-						display: 'Bob',
-						dataType: 'string',
-						format: undefined,
-					},
-					'$[*].age': {
-						raw: 25,
-						display: '25',
-						dataType: 'number',
-						format: undefined,
-					},
-				},
-			},
-		],
 	},
 };
+
+export const SINGLE_DATA_TABLE_DATA = [
+	{name: 'Alice', age: 30},
+	{name: 'Bob', age: 25},
+];
+
+/**
+ * Horizontal stack with three data-tables
+ */
+export const HORIZONTAL_STACK_SPEC: ComponentSpec = {
+	id: 'horizontal-stack',
+	title: 'Horizontal Stack',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'stack',
+			direction: 'horizontal',
+			spacing: 'normal',
+			children: [
+				{type: 'component', component_id: 'table-1'},
+				{type: 'component', component_id: 'table-2'},
+				{type: 'component', component_id: 'table-3'},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Table 1',
+					columns: [{accessor: '$[*].name', label: 'Name'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Table 2',
+					columns: [{accessor: '$[*].age', label: 'Age'}],
+					affordances: [],
+				},
+			},
+			'table-3': {
+				id: 'table-3',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Table 3',
+					columns: [{accessor: '$[*].status', label: 'Status'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				'$[*].name': {roles: ['label'], data_types: ['string']},
+			},
+			'table-2': {
+				'$[*].age': {roles: ['value'], data_types: ['number']},
+			},
+			'table-3': {
+				'$[*].status': {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const HORIZONTAL_STACK_DATA = [
+	{name: 'Alice', age: 30, status: 'active'},
+];
+
+/**
+ * Vertical stack with two data-tables
+ */
+export const VERTICAL_STACK_SPEC: ComponentSpec = {
+	id: 'vertical-stack',
+	title: 'Vertical Stack',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'tight',
+			children: [
+				{type: 'component', component_id: 'table-1'},
+				{type: 'component', component_id: 'table-2'},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Users',
+					columns: [{accessor: '$[*].name', label: 'Name'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Details',
+					columns: [{accessor: '$[*].email', label: 'Email'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				'$[*].name': {roles: ['label'], data_types: ['string']},
+			},
+			'table-2': {
+				'$[*].email': {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const VERTICAL_STACK_DATA = [
+	{name: 'Bob', email: 'bob@example.com'},
+];
+
+/**
+ * Empty vertical stack (no children)
+ */
+export const EMPTY_STACK_SPEC: ComponentSpec = {
+	id: 'empty-stack',
+	title: 'Empty Stack',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [],
+		},
+		nodes: {},
+		accessor_bindings: {},
+	},
+};
+
+/**
+ * Grid with explicit positioning and spanning
+ */
+export const GRID_POSITIONED_SPEC: ComponentSpec = {
+	id: 'grid-positioned',
+	title: 'Grid Positioned',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'grid',
+			columns: 2,
+			rows: 2,
+			children: [
+				{
+					element: {type: 'component', component_id: 'table-1'},
+					column_start: 1,
+					row_start: 1,
+				},
+				{
+					element: {type: 'component', component_id: 'table-2'},
+					column_start: 2,
+					row_start: 1,
+					column_span: 1,
+					row_span: 2,
+				},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Top Left',
+					columns: [{accessor: '$[*].a', label: 'A'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Right Side',
+					columns: [{accessor: '$[*].b', label: 'B'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				'$[*].a': {roles: ['label'], data_types: ['string']},
+			},
+			'table-2': {
+				'$[*].b': {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const GRID_POSITIONED_DATA = [
+	{a: 'foo', b: 'bar'},
+];
+
+/**
+ * Grid with auto-flow (no explicit positioning)
+ */
+export const GRID_AUTO_FLOW_SPEC: ComponentSpec = {
+	id: 'grid-auto-flow',
+	title: 'Grid Auto-flow',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'grid',
+			columns: 3,
+			children: [
+				{element: {type: 'component', component_id: 'table-1'}},
+				{element: {type: 'component', component_id: 'table-2'}},
+				{element: {type: 'component', component_id: 'table-3'}},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: '$[*].x', label: 'X'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: '$[*].y', label: 'Y'}],
+					affordances: [],
+				},
+			},
+			'table-3': {
+				id: 'table-3',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: '$[*].z', label: 'Z'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				'$[*].x': {roles: ['label'], data_types: ['string']},
+			},
+			'table-2': {
+				'$[*].y': {roles: ['label'], data_types: ['string']},
+			},
+			'table-3': {
+				'$[*].z': {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const GRID_AUTO_FLOW_DATA = [
+	{x: '1', y: '2', z: '3'},
+];
+
+/**
+ * Nested stack within stack
+ */
+export const NESTED_STACK_IN_STACK_SPEC: ComponentSpec = {
+	id: 'nested-stack-in-stack',
+	title: 'Nested Stack in Stack',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'outer',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [
+				{
+					type: 'layout',
+					node: {
+						id: 'inner',
+						type: 'stack',
+						direction: 'horizontal',
+						spacing: 'tight',
+						children: [{type: 'component', component_id: 'table-1'}],
+					},
+				},
+				{type: 'component', component_id: 'table-2'},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Inner Table',
+					columns: [{accessor: '$[*].name', label: 'Name'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Outer Table',
+					columns: [{accessor: '$[*].age', label: 'Age'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				'$[*].name': {roles: ['label'], data_types: ['string']},
+			},
+			'table-2': {
+				'$[*].age': {roles: ['value'], data_types: ['number']},
+			},
+		},
+	},
+};
+
+export const NESTED_STACK_DATA = [
+	{name: 'Alice', age: 30},
+];
+
+/**
+ * Nested grid within stack
+ */
+export const NESTED_GRID_IN_STACK_SPEC: ComponentSpec = {
+	id: 'nested-grid-in-stack',
+	title: 'Nested Grid in Stack',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'outer',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [
+				{
+					type: 'layout',
+					node: {
+						id: 'inner',
+						type: 'grid',
+						columns: 2,
+						children: [
+							{element: {type: 'component', component_id: 'table-1'}},
+							{element: {type: 'component', component_id: 'table-2'}},
+						],
+					},
+				},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: '$[*].a', label: 'A'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: '$[*].b', label: 'B'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				'$[*].a': {roles: ['label'], data_types: ['string']},
+			},
+			'table-2': {
+				'$[*].b': {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const NESTED_GRID_DATA = [
+	{a: 'x', b: 'y'},
+];
+
+/**
+ * Deeply nested layout (3 levels): stack → grid → stack
+ */
+export const DEEPLY_NESTED_SPEC: ComponentSpec = {
+	id: 'deeply-nested',
+	title: 'Deeply Nested',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'level-1',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [
+				{
+					type: 'layout',
+					node: {
+						id: 'level-2',
+						type: 'grid',
+						columns: 1,
+						children: [
+							{
+								element: {
+									type: 'layout',
+									node: {
+										id: 'level-3',
+										type: 'stack',
+										direction: 'horizontal',
+										spacing: 'tight',
+										children: [{type: 'component', component_id: 'table-1'}],
+									},
+								},
+							},
+						],
+					},
+				},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Deep Table',
+					columns: [{accessor: '$[*].value', label: 'Value'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				'$[*].value': {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const DEEPLY_NESTED_DATA = [
+	{value: 'deep'},
+];
+
+/**
+ * Spec with multiple components having invalid accessors (for error accumulation test)
+ */
+export const MULTIPLE_ERRORS_SPEC: ComponentSpec = {
+	id: 'multiple-errors',
+	title: 'Multiple Errors',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [
+				{type: 'component', component_id: 'table-1'},
+				{type: 'component', component_id: 'table-2'},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: 'badAccessor1', label: 'Bad 1'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: 'badAccessor2', label: 'Bad 2'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				badAccessor1: {roles: ['label'], data_types: ['string']},
+			},
+			'table-2': {
+				badAccessor2: {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const MULTIPLE_ERRORS_DATA = [{x: 1}];
+
+/**
+ * Spec with one valid component and one invalid component (partial success)
+ */
+export const PARTIAL_SUCCESS_SPEC: ComponentSpec = {
+	id: 'partial-success',
+	title: 'Partial Success',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'stack',
+			direction: 'horizontal',
+			spacing: 'normal',
+			children: [
+				{type: 'component', component_id: 'table-valid'},
+				{type: 'component', component_id: 'table-invalid'},
+			],
+		},
+		nodes: {
+			'table-valid': {
+				id: 'table-valid',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: '$[*].name', label: 'Name'}],
+					affordances: [],
+				},
+			},
+			'table-invalid': {
+				id: 'table-invalid',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: 'invalid', label: 'Invalid'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-valid': {
+				'$[*].name': {roles: ['label'], data_types: ['string']},
+			},
+			'table-invalid': {
+				invalid: {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const PARTIAL_SUCCESS_DATA = [{name: 'Alice'}];
+
+/**
+ * Nested layout with invalid accessor for pathContext testing
+ */
+export const NESTED_ERROR_SPEC: ComponentSpec = {
+	id: 'nested-error',
+	title: 'Nested Error',
+	created_at: '2025-01-01T00:00:00.000Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			id: 'root',
+			type: 'stack',
+			direction: 'vertical',
+			spacing: 'normal',
+			children: [
+				{
+					type: 'layout',
+					node: {
+						id: 'nested',
+						type: 'stack',
+						direction: 'horizontal',
+						spacing: 'normal',
+						children: [{type: 'component', component_id: 'table-1'}],
+					},
+				},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					columns: [{accessor: 'invalidAccessor', label: 'Invalid'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {
+				invalidAccessor: {roles: ['label'], data_types: ['string']},
+			},
+		},
+	},
+};
+
+export const NESTED_ERROR_DATA = [{x: 1}];
+
+/**
+ * Spec with invalid component reference for testing MISSING_COMPONENT error
+ */
+export const SPEC_ERROR_SPEC: ComponentSpec = {
+	id: 'test-spec-error',
+	title: 'Invalid Component Reference',
+	description: 'Spec with missing component',
+	created_at: '2025-10-18T00:00:00Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			type: 'stack',
+			direction: 'vertical',
+			id: 'root-layout',
+			spacing: 'normal',
+			children: [
+				{
+					type: 'component',
+					component_id: 'missing-component',
+				},
+			],
+		},
+		nodes: {
+			'actual-component': {
+				id: 'actual-component',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Users',
+					columns: [
+						{
+							accessor: '$[*].name',
+							label: 'Name',
+						},
+					],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'actual-component': {
+				'$[*].name': {
+					roles: ['label'],
+					data_types: ['string'],
+				},
+			},
+		},
+	},
+};
+
+export const SPEC_ERROR_DATA = [{name: 'Alice'}, {name: 'Bob'}];

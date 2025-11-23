@@ -113,9 +113,11 @@ describe('render', () => {
 		});
 
 		it('should throw when buildRenderTree fails - type mismatch', () => {
+			// Type mismatch is a programming error (malformed spec), so it throws a plain Error
+			// rather than SpecProcessingError which is for expected validation errors
 			expect(() => {
 				render(TYPE_MISMATCH_SPEC, []);
-			}).toThrow(SpecProcessingError);
+			}).toThrow('type mismatch');
 		});
 
 		it('should provide descriptive error messages', () => {

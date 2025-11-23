@@ -1,158 +1,317 @@
 /**
- * Core render tree builder - transforms ComponentSpec into RenderTree
+ * Core render tree builder v2 - orchestrates walkLayout and ComponentBuilders
+ *
+ * Two-phase processing:
+ * 1. walkLayout: Validates layout structure and produces RenderTree with component placeholders
+ * 2. processRenderTree: Recursively replaces placeholders with built components using builders
+ *
+ * This separation enables independent testing of layout traversal and data binding,
+ * and allows reporting all errors in one pass rather than failing fast.
  */
 
-import {ERROR_CODES, err, isErr, ok, type Result, type SpecError} from '@sigil/src/common/errors';
-import {generateFieldNameSimilaritySuggestion} from '@sigil/src/common/errors';
+import {err, isErr, ok, type Result, type SpecError} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
-import {bindTabularData, enrichColumns, extractColumns} from '../binding';
-import {JSONPATH_ROOT, VALID_LAYOUT_CHILD_TYPES} from '../constants/constants';
-import type {RenderTree, Row} from '../types';
-import {extractFirstLayoutChild} from '../utils/layout';
+import {getBuilder} from '../builders/registry';
+import {JSONPATH_ROOT} from '../constants';
+import type {
+	RenderComponent,
+	RenderGridChild,
+	RenderGridLayout,
+	RenderHorizontalStackLayout,
+	RenderTree,
+	RenderVerticalStackLayout,
+} from '../types';
+import {walkLayout} from '../utils/walkLayout';
 
 /**
  * Builds a RenderTree from ComponentSpec and raw data
  *
  * Processing pipeline:
- * 1. Navigate layout to find component reference
- * 2. Look up component in nodes registry
- * 3. Switch on component type for type narrowing
- * 4. Extract columns from config
- * 5. Get accessor_bindings for component
- * 6. Enrich columns with metadata
- * 7. Bind data to rows (validates array structure when needed)
- * 8. Return RenderTree
+ * 1. Call walkLayout to get RenderTree skeleton with component placeholders
+ * 2. Call processRenderTree to recursively replace placeholders with built components
+ * 3. Return complete RenderTree with all component props populated
  *
- * This function accumulates all structural errors found in the spec rather than
- * failing fast. It returns all issues discovered during processing, though some
- * errors may be dependent (e.g., missing component prevents data binding).
+ * Error accumulation:
+ * - Errors from walkLayout are returned immediately (cannot proceed without valid structure)
+ * - Errors from data binding are accumulated across all components
+ * - All binding errors reported in one pass to enable fixing multiple issues simultaneously
  *
  * @param spec - ComponentSpec from Sigil IR
  * @param data - Raw data (structure validated based on component requirements)
  * @returns Result containing RenderTree or array of structured errors
  */
 export const buildRenderTree = (spec: ComponentSpec, data: unknown): Result<RenderTree, SpecError[]> => {
-	const errors: SpecError[] = [];
+	// Phase 1: Get layout structure with placeholders
+	const layoutResult = walkLayout(spec);
 
-	// Extract first child from layout
-	const layoutChildResult = extractFirstLayoutChild(spec.root.layout);
-
-	if (!layoutChildResult.success) {
-		// Layout extraction failed - cannot proceed with dependent steps
-		return layoutChildResult;
+	if (isErr(layoutResult)) {
+		// Layout errors prevent data binding - return immediately
+		return layoutResult;
 	}
 
-	const layoutChild = layoutChildResult.data;
+	// Phase 2: Recursively replace placeholders with built components
+	const pathContext = [JSONPATH_ROOT];
+	const processedResult = processRenderTree(layoutResult.data, spec, data, pathContext);
 
-	// Use switch for type narrowing with discriminated union
-	switch (layoutChild.type) {
-		case 'component': {
-			const componentId = layoutChild.component_id;
+	return processedResult;
+};
 
-			// Look up component in nodes registry
-			const componentNode = spec.root.nodes[componentId];
+/**
+ * Recursively processes a RenderTree, replacing component placeholders with built components
+ *
+ * Handles three cases:
+ * 1. Stack layouts (horizontal/vertical): Recursively process children array
+ * 2. Grid layouts: Recursively process children whilst preserving positioning
+ * 3. Leaf components: Call replaceComponentPlaceholder to build actual props
+ *
+ * Error accumulation strategy:
+ * - Continue processing siblings even when one child fails
+ * - Collect all errors from recursive calls
+ * - Return accumulated errors if any failures occurred
+ *
+ * @param tree - RenderTree to process (may be layout or component)
+ * @param spec - ComponentSpec containing component definitions and bindings
+ * @param data - Raw data to bind to components
+ * @param pathContext - JSONPath segments for error reporting
+ * @returns Result containing processed RenderTree or accumulated errors
+ */
+const processRenderTree = (
+	tree: RenderTree,
+	spec: ComponentSpec,
+	data: unknown,
+	pathContext: string[]
+): Result<RenderTree, SpecError[]> => {
+	const errors: SpecError[] = [];
 
-			if (!componentNode) {
-				const availableComponents = Object.keys(spec.root.nodes);
-				const suggestion = generateFieldNameSimilaritySuggestion(componentId, availableComponents);
-				errors.push({
-					code: ERROR_CODES.MISSING_COMPONENT,
-					severity: 'error',
-					category: 'spec',
-					path: `$.root.layout.children[0].component_id`,
-					context: {componentId, availableComponents},
-					suggestion
-				});
-				// Cannot proceed without component - return accumulated errors
+	// Switch on discriminator to handle RenderLayout vs RenderComponent
+	switch (tree.type) {
+		case 'horizontal-stack':
+		case 'vertical-stack': {
+			// Process stack layout children
+			const processedChildren: RenderTree[] = [];
+
+			for (const [index, child] of tree.children.entries()) {
+				const childPathContext = [...pathContext, `.layout.children[${index}]`];
+				const result = processRenderTree(child, spec, data, childPathContext);
+
+				if (isErr(result)) {
+					// Accumulate errors but continue processing siblings
+					errors.push(...result.error);
+				} else {
+					processedChildren.push(result.data);
+				}
+			}
+
+			// Return layout with processed children
+			if (errors.length > 0) {
 				return err(errors);
 			}
 
-			// Use switch for type narrowing on component type
-			switch (componentNode.type) {
-				case 'data-table': {
-					// TypeScript narrows componentNode but we need to assert config type
-					if (componentNode.config.type !== 'data-table') {
-						errors.push({
-							code: ERROR_CODES.TYPE_MISMATCH,
-							severity: 'error',
-							category: 'spec',
-							path: `$.root.nodes['${componentId}']`,
-							context: {
-								expected: componentNode.type,
-								actual: componentNode.config.type,
-								nodeId: componentId
-							}
-						});
-						// Cannot proceed with mismatched types - return accumulated errors
-						return err(errors);
-					}
-					const config = componentNode.config;
-
-					// Extract columns from config
-					const columns = extractColumns(config.columns);
-
-					// Get accessor_bindings for this component
-					const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
-
-					// Enrich columns with metadata
-					const enrichedColumns = enrichColumns(columns, accessorBindings);
-
-					// Bind data to rows with path context
-					const bindResult = bindTabularData(data, enrichedColumns, accessorBindings, [JSONPATH_ROOT]);
-
-					// Handle binding errors
-					let rows: Row[];
-					if (isErr(bindResult)) {
-						// Accumulate binding errors
-						errors.push(...bindResult.error);
-						// Use empty array for partial rendering
-						rows = [];
-					} else {
-						rows = bindResult.data;
-					}
-
-					// Check if any errors accumulated (spec errors + binding errors)
-					if (errors.length > 0) {
-						return err(errors);
-					}
-
-					// Build RenderTree with successful rows
-					return ok({
-						type: 'data-table',
-						props: {
-							title: config.title,
-							description: config.description,
-							columns: enrichedColumns,
-							data: rows,
-						},
-					});
-				}
-
-				case 'hierarchy':
-				case 'composition':
-				case 'text-insight':
-					throw new Error(`Unsupported component type: ${componentNode.type}`);
+			if (tree.type === 'horizontal-stack') {
+				const processedLayout: RenderHorizontalStackLayout = {
+					...tree,
+					children: processedChildren,
+				};
+				return ok(processedLayout);
+			} else {
+				const processedLayout: RenderVerticalStackLayout = {
+					...tree,
+					children: processedChildren,
+				};
+				return ok(processedLayout);
 			}
 		}
 
-		case 'layout':
-			throw new Error('Nested layouts not yet supported');
+		case 'grid': {
+			// Process grid layout children whilst preserving positioning
+			const processedChildren: RenderGridChild[] = [];
+
+			for (const [index, gridChild] of tree.children.entries()) {
+				const childPathContext = [...pathContext, `.layout.children[${index}]`];
+				const elementPathContext = [...childPathContext, `.element`];
+				const result = processRenderTree(gridChild.element, spec, data, elementPathContext);
+
+				if (isErr(result)) {
+					// Accumulate errors but continue processing siblings
+					errors.push(...result.error);
+				} else {
+					// Preserve positioning metadata whilst replacing element
+					processedChildren.push({
+						element: result.data,
+						column_start: gridChild.column_start,
+						row_start: gridChild.row_start,
+						column_span: gridChild.column_span,
+						row_span: gridChild.row_span,
+					});
+				}
+			}
+
+			// Return grid layout with processed children
+			if (errors.length > 0) {
+				return err(errors);
+			}
+
+			const processedLayout: RenderGridLayout = {
+				...tree,
+				children: processedChildren,
+			};
+			return ok(processedLayout);
+		}
+
+		case 'data-table':
+		case 'hierarchy':
+		case 'composition':
+		case 'text-insight': {
+			// Leaf component - replace placeholder with built component
+			return replaceComponentPlaceholder(tree, spec, data, pathContext);
+		}
+
+		default: {
+			// Exhaustiveness check - should never reach here
+			const _exhaustive: never = tree;
+			return _exhaustive;
+		}
+	}
+};
+
+/**
+ * Replaces a component placeholder with actual props from ComponentBuilder
+ *
+ * Processing steps:
+ * 1. Extract componentId from placeholder
+ * 2. Look up component in spec.root.nodes
+ * 3. Look up builder from registry using component type
+ * 4. Extract accessor_bindings for this component
+ * 5. Call builder.build with config, data, bindings, pathContext
+ * 6. Return RenderComponent with built props or accumulated errors
+ *
+ * @param placeholder - RenderComponent placeholder with empty props
+ * @param spec - ComponentSpec containing component definitions and bindings
+ * @param data - Raw data to bind to component
+ * @param pathContext - JSONPath segments for error reporting
+ * @returns Result containing RenderComponent with built props or accumulated errors
+ */
+const replaceComponentPlaceholder = (
+	placeholder: RenderComponent,
+	spec: ComponentSpec,
+	data: unknown,
+	pathContext: string[]
+): Result<RenderComponent, SpecError[]> => {
+	// Extract componentId from placeholder
+	const componentId = placeholder.componentId;
+
+	if (!componentId) {
+		// This should never happen if walkLayout is working correctly
+		throw new Error('Component placeholder missing componentId - this is a bug in walkLayout');
+	}
+
+	// Look up component in spec.root.nodes
+	const componentNode = spec.root.nodes[componentId];
+
+	if (!componentNode) {
+		// This should never happen if walkLayout validated component references
+		throw new Error(`Component "${componentId}" not found in spec.root.nodes - this is a bug in walkLayout`);
+	}
+
+	// Switch on component type for type narrowing and builder dispatch
+	switch (placeholder.type) {
+		case 'data-table': {
+			// Verify config type matches component type
+			if (componentNode.config.type !== 'data-table') {
+				throw new Error(`Component "${componentId}" has type mismatch - this is a bug in walkLayout`);
+			}
+
+			const config = componentNode.config;
+			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
+			const builder = getBuilder('data-table');
+
+			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+
+			if (isErr(propsResult)) {
+				return propsResult;
+			}
+
+			return ok({
+				type: 'data-table',
+				componentId,
+				props: propsResult.data,
+			});
+		}
+
+		case 'hierarchy': {
+			// Verify config type matches component type
+			if (componentNode.config.type !== 'hierarchy') {
+				throw new Error(`Component "${componentId}" has type mismatch - this is a bug in walkLayout`);
+			}
+
+			const config = componentNode.config;
+			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
+			const builder = getBuilder('hierarchy');
+
+			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+
+			if (isErr(propsResult)) {
+				return propsResult;
+			}
+
+			return ok({
+				type: 'hierarchy',
+				componentId,
+				props: propsResult.data,
+			});
+		}
+
+		case 'composition': {
+			// Verify config type matches component type
+			if (componentNode.config.type !== 'composition') {
+				throw new Error(`Component "${componentId}" has type mismatch - this is a bug in walkLayout`);
+			}
+
+			const config = componentNode.config;
+			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
+			const builder = getBuilder('composition');
+
+			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+
+			if (isErr(propsResult)) {
+				return propsResult;
+			}
+
+			return ok({
+				type: 'composition',
+				componentId,
+				props: propsResult.data,
+			});
+		}
+
+		case 'text-insight': {
+			// Verify config type matches component type
+			if (componentNode.config.type !== 'text-insight') {
+				throw new Error(`Component "${componentId}" has type mismatch - this is a bug in walkLayout`);
+			}
+
+			const config = componentNode.config;
+			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
+			const builder = getBuilder('text-insight');
+
+			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+
+			if (isErr(propsResult)) {
+				return propsResult;
+			}
+
+			return ok({
+				type: 'text-insight',
+				componentId,
+				props: propsResult.data,
+			});
+		}
 
 		default: {
 			// Exhaustiveness check
-			const _exhaustive: never = layoutChild;
-			const childType = (_exhaustive as {type: string}).type;
-			const suggestion = generateFieldNameSimilaritySuggestion(childType, [...VALID_LAYOUT_CHILD_TYPES]);
-			errors.push({
-				code: ERROR_CODES.UNKNOWN_LAYOUT_CHILD_TYPE,
-				severity: 'error',
-				category: 'spec',
-				path: '$.root.layout.children[0]',
-				context: {childType, validTypes: [...VALID_LAYOUT_CHILD_TYPES]},
-				suggestion
-			});
-			return err(errors);
+			const _exhaustive: never = placeholder;
+			return _exhaustive;
 		}
 	}
 };

@@ -19,9 +19,10 @@ import {DataTable} from '../components';
  * Pipeline:
  * 1. Call buildRenderTree() to get framework-agnostic RenderTree
  * 2. Handle any errors from tree building
- * 3. Switch on RenderNode type
- * 4. Map to appropriate React component
- * 5. Return React element
+ * 3. Extract component from layout wrapper (temporary until full layout rendering)
+ * 4. Switch on RenderNode type
+ * 5. Map to appropriate React component
+ * 6. Return React element
  *
  * @param spec - ComponentSpec from Sigil IR
  * @param data - Raw data (structure depends on parser and component requirements)
@@ -37,7 +38,18 @@ export const render = (spec: ComponentSpec, data: unknown): ReactElement => {
 		throw new SpecProcessingError(renderTreeResult.error);
 	}
 
-	const renderTree = renderTreeResult.data;
+	let renderTree = renderTreeResult.data;
+
+	// Temporary: Extract single component from layout wrapper
+	// buildRenderTree v2 wraps everything in a layout, but React renderer
+	// doesn't have layout components yet. Extract the component if there's
+	// only one child in a vertical-stack wrapper.
+	if (renderTree.type === 'vertical-stack' && renderTree.children.length === 1) {
+		const child = renderTree.children.at(0);
+		if (child && child.type === 'data-table') {
+			renderTree = child;
+		}
+	}
 
 	// Switch on RenderNode type for type narrowing
 	switch (renderTree.type) {

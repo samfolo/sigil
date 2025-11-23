@@ -4,7 +4,6 @@
 
 export {buildRenderTree} from './buildRenderTree';
 export {bindTabularData, enrichColumns, extractColumns} from './binding';
-export {extractFirstLayoutChild} from './utils/layout';
 export {stringifyCellValue} from './utils/stringifyCellValue';
 export type {
 	CellValue,
