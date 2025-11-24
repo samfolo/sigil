@@ -9,9 +9,9 @@
 import {render as renderComponent, screen, within} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
+import {getByLayoutType} from '@sigil/renderer/react/common';
 import {ERROR_CODES, SpecProcessingError} from '@sigil/src/common/errors';
 import type {ComponentType, DataType} from '@sigil/src/lib/generated/types/specification';
-import {getAllByLayoutType, getByLayoutType} from '@sigil/renderer/react/common';
 
 import {render} from './render';
 import {
