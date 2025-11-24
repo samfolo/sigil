@@ -20,7 +20,7 @@ export interface HorizontalStackProps extends Omit<RenderHorizontalStackLayout, 
  * Only implements flex-direction; spacing, alignment, padding, and size constraints deferred
  */
 const HorizontalStackComponent = ({children}: HorizontalStackProps): ReactElement => (
-	<div className="flex flex-row">
+	<div data-layout-type="horizontal-stack" className="flex flex-row">
 		{children}
 	</div>
 );

@@ -11,6 +11,7 @@ import {describe, expect, it} from 'vitest';
 
 import {ERROR_CODES, SpecProcessingError} from '@sigil/src/common/errors';
 import type {ComponentType, DataType} from '@sigil/src/lib/generated/types/specification';
+import {getAllByLayoutType, getByLayoutType} from '@sigil/renderer/react/common';
 
 import {render} from './render';
 import {
@@ -321,43 +322,66 @@ describe('render', () => {
 
 		it('should render nested layouts recursively', () => {
 			const element = render(NESTED_STACK_SPEC, NESTED_STACK_DATA);
-			renderComponent(element);
+			const {container} = renderComponent(element);
+
+			// Verify layout structure: vertical stack containing summary table and horizontal stack
+			const verticalStack = getByLayoutType(container, 'vertical-stack');
+			expect(verticalStack).toBeInTheDocument();
+
+			// Horizontal stack should be nested inside vertical stack
+			const horizontalStack = verticalStack ? getByLayoutType(verticalStack, 'horizontal-stack') : null;
+			expect(horizontalStack).toBeInTheDocument();
 
 			// Get all three tables
 			const tables = screen.getAllByRole('table');
 			expect(tables).toHaveLength(3);
 
+			// Verify stacks exist before checking table containment
+			if (!verticalStack) {
+				throw new Error('Vertical stack not found');
+			}
+			if (!horizontalStack) {
+				throw new Error('Horizontal stack not found');
+			}
+
 			// Summary table (first child of vertical stack)
 			const summaryTable = tables.at(0);
-			expect(summaryTable).toBeDefined();
-			if (summaryTable) {
-				expect(within(summaryTable).getByText('Summary')).toBeInTheDocument();
-				expect(within(summaryTable).getByText('1000')).toBeInTheDocument();
+			if (!summaryTable) {
+				throw new Error('Summary table not found');
 			}
+			expect(within(summaryTable).getByText('Summary')).toBeInTheDocument();
+			expect(within(summaryTable).getByText('1000')).toBeInTheDocument();
+			// Summary should be in vertical stack but not in horizontal stack
+			expect(verticalStack.contains(summaryTable)).toBe(true);
+			expect(horizontalStack.contains(summaryTable)).toBe(false);
 
 			// Region A table (first child of nested horizontal stack)
 			const regionATable = tables.at(1);
-			expect(regionATable).toBeDefined();
-			if (regionATable) {
-				expect(within(regionATable).getByText('Region A')).toBeInTheDocument();
-				expect(within(regionATable).getByText('500')).toBeInTheDocument();
+			if (!regionATable) {
+				throw new Error('Region A table not found');
 			}
+			expect(within(regionATable).getByText('Region A')).toBeInTheDocument();
+			expect(within(regionATable).getByText('500')).toBeInTheDocument();
+			// Should be in horizontal stack
+			expect(horizontalStack.contains(regionATable)).toBe(true);
 
 			// Region B table (second child of nested horizontal stack)
 			const regionBTable = tables.at(2);
-			expect(regionBTable).toBeDefined();
-			if (regionBTable) {
-				expect(within(regionBTable).getByText('Region B')).toBeInTheDocument();
-				expect(within(regionBTable).getByText('500')).toBeInTheDocument();
+			if (!regionBTable) {
+				throw new Error('Region B table not found');
 			}
+			expect(within(regionBTable).getByText('Region B')).toBeInTheDocument();
+			expect(within(regionBTable).getByText('500')).toBeInTheDocument();
+			// Should be in horizontal stack
+			expect(horizontalStack.contains(regionBTable)).toBe(true);
 		});
 
 		it('should apply correct flexbox direction to stacks', () => {
 			const horizontalElement = render(HORIZONTAL_STACK_SPEC, HORIZONTAL_STACK_DATA);
 			const {container: horizontalContainer} = renderComponent(horizontalElement);
 
-			// Horizontal stack should have flex-row
-			const horizontalStack = horizontalContainer.querySelector('.flex.flex-row');
+			// Horizontal stack should render with correct layout type
+			const horizontalStack = getByLayoutType(horizontalContainer, 'horizontal-stack');
 			expect(horizontalStack).toBeInTheDocument();
 		});
 	});

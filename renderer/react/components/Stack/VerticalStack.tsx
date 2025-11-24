@@ -20,7 +20,7 @@ export interface VerticalStackProps extends Omit<RenderVerticalStackLayout, 'chi
  * Only implements flex-direction; spacing, alignment, padding, and size constraints deferred
  */
 const VerticalStackComponent = ({children}: VerticalStackProps): ReactElement => (
-	<div className="flex flex-col">
+	<div data-layout-type="vertical-stack" className="flex flex-col">
 		{children}
 	</div>
 );

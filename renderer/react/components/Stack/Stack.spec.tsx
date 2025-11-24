@@ -5,6 +5,8 @@
 import {render, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
+import {getByLayoutType} from '@sigil/renderer/react/common';
+
 import {HorizontalStack} from './HorizontalStack';
 import {VerticalStack} from './VerticalStack';
 
@@ -17,7 +19,7 @@ describe('HorizontalStack', () => {
 			</HorizontalStack>
 		);
 
-		const stackDiv = container.querySelector('.flex.flex-row');
+		const stackDiv = getByLayoutType(container, 'horizontal-stack');
 		expect(stackDiv).toBeInTheDocument();
 	});
 
@@ -43,7 +45,7 @@ describe('VerticalStack', () => {
 			</VerticalStack>
 		);
 
-		const stackDiv = container.querySelector('.flex.flex-col');
+		const stackDiv = getByLayoutType(container, 'vertical-stack');
 		expect(stackDiv).toBeInTheDocument();
 	});
 
