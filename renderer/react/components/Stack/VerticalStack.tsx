@@ -10,7 +10,7 @@ import type {RenderVerticalStackLayout} from '@sigil/renderer/core/types/types';
 /**
  * VerticalStack props with ReactNode children instead of RenderTree[]
  */
-export interface VerticalStackProps extends Omit<RenderVerticalStackLayout, 'children'> {
+export interface VerticalStackProps extends Omit<RenderVerticalStackLayout, 'children' | 'type'> {
 	children: ReactNode;
 }
 

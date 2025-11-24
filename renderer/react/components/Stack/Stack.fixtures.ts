@@ -9,7 +9,7 @@ import type {RenderHorizontalStackLayout, RenderVerticalStackLayout} from '@sigi
  */
 export const HORIZONTAL_STACK_TWO_TABLES: RenderHorizontalStackLayout = {
 	type: 'horizontal-stack',
-	spacing: 'md',
+	spacing: 'normal',
 	children: [
 		{
 			type: 'data-table',
@@ -93,7 +93,7 @@ export const HORIZONTAL_STACK_TWO_TABLES: RenderHorizontalStackLayout = {
  */
 export const VERTICAL_STACK_TWO_TABLES: RenderVerticalStackLayout = {
 	type: 'vertical-stack',
-	spacing: 'md',
+	spacing: 'normal',
 	children: [
 		{
 			type: 'data-table',
@@ -163,7 +163,7 @@ export const VERTICAL_STACK_TWO_TABLES: RenderVerticalStackLayout = {
  */
 export const NESTED_HORIZONTAL_IN_VERTICAL: RenderVerticalStackLayout = {
 	type: 'vertical-stack',
-	spacing: 'lg',
+	spacing: 'relaxed',
 	children: [
 		{
 			type: 'data-table',
@@ -197,7 +197,7 @@ export const NESTED_HORIZONTAL_IN_VERTICAL: RenderVerticalStackLayout = {
 		},
 		{
 			type: 'horizontal-stack',
-			spacing: 'md',
+			spacing: 'normal',
 			children: [
 				{
 					type: 'data-table',

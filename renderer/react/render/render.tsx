@@ -8,8 +8,8 @@
 import {Fragment} from 'react';
 import type {ReactElement} from 'react';
 
-import type {RenderTree} from '@sigil/renderer/core/types/types';
 import {buildRenderTree} from '@sigil/renderer/core';
+import type {RenderTree} from '@sigil/renderer/core/types/types';
 import {SpecProcessingError} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 

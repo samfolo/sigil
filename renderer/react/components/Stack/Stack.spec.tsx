@@ -11,7 +11,7 @@ import {VerticalStack} from './VerticalStack';
 describe('HorizontalStack', () => {
 	it('should render with flex-row', () => {
 		const {container} = render(
-			<HorizontalStack spacing="md">
+			<HorizontalStack spacing="normal">
 				<div>Child 1</div>
 				<div>Child 2</div>
 			</HorizontalStack>
@@ -23,7 +23,7 @@ describe('HorizontalStack', () => {
 
 	it('should render children', () => {
 		render(
-			<HorizontalStack spacing="md">
+			<HorizontalStack spacing="normal">
 				<div>First</div>
 				<div>Second</div>
 			</HorizontalStack>
@@ -37,7 +37,7 @@ describe('HorizontalStack', () => {
 describe('VerticalStack', () => {
 	it('should render with flex-col', () => {
 		const {container} = render(
-			<VerticalStack spacing="md">
+			<VerticalStack spacing="normal">
 				<div>Child 1</div>
 				<div>Child 2</div>
 			</VerticalStack>
@@ -49,7 +49,7 @@ describe('VerticalStack', () => {
 
 	it('should render children', () => {
 		render(
-			<VerticalStack spacing="md">
+			<VerticalStack spacing="normal">
 				<div>First</div>
 				<div>Second</div>
 			</VerticalStack>

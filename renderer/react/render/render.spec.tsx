@@ -6,7 +6,7 @@
  * and error handling.
  */
 
-import {render as renderComponent, screen} from '@testing-library/react';
+import {render as renderComponent, screen, within} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
 import {ERROR_CODES, SpecProcessingError} from '@sigil/src/common/errors';
@@ -15,12 +15,18 @@ import type {ComponentType, DataType} from '@sigil/src/lib/generated/types/speci
 import {render} from './render';
 import {
 	EMPTY_DATA,
+	HORIZONTAL_STACK_DATA,
+	HORIZONTAL_STACK_SPEC,
 	INVALID_COMPONENT_ID_SPEC,
 	NESTED_ACCESSOR_DATA,
 	NESTED_ACCESSOR_SPEC,
+	NESTED_STACK_DATA,
+	NESTED_STACK_SPEC,
 	SIMPLE_USER_DATA,
 	SIMPLE_USER_SPEC,
 	TYPE_MISMATCH_SPEC,
+	VERTICAL_STACK_DATA,
+	VERTICAL_STACK_SPEC,
 } from './render.fixtures';
 
 describe('render', () => {
@@ -283,6 +289,76 @@ describe('render', () => {
 			// Should not crash
 			const cells = screen.getAllByRole('cell');
 			expect(cells.length).toBeGreaterThan(0);
+		});
+	});
+
+	describe('Layout Rendering', () => {
+		it('should render horizontal stack with multiple tables', () => {
+			const element = render(HORIZONTAL_STACK_SPEC, HORIZONTAL_STACK_DATA);
+			renderComponent(element);
+
+			// Both tables should render
+			expect(screen.getByText('Users')).toBeInTheDocument();
+			expect(screen.getByText('Products')).toBeInTheDocument();
+
+			// Data from both tables should be visible
+			expect(screen.getByText('Alice')).toBeInTheDocument();
+			expect(screen.getByText('Widget')).toBeInTheDocument();
+		});
+
+		it('should render vertical stack with multiple tables', () => {
+			const element = render(VERTICAL_STACK_SPEC, VERTICAL_STACK_DATA);
+			renderComponent(element);
+
+			// Both tables should render
+			expect(screen.getByText('Sales')).toBeInTheDocument();
+			expect(screen.getByText('Orders')).toBeInTheDocument();
+
+			// Data from both tables should be visible
+			expect(screen.getByText('North')).toBeInTheDocument();
+			expect(screen.getByText('ORD-001')).toBeInTheDocument();
+		});
+
+		it('should render nested layouts recursively', () => {
+			const element = render(NESTED_STACK_SPEC, NESTED_STACK_DATA);
+			renderComponent(element);
+
+			// Get all three tables
+			const tables = screen.getAllByRole('table');
+			expect(tables).toHaveLength(3);
+
+			// Summary table (first child of vertical stack)
+			const summaryTable = tables.at(0);
+			expect(summaryTable).toBeDefined();
+			if (summaryTable) {
+				expect(within(summaryTable).getByText('Summary')).toBeInTheDocument();
+				expect(within(summaryTable).getByText('1000')).toBeInTheDocument();
+			}
+
+			// Region A table (first child of nested horizontal stack)
+			const regionATable = tables.at(1);
+			expect(regionATable).toBeDefined();
+			if (regionATable) {
+				expect(within(regionATable).getByText('Region A')).toBeInTheDocument();
+				expect(within(regionATable).getByText('500')).toBeInTheDocument();
+			}
+
+			// Region B table (second child of nested horizontal stack)
+			const regionBTable = tables.at(2);
+			expect(regionBTable).toBeDefined();
+			if (regionBTable) {
+				expect(within(regionBTable).getByText('Region B')).toBeInTheDocument();
+				expect(within(regionBTable).getByText('500')).toBeInTheDocument();
+			}
+		});
+
+		it('should apply correct flexbox direction to stacks', () => {
+			const horizontalElement = render(HORIZONTAL_STACK_SPEC, HORIZONTAL_STACK_DATA);
+			const {container: horizontalContainer} = renderComponent(horizontalElement);
+
+			// Horizontal stack should have flex-row
+			const horizontalStack = horizontalContainer.querySelector('.flex.flex-row');
+			expect(horizontalStack).toBeInTheDocument();
 		});
 	});
 });

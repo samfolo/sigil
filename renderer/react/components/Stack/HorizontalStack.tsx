@@ -10,7 +10,7 @@ import type {RenderHorizontalStackLayout} from '@sigil/renderer/core/types/types
 /**
  * HorizontalStack props with ReactNode children instead of RenderTree[]
  */
-export interface HorizontalStackProps extends Omit<RenderHorizontalStackLayout, 'children'> {
+export interface HorizontalStackProps extends Omit<RenderHorizontalStackLayout, 'children' | 'type'> {
 	children: ReactNode;
 }
 
