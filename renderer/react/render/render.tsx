@@ -13,7 +13,7 @@ import type {RenderTree} from '@sigil/renderer/core/types/types';
 import {SpecProcessingError} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
-import {DataTable, HorizontalStack, VerticalStack} from '../components';
+import {DataTable, Grid, GridChild, HorizontalStack, VerticalStack} from '../components';
 
 /**
  * Recursively renders a RenderTree node as React element
@@ -43,6 +43,23 @@ const renderTreeNode = (tree: RenderTree): ReactElement => {
 						</Fragment>
 					))}
 				</VerticalStack>
+			);
+
+		case 'grid':
+			return (
+				<Grid columns={tree.columns} rows={tree.rows}>
+					{tree.children.map((child, index) => (
+						<GridChild
+							key={index}
+							columnStart={child.column_start}
+							rowStart={child.row_start}
+							columnSpan={child.column_span}
+							rowSpan={child.row_span}
+						>
+							{renderTreeNode(child.element)}
+						</GridChild>
+					))}
+				</Grid>
 			);
 
 		case 'data-table':

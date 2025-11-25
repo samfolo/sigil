@@ -16,6 +16,10 @@ import type {ComponentType, DataType} from '@sigil/src/lib/generated/types/speci
 import {render} from './render';
 import {
 	EMPTY_DATA,
+	GRID_2X2_DATA,
+	GRID_2X2_SPEC,
+	GRID_AUTO_FLOW_DATA,
+	GRID_AUTO_FLOW_SPEC,
 	HORIZONTAL_STACK_DATA,
 	HORIZONTAL_STACK_SPEC,
 	INVALID_COMPONENT_ID_SPEC,
@@ -383,6 +387,42 @@ describe('render', () => {
 			// Horizontal stack should render with correct layout type
 			const horizontalStack = getByLayoutType(horizontalContainer, 'horizontal-stack');
 			expect(horizontalStack).toBeInTheDocument();
+		});
+
+		it('should render 2x2 grid with four tables', () => {
+			const element = render(GRID_2X2_SPEC, GRID_2X2_DATA);
+			const {container} = renderComponent(element);
+
+			// Grid should render with correct layout type
+			const grid = getByLayoutType(container, 'grid');
+			expect(grid).toBeInTheDocument();
+
+			// All four tables should render within the grid
+			const tables = within(grid!).getAllByRole('table');
+			expect(tables).toHaveLength(4);
+
+			// Data should be visible
+			expect(screen.getByText('Alice')).toBeInTheDocument();
+			expect(screen.getByText('Widget')).toBeInTheDocument();
+			expect(screen.getByText('ORD-001')).toBeInTheDocument();
+		});
+
+		it('should render grid with auto-flow (no explicit rows)', () => {
+			const element = render(GRID_AUTO_FLOW_SPEC, GRID_AUTO_FLOW_DATA);
+			const {container} = renderComponent(element);
+
+			// Grid should render
+			const grid = getByLayoutType(container, 'grid');
+			expect(grid).toBeInTheDocument();
+
+			// All three tables should render within the grid
+			const tables = within(grid!).getAllByRole('table');
+			expect(tables).toHaveLength(3);
+
+			// Table titles should be visible
+			expect(screen.getByText('Region A')).toBeInTheDocument();
+			expect(screen.getByText('Region B')).toBeInTheDocument();
+			expect(screen.getByText('Region C')).toBeInTheDocument();
 		});
 	});
 });

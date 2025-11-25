@@ -548,3 +548,157 @@ export const NESTED_STACK_SPEC: ComponentSpec = {
 export const NESTED_STACK_DATA = [
 	{total: 1000, sales_a: 500, sales_b: 500},
 ];
+
+/**
+ * Spec with 2x2 grid layout containing four tables
+ */
+export const GRID_2X2_SPEC: ComponentSpec = {
+	id: 'grid-2x2',
+	title: 'Grid Layout',
+	created_at: '2025-10-11T00:00:00Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			type: 'grid',
+			id: 'root-layout',
+			columns: 2,
+			rows: 2,
+			children: [
+				{
+					element: {type: 'component', component_id: 'table-1'},
+				},
+				{
+					element: {type: 'component', component_id: 'table-2'},
+				},
+				{
+					element: {type: 'component', component_id: 'table-3'},
+				},
+				{
+					element: {type: 'component', component_id: 'table-4'},
+				},
+			],
+		},
+		nodes: {
+			'table-1': {
+				id: 'table-1',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Users',
+					columns: [{accessor: '$[*].name', label: 'Name'}],
+					affordances: [],
+				},
+			},
+			'table-2': {
+				id: 'table-2',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Products',
+					columns: [{accessor: '$[*].product', label: 'Product'}],
+					affordances: [],
+				},
+			},
+			'table-3': {
+				id: 'table-3',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Orders',
+					columns: [{accessor: '$[*].order', label: 'Order'}],
+					affordances: [],
+				},
+			},
+			'table-4': {
+				id: 'table-4',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Sales',
+					columns: [{accessor: '$[*].sales', label: 'Sales'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'table-1': {'$[*].name': {roles: ['label'], data_types: ['string']}},
+			'table-2': {'$[*].product': {roles: ['label'], data_types: ['string']}},
+			'table-3': {'$[*].order': {roles: ['label'], data_types: ['string']}},
+			'table-4': {'$[*].sales': {roles: ['label'], data_types: ['number']}},
+		},
+	},
+};
+
+/**
+ * Sample data for GRID_2X2_SPEC
+ */
+export const GRID_2X2_DATA = [
+	{name: 'Alice', product: 'Widget', order: 'ORD-001', sales: 100},
+	{name: 'Bob', product: 'Gadget', order: 'ORD-002', sales: 200},
+];
+
+/**
+ * Spec with auto-flow grid (no explicit rows)
+ */
+export const GRID_AUTO_FLOW_SPEC: ComponentSpec = {
+	id: 'grid-auto-flow',
+	title: 'Auto Flow Grid',
+	created_at: '2025-10-11T00:00:00Z',
+	data_shape: 'tabular',
+	root: {
+		layout: {
+			type: 'grid',
+			id: 'root-layout',
+			columns: 3,
+			children: [
+				{element: {type: 'component', component_id: 'region-a'}},
+				{element: {type: 'component', component_id: 'region-b'}},
+				{element: {type: 'component', component_id: 'region-c'}},
+			],
+		},
+		nodes: {
+			'region-a': {
+				id: 'region-a',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Region A',
+					columns: [{accessor: '$[*].value_a', label: 'Value'}],
+					affordances: [],
+				},
+			},
+			'region-b': {
+				id: 'region-b',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Region B',
+					columns: [{accessor: '$[*].value_b', label: 'Value'}],
+					affordances: [],
+				},
+			},
+			'region-c': {
+				id: 'region-c',
+				type: 'data-table',
+				config: {
+					type: 'data-table',
+					title: 'Region C',
+					columns: [{accessor: '$[*].value_c', label: 'Value'}],
+					affordances: [],
+				},
+			},
+		},
+		accessor_bindings: {
+			'region-a': {'$[*].value_a': {roles: ['label'], data_types: ['number']}},
+			'region-b': {'$[*].value_b': {roles: ['label'], data_types: ['number']}},
+			'region-c': {'$[*].value_c': {roles: ['label'], data_types: ['number']}},
+		},
+	},
+};
+
+/**
+ * Sample data for GRID_AUTO_FLOW_SPEC
+ */
+export const GRID_AUTO_FLOW_DATA = [
+	{value_a: 100, value_b: 200, value_c: 300},
+];
