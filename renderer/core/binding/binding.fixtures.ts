@@ -879,3 +879,169 @@ export const ARRAY_OF_ARRAYS_WITH_OBJECTS = {
 	pathContext: [JSONPATH_ROOT],
 	expectedResult: 'Array-of-arrays with nested objects should support mixed accessor patterns like $[*][0].property',
 };
+
+/**
+ * 24. Data source navigation - nested array
+ *
+ * Tests data_source navigation to a nested array. Accessors are relative to
+ * the data_source path.
+ */
+export const DATA_SOURCE_NESTED_ARRAY = {
+	data: {
+		metadata: {version: '1.0'},
+		regions: {
+			north: [
+				{product: 'Widget A', units: 150, revenue: 3000},
+				{product: 'Widget B', units: 200, revenue: 4000},
+			],
+		},
+	},
+	columns: [
+		{id: '$[*].product', label: 'Product', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].units', label: 'Units', dataType: 'number', alignment: 'right' as const},
+		{id: '$[*].revenue', label: 'Revenue', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*].product': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].units': {
+			data_types: ['number' as const],
+			roles: ['value'],
+		},
+		'$[*].revenue': {
+			data_types: ['number' as const],
+			roles: ['value'],
+			format: '$0,0',
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: [JSONPATH_ROOT],
+	dataSource: '$.regions.north',
+	expectedResult: 'Should navigate to $.regions.north before binding, accessors are relative to that path',
+};
+
+/**
+ * 25. Data source navigation - root (default behaviour)
+ *
+ * Tests that data_source '$' or omitted behaves as default root binding.
+ */
+export const DATA_SOURCE_ROOT = {
+	data: [
+		{name: 'Alice', score: 95},
+		{name: 'Bob', score: 87},
+	],
+	columns: [
+		{id: '$[*].name', label: 'Name', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].score', label: 'Score', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*].name': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].score': {
+			data_types: ['number' as const],
+			roles: ['value'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: [JSONPATH_ROOT],
+	dataSource: '$',
+	expectedResult: 'data_source "$" should behave identically to omitting data_source',
+};
+
+/**
+ * 26. Data source navigation - path returns no data
+ *
+ * Tests error handling when data_source path resolves to undefined.
+ */
+export const DATA_SOURCE_NO_DATA = {
+	data: {
+		regions: {
+			north: [{product: 'Widget'}],
+		},
+	},
+	columns: [
+		{id: '$[*].product', label: 'Product', dataType: 'string', alignment: 'left' as const},
+	],
+	accessorBindings: {
+		'$[*].product': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: [JSONPATH_ROOT],
+	dataSource: '$.regions.south',
+	expectedResult: 'Should return error when data_source path resolves to undefined',
+};
+
+/**
+ * 27. Data source navigation - multiple regional tables
+ *
+ * Tests the multi-table pattern where each table has its own data_source.
+ * This fixture represents one of the tables (north region).
+ */
+export const DATA_SOURCE_MULTI_TABLE_NORTH = {
+	data: {
+		northRegion: [
+			{product: 'Widget A', units: 150},
+			{product: 'Widget B', units: 200},
+		],
+		southRegion: [
+			{product: 'Widget C', units: 175},
+			{product: 'Widget D', units: 225},
+		],
+	},
+	columns: [
+		{id: '$[*].product', label: 'Product', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].units', label: 'Units', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*].product': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].units': {
+			data_types: ['number' as const],
+			roles: ['value'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: [JSONPATH_ROOT],
+	dataSource: '$.northRegion',
+	expectedResult: 'Should bind only to northRegion data, ignoring southRegion',
+};
+
+/**
+ * 28. Data source navigation - multiple regional tables (south)
+ *
+ * Same data as fixture 27 but binding to south region.
+ */
+export const DATA_SOURCE_MULTI_TABLE_SOUTH = {
+	data: {
+		northRegion: [
+			{product: 'Widget A', units: 150},
+			{product: 'Widget B', units: 200},
+		],
+		southRegion: [
+			{product: 'Widget C', units: 175},
+			{product: 'Widget D', units: 225},
+		],
+	},
+	columns: [
+		{id: '$[*].product', label: 'Product', dataType: 'string', alignment: 'left' as const},
+		{id: '$[*].units', label: 'Units', dataType: 'number', alignment: 'right' as const},
+	],
+	accessorBindings: {
+		'$[*].product': {
+			data_types: ['string' as const],
+			roles: ['label'],
+		},
+		'$[*].units': {
+			data_types: ['number' as const],
+			roles: ['value'],
+		},
+	} satisfies Record<string, FieldMetadata>,
+	pathContext: [JSONPATH_ROOT],
+	dataSource: '$.southRegion',
+	expectedResult: 'Should bind only to southRegion data, ignoring northRegion',
+};

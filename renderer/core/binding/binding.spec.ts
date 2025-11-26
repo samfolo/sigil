@@ -26,6 +26,11 @@ import {
 	CSV_ARRAY_OF_ARRAYS_EMPTY,
 	CSV_ARRAY_OF_ARRAYS_MISSING_VALUES,
 	CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS,
+	DATA_SOURCE_MULTI_TABLE_NORTH,
+	DATA_SOURCE_MULTI_TABLE_SOUTH,
+	DATA_SOURCE_NESTED_ARRAY,
+	DATA_SOURCE_NO_DATA,
+	DATA_SOURCE_ROOT,
 	DATA_WITH_ARRAYS,
 	DATA_WITH_NULL_VALUES,
 	DATA_WITH_UNDEFINED_VALUES,
@@ -732,5 +737,131 @@ describe('bindTabularData - object-of-objects binding', () => {
 		expect(result.data.at(0)?.cells['$[*][0]'].raw).toBe('Alice Johnson');
 		expect(result.data.at(0)?.cells['$[*][1]'].raw).toBe('alice@example.com');
 		expect(result.data.at(0)?.cells['$[*][2]'].raw).toBe(28);
+	});
+});
+
+describe('bindTabularData - data source navigation', () => {
+	it('should navigate to nested array via data_source', () => {
+		const result = bindTabularData(
+			DATA_SOURCE_NESTED_ARRAY.data,
+			DATA_SOURCE_NESTED_ARRAY.columns,
+			DATA_SOURCE_NESTED_ARRAY.accessorBindings,
+			DATA_SOURCE_NESTED_ARRAY.pathContext,
+			DATA_SOURCE_NESTED_ARRAY.dataSource
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		// Should have 2 rows from the nested north region array
+		expect(result.data).toHaveLength(2);
+		expect(result.data.at(0)?.cells['$[*].product'].raw).toBe('Widget A');
+		expect(result.data.at(0)?.cells['$[*].units'].raw).toBe(150);
+		expect(result.data.at(0)?.cells['$[*].revenue'].raw).toBe(3000);
+		expect(result.data.at(1)?.cells['$[*].product'].raw).toBe('Widget B');
+	});
+
+	it('should treat data_source "$" same as omitting it', () => {
+		const result = bindTabularData(
+			DATA_SOURCE_ROOT.data,
+			DATA_SOURCE_ROOT.columns,
+			DATA_SOURCE_ROOT.accessorBindings,
+			DATA_SOURCE_ROOT.pathContext,
+			DATA_SOURCE_ROOT.dataSource
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		expect(result.data).toHaveLength(2);
+		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Alice');
+		expect(result.data.at(0)?.cells['$[*].score'].raw).toBe(95);
+	});
+
+	it('should return error when data_source path resolves to undefined', () => {
+		const result = bindTabularData(
+			DATA_SOURCE_NO_DATA.data,
+			DATA_SOURCE_NO_DATA.columns,
+			DATA_SOURCE_NO_DATA.accessorBindings,
+			DATA_SOURCE_NO_DATA.pathContext,
+			DATA_SOURCE_NO_DATA.dataSource
+		);
+
+		expect(isErr(result)).toBe(true);
+		if (!isErr(result)) {return;}
+
+		expect(result.error).toHaveLength(1);
+		expect(result.error.at(0)?.code).toBe(ERROR_CODES.QUERY_ERROR);
+		expect(result.error.at(0)?.context).toHaveProperty('jsonPath', '$.regions.south');
+		expect(result.error.at(0)?.context).toHaveProperty('reason');
+	});
+
+	it('should bind to north region with data_source', () => {
+		const result = bindTabularData(
+			DATA_SOURCE_MULTI_TABLE_NORTH.data,
+			DATA_SOURCE_MULTI_TABLE_NORTH.columns,
+			DATA_SOURCE_MULTI_TABLE_NORTH.accessorBindings,
+			DATA_SOURCE_MULTI_TABLE_NORTH.pathContext,
+			DATA_SOURCE_MULTI_TABLE_NORTH.dataSource
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		// Should only have north region data
+		expect(result.data).toHaveLength(2);
+		expect(result.data.at(0)?.cells['$[*].product'].raw).toBe('Widget A');
+		expect(result.data.at(0)?.cells['$[*].units'].raw).toBe(150);
+		expect(result.data.at(1)?.cells['$[*].product'].raw).toBe('Widget B');
+		expect(result.data.at(1)?.cells['$[*].units'].raw).toBe(200);
+	});
+
+	it('should bind to south region with data_source', () => {
+		const result = bindTabularData(
+			DATA_SOURCE_MULTI_TABLE_SOUTH.data,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.columns,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.accessorBindings,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.pathContext,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.dataSource
+		);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {return;}
+
+		// Should only have south region data
+		expect(result.data).toHaveLength(2);
+		expect(result.data.at(0)?.cells['$[*].product'].raw).toBe('Widget C');
+		expect(result.data.at(0)?.cells['$[*].units'].raw).toBe(175);
+		expect(result.data.at(1)?.cells['$[*].product'].raw).toBe('Widget D');
+		expect(result.data.at(1)?.cells['$[*].units'].raw).toBe(225);
+	});
+
+	it('should support multi-table binding from same data source', () => {
+		// Verify that both tables can be bound from the same root data
+		// by using different data_source paths
+		const northResult = bindTabularData(
+			DATA_SOURCE_MULTI_TABLE_NORTH.data,
+			DATA_SOURCE_MULTI_TABLE_NORTH.columns,
+			DATA_SOURCE_MULTI_TABLE_NORTH.accessorBindings,
+			DATA_SOURCE_MULTI_TABLE_NORTH.pathContext,
+			DATA_SOURCE_MULTI_TABLE_NORTH.dataSource
+		);
+
+		const southResult = bindTabularData(
+			DATA_SOURCE_MULTI_TABLE_SOUTH.data,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.columns,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.accessorBindings,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.pathContext,
+			DATA_SOURCE_MULTI_TABLE_SOUTH.dataSource
+		);
+
+		expect(isOk(northResult)).toBe(true);
+		expect(isOk(southResult)).toBe(true);
+
+		if (!isOk(northResult) || !isOk(southResult)) {return;}
+
+		// Tables should have different data
+		expect(northResult.data.at(0)?.cells['$[*].product'].raw).toBe('Widget A');
+		expect(southResult.data.at(0)?.cells['$[*].product'].raw).toBe('Widget C');
 	});
 });

@@ -12,7 +12,7 @@
 
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import type {SpecError} from '@sigil/src/common/errors';
-import {err, isErr} from '@sigil/src/common/errors/result';
+import {err, isErr, ok} from '@sigil/src/common/errors/result';
 import type {Result} from '@sigil/src/common/errors/result';
 import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
@@ -92,6 +92,14 @@ export const bindTabularData = (
 	pathContext: string[],
 	dataSource: string = JSONPATH_ROOT,
 ): Result<Row[], SpecError[]> => {
+	// Handle empty root data early - return empty rows without error
+	// This enables spec structure validation without actual data
+	const isEmptyRootData = (Array.isArray(data) && data.length === 0) ||
+		(isRecord(data) && Object.keys(data).length === 0);
+	if (isEmptyRootData) {
+		return ok([]);
+	}
+
 	// Navigate to data source if not root
 	let targetData = data;
 	if (dataSource !== JSONPATH_ROOT) {
@@ -100,16 +108,23 @@ export const bindTabularData = (
 			return navResult;
 		}
 		if (navResult.data === undefined) {
+			// Provide contextual error with data structure info
+			const rootDataType = Array.isArray(data) ? 'array' : 'object';
+			const availableKeys = isRecord(data) ? Object.keys(data).join(', ') : undefined;
+
 			return err([{
 				code: ERROR_CODES.QUERY_ERROR,
 				severity: 'error',
 				category: 'data',
 				path: pathContext.join(''),
 				context: {
-					dataSource,
-					reason: 'Data source path returned no data',
+					jsonPath: dataSource,
+					reason: availableKeys
+						? `Path not found. Available keys: ${availableKeys}`
+						: 'Path not found in data',
+					dataType: rootDataType,
 				},
-				suggestion: 'Check that the data_source path exists in your data',
+				suggestion: 'Check that data_source matches your data structure',
 			}]);
 		}
 		targetData = navResult.data;

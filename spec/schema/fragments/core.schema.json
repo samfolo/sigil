@@ -84,6 +84,10 @@
           "$ref": "./components.schema.json#/definitions/ComponentConfig",
           "description": "Type-specific configuration for this component. The config type must match the component type (enforced by discriminated union)"
         },
+        "data_source": {
+          "type": "string",
+          "description": "JSONPath expression specifying which portion of the data this component binds to. All accessors in config and accessor_bindings are relative to this path. Defaults to '$' (root) if omitted."
+        },
         "id": {
           "type": "string",
           "description": "Unique identifier for this component. Referenced by LayoutChild.component_id"
