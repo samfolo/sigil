@@ -4,7 +4,7 @@
 
 import type {StackLayoutNodeAlignment} from '@sigil/src/lib/generated/types/specification';
 
-const ALIGNMENT_CLASS_MAP: Record<StackLayoutNodeAlignment, string> = {
+export const ALIGNMENT_CLASS_MAP: Record<StackLayoutNodeAlignment, string> = {
 	start: 'items-start',
 	center: 'items-center',
 	end: 'items-end',

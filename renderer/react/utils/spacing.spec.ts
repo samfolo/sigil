@@ -1,45 +1,30 @@
 import {describe, expect, it} from 'vitest';
 
-import {getColumnGapClass, getRowGapClass, getSpacingClass} from './spacing';
+import {objectToEntries} from '@sigil/renderer/react/common';
+
+import {
+	COLUMN_GAP_CLASS_MAP,
+	ROW_GAP_CLASS_MAP,
+	SPACING_CLASS_MAP,
+	getColumnGapClass,
+	getRowGapClass,
+	getSpacingClass,
+} from './spacing';
 
 describe('getSpacingClass', () => {
-	it('returns gap-2 for tight', () => {
-		expect(getSpacingClass('tight')).toBe('gap-2');
-	});
-
-	it('returns gap-4 for normal', () => {
-		expect(getSpacingClass('normal')).toBe('gap-4');
-	});
-
-	it('returns gap-6 for relaxed', () => {
-		expect(getSpacingClass('relaxed')).toBe('gap-6');
+	it.each(objectToEntries(SPACING_CLASS_MAP))('returns %s for %s', (spacing, expected) => {
+		expect(getSpacingClass(spacing)).toBe(expected);
 	});
 });
 
 describe('getColumnGapClass', () => {
-	it('returns gap-x-2 for tight', () => {
-		expect(getColumnGapClass('tight')).toBe('gap-x-2');
-	});
-
-	it('returns gap-x-4 for normal', () => {
-		expect(getColumnGapClass('normal')).toBe('gap-x-4');
-	});
-
-	it('returns gap-x-6 for relaxed', () => {
-		expect(getColumnGapClass('relaxed')).toBe('gap-x-6');
+	it.each(objectToEntries(COLUMN_GAP_CLASS_MAP))('returns %s for %s', (spacing, expected) => {
+		expect(getColumnGapClass(spacing)).toBe(expected);
 	});
 });
 
 describe('getRowGapClass', () => {
-	it('returns gap-y-2 for tight', () => {
-		expect(getRowGapClass('tight')).toBe('gap-y-2');
-	});
-
-	it('returns gap-y-4 for normal', () => {
-		expect(getRowGapClass('normal')).toBe('gap-y-4');
-	});
-
-	it('returns gap-y-6 for relaxed', () => {
-		expect(getRowGapClass('relaxed')).toBe('gap-y-6');
+	it.each(objectToEntries(ROW_GAP_CLASS_MAP))('returns %s for %s', (spacing, expected) => {
+		expect(getRowGapClass(spacing)).toBe(expected);
 	});
 });

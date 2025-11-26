@@ -5,22 +5,26 @@
 import {render, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
-import {getByLayoutType} from '@sigil/renderer/react/common';
+import {getByLayoutType, objectToEntries} from '@sigil/renderer/react/common';
+import {COLUMN_GAP_CLASS_MAP, ROW_GAP_CLASS_MAP} from '@sigil/renderer/react/utils';
 
 import {Grid} from './Grid';
 import {GridChild} from './GridChild';
 
 describe('Grid', () => {
-	it('should render with data-layout-type="grid"', () => {
+	it('should render with grid class and children', () => {
 		const {container} = render(
 			<Grid columns={2}>
-				<div>Child 1</div>
-				<div>Child 2</div>
+				<div>First</div>
+				<div>Second</div>
 			</Grid>
 		);
 
 		const gridDiv = getByLayoutType(container, 'grid');
 		expect(gridDiv).toBeInTheDocument();
+		expect(gridDiv).toHaveClass('grid');
+		expect(screen.getByText('First')).toBeInTheDocument();
+		expect(screen.getByText('Second')).toBeInTheDocument();
 	});
 
 	it('should apply gridTemplateColumns inline style', () => {
@@ -30,20 +34,21 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		const gridDiv = getByLayoutType(container, 'grid');
-		expect(gridDiv).toHaveClass('grid');
-		expect(gridDiv).toHaveStyle({gridTemplateColumns: 'repeat(3, 1fr)'});
+		expect(getByLayoutType(container, 'grid')).toHaveStyle({
+			gridTemplateColumns: 'repeat(3, 1fr)',
+		});
 	});
 
-	it('should apply gridTemplateRows inline style when rows is provided', () => {
+	it('should apply gridTemplateRows when rows is provided', () => {
 		const {container} = render(
 			<Grid columns={2} rows={3}>
 				<div>Child</div>
 			</Grid>
 		);
 
-		const gridDiv = getByLayoutType(container, 'grid');
-		expect(gridDiv).toHaveStyle({gridTemplateRows: 'repeat(3, 1fr)'});
+		expect(getByLayoutType(container, 'grid')).toHaveStyle({
+			gridTemplateRows: 'repeat(3, 1fr)',
+		});
 	});
 
 	it('should not apply gridTemplateRows when rows is undefined', () => {
@@ -53,34 +58,84 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		const gridDiv = getByLayoutType(container, 'grid');
-		const style = gridDiv?.getAttribute('style') ?? '';
+		const style = getByLayoutType(container, 'grid')?.getAttribute('style') ?? '';
 		expect(style).not.toContain('grid-template-rows');
 	});
 
-	it('should render children', () => {
-		render(
-			<Grid columns={2}>
-				<div>First</div>
-				<div>Second</div>
-				<div>Third</div>
-			</Grid>
-		);
+	it.each(objectToEntries(COLUMN_GAP_CLASS_MAP))(
+		'applies %s column_gap as %s class',
+		(gap, expectedClass) => {
+			const {container} = render(
+				<Grid columns={2} column_gap={gap}>
+					<div>Child</div>
+				</Grid>
+			);
 
-		expect(screen.getByText('First')).toBeInTheDocument();
-		expect(screen.getByText('Second')).toBeInTheDocument();
-		expect(screen.getByText('Third')).toBeInTheDocument();
-	});
+			expect(getByLayoutType(container, 'grid')).toHaveClass(expectedClass);
+		}
+	);
 
-	it('should support large column counts via inline styles', () => {
+	it.each(objectToEntries(ROW_GAP_CLASS_MAP))(
+		'applies %s row_gap as %s class',
+		(gap, expectedClass) => {
+			const {container} = render(
+				<Grid columns={2} row_gap={gap}>
+					<div>Child</div>
+				</Grid>
+			);
+
+			expect(getByLayoutType(container, 'grid')).toHaveClass(expectedClass);
+		}
+	);
+
+	it('applies both column_gap and row_gap classes', () => {
 		const {container} = render(
-			<Grid columns={15}>
+			<Grid columns={2} column_gap="tight" row_gap="relaxed">
 				<div>Child</div>
 			</Grid>
 		);
 
 		const gridDiv = getByLayoutType(container, 'grid');
-		expect(gridDiv).toHaveStyle({gridTemplateColumns: 'repeat(15, 1fr)'});
+		expect(gridDiv).toHaveClass('gap-x-2', 'gap-y-6');
+	});
+
+	it('does not apply gap classes when gaps are undefined', () => {
+		const {container} = render(
+			<Grid columns={2}>
+				<div>Child</div>
+			</Grid>
+		);
+
+		const gridDiv = getByLayoutType(container, 'grid');
+		Object.values(COLUMN_GAP_CLASS_MAP).forEach((className) => {
+			expect(gridDiv).not.toHaveClass(className);
+		});
+		Object.values(ROW_GAP_CLASS_MAP).forEach((className) => {
+			expect(gridDiv).not.toHaveClass(className);
+		});
+	});
+
+	it('applies uniform padding for number value', () => {
+		const {container} = render(
+			<Grid columns={2} padding={16}>
+				<div>Child</div>
+			</Grid>
+		);
+
+		expect(getByLayoutType(container, 'grid')).toHaveStyle({padding: '16px'});
+	});
+
+	it('applies individual padding for object value', () => {
+		const {container} = render(
+			<Grid columns={2} padding={{top: 8, bottom: 8}}>
+				<div>Child</div>
+			</Grid>
+		);
+
+		expect(getByLayoutType(container, 'grid')).toHaveStyle({
+			paddingTop: '8px',
+			paddingBottom: '8px',
+		});
 	});
 });
 

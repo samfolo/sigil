@@ -6,19 +6,19 @@
 
 import type {LayoutNodeSpacing} from '@sigil/src/lib/generated/types/specification';
 
-const SPACING_CLASS_MAP: Record<LayoutNodeSpacing, string> = {
+export const SPACING_CLASS_MAP: Record<LayoutNodeSpacing, string> = {
 	tight: 'gap-2',
 	normal: 'gap-4',
 	relaxed: 'gap-6',
 };
 
-const COLUMN_GAP_CLASS_MAP: Record<LayoutNodeSpacing, string> = {
+export const COLUMN_GAP_CLASS_MAP: Record<LayoutNodeSpacing, string> = {
 	tight: 'gap-x-2',
 	normal: 'gap-x-4',
 	relaxed: 'gap-x-6',
 };
 
-const ROW_GAP_CLASS_MAP: Record<LayoutNodeSpacing, string> = {
+export const ROW_GAP_CLASS_MAP: Record<LayoutNodeSpacing, string> = {
 	tight: 'gap-y-2',
 	normal: 'gap-y-4',
 	relaxed: 'gap-y-6',

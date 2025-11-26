@@ -8,6 +8,16 @@
 export type LayoutType = 'horizontal-stack' | 'vertical-stack' | 'grid';
 
 /**
+ * Type-preserving Object.entries wrapper
+ *
+ * TypeScript's Object.entries returns [string, V][] which loses literal key types.
+ * This wrapper preserves key-value relationships.
+ */
+export const objectToEntries = <Key extends string, Value>(
+	obj: Record<Key, Value>
+): [Key, Value][] => Object.entries(obj) as [Key, Value][];
+
+/**
  * Finds element by data-layout-type attribute
  *
  * @param container - Container element to search within
