@@ -37,6 +37,7 @@ const GridComponent = ({
 		.filter(Boolean)
 		.join(' ');
 
+	console.log({columns, rows, column_gap, row_gap, gapClasses});
 	const className = `grid${gapClasses ? ` ${gapClasses}` : ''}`;
 
 	return (

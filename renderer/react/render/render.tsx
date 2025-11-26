@@ -48,7 +48,7 @@ const renderTreeNode = (tree: RenderTree): ReactElement => {
 
 		case 'grid':
 			return (
-				<Grid columns={tree.columns} rows={tree.rows}>
+				<Grid {...tree}>
 					{tree.children.map((child, index) => (
 						<GridChild
 							key={index}
