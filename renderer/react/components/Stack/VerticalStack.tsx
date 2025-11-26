@@ -7,6 +7,8 @@ import {memo} from 'react';
 
 import type {RenderVerticalStackLayout} from '@sigil/renderer/core/types/types';
 
+import {getAlignmentClass, getPaddingStyle, getSpacingClass} from '../../utils';
+
 /**
  * VerticalStack props with ReactNode children instead of RenderTree[]
  */
@@ -16,14 +18,26 @@ export interface VerticalStackProps extends Omit<RenderVerticalStackLayout, 'chi
 
 /**
  * Renders children in vertical flexbox container
- *
- * Only implements flex-direction; spacing, alignment, padding, and size constraints deferred
  */
-const VerticalStackComponent = ({children}: VerticalStackProps): ReactElement => (
-	<div data-layout-type="vertical-stack" className="flex flex-col">
-		{children}
-	</div>
-);
+const VerticalStackComponent = ({
+	spacing,
+	horizontal_alignment,
+	padding,
+	children,
+}: VerticalStackProps): ReactElement => {
+	const alignmentClass = getAlignmentClass(horizontal_alignment);
+	const className = `flex flex-col ${getSpacingClass(spacing)}${alignmentClass ? ` ${alignmentClass}` : ''}`;
+
+	return (
+		<div
+			data-layout-type="vertical-stack"
+			className={className}
+			style={getPaddingStyle(padding)}
+		>
+			{children}
+		</div>
+	);
+};
 
 export const VerticalStack = memo(VerticalStackComponent);
 VerticalStack.displayName = 'VerticalStack';

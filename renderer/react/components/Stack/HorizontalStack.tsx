@@ -7,6 +7,8 @@ import {memo} from 'react';
 
 import type {RenderHorizontalStackLayout} from '@sigil/renderer/core/types/types';
 
+import {getAlignmentClass, getPaddingStyle, getSpacingClass} from '../../utils';
+
 /**
  * HorizontalStack props with ReactNode children instead of RenderTree[]
  */
@@ -16,14 +18,26 @@ export interface HorizontalStackProps extends Omit<RenderHorizontalStackLayout, 
 
 /**
  * Renders children in horizontal flexbox container
- *
- * Only implements flex-direction; spacing, alignment, padding, and size constraints deferred
  */
-const HorizontalStackComponent = ({children}: HorizontalStackProps): ReactElement => (
-	<div data-layout-type="horizontal-stack" className="flex flex-row">
-		{children}
-	</div>
-);
+const HorizontalStackComponent = ({
+	spacing,
+	vertical_alignment,
+	padding,
+	children,
+}: HorizontalStackProps): ReactElement => {
+	const alignmentClass = getAlignmentClass(vertical_alignment);
+	const className = `flex flex-row ${getSpacingClass(spacing)}${alignmentClass ? ` ${alignmentClass}` : ''}`;
+
+	return (
+		<div
+			data-layout-type="horizontal-stack"
+			className={className}
+			style={getPaddingStyle(padding)}
+		>
+			{children}
+		</div>
+	);
+};
 
 export const HorizontalStack = memo(HorizontalStackComponent);
 HorizontalStack.displayName = 'HorizontalStack';
