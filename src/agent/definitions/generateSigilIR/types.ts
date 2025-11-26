@@ -20,6 +20,14 @@ export interface GenerateSigilIRInput {
 	 * AnalysisOutput from the Analyser agent
 	 */
 	analysis: AnalysisOutput;
+
+	/**
+	 * Parsed data from the Analyser agent
+	 *
+	 * Used by buildRenderTree validator to validate dataSource paths
+	 * against actual data structure.
+	 */
+	parsedData: unknown;
 }
 
 /**

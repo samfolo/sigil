@@ -388,7 +388,7 @@ export const POST = async (request: NextRequest) => {
 		// Create GenerateSigilIR agent
 		let generatorAgent;
 		try {
-			generatorAgent = await createGenerateSigilIRAgent();
+			generatorAgent = await createGenerateSigilIRAgent({parsedData});
 		} catch (error) {
 			// Return partial success: analysis succeeded but IR generation failed to init
 			return NextResponse.json({
@@ -409,6 +409,7 @@ export const POST = async (request: NextRequest) => {
 		// Build GenerateSigilIR input
 		const generatorInput: GenerateSigilIRInput = {
 			analysis: analysisOutput,
+			parsedData,
 		};
 
 		const generatorLogger = logger.child('GenerateSigilIR');

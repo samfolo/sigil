@@ -93,11 +93,13 @@ export const bindTabularData = (
 	dataSource: string = JSONPATH_ROOT,
 ): Result<Row[], SpecError[]> => {
 	// Handle empty root data early - return empty rows without error
-	// This enables spec structure validation without actual data
-	const isEmptyRootData = (Array.isArray(data) && data.length === 0) ||
-		(isRecord(data) && Object.keys(data).length === 0);
-	if (isEmptyRootData) {
-		return ok([]);
+	// Only applies when using root data source; explicit paths should attempt navigation
+	if (dataSource === JSONPATH_ROOT) {
+		const isEmptyRootData = (Array.isArray(data) && data.length === 0) ||
+			(isRecord(data) && Object.keys(data).length === 0);
+		if (isEmptyRootData) {
+			return ok([]);
+		}
 	}
 
 	// Navigate to data source if not root

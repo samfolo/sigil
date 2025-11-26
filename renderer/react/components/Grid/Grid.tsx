@@ -17,13 +17,18 @@ export interface GridProps extends Omit<RenderGridLayout, 'children' | 'type'> {
 /**
  * Renders children in CSS Grid container
  *
- * Uses Tailwind arbitrary values for dynamic column/row counts.
+ * Uses inline styles for dynamic column/row counts as Tailwind
+ * cannot detect dynamically constructed class names at build time.
  * Spacing, alignment, and padding deferred to subsequent implementation.
  */
 const GridComponent = ({columns, rows, children}: GridProps): ReactElement => (
 	<div
 		data-layout-type="grid"
-		className={`grid grid-cols-[repeat(${columns},1fr)]${rows !== undefined ? ` grid-rows-[repeat(${rows},1fr)]` : ''}`}
+		className="grid"
+		style={{
+			gridTemplateColumns: `repeat(${columns}, 1fr)`,
+			...(rows !== undefined && {gridTemplateRows: `repeat(${rows}, 1fr)`}),
+		}}
 	>
 		{children}
 	</div>

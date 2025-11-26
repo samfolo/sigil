@@ -8,6 +8,11 @@ import type {GenerateSigilIRInput, GenerateSigilIROutput} from './types';
  * Valid input with CSV analysis data
  */
 export const VALID_GENERATE_SIGIL_IR_INPUT: GenerateSigilIRInput = {
+	parsedData: [
+		['Alice Smith', 'alice@example.com', 'active'],
+		['Bob Jones', 'bob@example.com', 'inactive'],
+		['Carol White', 'carol@example.com', 'pending'],
+	],
 	analysis: {
 		classification: {
 			syntactic: 'csv',

@@ -23,6 +23,16 @@ const MODEL_TEMPERATURE = 0.4;
 const MAX_MODEL_TOKENS = 16000;
 
 /**
+ * Configuration for creating the GenerateSigilIR agent
+ */
+interface CreateGenerateSigilIRAgentOptions {
+	/**
+	 * Parsed data from Analyser for buildRenderTree validation
+	 */
+	parsedData: unknown;
+}
+
+/**
  * Creates the GenerateSigilIR agent definition
  *
  * This agent generates ComponentSpec IRs from semantic analysis data. It uses:
@@ -31,10 +41,11 @@ const MAX_MODEL_TOKENS = 16000;
  * - buildRenderTree custom validator to ensure specs are renderable
  * - No helper tools (stateless pure generation)
  *
- * @returns Promise resolving to frozen agent definition
  * @throws If prompt template loading or agent definition validation fails
  */
-export const createGenerateSigilIRAgent = async (): Promise<
+export const createGenerateSigilIRAgent = async (
+	options: CreateGenerateSigilIRAgentOptions
+): Promise<
 	AgentDefinition<GenerateSigilIRInput, GenerateSigilIROutput, EmptyObject, EmptyObject>
 > => {
 	// Load prompt templates
@@ -75,7 +86,7 @@ export const createGenerateSigilIRAgent = async (): Promise<
 
 		validation: {
 			outputSchema: ComponentSpecSchema.omit({id: true, created_at: true}),
-			customValidators: [createBuildRenderTreeValidator()],
+			customValidators: [createBuildRenderTreeValidator({data: options.parsedData})],
 			maxAttempts: MAX_VALIDATION_ATTEMPTS,
 		},
 
