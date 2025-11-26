@@ -12,11 +12,13 @@
 
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import type {SpecError} from '@sigil/src/common/errors';
-import {err} from '@sigil/src/common/errors/result';
+import {err, isErr} from '@sigil/src/common/errors/result';
 import type {Result} from '@sigil/src/common/errors/result';
 import type {DataTableColumn, FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
+import {JSONPATH_ROOT} from '../constants';
 import type {Column, Row} from '../types';
+import {queryJSONPath} from '../utils/queryJSONPath';
 
 import {bindArrayOfArrays} from './bindArrayOfArrays';
 import {bindArrayOfObjects} from './bindArrayOfObjects';
@@ -80,6 +82,7 @@ export const enrichColumns = (
  * @param columns - Column definitions with wildcard accessors
  * @param accessorBindings - Field metadata containing value_mappings
  * @param pathContext - JSONPath segments for error context
+ * @param dataSource - JSONPath to navigate to before binding (defaults to '$')
  * @returns Result containing array of processed rows, or accumulated errors
  */
 export const bindTabularData = (
@@ -87,7 +90,30 @@ export const bindTabularData = (
 	columns: Column[],
 	accessorBindings: Record<string, FieldMetadata>,
 	pathContext: string[],
+	dataSource: string = JSONPATH_ROOT,
 ): Result<Row[], SpecError[]> => {
+	// Navigate to data source if not root
+	let targetData = data;
+	if (dataSource !== JSONPATH_ROOT) {
+		const navResult = queryJSONPath(data, dataSource);
+		if (isErr(navResult)) {
+			return navResult;
+		}
+		if (navResult.data === undefined) {
+			return err([{
+				code: ERROR_CODES.QUERY_ERROR,
+				severity: 'error',
+				category: 'data',
+				path: pathContext.join(''),
+				context: {
+					dataSource,
+					reason: 'Data source path returned no data',
+				},
+				suggestion: 'Check that the data_source path exists in your data',
+			}]);
+		}
+		targetData = navResult.data;
+	}
 	// Validate that all columns use wildcard accessors
 	const nonWildcardColumns = columns.filter(col => !hasWildcardAccessor(col.id));
 	if (nonWildcardColumns.length > 0) {
@@ -106,7 +132,7 @@ export const bindTabularData = (
 	}
 
 	// Dispatch to appropriate binding strategy based on data structure
-	if (Array.isArray(data)) {
+	if (Array.isArray(targetData)) {
 		// Detect CSV array-of-arrays vs array-of-objects
 		// Array-of-arrays: ALL columns have index accessor immediately after wildcard
 		// Supports: $[*][0], $[*][1], $[*][0].property (array of arrays of objects)
@@ -116,15 +142,15 @@ export const bindTabularData = (
 
 		if (allColumnsHaveIndexAccessors) {
 			// CSV array-of-arrays: column-oriented (preserves structure)
-			return bindArrayOfArrays(data, columns, accessorBindings, pathContext);
+			return bindArrayOfArrays(targetData, columns, accessorBindings, pathContext);
 		} else {
 			// Array-of-objects: row-oriented (handles missing properties)
 			// Supports: $[*].name, $[*].user.email, $[*].items[0] (nested arrays)
-			return bindArrayOfObjects(data, columns, accessorBindings, pathContext);
+			return bindArrayOfObjects(targetData, columns, accessorBindings, pathContext);
 		}
-	} else if (isRecord(data)) {
+	} else if (isRecord(targetData)) {
 		// Object-based (object-of-objects, object-of-arrays): row-oriented
-		return bindObjectBased(data, columns, accessorBindings, pathContext);
+		return bindObjectBased(targetData, columns, accessorBindings, pathContext);
 	}
 
 	// Invalid data type
@@ -135,7 +161,7 @@ export const bindTabularData = (
 		path: pathContext.join(''),
 		context: {
 			expected: 'array or object',
-			received: typeof data,
+			received: typeof targetData,
 		},
 		suggestion: 'Tabular data must be an array or object',
 	}]);

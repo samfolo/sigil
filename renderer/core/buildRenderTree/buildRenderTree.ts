@@ -214,6 +214,9 @@ const replaceComponentPlaceholder = (
 		throw new Error(`Component "${componentId}" not found in spec.root.nodes - this is a bug in walkLayout`);
 	}
 
+	// Extract data_source for binding (defaults to root if not specified)
+	const dataSource = componentNode.data_source ?? JSONPATH_ROOT;
+
 	// Switch on component type for type narrowing and builder dispatch
 	switch (placeholder.type) {
 		case 'data-table': {
@@ -226,7 +229,7 @@ const replaceComponentPlaceholder = (
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
 			const builder = getBuilder('data-table');
 
-			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
 			if (isErr(propsResult)) {
 				return propsResult;
@@ -249,7 +252,7 @@ const replaceComponentPlaceholder = (
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
 			const builder = getBuilder('hierarchy');
 
-			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
 			if (isErr(propsResult)) {
 				return propsResult;
@@ -272,7 +275,7 @@ const replaceComponentPlaceholder = (
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
 			const builder = getBuilder('composition');
 
-			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
 			if (isErr(propsResult)) {
 				return propsResult;
@@ -295,7 +298,7 @@ const replaceComponentPlaceholder = (
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
 			const builder = getBuilder('text-insight');
 
-			const propsResult = builder.build(config, data, accessorBindings, pathContext);
+			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
 			if (isErr(propsResult)) {
 				return propsResult;

@@ -28,13 +28,15 @@ export class DataTableBuilder implements ComponentBuilder<DataTableConfig, Table
 	 * @param data - Raw data to bind to table
 	 * @param bindings - Field metadata for accessor binding
 	 * @param pathContext - JSONPath segments for error context
+	 * @param dataSource - JSONPath to the data this component binds to
 	 * @returns Result containing TableProps or accumulated binding errors
 	 */
 	build(
 		config: DataTableConfig,
 		data: unknown,
 		bindings: Record<string, FieldMetadata>,
-		pathContext: string[]
+		pathContext: string[],
+		dataSource?: string
 	): Result<TableProps, SpecError[]> {
 		// Extract columns from config
 		const columns = extractColumns(config.columns);
@@ -42,8 +44,8 @@ export class DataTableBuilder implements ComponentBuilder<DataTableConfig, Table
 		// Enrich columns with metadata
 		const enrichedColumns = enrichColumns(columns, bindings);
 
-		// Bind data to rows
-		const rowsResult = bindTabularData(data, enrichedColumns, bindings, pathContext);
+		// Bind data to rows (navigates to dataSource before binding)
+		const rowsResult = bindTabularData(data, enrichedColumns, bindings, pathContext, dataSource);
 
 		// Propagate binding errors
 		if (isErr(rowsResult)) {

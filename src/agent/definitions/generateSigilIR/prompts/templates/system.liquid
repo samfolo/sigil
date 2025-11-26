@@ -6,19 +6,18 @@ TASK
 
 Generate a complete ComponentSpec that conforms to the full schema provided below. The spec must be renderable with current renderer capabilities and correctly bind data via JSONPath accessors.
 
-RENDERER CAPABILITIES (Current Limitations)
+RENDERER CAPABILITIES
 
 Supported components:
 - data-table: Tabular display with columns
 
 Supported layouts:
-- stack: Vertical or horizontal stacking (use direction: "vertical")
-- Single component layouts only (one component per spec for now)
+- stack: Linear arrangement (direction: "vertical" or "horizontal")
+- grid: Two-dimensional arrangement with columns and optional rows
+- Nested layouts: Layouts can contain other layouts
 
 Current limitations:
 - No affordances supported yet (set affordances: [])
-- No nested layouts
-- No grid layouts
 
 COMPONENT IDS
 
@@ -29,34 +28,80 @@ Examples:
 - "table-2"
 - "chart-1"
 
+LAYOUT STRUCTURES
+
+Stack layout:
+- type: "stack", direction: "vertical" | "horizontal"
+- spacing: "compact" | "normal" | "relaxed" (required)
+- children: array of {type: "component", component_id: "..."} or {type: "layout", node: {...}}
+
+Grid layout:
+- type: "grid", columns: number (required)
+- rows: optional (auto-flow if omitted)
+- children: array of {element: LayoutChild, column_start?, row_start?, column_span?, row_span?}
+- Grid coordinates are 1-indexed
+
+Nested layouts:
+- Use {type: "layout", node: {...}} as a child to nest layouts
+- Example: A grid containing stacks, or a vertical stack containing a horizontal stack
+
+DATA SOURCE
+
+Each component can specify a `data_source` path indicating which portion of the data it binds to. All accessors in config and accessor_bindings are then relative to this path.
+
+- `data_source: "$.north"` - binds to the north array
+- `data_source` omitted or `"$"` - binds to root data
+
+Benefits:
+- Cleaner separation: data_source selects "where", accessors extract "what"
+- Simpler accessors: `$[*].product` instead of `$.north[*].product`
+- Consistent pattern across all component types
+
 ACCESSOR BINDINGS
 
-All tabular accessors must use wildcard notation. The renderer correctly handles missing values and maintains row alignment across all data structures.
+All tabular accessors must use wildcard notation relative to data_source. The renderer correctly handles missing values and maintains row alignment across all data structures.
 
 Converting keyFields to column accessors:
 
-JSON data (array-of-objects or object-of-objects):
-- keyFields contain paths like `$.users[0].name` or `$.data.items[0].price`
-- Convert to wildcard accessor: replace specific index with `[*]`
-- Example: `$.users[0].name` → `$[*].name`
-- Example: `$.data.items[0].price` → `$[*].price`
-- Nested paths: `$.company.employees[0].profile.email` → `$[*].profile.email`
+Root-level array (single table, no data_source needed):
+- Data: `[{name: "Alice"}, {name: "Bob"}]`
+- keyField: `$[0].name` → accessor: `$[*].name`
+- Replace specific index with `[*]`
 
-CSV data (array-of-arrays or object-of-arrays):
-- keyFields already use `$[*][N]` notation
-- Use directly without modification
-- Example: `$[*][0]`, `$[*][1]`, `$[*][2]`
+Nested array (use data_source):
+- Data: `{users: [{name: "Alice"}, {name: "Bob"}]}`
+- keyField: `$.users[0].name`
+- data_source: `"$.users"`, accessor: `$[*].name`
+
+Object-of-arrays (MULTIPLE tables with data_source):
+- Data: `{north: [{...}], south: [{...}], east: [{...}]}`
+- Each array becomes a separate table with its own data_source
+- Table 1: data_source `"$.north"`, accessor `$[*].field`
+- Table 2: data_source `"$.south"`, accessor `$[*].field`
+- Use grid layout to arrange tables side-by-side
+
+CSV data (array-of-arrays):
+- keyFields use `$[*][N]` notation
+- Use directly: `$[*][0]`, `$[*][1]`, `$[*][2]`
 
 Object keys column:
 - To access object property names, use tilde operator: `$[*]~`
 - Example: for `{user_123: {...}, user_456: {...}}` → accessor `$[*]~` represents the keys column
-- The renderer extracts `['user_123', 'user_456', ...]` for this column
 
 Role heuristics for accessor_bindings:
 - String fields → roles: ["label"]
 - Number fields → roles: ["value"]
 - Enum/categorical fields → roles: ["categorical"]
 - Object keys → roles: ["identifier"]
+
+WHEN TO USE MULTIPLE TABLES
+
+Create multiple tables when:
+- Data contains parallel arrays with identical schemas (e.g., regional data, time periods)
+- parseResult.topLevelKeys shows multiple keys, each containing an array
+- The semantic meaning suggests comparison between groups
+
+Arrange multiple tables using grid layout for side-by-side comparison.
 
 DATA SHAPE
 
@@ -100,6 +145,70 @@ MINIMAL VALID EXAMPLE
         "$[*].name": {"roles": ["label"], "data_types": ["string"]},
         "$[*].email": {"roles": ["label"], "data_types": ["string"]},
         "$[*].status": {"roles": ["categorical"], "data_types": ["string"]}
+      }
+    }
+  }
+}
+```
+
+MULTI-TABLE GRID EXAMPLE
+
+For data: `{north: [{product, units}], south: [{product, units}]}`
+
+Each table uses data_source to bind to its array, with accessors relative to that source:
+
+```json
+{
+  "title": "Regional Sales",
+  "data_shape": "tabular",
+  "root": {
+    "layout": {
+      "type": "grid",
+      "id": "dashboard-grid",
+      "columns": 2,
+      "children": [
+        {"element": {"type": "component", "component_id": "table-1"}},
+        {"element": {"type": "component", "component_id": "table-2"}}
+      ]
+    },
+    "nodes": {
+      "table-1": {
+        "id": "table-1",
+        "type": "data-table",
+        "data_source": "$.north",
+        "config": {
+          "type": "data-table",
+          "title": "North Region",
+          "columns": [
+            {"accessor": "$[*].product", "label": "Product"},
+            {"accessor": "$[*].units", "label": "Units"}
+          ],
+          "affordances": []
+        }
+      },
+      "table-2": {
+        "id": "table-2",
+        "type": "data-table",
+        "data_source": "$.south",
+        "config": {
+          "type": "data-table",
+          "title": "South Region",
+          "columns": [
+            {"accessor": "$[*].product", "label": "Product"},
+            {"accessor": "$[*].units", "label": "Units"}
+          ],
+          "affordances": []
+        }
+      }
+    },
+    "accessor_bindings": {
+      "table-1": {
+        "$[*].product": {"roles": ["label"], "data_types": ["string"]},
+        "$[*].units": {"roles": ["value"], "data_types": ["number"]}
+      },
+      "table-2": {
+        "$[*].product": {"roles": ["label"], "data_types": ["string"]},
+        "$[*].units": {"roles": ["value"], "data_types": ["number"]}
       }
     }
   }

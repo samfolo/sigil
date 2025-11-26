@@ -19,12 +19,14 @@ export interface ComponentBuilder<Config, Props> {
 	 * @param data - Raw data to bind to component
 	 * @param bindings - Field metadata for accessor binding
 	 * @param pathContext - JSONPath segments for error context
+	 * @param dataSource - JSONPath to the data this component binds to (defaults to '$')
 	 * @returns Result containing props or accumulated binding errors
 	 */
 	build: (
 		config: Config,
 		data: unknown,
 		bindings: Record<string, FieldMetadata>,
-		pathContext: string[]
+		pathContext: string[],
+		dataSource?: string
 	) => Result<Props, SpecError[]>;
 }
