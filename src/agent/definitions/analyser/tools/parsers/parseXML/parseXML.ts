@@ -6,7 +6,7 @@ import {calculateDepth, MAX_STRUCTURE_PROBING_DEPTH} from '@sigil/src/agent/defi
 import type {Result} from '@sigil/src/common/errors';
 import {ok} from '@sigil/src/common/errors';
 
-import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL} from './constants';
+import {ATTRIBUTES_GROUP_NAME, FRAGMENT_SENTINEL, TEXT_NODE_NAME} from './constants';
 import type {ParseXMLResult, XMLMetadata} from './schemas';
 import {extractTopLevelTags} from './utils/extractTopLevelTags';
 
@@ -45,10 +45,12 @@ export const parseXML = (rawData: string): Result<ParseXMLResult, string> => {
 	// Calculate size from raw input
 	const size = calculateSize(rawData);
 
-	// Create XML parser with attribute handling
+	// Create XML parser with attribute grouping
 	const parser = new XMLParser({
 		ignoreAttributes: false,
-		attributeNamePrefix: ATTRIBUTE_PREFIX,
+		attributesGroupName: ATTRIBUTES_GROUP_NAME,
+		attributeNamePrefix: '',
+		textNodeName: TEXT_NODE_NAME,
 	});
 
 	// Attempt to parse XML

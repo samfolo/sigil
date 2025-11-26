@@ -4,13 +4,8 @@ import {isOk} from '@sigil/src/common/errors';
 
 import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_PROBING_DEPTH, MAX_STRUCTURE_VALUE_LENGTH} from '../common';
 
-import {ATTRIBUTE_PREFIX, FRAGMENT_SENTINEL, TEXT_NODE_KEY} from './constants';
+import {ATTRIBUTES_GROUP_NAME, FRAGMENT_SENTINEL, TEXT_NODE_NAME} from './constants';
 import {parseXML} from './parseXML';
-
-/**
- * Helper to create attribute key with proper prefix
- */
-const attr = (name: string): string => `${ATTRIBUTE_PREFIX}${name}`;
 
 describe('parseXML', () => {
 	describe('invalid XML', () => {
@@ -229,7 +224,7 @@ describe('parseXML', () => {
 
 			const {metadata} = result.data;
 			expect(metadata.topLevelNodeTags).toHaveLength(2);
-			expect(metadata.topLevelNodeTags.map((t) => t.value)).not.toContain(TEXT_NODE_KEY);
+			expect(metadata.topLevelNodeTags.map((t) => t.value)).not.toContain(TEXT_NODE_NAME);
 		});
 	});
 
@@ -285,8 +280,7 @@ describe('parseXML', () => {
 			const {metadata} = result.data;
 			expect(metadata.topLevelNodeTags).toHaveLength(1);
 			expect(metadata.topLevelNodeTags.at(0)?.value).toBe('child');
-			expect(metadata.topLevelNodeTags.map((t) => t.value)).not.toContain(attr('id'));
-			expect(metadata.topLevelNodeTags.map((t) => t.value)).not.toContain(attr('class'));
+			expect(metadata.topLevelNodeTags.map((t) => t.value)).not.toContain(ATTRIBUTES_GROUP_NAME);
 		});
 	});
 

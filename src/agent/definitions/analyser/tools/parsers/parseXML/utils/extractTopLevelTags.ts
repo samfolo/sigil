@@ -3,7 +3,7 @@ import {truncateString} from '@sigil/src/agent/definitions/analyser/tools/common
 
 import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_VALUE_LENGTH} from '../../common';
 
-import {ATTRIBUTE_PREFIX, TEXT_NODE_KEY} from '../constants';
+import {ATTRIBUTES_GROUP_NAME, TEXT_NODE_NAME} from '../constants';
 
 /**
  * Extracts and processes top-level XML node tags from parsed XML structure
@@ -21,7 +21,7 @@ export const extractTopLevelTags = (value: unknown): PrecisionValue<string>[] =>
 	}
 
 	return Object.keys(value)
-		.filter((key) => key !== TEXT_NODE_KEY && !key.startsWith(ATTRIBUTE_PREFIX))
+		.filter((key) => key !== TEXT_NODE_NAME && key !== ATTRIBUTES_GROUP_NAME)
 		.slice(0, MAX_STRUCTURE_EXTRACTED_ITEMS)
 		.map((key) => truncateString(key, MAX_STRUCTURE_VALUE_LENGTH));
 };

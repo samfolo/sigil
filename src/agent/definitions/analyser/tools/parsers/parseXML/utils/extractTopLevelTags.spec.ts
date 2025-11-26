@@ -2,14 +2,9 @@ import {describe, expect, it} from 'vitest';
 
 import {MAX_STRUCTURE_EXTRACTED_ITEMS, MAX_STRUCTURE_VALUE_LENGTH} from '../../common';
 
-import {ATTRIBUTE_PREFIX, TEXT_NODE_KEY} from '../constants';
+import {ATTRIBUTES_GROUP_NAME, TEXT_NODE_NAME} from '../constants';
 
 import {extractTopLevelTags} from './extractTopLevelTags';
-
-/**
- * Helper to create attribute key with proper prefix
- */
-const attr = (name: string): string => `${ATTRIBUTE_PREFIX}${name}`;
 
 describe('extractTopLevelTags', () => {
 	describe('primitives', () => {
@@ -83,7 +78,7 @@ describe('extractTopLevelTags', () => {
 		it('filters out text node key', () => {
 			const result = extractTopLevelTags({
 				child1: {},
-				[TEXT_NODE_KEY]: 'some text',
+				[TEXT_NODE_NAME]: 'some text',
 				child2: {},
 			});
 
@@ -91,11 +86,10 @@ describe('extractTopLevelTags', () => {
 			expect(result.map((k) => k.value)).toEqual(['child1', 'child2']);
 		});
 
-		it('filters out attribute keys with prefix', () => {
+		it('filters out attributes group key', () => {
 			const result = extractTopLevelTags({
 				child1: {},
-				[attr('id')]: '123',
-				[attr('class')]: 'foo',
+				[ATTRIBUTES_GROUP_NAME]: {id: '123', class: 'foo'},
 				child2: {},
 			});
 
@@ -103,13 +97,12 @@ describe('extractTopLevelTags', () => {
 			expect(result.map((k) => k.value)).toEqual(['child1', 'child2']);
 		});
 
-		it('filters out both text nodes and attributes', () => {
+		it('filters out both text nodes and attributes group', () => {
 			const result = extractTopLevelTags({
 				child1: {},
-				[TEXT_NODE_KEY]: 'text content',
-				[attr('id')]: '123',
+				[TEXT_NODE_NAME]: 'text content',
+				[ATTRIBUTES_GROUP_NAME]: {id: '123', class: 'foo'},
 				child2: {},
-				[attr('class')]: 'foo',
 			});
 
 			expect(result).toHaveLength(2);
@@ -218,12 +211,11 @@ describe('extractTopLevelTags', () => {
 
 		it('handles complex XML structure', () => {
 			const result = extractTopLevelTags({
-				[TEXT_NODE_KEY]: 'Some text content',
-				[attr('id')]: '123',
-				[attr('class')]: 'container',
+				[TEXT_NODE_NAME]: 'Some text content',
+				[ATTRIBUTES_GROUP_NAME]: {id: '123', class: 'container'},
 				header: {},
 				body: {
-					[TEXT_NODE_KEY]: 'Body text',
+					[TEXT_NODE_NAME]: 'Body text',
 					section: [{}, {}],
 				},
 				footer: {},
