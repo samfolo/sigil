@@ -25,7 +25,7 @@ const RANDOM_SUFFIX_BYTE_LENGTH = 2;
 /**
  * Generates a unique run identifier
  *
- * Format: YYYYMMDD-HHmmssSSS-xxxx where xxxx is 4-char hex suffix
+ * Format: yyyyMMdd-HHmmssSSS-xxxx where xxxx is 4-char hex suffix
  *
  * The timestamp-based format ensures that lexicographic sorting of run IDs
  * produces chronological ordering, eliminating the need for date grouping directories.

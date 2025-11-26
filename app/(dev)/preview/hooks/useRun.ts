@@ -8,7 +8,7 @@ import {RunArtifactSchema} from '@sigil/src/common/run/schemas';
 /**
  * Fetches a single run by ID from the preview API.
  *
- * @param id - The run ID (format: "YYYYMMDD-HHmmssSSS-xxxx"), or null
+ * @param id - The run ID (format: "yyyyMMdd-HHmmssSSS-xxxx"), or null
  * @returns React Query result containing Result-wrapped run artifact data
  */
 export const useRun = (id: string | null) => useQuery({

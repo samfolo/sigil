@@ -17,7 +17,7 @@
         },
         "format": {
           "type": "string",
-          "description": "Format string for displaying values. Uses format strings appropriate to the data type:\n- Dates: 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', 'MMM D, YYYY'\n- Numbers: '0,0.00', '£0,0', '$0.00a', '0%'\n- Strings: typically omitted (displayed as-is)\n\nThe rendering engine determines how to interpret format strings"
+          "description": "Format string for displaying values. Uses format strings appropriate to the data type:\n- Dates: 'dd/MM/yyyy', 'yyyy-MM-dd HH:mm:ss', 'MMM D, yyyy'\n- Numbers: '0,0.00', '£0,0', '$0.00a', '0%'\n- Strings: typically omitted (displayed as-is)\n\nThe rendering engine determines how to interpret format strings"
         },
         "roles": {
           "items": {

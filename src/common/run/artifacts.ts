@@ -28,7 +28,7 @@ const DEBUG_RUN_SCANNING = process.env.DEBUG_RUN_SCANNING === 'true';
 /**
  * Pattern for validating run ID format
  *
- * Format: YYYYMMDD-HHmmssSSS-xxxx where xxxx is 4-character hex suffix
+ * Format: yyyyMMdd-HHmmssSSS-xxxx where xxxx is 4-character hex suffix
  */
 export const RUN_ID_PATTERN = /^\d{8}-\d{9}-[a-f0-9]{4}$/;
 
@@ -62,7 +62,7 @@ const getRunsDirectory = (): string => {
 /**
  * Gets the directory path for a specific run
  *
- * @param runId - Run identifier (format: YYYYMMDD-HHMMSS-xxxx)
+ * @param runId - Run identifier (format: yyyyMMdd-HHMMSS-xxxx)
  * @returns Absolute path to run directory
  *
  * @example

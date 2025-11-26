@@ -9,7 +9,7 @@ import {loadRunArtifact} from '@sigil/src/common/run';
  *
  * Development-only endpoint that retrieves a complete run artifact including
  * input, data, analysis, output, logs, and metadata. The run ID format is
- * "YYYYMMDD-HHmmssSSS-xxxx" (e.g., "20251108-143022000-a3f9").
+ * "yyyyMMdd-HHmmssSSS-xxxx" (e.g., "20251108-143022000-a3f9").
  *
  * @param params.runId - Run identifier from URL path
  *

@@ -46,7 +46,7 @@ export const MAX_SEMANTIC_DESCRIPTION_LENGTH = 175;
 
 export const MIN_SUMMARY_LENGTH = 20;
 export const TARGET_SUMMARY_LENGTH = 350;
-export const MAX_SUMMARY_LENGTH = 700;
+export const MAX_SUMMARY_LENGTH = 1500;
 
 export const MIN_FIELD_LABEL_LENGTH = 3;
 export const TARGET_FIELD_LABEL_LENGTH = 20;
