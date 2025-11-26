@@ -88,6 +88,13 @@ Object keys column:
 - To access object property names, use tilde operator: `$[*]~`
 - Example: for `{user_123: {...}, user_456: {...}}` → accessor `$[*]~` represents the keys column
 
+XML data (attributes grouped under __attrs, text under __text):
+- Attributes are grouped under `__attrs` key, not prefixed
+- Text content uses `__text` key
+- keyField: `$.products.product[0].__attrs.id` → data_source: `"$.products.product"`, accessor: `$[*].__attrs.id`
+- keyField: `$.products.product[0].__text` → data_source: `"$.products.product"`, accessor: `$[*].__text`
+- Example: XML `<item id="123">Name</item>` becomes `{"item": {"__attrs": {"id": "123"}, "__text": "Name"}}`
+
 Role heuristics for accessor_bindings:
 - String fields → roles: ["label"]
 - Number fields → roles: ["value"]

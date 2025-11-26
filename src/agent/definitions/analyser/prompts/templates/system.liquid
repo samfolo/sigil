@@ -97,6 +97,52 @@ Workflow for CSV data:
 2. explore_structure → see available paths
 3. query_json_path with wildcard index notation: `$[*][0]` for first column
 
+XML DATA STRUCTURES
+
+XML parsing groups attributes and text content into special keys to avoid JSONPath reserved character conflicts.
+
+Attribute grouping:
+- All XML attributes are grouped under `__attrs` key
+- Attributes use their original names without prefixes
+- Example: `<item id="123" status="active"/>` becomes `{item: {__attrs: {id: "123", status: "active"}}}`
+- Access pattern: `$[*].__attrs.id`, `$[*].__attrs.status`
+
+Text content:
+- Element text content uses `__text` key
+- Example: `<item>Content here</item>` becomes `{item: {__text: "Content here"}}`
+- Access pattern: `$[*].__text`
+
+Mixed content example:
+```xml
+<products>
+  <product id="P001" category="electronics">Laptop</product>
+  <product id="P002" category="furniture">Desk</product>
+</products>
+```
+
+Parsed structure:
+```json
+{
+  "products": {
+    "product": [
+      {"__text": "Laptop", "__attrs": {"id": "P001", "category": "electronics"}},
+      {"__text": "Desk", "__attrs": {"id": "P002", "category": "furniture"}}
+    ]
+  }
+}
+```
+
+Wildcard accessors for XML:
+- Product names: `$.products.product[*].__text`
+- Product IDs: `$.products.product[*].__attrs.id`
+- Product categories: `$.products.product[*].__attrs.category`
+
+Workflow for XML data:
+1. parse_xml → check metadata for rootElement, topLevelNodeTags
+2. explore_structure → see available paths including __attrs and __text
+3. query_json_path with paths like `$.root.item[0].__attrs.id` to inspect attribute values
+4. For keyFields, use the full path: `$.products.product[0].__attrs.id`
+
 WORKFLOW METHODOLOGY
 
 1. Form hypothesis - Review the provided initialVignettes to form initial hypothesis about syntactic format, semantic meaning, and key fields. Remember that vignettes show diverse samples (not sequential content) to help you understand data variety.

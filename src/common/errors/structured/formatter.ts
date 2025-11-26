@@ -29,13 +29,18 @@ export const formatList = (
 };
 
 /**
+ * Default maximum length for stringified values
+ */
+const DEFAULT_STRINGIFY_MAX_LENGTH = 300;
+
+/**
  * Safely stringifies a value with truncation
  *
  * @param value - Value to stringify
  * @param maxLength - Maximum length before truncation
  * @returns Stringified value, truncated if necessary
  */
-export const safeStringify = (value: unknown, maxLength: number = 100): string => {
+export const safeStringify = (value: unknown, maxLength: number = DEFAULT_STRINGIFY_MAX_LENGTH): string => {
 	try {
 		const stringified = JSON.stringify(value);
 		return stringified.length > maxLength
