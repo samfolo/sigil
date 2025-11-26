@@ -395,7 +395,7 @@ export interface CellValue {
 	display: string;
 
 	/**
-	 * Optional format string from FieldMetadata (e.g., 'DD/MM/YYYY', '0,0.00')
+	 * Optional format string from FieldMetadata (e.g., 'dd/mM/yyyy', '0,0.00')
 	 */
 	format?: string;
 

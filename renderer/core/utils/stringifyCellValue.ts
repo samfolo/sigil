@@ -87,7 +87,7 @@ export const stringifyCellValue = (value: unknown, format?: string, dataType?: s
  * Tries the provided format string, falls back to locale default if invalid
  *
  * Supports:
- * - Luxon format tokens (e.g., 'DD/MM/YYYY', 'yyyy-MM-dd HH:mm:ss')
+ * - Luxon format tokens (e.g., 'dd/MM/yyyy', 'yyyy-MM-dd HH:mm:ss')
  * - Luxon preset constants (e.g., 'iso8601', 'DATE_SHORT', 'DATETIME_MED')
  * - Falls back to locale string if format is invalid
  *
