@@ -11,6 +11,7 @@ import type {ReactElement} from 'react';
 import {buildRenderTree} from '@sigil/renderer/core';
 import type {RenderTree} from '@sigil/renderer/core/types/types';
 import {SpecProcessingError} from '@sigil/src/common/errors';
+import {isErr} from '@sigil/src/common/errors/result';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
 import {DataTable, Grid, GridChild, HorizontalStack, VerticalStack} from '../components';
@@ -86,7 +87,7 @@ const renderTreeNode = (tree: RenderTree): ReactElement => {
 export const render = (spec: ComponentSpec, data: unknown): ReactElement => {
 	const renderTreeResult = buildRenderTree(spec, data);
 
-	if (!renderTreeResult.success) {
+	if (isErr(renderTreeResult)) {
 		throw new SpecProcessingError(renderTreeResult.error);
 	}
 

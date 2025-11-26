@@ -23,7 +23,7 @@ describe('Grid', () => {
 		expect(gridDiv).toBeInTheDocument();
 	});
 
-	it('should apply grid-cols class with arbitrary value', () => {
+	it('should apply gridTemplateColumns inline style', () => {
 		const {container} = render(
 			<Grid columns={3}>
 				<div>Child</div>
@@ -32,10 +32,10 @@ describe('Grid', () => {
 
 		const gridDiv = getByLayoutType(container, 'grid');
 		expect(gridDiv).toHaveClass('grid');
-		expect(gridDiv).toHaveClass('grid-cols-[repeat(3,1fr)]');
+		expect(gridDiv).toHaveStyle({gridTemplateColumns: 'repeat(3, 1fr)'});
 	});
 
-	it('should apply grid-rows class when rows is provided', () => {
+	it('should apply gridTemplateRows inline style when rows is provided', () => {
 		const {container} = render(
 			<Grid columns={2} rows={3}>
 				<div>Child</div>
@@ -43,10 +43,10 @@ describe('Grid', () => {
 		);
 
 		const gridDiv = getByLayoutType(container, 'grid');
-		expect(gridDiv).toHaveClass('grid-rows-[repeat(3,1fr)]');
+		expect(gridDiv).toHaveStyle({gridTemplateRows: 'repeat(3, 1fr)'});
 	});
 
-	it('should not apply grid-rows class when rows is undefined', () => {
+	it('should not apply gridTemplateRows when rows is undefined', () => {
 		const {container} = render(
 			<Grid columns={2}>
 				<div>Child</div>
@@ -54,7 +54,8 @@ describe('Grid', () => {
 		);
 
 		const gridDiv = getByLayoutType(container, 'grid');
-		expect(gridDiv?.className).not.toContain('grid-rows');
+		const style = gridDiv?.getAttribute('style') ?? '';
+		expect(style).not.toContain('grid-template-rows');
 	});
 
 	it('should render children', () => {
@@ -71,7 +72,7 @@ describe('Grid', () => {
 		expect(screen.getByText('Third')).toBeInTheDocument();
 	});
 
-	it('should support large column counts via arbitrary values', () => {
+	it('should support large column counts via inline styles', () => {
 		const {container} = render(
 			<Grid columns={15}>
 				<div>Child</div>
@@ -79,7 +80,7 @@ describe('Grid', () => {
 		);
 
 		const gridDiv = getByLayoutType(container, 'grid');
-		expect(gridDiv).toHaveClass('grid-cols-[repeat(15,1fr)]');
+		expect(gridDiv).toHaveStyle({gridTemplateColumns: 'repeat(15, 1fr)'});
 	});
 });
 
