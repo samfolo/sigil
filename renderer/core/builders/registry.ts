@@ -4,6 +4,7 @@ import type {
 	HierarchyConfig,
 	CompositionConfig,
 	TextInsightConfig,
+	TextConfig,
 } from '@sigil/src/lib/generated/types/specification';
 
 import type {TableProps} from '../types';
@@ -19,6 +20,7 @@ interface ComponentBuilderRegistry {
 	'hierarchy': ComponentBuilder<HierarchyConfig, Record<string, never>>;
 	'composition': ComponentBuilder<CompositionConfig, Record<string, never>>;
 	'text-insight': ComponentBuilder<TextInsightConfig, Record<string, never>>;
+	'text': ComponentBuilder<TextConfig, Record<string, never>>;
 }
 
 /**
@@ -37,6 +39,9 @@ export const componentBuilders: ComponentBuilderRegistry = {
 	},
 	get 'text-insight'(): never {
 		throw new Error('TextInsightBuilder not yet implemented');
+	},
+	get 'text'(): never {
+		throw new Error('TextBuilder not yet implemented');
 	},
 };
 

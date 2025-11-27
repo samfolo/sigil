@@ -162,7 +162,8 @@ const processRenderTree = (
 		case 'data-table':
 		case 'hierarchy':
 		case 'composition':
-		case 'text-insight': {
+		case 'text-insight':
+		case 'text': {
 			// Leaf component - replace placeholder with built component
 			return replaceComponentPlaceholder(tree, spec, data, pathContext);
 		}
@@ -306,6 +307,29 @@ const replaceComponentPlaceholder = (
 
 			return ok({
 				type: 'text-insight',
+				componentId,
+				props: propsResult.data,
+			});
+		}
+
+		case 'text': {
+			// Verify config type matches component type
+			if (componentNode.config.type !== 'text') {
+				throw new Error(`Component "${componentId}" has type mismatch - this is a bug in walkLayout`);
+			}
+
+			const config = componentNode.config;
+			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
+			const builder = getBuilder('text');
+
+			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
+
+			if (isErr(propsResult)) {
+				return propsResult;
+			}
+
+			return ok({
+				type: 'text',
 				componentId,
 				props: propsResult.data,
 			});

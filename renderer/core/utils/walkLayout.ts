@@ -270,6 +270,13 @@ const createComponentPlaceholder = (
 				props: {},
 			});
 
+		case 'text':
+			return ok({
+				type: 'text',
+				componentId,
+				props: {},
+			});
+
 		default: {
 			const _exhaustive: never = componentNode.type;
 			return err([{
@@ -278,7 +285,7 @@ const createComponentPlaceholder = (
 				category: 'spec',
 				path: context.path,
 				context: {
-					expected: 'data-table | hierarchy | composition | text-insight',
+					expected: 'data-table | hierarchy | composition | text-insight | text',
 					actual: _exhaustive,
 					nodeId: componentId,
 				},

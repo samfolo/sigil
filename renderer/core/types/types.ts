@@ -8,7 +8,7 @@
  * - Debuggable intermediate state
  *
  * Supports layout structures (stacks and grids) and recursive tree processing.
- * Component types include data-table, hierarchy, composition, and text-insight.
+ * Component types include data-table, hierarchy, composition, text-insight, and text.
  */
 
 import type {
@@ -39,7 +39,7 @@ export type RenderLayout = RenderHorizontalStackLayout | RenderVerticalStackLayo
  *
  * Discriminated union of all component types.
  */
-export type RenderComponent = RenderDataTable | RenderHierarchy | RenderComposition | RenderTextInsight;
+export type RenderComponent = RenderDataTable | RenderHierarchy | RenderComposition | RenderTextInsight | RenderText;
 
 /**
  * Common size constraint fields for layout nodes
@@ -302,6 +302,27 @@ export interface RenderTextInsight {
 
 	/**
 	 * Processed text insight properties
+	 */
+	props: Record<string, never>;
+}
+
+/**
+ * Text primitive component with processed props
+ */
+export interface RenderText {
+	/**
+	 * Discriminator for text primitive components
+	 */
+	type: 'text';
+
+	/**
+	 * Component ID from spec.root.nodes
+	 * Used to look up configuration and bindings during rendering
+	 */
+	componentId?: string;
+
+	/**
+	 * Processed text properties
 	 */
 	props: Record<string, never>;
 }

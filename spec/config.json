@@ -24,6 +24,11 @@
       "description": "Data affordance types (sorting, filtering, pagination, etc.)",
       "dependencies": ["primitives", "filtering"]
     },
+    "text-format": {
+      "path": "schema/fragments/text-format.schema.json",
+      "description": "Text formatting types (number, date, currency, etc.)",
+      "dependencies": []
+    },
     "layout": {
       "path": "schema/fragments/layout.schema.json",
       "description": "Layout system (stack, grid)",
@@ -32,7 +37,7 @@
     "components": {
       "path": "schema/fragments/components.schema.json",
       "description": "Component configuration types",
-      "dependencies": ["affordances"]
+      "dependencies": ["affordances", "text-format", "primitives"]
     },
     "core": {
       "path": "schema/fragments/core.schema.json",
@@ -42,7 +47,7 @@
   },
   "discriminatedUnions": [
     {
-      "name": "Affordance",
+      "name": "DataTableAffordance",
       "location": "affordances.schema.json",
       "discriminator": "type",
       "variants": [
@@ -77,6 +82,56 @@
       ]
     },
     {
+      "name": "TextAffordance",
+      "location": "affordances.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "hyperlink",
+          "type": "HyperlinkAffordance"
+        },
+        {
+          "value": "truncation",
+          "type": "TruncationAffordance"
+        }
+      ]
+    },
+    {
+      "name": "TextFormat",
+      "location": "text-format.schema.json",
+      "discriminator": "type",
+      "variants": [
+        {
+          "value": "decimal",
+          "type": "DecimalTextFormat"
+        },
+        {
+          "value": "currency",
+          "type": "CurrencyTextFormat"
+        },
+        {
+          "value": "percent",
+          "type": "PercentTextFormat"
+        },
+        {
+          "value": "unit",
+          "type": "UnitTextFormat"
+        },
+        {
+          "value": "relative",
+          "type": "RelativeDateTextFormat"
+        },
+        {
+          "value": "absolute",
+          "type": "AbsoluteDateTextFormat"
+        },
+        {
+          "value": "elapsed",
+          "type": "ElapsedTextFormat"
+        }
+      ]
+    },
+    {
       "name": "ComponentConfig",
       "location": "components.schema.json",
       "discriminator": "type",
@@ -96,6 +151,10 @@
         {
           "value": "text-insight",
           "type": "TextInsightConfig"
+        },
+        {
+          "value": "text",
+          "type": "TextConfig"
         }
       ]
     },

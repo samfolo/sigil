@@ -107,7 +107,6 @@ export const createHierarchyComponentSpec = (layout: LayoutNode): ComponentSpec 
 				type: 'hierarchy',
 				config: {
 					type: 'hierarchy',
-					affordances: [],
 				},
 			},
 		},
@@ -131,7 +130,6 @@ export const createCompositionComponentSpec = (layout: LayoutNode): ComponentSpe
 				type: 'composition',
 				config: {
 					type: 'composition',
-					affordances: [],
 				},
 			},
 		},
@@ -155,7 +153,6 @@ export const createTextInsightComponentSpec = (layout: LayoutNode): ComponentSpe
 				type: 'text-insight',
 				config: {
 					type: 'text-insight',
-					affordances: [],
 				},
 			},
 		},

@@ -131,13 +131,6 @@
       "description": "Configuration for composition components.\n\nCompositions are meta-components that combine multiple sub-components into a unified visualisation (e.g., a dashboard with multiple charts).\n\nBest used with: any data_shape, depending on sub-components",
       "additionalProperties": false,
       "properties": {
-        "affordances": {
-          "items": {
-            "$ref": "./affordances.schema.json#/definitions/Affordance"
-          },
-          "type": "array",
-          "description": "Interactive capabilities for the composition as a whole. Note: sub-components have their own affordances"
-        },
         "description": {
           "type": "string",
           "description": "Optional description explaining the component's purpose"
@@ -152,7 +145,6 @@
         }
       },
       "required": [
-        "affordances",
         "type"
       ],
       "type": "object"
@@ -161,13 +153,6 @@
       "description": "Configuration for text insight components.\n\nText insights display textual information, summaries, or key-value metadata in a readable format.\n\nBest used with: data_shape = 'key_value'",
       "additionalProperties": false,
       "properties": {
-        "affordances": {
-          "items": {
-            "$ref": "./affordances.schema.json#/definitions/Affordance"
-          },
-          "type": "array",
-          "description": "Interactive capabilities for text insights. Common affordances: search, export"
-        },
         "description": {
           "type": "string",
           "description": "Optional description explaining the component's purpose"
@@ -182,7 +167,6 @@
         }
       },
       "required": [
-        "affordances",
         "type"
       ],
       "type": "object"
