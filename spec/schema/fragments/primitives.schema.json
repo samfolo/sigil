@@ -31,12 +31,13 @@
       "type": "string"
     },
     "ComponentType": {
-      "description": "Available component types, each optimised for specific data shapes. Components are the 'rendering primitives' of the specification system. Each type is designed to handle a particular visualisation pattern.\n\nAvailable types:\n- data-table: Tabular display with rows and columns (best for: tabular data shapes, spreadsheet-like views, data grids)\n- hierarchy: Tree or nested structure display (best for: hierarchical data shapes, file explorers, org charts, JSON viewers)\n- composition: Composed/aggregate visualisations combining multiple sub-components (best for: dashboards, multi-faceted views, complex analytical displays)\n- text-insight: Text-based insights, summaries, or explanations (best for: key_value data shapes, insights, summaries, explanatory text)",
+      "description": "Available component types, each optimised for specific data shapes. Components are the 'rendering primitives' of the specification system. Each type is designed to handle a particular visualisation pattern.\n\nAvailable types:\n- data-table: Tabular display with rows and columns (best for: tabular data shapes, spreadsheet-like views, data grids)\n- hierarchy: Tree or nested structure display (best for: hierarchical data shapes, file explorers, org charts, JSON viewers)\n- composition: Composed/aggregate visualisations combining multiple sub-components (best for: dashboards, multi-faceted views, complex analytical displays)\n- text-insight: Text-based insights, summaries, or explanations (best for: key_value data shapes, insights, summaries, explanatory text)\n- text: Atomic text primitive for rendering single bound values with formatting and styling",
       "enum": [
         "data-table",
         "hierarchy",
         "composition",
-        "text-insight"
+        "text-insight",
+        "text"
       ],
       "type": "string"
     },
@@ -242,6 +243,32 @@
         "type"
       ],
       "type": "object"
+    },
+    "TextScale": {
+      "description": "Semantic importance levels for text. These represent hierarchy and emphasis, not visual sizes. Renderers map to platform-appropriate typography.\n\nAvailable scales:\n- display: Largest, most prominent text (hero headings, splash screens)\n- title: Primary page or section titles\n- heading: Section headings within content\n- subheading: Secondary headings, group labels\n- body: Standard paragraph text (default)\n- caption: Supporting text, annotations, timestamps\n- overline: Small uppercase labels above headings",
+      "enum": [
+        "display",
+        "title",
+        "heading",
+        "subheading",
+        "body",
+        "caption",
+        "overline"
+      ],
+      "type": "string"
+    },
+    "TextTrait": {
+      "description": "Semantic text traits for styling. Traits are combinable (used as array) and represent meaning, not visual appearance. Renderers map to platform-appropriate styling.\n\nAvailable traits:\n- strong: Important or emphasised content (typically bold)\n- emphasis: Stressed content (typically italic)\n- code: Monospace text for code, commands, or technical content\n- underline: Underlined text (use sparingly, often implies links)\n- subtle: De-emphasised or secondary content (typically muted colour)\n- superscript: Raised text (footnotes, ordinals, mathematical notation)\n- subscript: Lowered text (chemical formulas, mathematical notation)",
+      "enum": [
+        "strong",
+        "emphasis",
+        "code",
+        "underline",
+        "subtle",
+        "superscript",
+        "subscript"
+      ],
+      "type": "string"
     }
   }
 }

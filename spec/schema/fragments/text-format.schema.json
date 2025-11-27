@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sigil://spec/text-format",
+  "title": "Sigil Text Formats",
+  "description": "Text formatting types for numbers, dates, and other values. Format options align with Intl APIs (CLDR) for cross-platform consistency. Renderers map snake_case options to Intl.NumberFormat / Intl.DateTimeFormat camelCase equivalents.",
+  "definitions": {
+    "TextFormat": {
+      "description": "Union of text format types for rendering values",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DecimalTextFormat"
+        },
+        {
+          "$ref": "#/definitions/CurrencyTextFormat"
+        },
+        {
+          "$ref": "#/definitions/PercentTextFormat"
+        },
+        {
+          "$ref": "#/definitions/UnitTextFormat"
+        },
+        {
+          "$ref": "#/definitions/RelativeDateTextFormat"
+        },
+        {
+          "$ref": "#/definitions/AbsoluteDateTextFormat"
+        },
+        {
+          "$ref": "#/definitions/ElapsedTextFormat"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "decimal": "#/definitions/DecimalTextFormat",
+          "currency": "#/definitions/CurrencyTextFormat",
+          "percent": "#/definitions/PercentTextFormat",
+          "unit": "#/definitions/UnitTextFormat",
+          "relative": "#/definitions/RelativeDateTextFormat",
+          "absolute": "#/definitions/AbsoluteDateTextFormat",
+          "elapsed": "#/definitions/ElapsedTextFormat"
+        }
+      }
+    },
+    "DecimalTextFormat": {
+      "description": "Formats numeric values as decimal numbers with configurable precision and grouping.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "decimal",
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/DecimalFormatOptions",
+          "description": "Formatting options for decimal display"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "DecimalFormatOptions": {
+      "description": "Options for decimal number formatting. Maps to Intl.NumberFormat options.",
+      "additionalProperties": false,
+      "properties": {
+        "minimum_fraction_digits": {
+          "type": "number",
+          "description": "Minimum number of fraction digits to display"
+        },
+        "maximum_fraction_digits": {
+          "type": "number",
+          "description": "Maximum number of fraction digits to display"
+        },
+        "use_grouping": {
+          "type": "boolean",
+          "description": "Whether to use grouping separators (e.g., thousands). Default: true"
+        }
+      },
+      "type": "object"
+    },
+    "CurrencyTextFormat": {
+      "description": "Formats numeric values as currency with locale-appropriate symbols and formatting.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "currency",
+          "type": "string"
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 currency code (e.g., 'GBP', 'USD', 'EUR')"
+        },
+        "options": {
+          "$ref": "#/definitions/CurrencyFormatOptions",
+          "description": "Formatting options for currency display"
+        }
+      },
+      "required": [
+        "type",
+        "currency"
+      ],
+      "type": "object"
+    },
+    "CurrencyFormatOptions": {
+      "description": "Options for currency formatting. Maps to Intl.NumberFormat options.",
+      "additionalProperties": false,
+      "properties": {
+        "minimum_fraction_digits": {
+          "type": "number",
+          "description": "Minimum number of fraction digits to display"
+        },
+        "maximum_fraction_digits": {
+          "type": "number",
+          "description": "Maximum number of fraction digits to display"
+        },
+        "display": {
+          "enum": [
+            "symbol",
+            "narrow_symbol",
+            "code",
+            "name"
+          ],
+          "type": "string",
+          "description": "How to display the currency. 'symbol': £, 'narrow_symbol': £, 'code': GBP, 'name': British pound. Default: 'symbol'"
+        }
+      },
+      "type": "object"
+    },
+    "PercentTextFormat": {
+      "description": "Formats numeric values as percentages. Input value is multiplied by 100 (0.5 becomes 50%).",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "percent",
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/PercentFormatOptions",
+          "description": "Formatting options for percentage display"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "PercentFormatOptions": {
+      "description": "Options for percentage formatting. Maps to Intl.NumberFormat options.",
+      "additionalProperties": false,
+      "properties": {
+        "minimum_fraction_digits": {
+          "type": "number",
+          "description": "Minimum number of fraction digits to display"
+        },
+        "maximum_fraction_digits": {
+          "type": "number",
+          "description": "Maximum number of fraction digits to display"
+        }
+      },
+      "type": "object"
+    },
+    "UnitTextFormat": {
+      "description": "Formats numeric values with unit labels (e.g., '5 kilometres', '100 MB').",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "unit",
+          "type": "string"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Intl unit identifier (e.g., 'kilometer', 'megabyte', 'celsius', 'percent'). See TC39 unit identifiers"
+        },
+        "display": {
+          "enum": [
+            "short",
+            "narrow",
+            "long"
+          ],
+          "type": "string",
+          "description": "Unit display style. 'short': 5 km, 'narrow': 5km, 'long': 5 kilometres. Default: 'short'"
+        }
+      },
+      "required": [
+        "type",
+        "unit"
+      ],
+      "type": "object"
+    },
+    "RelativeDateTextFormat": {
+      "description": "Formats dates as relative time strings (e.g., '2 days ago', 'in 3 hours').",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "relative",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "AbsoluteDateTextFormat": {
+      "description": "Formats dates as absolute date/time strings with configurable display and style.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "absolute",
+          "type": "string"
+        },
+        "display": {
+          "enum": [
+            "date",
+            "time",
+            "datetime"
+          ],
+          "type": "string",
+          "description": "Which parts to display. 'date': date only, 'time': time only, 'datetime': both. Default: 'datetime'"
+        },
+        "style": {
+          "enum": [
+            "full",
+            "long",
+            "medium",
+            "short"
+          ],
+          "type": "string",
+          "description": "Date/time style. 'full': Thursday, 27 November 2025, 'long': 27 November 2025, 'medium': 27 Nov 2025, 'short': 27/11/2025. Default: 'medium'"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "ElapsedTextFormat": {
+      "description": "Formats duration values as elapsed time strings (e.g., '2h 30m', '2 hours 30 minutes').",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "elapsed",
+          "type": "string"
+        },
+        "style": {
+          "enum": [
+            "compact",
+            "expanded"
+          ],
+          "type": "string",
+          "description": "Display style. 'compact': 2h 30m, 'expanded': 2 hours 30 minutes. Default: 'compact'"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

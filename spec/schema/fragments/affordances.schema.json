@@ -4,8 +4,8 @@
   "title": "Sigil Affordances",
   "description": "Data interaction affordances (sorting, filtering, pagination, etc.)\n\nAffordances are declarative capabilities that enhance component interactivity.\n\nDesign philosophy:\n- Affordances are opt-in: components work without them, but they enable richer interactions\n- They are declarative, not imperative: you specify WHAT capabilities exist, not HOW to implement them\n- Each affordance is independent and composable\n- The rendering engine implements the actual behaviour based on these declarations\n\nCommon affordances enable:\n- Performance optimisations (virtualisation)\n- Data manipulation (sorting, filtering, search)\n- User interaction (selection)\n- Data export (CSV, JSON)",
   "definitions": {
-    "Affordance": {
-      "description": "Union type of all available affordance types",
+    "DataTableAffordance": {
+      "description": "Union of data table affordances (virtualisation, sorting, filtering, pagination, export, selection, search)",
       "anyOf": [
         {
           "$ref": "#/definitions/VirtualisationAffordance"
@@ -253,6 +253,78 @@
       },
       "required": [
         "type"
+      ],
+      "type": "object"
+    },
+    "TextAffordance": {
+      "description": "Union of text-specific affordances",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HyperlinkAffordance"
+        },
+        {
+          "$ref": "#/definitions/TruncationAffordance"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "hyperlink": "#/definitions/HyperlinkAffordance",
+          "truncation": "#/definitions/TruncationAffordance"
+        }
+      }
+    },
+    "HyperlinkAffordance": {
+      "description": "Enables text as a navigational link.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "hyperlink",
+          "type": "string"
+        },
+        "href": {
+          "type": "string",
+          "description": "Link destination. If prefixed with '$', treated as JSONPath accessor to extract URL from data; otherwise treated as literal URL"
+        },
+        "target": {
+          "enum": [
+            "self",
+            "blank"
+          ],
+          "type": "string",
+          "description": "Link target behaviour. 'self' opens in same window, 'blank' opens in new tab. Default: 'self'"
+        }
+      },
+      "required": [
+        "type",
+        "href"
+      ],
+      "type": "object"
+    },
+    "TruncationAffordance": {
+      "description": "Controls text overflow behaviour by limiting visible characters.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "truncation",
+          "type": "string"
+        },
+        "maximum_characters": {
+          "type": "number",
+          "description": "Maximum number of characters to display before truncation"
+        },
+        "indicator": {
+          "enum": [
+            "ellipsis",
+            "none"
+          ],
+          "type": "string",
+          "description": "Truncation indicator style. 'ellipsis' appends '...' to truncated text. Default: 'ellipsis'"
+        }
+      },
+      "required": [
+        "type",
+        "maximum_characters"
       ],
       "type": "object"
     }

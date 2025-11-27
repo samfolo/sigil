@@ -18,6 +18,9 @@
         },
         {
           "$ref": "#/definitions/TextInsightConfig"
+        },
+        {
+          "$ref": "#/definitions/TextConfig"
         }
       ],
       "discriminator": {
@@ -26,7 +29,8 @@
           "data-table": "#/definitions/DataTableConfig",
           "hierarchy": "#/definitions/HierarchyConfig",
           "composition": "#/definitions/CompositionConfig",
-          "text-insight": "#/definitions/TextInsightConfig"
+          "text-insight": "#/definitions/TextInsightConfig",
+          "text": "#/definitions/TextConfig"
         }
       }
     },
@@ -69,7 +73,7 @@
       "properties": {
         "affordances": {
           "items": {
-            "$ref": "./affordances.schema.json#/definitions/Affordance"
+            "$ref": "./affordances.schema.json#/definitions/DataTableAffordance"
           },
           "type": "array",
           "description": "Interactive capabilities enabled for this table. Common affordances: sorting, filtering, pagination, virtualisation, search, export"
@@ -105,13 +109,6 @@
       "description": "Configuration for hierarchy/tree components.\n\nHierarchy components display nested or tree-structured data with expand/collapse functionality and hierarchical navigation.\n\nBest used with: data_shape = 'hierarchical'",
       "additionalProperties": false,
       "properties": {
-        "affordances": {
-          "items": {
-            "$ref": "./affordances.schema.json#/definitions/Affordance"
-          },
-          "type": "array",
-          "description": "Interactive capabilities enabled for this hierarchy. Common affordances: search, selection, export"
-        },
         "description": {
           "type": "string",
           "description": "Optional description explaining the component's purpose"
@@ -126,7 +123,6 @@
         }
       },
       "required": [
-        "affordances",
         "type"
       ],
       "type": "object"
@@ -188,6 +184,55 @@
       "required": [
         "affordances",
         "type"
+      ],
+      "type": "object"
+    },
+    "TextConfig": {
+      "description": "Configuration for text primitive components.\n\nText is the atomic primitive for rendering single bound values with formatting, styling, and affordances. Use for displaying individual data points with semantic typography.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "text",
+          "type": "string"
+        },
+        "accessor": {
+          "type": "string",
+          "description": "JSONPath to the value to display (must start with '$')"
+        },
+        "scale": {
+          "$ref": "./primitives.schema.json#/definitions/TextScale",
+          "description": "Semantic importance level for typography. Default: 'body'"
+        },
+        "traits": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/TextTrait"
+          },
+          "type": "array",
+          "description": "Semantic text traits for styling (combinable)"
+        },
+        "format": {
+          "$ref": "./text-format.schema.json#/definitions/TextFormat",
+          "description": "Value formatting (number, date, currency, etc.). Omit to display raw value"
+        },
+        "affordances": {
+          "items": {
+            "$ref": "./affordances.schema.json#/definitions/TextAffordance"
+          },
+          "type": "array",
+          "description": "Text-specific affordances (hyperlink, truncation)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Optional title for the component"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description explaining the component's purpose"
+        }
+      },
+      "required": [
+        "type",
+        "accessor"
       ],
       "type": "object"
     }
