@@ -1,0 +1,315 @@
+import {DateTime} from 'luxon';
+import {describe, expect, it} from 'vitest';
+
+import type {TextFormat} from '@sigil/src/lib/generated/types/specification';
+
+import {formatTextValue} from './formatTextValue';
+
+interface TestCase {
+	name: string;
+	value: unknown;
+	format: TextFormat | undefined;
+	expected: string;
+}
+
+describe('formatTextValue', () => {
+	describe('no format (string conversion)', () => {
+		it.each<TestCase>([
+			{name: 'string', value: 'hello', format: undefined, expected: 'hello'},
+			{name: 'number', value: 42, format: undefined, expected: '42'},
+			{name: 'boolean', value: true, format: undefined, expected: 'true'},
+			{name: 'null', value: null, format: undefined, expected: 'null'},
+			{name: 'undefined', value: undefined, format: undefined, expected: 'undefined'},
+			{name: 'object', value: {a: 1}, format: undefined, expected: '{"a":1}'},
+			{name: 'array', value: [1, 2, 3], format: undefined, expected: '[1,2,3]'},
+		])('converts $name to string', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+
+	describe('decimal format', () => {
+		it.each<TestCase>([
+			{
+				name: 'basic number',
+				value: 1234.567,
+				format: {type: 'decimal'},
+				expected: '1,234.567',
+			},
+			{
+				name: 'with minimum fraction digits',
+				value: 42,
+				format: {type: 'decimal', options: {minimum_fraction_digits: 2}},
+				expected: '42.00',
+			},
+			{
+				name: 'with maximum fraction digits',
+				value: 3.14159,
+				format: {type: 'decimal', options: {maximum_fraction_digits: 2}},
+				expected: '3.14',
+			},
+			{
+				name: 'without grouping',
+				value: 1234567,
+				format: {type: 'decimal', options: {use_grouping: false}},
+				expected: '1234567',
+			},
+			{
+				name: 'string number',
+				value: '9876.54',
+				format: {type: 'decimal'},
+				expected: '9,876.54',
+			},
+			{
+				name: 'invalid value fallback',
+				value: 'not a number',
+				format: {type: 'decimal'},
+				expected: 'not a number',
+			},
+		])('formats $name', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+
+	describe('currency format', () => {
+		it.each<TestCase>([
+			{
+				name: 'GBP',
+				value: 1234.56,
+				format: {type: 'currency', currency: 'GBP'},
+				expected: '£1,234.56',
+			},
+			{
+				name: 'USD',
+				value: 99.99,
+				format: {type: 'currency', currency: 'USD'},
+				expected: 'US$99.99',
+			},
+			{
+				name: 'EUR',
+				value: 50,
+				format: {type: 'currency', currency: 'EUR'},
+				expected: '€50.00',
+			},
+			{
+				name: 'with code display',
+				value: 100,
+				format: {type: 'currency', currency: 'GBP', options: {display: 'code'}},
+				expected: 'GBP 100.00',
+			},
+			{
+				name: 'with name display',
+				value: 100,
+				format: {type: 'currency', currency: 'GBP', options: {display: 'name'}},
+				expected: '100.00 British pounds',
+			},
+			{
+				name: 'with narrow symbol',
+				value: 100,
+				format: {type: 'currency', currency: 'USD', options: {display: 'narrow_symbol'}},
+				expected: '$100.00',
+			},
+			{
+				name: 'with fraction digits',
+				value: 99,
+				format: {type: 'currency', currency: 'GBP', options: {minimum_fraction_digits: 0, maximum_fraction_digits: 0}},
+				expected: '£99',
+			},
+		])('formats $name', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+
+	describe('percent format', () => {
+		it.each<TestCase>([
+			{
+				name: 'basic percentage',
+				value: 0.5,
+				format: {type: 'percent'},
+				expected: '50%',
+			},
+			{
+				name: 'with fraction digits',
+				value: 0.1234,
+				format: {type: 'percent', options: {minimum_fraction_digits: 1, maximum_fraction_digits: 1}},
+				expected: '12.3%',
+			},
+			{
+				name: 'greater than 100%',
+				value: 1.5,
+				format: {type: 'percent'},
+				expected: '150%',
+			},
+			{
+				name: 'zero',
+				value: 0,
+				format: {type: 'percent'},
+				expected: '0%',
+			},
+		])('formats $name', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+
+	describe('unit format', () => {
+		it.each<TestCase>([
+			{
+				name: 'kilometres short',
+				value: 5,
+				format: {type: 'unit', unit: 'kilometer'},
+				expected: '5 km',
+			},
+			{
+				name: 'kilometres long',
+				value: 5,
+				format: {type: 'unit', unit: 'kilometer', display: 'long'},
+				expected: '5 kilometres',
+			},
+			{
+				name: 'megabytes narrow',
+				value: 100,
+				format: {type: 'unit', unit: 'megabyte', display: 'narrow'},
+				expected: '100MB',
+			},
+			{
+				name: 'celsius',
+				value: 25,
+				format: {type: 'unit', unit: 'celsius'},
+				expected: '25°C',
+			},
+		])('formats $name', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+
+	describe('relative date format', () => {
+		const NOW = DateTime.fromISO('2025-06-15T12:00:00Z');
+
+		it.each<{name: string; value: string; expected: string}>([
+			{name: 'yesterday', value: '2025-06-14T12:00:00Z', expected: 'yesterday'},
+			{name: 'tomorrow', value: '2025-06-16T12:00:00Z', expected: 'tomorrow'},
+			{name: '3 days ago', value: '2025-06-12T12:00:00Z', expected: '3 days ago'},
+			{name: 'in 2 weeks', value: '2025-06-29T12:00:00Z', expected: 'in 2 weeks'},
+			{name: 'last month', value: '2025-05-15T12:00:00Z', expected: 'last month'},
+			{name: 'last year', value: '2024-06-15T12:00:00Z', expected: 'last year'},
+		])('formats $name', ({value, expected}) => {
+			expect(formatTextValue(value, {type: 'relative'}, {now: NOW})).toBe(expected);
+		});
+	});
+
+	describe('absolute date format', () => {
+		it.each<TestCase>([
+			{
+				name: 'datetime medium (default)',
+				value: '2025-06-15T14:30:00Z',
+				format: {type: 'absolute'},
+				expected: '2025-06-15 14:30:00',
+			},
+			{
+				name: 'date only short',
+				value: '2025-06-15T14:30:00Z',
+				format: {type: 'absolute', display: 'date', style: 'short'},
+				expected: '2025-06-15',
+			},
+			{
+				name: 'date only long',
+				value: '2025-06-15T14:30:00Z',
+				format: {type: 'absolute', display: 'date', style: 'long'},
+				expected: '15 June 2025',
+			},
+			{
+				name: 'date only full',
+				value: '2025-06-15T14:30:00Z',
+				format: {type: 'absolute', display: 'date', style: 'full'},
+				expected: 'Sunday, 15 June 2025',
+			},
+			{
+				name: 'time only short',
+				value: '2025-06-15T14:30:00Z',
+				format: {type: 'absolute', display: 'time', style: 'short'},
+				expected: '14:30',
+			},
+			{
+				name: 'time only medium',
+				value: '2025-06-15T14:30:45Z',
+				format: {type: 'absolute', display: 'time', style: 'medium'},
+				expected: '14:30:45',
+			},
+			{
+				name: 'from Date object',
+				value: new Date('2025-06-15T14:30:00Z'),
+				format: {type: 'absolute', display: 'date', style: 'short'},
+				expected: '2025-06-15',
+			},
+		])('formats $name', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+
+	describe('elapsed format', () => {
+		it.each<TestCase>([
+			{
+				name: 'ISO 8601 duration compact',
+				value: 'PT2H30M',
+				format: {type: 'elapsed'},
+				expected: '2h 30m',
+			},
+			{
+				name: 'ISO 8601 duration expanded',
+				value: 'PT2H30M',
+				format: {type: 'elapsed', style: 'expanded'},
+				expected: '2 hours 30 minutes',
+			},
+			{
+				name: 'full duration',
+				value: 'P1Y2M3DT4H5M6S',
+				format: {type: 'elapsed'},
+				expected: '1y 2mo 3d 4h 5m 6s',
+			},
+			{
+				name: 'milliseconds',
+				value: 9000000,
+				format: {type: 'elapsed'},
+				expected: '2h 30m',
+			},
+			{
+				name: 'milliseconds expanded',
+				value: 9000000,
+				format: {type: 'elapsed', style: 'expanded'},
+				expected: '2 hours 30 minutes',
+			},
+		])('formats $name', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+
+	describe('graceful fallback', () => {
+		it.each<TestCase>([
+			{
+				name: 'invalid number for decimal',
+				value: 'abc',
+				format: {type: 'decimal'},
+				expected: 'abc',
+			},
+			{
+				name: 'invalid date for relative',
+				value: 'not a date',
+				format: {type: 'relative'},
+				expected: 'not a date',
+			},
+			{
+				name: 'invalid date for absolute',
+				value: 'invalid',
+				format: {type: 'absolute'},
+				expected: 'invalid',
+			},
+			{
+				name: 'object for number format',
+				value: {x: 1},
+				format: {type: 'decimal'},
+				expected: '{"x":1}',
+			},
+		])('falls back to string for $name', ({value, format, expected}) => {
+			expect(formatTextValue(value, format)).toBe(expected);
+		});
+	});
+});

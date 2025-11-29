@@ -165,6 +165,34 @@ interface Result {
 - Type guards: Use `instanceof`, `typeof`, `in`, or Zod schemas instead of `as` casting
 - Zod schemas: Prefer `schemas.ts` files, derive types with `z.infer`, use `.parse()` to avoid `as` casting
 - Zod V4: Check https://zod.dev for documentation
+- Default parameters: Use default parameter values instead of nullish coalescing where sensible
+- Exhaustiveness checks: Use `const _exhaustive: never = value` in switch default cases to catch unhandled discriminants
+
+Default parameter values:
+```typescript
+// Good - default in parameter
+const format = (value: string, style: Style = 'compact'): string => {...};
+
+// Avoid - nullish coalescing when default parameter works
+const format = (value: string, style?: Style): string => {
+  const resolvedStyle = style ?? 'compact';
+  ...
+};
+```
+
+Exhaustiveness check pattern:
+```typescript
+switch (format.type) {
+  case 'decimal':
+    return formatDecimal(value);
+  case 'currency':
+    return formatCurrency(value);
+  default: {
+    const _exhaustive: never = format;
+    return String(_exhaustive);
+  }
+}
+```
 
 Avoid `as` casting wherever possible:
 ```typescript
