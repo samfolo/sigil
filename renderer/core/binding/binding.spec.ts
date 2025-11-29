@@ -929,12 +929,12 @@ describe('extractColumns - header and body config', () => {
 			{
 				accessor: '$[*].name',
 				label: 'Name',
-				header: {scale: 'sm', traits: ['bold']},
+				header: {scale: 'caption', traits: ['strong']},
 			},
 		]);
 
 		expect(columns).toHaveLength(1);
-		expect(columns.at(0)?.header).toEqual({scale: 'sm', traits: ['bold']});
+		expect(columns.at(0)?.header).toEqual({scale: 'caption', traits: ['strong']});
 	});
 
 	it('should pass through body config with format', () => {
@@ -944,7 +944,7 @@ describe('extractColumns - header and body config', () => {
 				label: 'Price',
 				body: {
 					format: {type: 'currency', currency: 'GBP'},
-					scale: 'base',
+					scale: 'body',
 					traits: ['mono'],
 				},
 			},
@@ -953,7 +953,7 @@ describe('extractColumns - header and body config', () => {
 		expect(columns).toHaveLength(1);
 		expect(columns.at(0)?.body).toEqual({
 			format: {type: 'currency', currency: 'GBP'},
-			scale: 'base',
+			scale: 'body',
 			traits: ['mono'],
 		});
 	});
@@ -976,7 +976,7 @@ describe('extractColumns - header and body config', () => {
 			{
 				accessor: '$[*].name',
 				label: 'Name',
-				header: {traits: ['bold']},
+				header: {traits: ['strong']},
 			},
 			{
 				accessor: '$[*].age',
@@ -990,7 +990,7 @@ describe('extractColumns - header and body config', () => {
 		]);
 
 		expect(columns).toHaveLength(3);
-		expect(columns.at(0)?.header).toEqual({traits: ['bold']});
+		expect(columns.at(0)?.header).toEqual({traits: ['strong']});
 		expect(columns.at(0)?.body).toBeUndefined();
 		expect(columns.at(1)?.header).toBeUndefined();
 		expect(columns.at(1)?.body).toBeUndefined();

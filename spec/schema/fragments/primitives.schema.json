@@ -258,11 +258,11 @@
       "type": "string"
     },
     "TextTrait": {
-      "description": "Semantic text traits for styling. Traits are combinable (used as array) and represent meaning, not visual appearance. Renderers map to platform-appropriate styling.\n\nAvailable traits:\n- strong: Important or emphasised content (typically bold)\n- emphasis: Stressed content (typically italic)\n- code: Monospace text for code, commands, or technical content\n- underline: Underlined text (use sparingly, often implies links)\n- subtle: De-emphasised or secondary content (typically muted colour)\n- superscript: Raised text (footnotes, ordinals, mathematical notation)\n- subscript: Lowered text (chemical formulas, mathematical notation)",
+      "description": "Semantic text traits for styling. Traits are combinable (used as array) and represent meaning, not visual appearance. Renderers map to platform-appropriate styling.\n\nAvailable traits:\n- strong: Important or emphasised content (typically bold)\n- emphasis: Stressed content (typically italic)\n- mono: Monospace text for code, commands, or technical content\n- underline: Underlined text (use sparingly, often implies links)\n- subtle: De-emphasised or secondary content (typically muted colour)\n- superscript: Raised text (footnotes, ordinals, mathematical notation)\n- subscript: Lowered text (chemical formulas, mathematical notation)",
       "enum": [
         "strong",
         "emphasis",
-        "code",
+        "mono",
         "underline",
         "subtle",
         "superscript",
