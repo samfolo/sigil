@@ -450,6 +450,61 @@ describe('bindTabularData - edge cases', () => {
 		expect(result.data.at(1)?.cells['$[*].name'].display).toBeUndefined();
 	});
 
+	it('should map null to placeholder via value_mappings', () => {
+		const data = [{status: null}, {status: 'active'}];
+		const columns = [{id: '$[*].status', label: 'Status'}];
+		const bindings = {
+			'$[*].status': {
+				value_mappings: {
+					'null': {display_value: 'N/A'},
+					'active': {display_value: 'Active'},
+				},
+			},
+		};
+
+		const result = bindTabularData(data, columns, bindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		// Null value mapped to placeholder
+		expect(result.data.at(0)?.cells['$[*].status'].raw).toBeNull();
+		expect(result.data.at(0)?.cells['$[*].status'].display).toBe('N/A');
+
+		// Regular value mapped normally
+		expect(result.data.at(1)?.cells['$[*].status'].raw).toBe('active');
+		expect(result.data.at(1)?.cells['$[*].status'].display).toBe('Active');
+	});
+
+	it('should map undefined to placeholder via value_mappings', () => {
+		const data = [{name: 'Alice'}, {name: undefined}];
+		const columns = [{id: '$[*].name', label: 'Name'}];
+		const bindings = {
+			'$[*].name': {
+				value_mappings: {
+					'undefined': {display_value: '-'},
+				},
+			},
+		};
+
+		const result = bindTabularData(data, columns, bindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		// Regular value unchanged
+		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Alice');
+		expect(result.data.at(0)?.cells['$[*].name'].display).toBe('Alice');
+
+		// Undefined value mapped to placeholder
+		expect(result.data.at(1)?.cells['$[*].name'].raw).toBeUndefined();
+		expect(result.data.at(1)?.cells['$[*].name'].display).toBe('-');
+	});
+
 	it('should handle single row with single column', () => {
 		const result = bindTabularData(
 			SINGLE_ROW_SINGLE_COLUMN.data,

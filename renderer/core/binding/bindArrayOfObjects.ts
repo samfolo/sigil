@@ -58,7 +58,7 @@ export const bindArrayOfObjects = (
 				raw: rawValue,
 				display: applyValueMapping(rawValue, metadata),
 				format: metadata?.format,
-				dataType: metadata?.data_types.at(0),
+				dataType: metadata?.data_types?.at(0),
 			};
 		}
 
