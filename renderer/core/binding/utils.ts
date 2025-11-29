@@ -8,8 +8,8 @@ import type {Result} from '@sigil/src/common/errors/result';
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import {JSONPATH_ROOT} from '../constants';
-import type {Column} from '../types';
-import {stringifyCellValue} from '../utils/stringifyCellValue';
+import type {Column, FormattedValue} from '../types';
+import {formatTextValue} from '../utils/formatTextValue';
 
 /**
  * Type guard to check if value is a Record<string, unknown>
@@ -92,23 +92,22 @@ export const enrichQueryErrors = (
  * Applies value mapping transformation if defined in FieldMetadata
  *
  * Value mapping process:
- * 1. Convert raw value to string key
+ * 1. Pass through null/undefined (let renderers decide presentation)
  * 2. Look up in metadata.value_mappings
  * 3. Return display_value if found
- * 4. Otherwise, format the raw value using data type hints and format strings
- *
- * Tries each data type in order for type coercion/formatting
- *
- * Phase 1: Only uses display_value, ignores display_config
+ * 4. Otherwise, stringify the raw value
  *
  * @param rawValue - Original value from data
- * @param metadata - Field metadata containing value_mappings and format info
- * @returns Display string
+ * @param metadata - Field metadata containing value_mappings
+ * @returns Display string, null, or undefined
  */
-export const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): string => {
-	// Handle null/undefined
-	if (rawValue === null || rawValue === undefined) {
-		return '';
+export const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): FormattedValue => {
+	// Pass through null/undefined - let renderers decide presentation
+	if (rawValue === null) {
+		return null;
+	}
+	if (rawValue === undefined) {
+		return undefined;
 	}
 
 	// Check for value mapping first (takes precedence)
@@ -121,19 +120,6 @@ export const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): 
 		}
 	}
 
-	// Try formatting with each data type in order
-	if (metadata?.data_types && metadata.data_types.length > 0) {
-		for (const dataType of metadata.data_types) {
-			const formatted = stringifyCellValue(rawValue, metadata.format, dataType);
-
-			// If formatting succeeded (not fallback), use it
-			// Simple heuristic: if it's not the same as String(rawValue), we formatted it
-			if (formatted !== String(rawValue) || dataType === metadata.data_types.at(-1)) {
-				return formatted;
-			}
-		}
-	}
-
-	// Final fallback: stringify with no type hints
-	return stringifyCellValue(rawValue);
+	// Stringify without format (plain conversion)
+	return formatTextValue(rawValue, undefined);
 };

@@ -1,6 +1,7 @@
 export type {
 	CellValue,
 	Column,
+	FormattedValue,
 	RenderComponent,
 	RenderDataTable,
 	RenderGridChild,

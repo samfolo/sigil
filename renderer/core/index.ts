@@ -4,10 +4,10 @@
 
 export {buildRenderTree} from './buildRenderTree';
 export {bindTabularData, enrichColumns, extractColumns} from './binding';
-export {stringifyCellValue} from './utils/stringifyCellValue';
 export type {
 	CellValue,
 	Column,
+	FormattedValue,
 	RenderComponent,
 	RenderDataTable,
 	RenderGridChild,

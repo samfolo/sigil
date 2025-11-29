@@ -15,14 +15,6 @@ import type {LayoutChild, LayoutNode} from '@sigil/src/lib/generated/types/speci
 export const JSONPATH_ROOT = '$';
 
 /**
- * Maximum length for stringified complex values (objects/arrays) before truncation
- *
- * Prevents UI overflow when displaying nested data structures.
- * Values longer than this are truncated with "..." suffix.
- */
-export const MAX_DISPLAY_LENGTH = 100;
-
-/**
  * Default maximum Levenshtein distance for string similarity matching
  *
  * Used when suggesting alternatives for misspelt identifiers.

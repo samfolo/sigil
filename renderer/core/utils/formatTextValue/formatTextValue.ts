@@ -19,6 +19,7 @@ import type {
 } from '@sigil/src/lib/generated/types/specification';
 
 import {DEFAULT_LOCALE, DEFAULT_TIMEZONE} from '../../constants';
+import type {FormattedValue} from '../../types';
 
 import {formatElapsedTime} from './formatElapsedTime';
 
@@ -95,7 +96,7 @@ const TIME_FORMAT_LONG = 'HH:mm:ss ZZZZ';
  * @param value - The value to format
  * @param format - TextFormat specification (or undefined for plain string conversion)
  * @param options - Optional configuration
- * @returns Formatted string, or stringifyValue() on format failure
+ * @returns Formatted string, null, or undefined. Null/undefined values pass through unchanged.
  */
 export const formatTextValue = (
 	value: unknown,
@@ -105,7 +106,15 @@ export const formatTextValue = (
 		timezone = DEFAULT_TIMEZONE,
 		locale = DEFAULT_LOCALE,
 	}: FormatTextValueOptions = {}
-): string => {
+): FormattedValue => {
+	// Pass through null/undefined - let renderers decide presentation
+	if (value === null) {
+		return null;
+	}
+	if (value === undefined) {
+		return undefined;
+	}
+
 	if (format === undefined) {
 		return stringifyValue(value);
 	}
@@ -435,20 +444,13 @@ const toDateTime = (value: unknown): Result<DateTime, string> => {
 };
 
 /**
- * Convert any value to a displayable string
+ * Convert any non-null value to a displayable string
  *
  * Objects are JSON stringified to avoid '[object Object]' in the UI.
+ * Null/undefined handled at formatTextValue entry point.
  */
 const stringifyValue = (value: unknown): string => {
-	if (value === null) {
-		return 'null';
-	}
-
-	if (value === undefined) {
-		return 'undefined';
-	}
-
-	if (typeof value === 'object') {
+	if (typeof value === 'object' && value !== null) {
 		try {
 			return JSON.stringify(value);
 		} catch {

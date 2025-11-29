@@ -20,6 +20,14 @@ import type {
 } from '@sigil/src/lib/generated/types/specification';
 
 /**
+ * Formatted value type for text display
+ *
+ * Null/undefined pass through from original data values, allowing renderers
+ * to decide presentation (placeholder UI, empty string, etc.).
+ */
+export type FormattedValue = string | null | undefined;
+
+/**
  * RenderTree is the root of the intermediate representation
  *
  * Discriminated union supporting both layout containers and leaf components.
@@ -343,7 +351,7 @@ export interface TextProps {
 	/**
 	 * Formatted value after accessor resolution and format application
 	 */
-	formattedValue: string;
+	formattedValue: FormattedValue;
 }
 
 /**
@@ -430,9 +438,10 @@ export interface CellValue {
 
 	/**
 	 * Display value after applying value_mappings and formatting.
-	 * Applies value_mappings first, then format strings for dates/numbers
+	 * Applies value_mappings first, then format strings for dates/numbers.
+	 * Null/undefined pass through from original data values.
 	 */
-	display: string;
+	display: FormattedValue;
 
 	/**
 	 * Optional format string from FieldMetadata (e.g., 'dd/mM/yyyy', '0,0.00')
