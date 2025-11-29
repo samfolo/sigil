@@ -14,6 +14,7 @@ import {describe, expect, it} from 'vitest';
 
 import {ERROR_CODES} from '@sigil/src/common/errors';
 import {isErr, isOk} from '@sigil/src/common/errors/result';
+import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import {JSONPATH_ROOT} from '../constants';
 
@@ -452,9 +453,11 @@ describe('bindTabularData - edge cases', () => {
 
 	it('should map null to placeholder via value_mappings', () => {
 		const data = [{status: null}, {status: 'active'}];
-		const columns = [{id: '$[*].status', label: 'Status'}];
-		const bindings = {
+		const columns = [{id: '$[*].status', label: 'Status', dataType: 'string'}];
+		const bindings: Record<string, FieldMetadata> = {
 			'$[*].status': {
+				data_types: ['string'],
+				roles: ['value'],
 				value_mappings: {
 					'null': {display_value: 'N/A'},
 					'active': {display_value: 'Active'},
@@ -480,9 +483,11 @@ describe('bindTabularData - edge cases', () => {
 
 	it('should map undefined to placeholder via value_mappings', () => {
 		const data = [{name: 'Alice'}, {name: undefined}];
-		const columns = [{id: '$[*].name', label: 'Name'}];
-		const bindings = {
+		const columns = [{id: '$[*].name', label: 'Name', dataType: 'string'}];
+		const bindings: Record<string, FieldMetadata> = {
 			'$[*].name': {
+				data_types: ['string'],
+				roles: ['label'],
 				value_mappings: {
 					'undefined': {display_value: '-'},
 				},
