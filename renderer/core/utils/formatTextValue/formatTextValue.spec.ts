@@ -91,12 +91,6 @@ describe('formatTextValue', () => {
 				expected: '€50.00',
 			},
 			{
-				name: 'with code display',
-				value: 100,
-				format: {type: 'currency', currency: 'GBP', options: {display: 'code'}},
-				expected: 'GBP 100.00',
-			},
-			{
 				name: 'with name display',
 				value: 100,
 				format: {type: 'currency', currency: 'GBP', options: {display: 'name'}},
@@ -116,6 +110,12 @@ describe('formatTextValue', () => {
 			},
 		])('formats $name', ({value, format, expected}) => {
 			expect(formatTextValue(value, format)).toBe(expected);
+		});
+
+		it('formats with code display', () => {
+			const result = formatTextValue(100, {type: 'currency', currency: 'GBP', options: {display: 'code'}});
+			// Intl uses narrow non-breaking space between code and amount
+			expect(result).toMatch(/^GBP\s+100\.00$/);
 		});
 	});
 

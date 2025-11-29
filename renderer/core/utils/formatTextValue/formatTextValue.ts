@@ -29,9 +29,13 @@ import {formatElapsedTime} from './formatElapsedTime';
  */
 export interface FormatTextValueOptions {
 	/**
-	 * Current time for relative date calculations. Defaults to DateTime.now().
+	 * Current time for relative date calculations. Defaults to DateTime.utc().
 	 */
 	now?: DateTime;
+	/**
+	 * Timezone for date/time output. Defaults to 'utc'.
+	 */
+	timezone?: string;
 }
 
 /**
@@ -111,10 +115,10 @@ export const formatTextValue = (
 				return formatUnit(value, format.unit, format.display);
 
 			case 'relative':
-				return formatRelativeDate(value, options.now ?? DateTime.now());
+				return formatRelativeDate(value, options.now, options.timezone);
 
 			case 'absolute':
-				return formatAbsoluteDate(value, format.display, format.style);
+				return formatAbsoluteDate(value, format.display, format.style, options.timezone);
 
 			case 'elapsed':
 				return formatElapsed(value, format.style);
@@ -223,13 +227,14 @@ const formatUnit = (
 /**
  * Format as relative date (e.g., '2 days ago', 'in 3 hours')
  */
-const formatRelativeDate = (value: unknown, now: DateTime): string => {
+const formatRelativeDate = (value: unknown, now = DateTime.utc(), timezone = 'utc'): string => {
 	const dateResult = toDateTime(value);
 	if (isErr(dateResult)) {
 		return stringifyValue(value);
 	}
 
-	const diff = dateResult.data.diff(now, ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds']);
+	const dt = dateResult.data.setZone(timezone);
+	const diff = dt.diff(now.setZone(timezone), ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds']);
 	const rtf = new Intl.RelativeTimeFormat(undefined, {numeric: 'auto'});
 
 	// Find the largest non-zero unit
@@ -278,14 +283,15 @@ const selectRelativeTimeUnit = (diff: Duration): RelativeTimeValue | null => {
 const formatAbsoluteDate = (
 	value: unknown,
 	display: DateTimeDisplay = 'datetime',
-	style: DateTimeStyle = 'medium'
+	style: DateTimeStyle = 'medium',
+	timezone = 'utc'
 ): string => {
 	const dateResult = toDateTime(value);
 	if (isErr(dateResult)) {
 		return stringifyValue(value);
 	}
 
-	const dt = dateResult.data;
+	const dt = dateResult.data.setZone(timezone);
 
 	// Use ISO format for unambiguous date representation
 	switch (display) {

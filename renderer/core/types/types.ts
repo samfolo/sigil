@@ -16,6 +16,7 @@ import type {
 	Padding,
 	SizeConstraint,
 	StackLayoutNodeAlignment,
+	TextConfig,
 } from '@sigil/src/lib/generated/types/specification';
 
 /**
@@ -324,7 +325,7 @@ export interface RenderText {
 	/**
 	 * Processed text properties
 	 */
-	props: Record<string, never>;
+	props: TextProps;
 }
 
 /**
