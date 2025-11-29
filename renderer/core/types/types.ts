@@ -329,6 +329,24 @@ export interface RenderText {
 }
 
 /**
+ * TextProps contains processed data needed to render a text primitive
+ *
+ * Passes through the full TextConfig for lossless transformation.
+ * The presentation layer handles truncation based on bounding box constraints.
+ */
+export interface TextProps {
+	/**
+	 * Full text configuration from the spec
+	 */
+	config: Omit<TextConfig, 'type'>;
+
+	/**
+	 * Formatted value after accessor resolution and format application
+	 */
+	formattedValue: string;
+}
+
+/**
  * TableProps contains all processed data needed to render a data table
  *
  * This is the contract between the core renderer and the presentation layer.

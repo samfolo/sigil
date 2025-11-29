@@ -312,4 +312,30 @@ describe('formatTextValue', () => {
 			expect(formatTextValue(value, format)).toBe(expected);
 		});
 	});
+
+	describe('timezone option', () => {
+		it('defaults to UTC for absolute dates', () => {
+			const result = formatTextValue('2025-06-15T14:30:00Z', {type: 'absolute', display: 'time', style: 'short'});
+			expect(result).toBe('14:30');
+		});
+
+		it('converts to specified timezone for absolute dates', () => {
+			const result = formatTextValue('2025-06-15T14:30:00Z', {type: 'absolute', display: 'time', style: 'short'}, {timezone: 'Europe/London'});
+			expect(result).toBe('15:30');
+		});
+
+		it('handles timezone with date display', () => {
+			// Midnight UTC on the 15th is still the 14th in New York (UTC-4 in June)
+			const result = formatTextValue('2025-06-15T02:00:00Z', {type: 'absolute', display: 'date', style: 'short'}, {timezone: 'America/New_York'});
+			expect(result).toBe('2025-06-14');
+		});
+
+		it('uses timezone for relative date calculations', () => {
+			const now = DateTime.fromISO('2025-06-15T23:00:00Z');
+			// In UTC, both are on the 15th (same day)
+			// In Pacific time (UTC-7), now is 16:00 on the 15th, value is 01:00 on the 15th (14 hours ago)
+			const result = formatTextValue('2025-06-15T08:00:00Z', {type: 'relative'}, {now, timezone: 'utc'});
+			expect(result).toBe('15 hours ago');
+		});
+	});
 });
