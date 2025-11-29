@@ -302,16 +302,16 @@
       "type": "object"
     },
     "TruncationAffordance": {
-      "description": "Controls text overflow behaviour by limiting visible characters.",
+      "description": "Controls text overflow behaviour. Specifies maximum visible lines before truncation. Character-based truncation is derived from rendering context (container width, terminal columns).",
       "additionalProperties": false,
       "properties": {
         "type": {
           "const": "truncation",
           "type": "string"
         },
-        "maximum_characters": {
+        "maximum_lines": {
           "type": "number",
-          "description": "Maximum number of characters to display before truncation"
+          "description": "Maximum lines before truncation. Omit for single-line default."
         },
         "indicator": {
           "enum": [
@@ -323,8 +323,7 @@
         }
       },
       "required": [
-        "type",
-        "maximum_characters"
+        "type"
       ],
       "type": "object"
     }
