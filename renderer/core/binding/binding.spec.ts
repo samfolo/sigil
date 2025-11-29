@@ -17,8 +17,9 @@ import {isErr, isOk} from '@sigil/src/common/errors/result';
 import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 
 import {JSONPATH_ROOT} from '../constants';
+import type {Column} from '../types';
 
-import {bindTabularData} from './binding';
+import {bindTabularData, extractColumns} from './binding';
 import {
 	ALL_COLUMNS_UNDEFINED,
 	ARRAY_OF_ARRAYS_WITH_OBJECTS,
@@ -919,5 +920,372 @@ describe('bindTabularData - data source navigation', () => {
 		// Tables should have different data
 		expect(northResult.data.at(0)?.cells['$[*].product'].raw).toBe('Widget A');
 		expect(southResult.data.at(0)?.cells['$[*].product'].raw).toBe('Widget C');
+	});
+});
+
+describe('extractColumns - header and body config', () => {
+	it('should pass through header config', () => {
+		const columns = extractColumns([
+			{
+				accessor: '$[*].name',
+				label: 'Name',
+				header: {scale: 'sm', traits: ['bold']},
+			},
+		]);
+
+		expect(columns).toHaveLength(1);
+		expect(columns.at(0)?.header).toEqual({scale: 'sm', traits: ['bold']});
+	});
+
+	it('should pass through body config with format', () => {
+		const columns = extractColumns([
+			{
+				accessor: '$[*].price',
+				label: 'Price',
+				body: {
+					format: {type: 'currency', currency: 'GBP'},
+					scale: 'base',
+					traits: ['mono'],
+				},
+			},
+		]);
+
+		expect(columns).toHaveLength(1);
+		expect(columns.at(0)?.body).toEqual({
+			format: {type: 'currency', currency: 'GBP'},
+			scale: 'base',
+			traits: ['mono'],
+		});
+	});
+
+	it('should handle columns without header/body config', () => {
+		const columns = extractColumns([
+			{
+				accessor: '$[*].name',
+				label: 'Name',
+			},
+		]);
+
+		expect(columns).toHaveLength(1);
+		expect(columns.at(0)?.header).toBeUndefined();
+		expect(columns.at(0)?.body).toBeUndefined();
+	});
+
+	it('should handle mixed columns with and without config', () => {
+		const columns = extractColumns([
+			{
+				accessor: '$[*].name',
+				label: 'Name',
+				header: {traits: ['bold']},
+			},
+			{
+				accessor: '$[*].age',
+				label: 'Age',
+			},
+			{
+				accessor: '$[*].price',
+				label: 'Price',
+				body: {format: {type: 'decimal', options: {minimum_fraction_digits: 2}}},
+			},
+		]);
+
+		expect(columns).toHaveLength(3);
+		expect(columns.at(0)?.header).toEqual({traits: ['bold']});
+		expect(columns.at(0)?.body).toBeUndefined();
+		expect(columns.at(1)?.header).toBeUndefined();
+		expect(columns.at(1)?.body).toBeUndefined();
+		expect(columns.at(2)?.header).toBeUndefined();
+		expect(columns.at(2)?.body?.format).toEqual({type: 'decimal', options: {minimum_fraction_digits: 2}});
+	});
+});
+
+describe('bindTabularData - body.format integration', () => {
+	it('should apply currency format from column body config', () => {
+		const data = [
+			{product: 'Laptop', price: 1299.99},
+			{product: 'Mouse', price: 29.99},
+		];
+
+		const columns: Column[] = [
+			{id: '$[*].product', label: 'Product', dataType: 'string'},
+			{
+				id: '$[*].price',
+				label: 'Price',
+				dataType: 'number',
+				body: {format: {type: 'currency', currency: 'GBP'}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*].product': {data_types: ['string'], roles: ['label']},
+			'$[*].price': {data_types: ['number'], roles: ['value']},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		expect(result.data.at(0)?.cells['$[*].price'].raw).toBe(1299.99);
+		expect(result.data.at(0)?.cells['$[*].price'].display).toBe('£1,299.99');
+		expect(result.data.at(1)?.cells['$[*].price'].display).toBe('£29.99');
+	});
+
+	it('should apply decimal format with fraction digits', () => {
+		const data = [{value: 1234.5}, {value: 0.1}];
+
+		const columns: Column[] = [
+			{
+				id: '$[*].value',
+				label: 'Value',
+				dataType: 'number',
+				body: {
+					format: {
+						type: 'decimal',
+						options: {minimum_fraction_digits: 2, maximum_fraction_digits: 2},
+					},
+				},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*].value': {data_types: ['number'], roles: ['value']},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		expect(result.data.at(0)?.cells['$[*].value'].display).toBe('1,234.50');
+		expect(result.data.at(1)?.cells['$[*].value'].display).toBe('0.10');
+	});
+
+	it('should apply percent format', () => {
+		const data = [{rate: 0.156}, {rate: 0.5}];
+
+		const columns: Column[] = [
+			{
+				id: '$[*].rate',
+				label: 'Rate',
+				dataType: 'number',
+				body: {format: {type: 'percent', options: {maximum_fraction_digits: 1}}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*].rate': {data_types: ['number'], roles: ['value']},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		expect(result.data.at(0)?.cells['$[*].rate'].display).toBe('15.6%');
+		expect(result.data.at(1)?.cells['$[*].rate'].display).toBe('50%');
+	});
+
+	it('should apply unit format', () => {
+		const data = [{distance: 42}, {distance: 100}];
+
+		const columns: Column[] = [
+			{
+				id: '$[*].distance',
+				label: 'Distance',
+				dataType: 'number',
+				body: {format: {type: 'unit', unit: 'kilometer', display: 'short'}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*].distance': {data_types: ['number'], roles: ['value']},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		expect(result.data.at(0)?.cells['$[*].distance'].display).toBe('42 km');
+		expect(result.data.at(1)?.cells['$[*].distance'].display).toBe('100 km');
+	});
+
+	it('should prioritise value_mappings over body.format', () => {
+		const data = [{status: 100}, {status: 50}];
+
+		const columns: Column[] = [
+			{
+				id: '$[*].status',
+				label: 'Status',
+				dataType: 'number',
+				body: {format: {type: 'percent'}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*].status': {
+				data_types: ['number'],
+				roles: ['value'],
+				value_mappings: {
+					'100': {display_value: 'Complete'},
+				},
+			},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		// 100 has a value_mapping, so it should use that
+		expect(result.data.at(0)?.cells['$[*].status'].display).toBe('Complete');
+		// 50 has no mapping, so it should use the format
+		expect(result.data.at(1)?.cells['$[*].status'].display).toBe('5,000%');
+	});
+
+	it('should handle null/undefined with format but no mapping', () => {
+		const data = [{value: null}, {value: undefined}, {value: 42}];
+
+		const columns: Column[] = [
+			{
+				id: '$[*].value',
+				label: 'Value',
+				dataType: 'number',
+				body: {format: {type: 'decimal'}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*].value': {data_types: ['number'], roles: ['value']},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		// Null/undefined should pass through
+		expect(result.data.at(0)?.cells['$[*].value'].display).toBeNull();
+		expect(result.data.at(1)?.cells['$[*].value'].display).toBeUndefined();
+		// Regular value should be formatted
+		expect(result.data.at(2)?.cells['$[*].value'].display).toBe('42');
+	});
+
+	it('should map null to placeholder when value_mapping exists', () => {
+		const data = [{value: null}, {value: 42}];
+
+		const columns: Column[] = [
+			{
+				id: '$[*].value',
+				label: 'Value',
+				dataType: 'number',
+				body: {format: {type: 'decimal'}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*].value': {
+				data_types: ['number'],
+				roles: ['value'],
+				value_mappings: {
+					'null': {display_value: 'N/A'},
+				},
+			},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		// Null should use the mapping
+		expect(result.data.at(0)?.cells['$[*].value'].raw).toBeNull();
+		expect(result.data.at(0)?.cells['$[*].value'].display).toBe('N/A');
+		// Regular value should be formatted
+		expect(result.data.at(1)?.cells['$[*].value'].display).toBe('42');
+	});
+
+	it('should work with CSV array-of-arrays binding', () => {
+		const data = [
+			['Product', 'Price'],
+			['Laptop', 999.99],
+			['Mouse', 29.99],
+		];
+
+		const columns: Column[] = [
+			{id: '$[*][0]', label: 'Product', dataType: 'string'},
+			{
+				id: '$[*][1]',
+				label: 'Price',
+				dataType: 'number',
+				body: {format: {type: 'currency', currency: 'USD'}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*][0]': {data_types: ['string'], roles: ['label']},
+			'$[*][1]': {data_types: ['number'], roles: ['value']},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		expect(result.data).toHaveLength(2);
+		expect(result.data.at(0)?.cells['$[*][1]'].display).toBe('US$999.99');
+		expect(result.data.at(1)?.cells['$[*][1]'].display).toBe('US$29.99');
+	});
+
+	it('should work with object-of-objects binding', () => {
+		const data = {
+			product_1: {name: 'Laptop', price: 999.99},
+			product_2: {name: 'Mouse', price: 29.99},
+		};
+
+		const columns: Column[] = [
+			{id: '$[*]~', label: 'ID', dataType: 'string'},
+			{id: '$[*].name', label: 'Name', dataType: 'string'},
+			{
+				id: '$[*].price',
+				label: 'Price',
+				dataType: 'number',
+				body: {format: {type: 'currency', currency: 'EUR'}},
+			},
+		];
+
+		const accessorBindings: Record<string, FieldMetadata> = {
+			'$[*]~': {data_types: ['string'], roles: ['identifier']},
+			'$[*].name': {data_types: ['string'], roles: ['label']},
+			'$[*].price': {data_types: ['number'], roles: ['value']},
+		};
+
+		const result = bindTabularData(data, columns, accessorBindings, ['$']);
+
+		expect(isOk(result)).toBe(true);
+		if (!isOk(result)) {
+			return;
+		}
+
+		expect(result.data).toHaveLength(2);
+		expect(result.data.at(0)?.cells['$[*].price'].display).toBe('€999.99');
+		expect(result.data.at(1)?.cells['$[*].price'].display).toBe('€29.99');
 	});
 });
