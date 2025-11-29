@@ -5,7 +5,7 @@
   "description": "Field metadata and value mapping types for data display configuration",
   "definitions": {
     "FieldMetadata": {
-      "description": "Metadata describing how a data field should be interpreted and displayed.\n\nFieldMetadata provides the semantic layer between raw data and visualisation. It tells the rendering engine:\n- What role(s) the field plays (e.g., label, value, time axis)\n- What data type(s) it contains (with fallbacks for type coercion)\n- How to transform values for display (mappings)\n- How to format values (date/number formatting)",
+      "description": "Metadata describing how a data field should be interpreted and displayed.\n\nFieldMetadata provides the semantic layer between raw data and visualisation. It tells the rendering engine:\n- What role(s) the field plays (e.g., label, value, time axis)\n- What data type(s) it contains (with fallbacks for type coercion)\n- How to transform values for display (mappings)",
       "additionalProperties": false,
       "properties": {
         "data_types": {
@@ -14,10 +14,6 @@
           },
           "type": "array",
           "description": "Data types for this field, in order of preference. First element is the primary type, subsequent elements are fallbacks for type coercion if the primary type fails. Example: ['number', 'string'] means 'try to parse as number, fall back to string'"
-        },
-        "format": {
-          "type": "string",
-          "description": "Format string for displaying values. Uses format strings appropriate to the data type:\n- Dates: 'dd/MM/yyyy', 'yyyy-MM-dd HH:mm:ss', 'MMM dd, yyyy'\n- Numbers: '0,0.00', '£0,0', '$0.00a', '0%'\n- Strings: typically omitted (displayed as-is)\n\nThe rendering engine determines how to interpret format strings"
         },
         "roles": {
           "items": {
@@ -59,13 +55,13 @@
       "type": "object"
     },
     "ValueMappingDisplayConfig": {
-      "description": "Discriminated union of all display configuration types.\n\nAvailable display styles:\n- chip: Compact pill-shaped element with optional icon\n- label: Simple coloured text\n- badge: Prominent indicator, often circular or rectangular",
+      "description": "Discriminated union of all display configuration types.\n\nAvailable display styles:\n- chip: Compact pill-shaped element with optional icon\n- text: Styled text using semantic scale and traits\n- badge: Prominent indicator, often circular or rectangular",
       "anyOf": [
         {
           "$ref": "#/definitions/ChipValueMappingDisplayConfig"
         },
         {
-          "$ref": "#/definitions/LabelValueMappingDisplayConfig"
+          "$ref": "#/definitions/TextValueMappingDisplayConfig"
         },
         {
           "$ref": "#/definitions/BadgeValueMappingDisplayConfig"
@@ -75,7 +71,7 @@
         "propertyName": "type",
         "mapping": {
           "chip": "#/definitions/ChipValueMappingDisplayConfig",
-          "label": "#/definitions/LabelValueMappingDisplayConfig",
+          "text": "#/definitions/TextValueMappingDisplayConfig",
           "badge": "#/definitions/BadgeValueMappingDisplayConfig"
         }
       }
@@ -109,24 +105,24 @@
       ],
       "type": "object"
     },
-    "LabelValueMappingDisplayConfig": {
-      "description": "Display configuration for label-style rendering. Labels are simple text with optional colouring, used for inline annotations",
+    "TextValueMappingDisplayConfig": {
+      "description": "Display configuration for styled text rendering. Applies text styling to mapped values without using a widget",
       "additionalProperties": false,
       "properties": {
-        "details": {
-          "additionalProperties": false,
-          "properties": {
-            "color": {
-              "type": "string",
-              "description": "Label text colour (CSS colour string). Examples: 'blue', '#0000ff'"
-            }
-          },
-          "type": "object",
-          "description": "Optional label-specific styling"
-        },
         "type": {
-          "const": "label",
+          "const": "text",
           "type": "string"
+        },
+        "scale": {
+          "$ref": "./primitives.schema.json#/definitions/TextScale",
+          "description": "Semantic importance level for typography"
+        },
+        "traits": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/TextTrait"
+          },
+          "type": "array",
+          "description": "Semantic text traits for styling"
         }
       },
       "required": [
