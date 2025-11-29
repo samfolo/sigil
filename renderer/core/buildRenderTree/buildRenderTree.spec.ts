@@ -517,10 +517,10 @@ describe('buildRenderTree - edge cases', () => {
 
 		// Null values should be handled gracefully
 		expect(dataTable.props.data.at(0)?.cells['$[*].name'].raw).toBeNull();
-		expect(dataTable.props.data.at(0)?.cells['$[*].name'].display).toBe('');
+		expect(dataTable.props.data.at(0)?.cells['$[*].name'].display).toBeNull();
 
 		expect(dataTable.props.data.at(1)?.cells['$[*].age'].raw).toBeNull();
-		expect(dataTable.props.data.at(1)?.cells['$[*].age'].display).toBe('');
+		expect(dataTable.props.data.at(1)?.cells['$[*].age'].display).toBeNull();
 	});
 
 	it('should handle data with undefined values in cells', () => {
@@ -546,10 +546,10 @@ describe('buildRenderTree - edge cases', () => {
 
 		// Undefined values should be handled gracefully
 		expect(dataTable.props.data.at(0)?.cells['$[*].name'].raw).toBeUndefined();
-		expect(dataTable.props.data.at(0)?.cells['$[*].name'].display).toBe('');
+		expect(dataTable.props.data.at(0)?.cells['$[*].name'].display).toBeUndefined();
 
 		expect(dataTable.props.data.at(1)?.cells['$[*].age'].raw).toBeUndefined();
-		expect(dataTable.props.data.at(1)?.cells['$[*].age'].display).toBe('');
+		expect(dataTable.props.data.at(1)?.cells['$[*].age'].display).toBeUndefined();
 	});
 
 	it('should handle single row successfully', () => {

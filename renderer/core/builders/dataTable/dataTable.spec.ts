@@ -501,8 +501,8 @@ describe('DataTableBuilder', () => {
 				return;
 			}
 
-			expect(result.data.data.at(0)?.cells['$[*].nullValue'].display).toBe('');
-			expect(result.data.data.at(0)?.cells['$[*].undefinedValue'].display).toBe('');
+			expect(result.data.data.at(0)?.cells['$[*].nullValue'].display).toBeNull();
+			expect(result.data.data.at(0)?.cells['$[*].undefinedValue'].display).toBeUndefined();
 		});
 
 		it('handles single row of data', () => {

@@ -227,7 +227,7 @@ describe('TextBuilder', () => {
 
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
-				expect(result.data.formattedValue).toBe('undefined');
+				expect(result.data.formattedValue).toBeUndefined();
 			}
 		});
 
@@ -242,7 +242,7 @@ describe('TextBuilder', () => {
 
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
-				expect(result.data.formattedValue).toBe('null');
+				expect(result.data.formattedValue).toBeNull();
 			}
 		});
 

@@ -186,11 +186,11 @@ describe('bindTabularData - error accumulation', () => {
 		expect(isOk(result)).toBe(true);
 		if (!isOk(result)) {return;}
 
-		// Missing fields should result in undefined raw, empty display
+		// Missing fields should result in undefined raw and display
 		expect(result.data.at(0)?.cells['$[*].email'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$[*].email'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].email'].display).toBeUndefined();
 		expect(result.data.at(1)?.cells['$[*].email'].raw).toBeUndefined();
-		expect(result.data.at(1)?.cells['$[*].email'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].email'].display).toBeUndefined();
 	});
 
 	it('should handle wrong array index gracefully', () => {
@@ -209,7 +209,7 @@ describe('bindTabularData - error accumulation', () => {
 
 		// Out of bounds index should return undefined
 		expect(result.data.at(0)?.cells['$[*].items[5]'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$[*].items[5]'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].items[5]'].display).toBeUndefined();
 	});
 
 	it('should stringify arrays when accessor returns array', () => {
@@ -248,9 +248,9 @@ describe('bindTabularData - error accumulation', () => {
 
 		// Rows with optionalField missing
 		expect(result.data.at(1)?.cells['$[*].optionalField'].raw).toBeUndefined();
-		expect(result.data.at(1)?.cells['$[*].optionalField'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].optionalField'].display).toBeUndefined();
 		expect(result.data.at(3)?.cells['$[*].optionalField'].raw).toBeUndefined();
-		expect(result.data.at(3)?.cells['$[*].optionalField'].display).toBe('');
+		expect(result.data.at(3)?.cells['$[*].optionalField'].display).toBeUndefined();
 	});
 });
 
@@ -421,12 +421,12 @@ describe('bindTabularData - edge cases', () => {
 
 		expect(result.data).toHaveLength(3);
 
-		// Null values should produce empty display strings
+		// Null values pass through
 		expect(result.data.at(0)?.cells['$[*].status'].raw).toBeNull();
-		expect(result.data.at(0)?.cells['$[*].status'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].status'].display).toBeNull();
 
 		expect(result.data.at(1)?.cells['$[*].name'].raw).toBeNull();
-		expect(result.data.at(1)?.cells['$[*].name'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].name'].display).toBeNull();
 	});
 
 	it('should handle undefined values in data', () => {
@@ -442,12 +442,12 @@ describe('bindTabularData - edge cases', () => {
 
 		expect(result.data).toHaveLength(2);
 
-		// Undefined values should produce empty display strings
+		// Undefined values pass through
 		expect(result.data.at(0)?.cells['$[*].value'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$[*].value'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].value'].display).toBeUndefined();
 
 		expect(result.data.at(1)?.cells['$[*].name'].raw).toBeUndefined();
-		expect(result.data.at(1)?.cells['$[*].name'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*].name'].display).toBeUndefined();
 	});
 
 	it('should handle single row with single column', () => {
@@ -478,9 +478,9 @@ describe('bindTabularData - edge cases', () => {
 
 		expect(result.data).toHaveLength(1);
 		expect(result.data.at(0)?.cells['$[*].missing1'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$[*].missing1'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].missing1'].display).toBeUndefined();
 		expect(result.data.at(0)?.cells['$[*].missing2'].raw).toBeUndefined();
-		expect(result.data.at(0)?.cells['$[*].missing2'].display).toBe('');
+		expect(result.data.at(0)?.cells['$[*].missing2'].display).toBeUndefined();
 	});
 });
 
@@ -620,7 +620,7 @@ describe('bindTabularData - CSV array-of-arrays binding', () => {
 
 		// Second row with null email
 		expect(result.data.at(1)?.cells['$[*][1]'].raw).toBeNull();
-		expect(result.data.at(1)?.cells['$[*][1]'].display).toBe('');
+		expect(result.data.at(1)?.cells['$[*][1]'].display).toBeNull();
 	});
 
 	it('should bind array-of-arrays with nested object properties', () => {

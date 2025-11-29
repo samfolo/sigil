@@ -92,25 +92,17 @@ export const enrichQueryErrors = (
  * Applies value mapping transformation if defined in FieldMetadata
  *
  * Value mapping process:
- * 1. Pass through null/undefined (let renderers decide presentation)
- * 2. Look up in metadata.value_mappings
- * 3. Return display_value if found
- * 4. Otherwise, stringify the raw value
+ * 1. Check value_mappings first (allows mapping null/undefined to placeholders)
+ * 2. Pass through null/undefined if no mapping exists
+ * 3. Otherwise, stringify the raw value
  *
  * @param rawValue - Original value from data
  * @param metadata - Field metadata containing value_mappings
  * @returns Display string, null, or undefined
  */
 export const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): FormattedValue => {
-	// Pass through null/undefined - let renderers decide presentation
-	if (rawValue === null) {
-		return null;
-	}
-	if (rawValue === undefined) {
-		return undefined;
-	}
-
-	// Check for value mapping first (takes precedence)
+	// Check for value mapping first (takes precedence, including for null/undefined)
+	// String(null) → "null", String(undefined) → "undefined"
 	if (metadata?.value_mappings) {
 		const key = String(rawValue);
 		const mapping = metadata.value_mappings[key];
@@ -118,6 +110,14 @@ export const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): 
 		if (mapping) {
 			return mapping.display_value;
 		}
+	}
+
+	// Pass through null/undefined - let renderers decide presentation
+	if (rawValue === null) {
+		return null;
+	}
+	if (rawValue === undefined) {
+		return undefined;
 	}
 
 	// Stringify without format (plain conversion)

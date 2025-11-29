@@ -13,13 +13,29 @@ interface TestCase {
 }
 
 describe('formatTextValue', () => {
+	describe('null/undefined passthrough', () => {
+		it('returns null for null input', () => {
+			expect(formatTextValue(null, undefined)).toBeNull();
+		});
+
+		it('returns undefined for undefined input', () => {
+			expect(formatTextValue(undefined, undefined)).toBeUndefined();
+		});
+
+		it('returns null even with format specified', () => {
+			expect(formatTextValue(null, {type: 'decimal'})).toBeNull();
+		});
+
+		it('returns undefined even with format specified', () => {
+			expect(formatTextValue(undefined, {type: 'decimal'})).toBeUndefined();
+		});
+	});
+
 	describe('no format (string conversion)', () => {
 		it.each<TestCase>([
 			{name: 'string', value: 'hello', format: undefined, expected: 'hello'},
 			{name: 'number', value: 42, format: undefined, expected: '42'},
 			{name: 'boolean', value: true, format: undefined, expected: 'true'},
-			{name: 'null', value: null, format: undefined, expected: 'null'},
-			{name: 'undefined', value: undefined, format: undefined, expected: 'undefined'},
 			{name: 'object', value: {a: 1}, format: undefined, expected: '{"a":1}'},
 			{name: 'array', value: [1, 2, 3], format: undefined, expected: '[1,2,3]'},
 		])('converts $name to string', ({value, format, expected}) => {
