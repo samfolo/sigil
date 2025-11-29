@@ -254,8 +254,13 @@ interface RelativeTimeValue {
 	unit: RelativeTimeUnit;
 }
 
+/**
+ * Duration unit keys for accessing values from luxon Duration
+ */
+type DurationUnit = 'years' | 'months' | 'weeks' | 'days' | 'hours' | 'minutes' | 'seconds';
+
 const selectRelativeTimeUnit = (diff: Duration): RelativeTimeValue | null => {
-	const units: Array<{key: keyof Duration; unit: RelativeTimeUnit}> = [
+	const units: Array<{key: DurationUnit; unit: RelativeTimeUnit}> = [
 		{key: 'years', unit: 'year'},
 		{key: 'months', unit: 'month'},
 		{key: 'weeks', unit: 'week'},

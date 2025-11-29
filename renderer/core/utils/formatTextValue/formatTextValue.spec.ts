@@ -251,31 +251,31 @@ describe('formatTextValue', () => {
 				name: 'ISO 8601 duration compact',
 				value: 'PT2H30M',
 				format: {type: 'elapsed'},
-				expected: '2h 30m',
+				expected: '2 hrs, 30 mins',
 			},
 			{
 				name: 'ISO 8601 duration expanded',
 				value: 'PT2H30M',
 				format: {type: 'elapsed', style: 'expanded'},
-				expected: '2 hours 30 minutes',
+				expected: '2 hours, 30 minutes',
 			},
 			{
 				name: 'full duration',
 				value: 'P1Y2M3DT4H5M6S',
 				format: {type: 'elapsed'},
-				expected: '1y 2mo 3d 4h 5m 6s',
+				expected: '1 yr, 2 mths, 3 days, 4 hrs, 5 mins, 6 secs',
 			},
 			{
 				name: 'milliseconds',
 				value: 9000000,
 				format: {type: 'elapsed'},
-				expected: '2h 30m',
+				expected: '2 hrs, 30 mins',
 			},
 			{
 				name: 'milliseconds expanded',
 				value: 9000000,
 				format: {type: 'elapsed', style: 'expanded'},
-				expected: '2 hours 30 minutes',
+				expected: '2 hours, 30 minutes',
 			},
 		])('formats $name', ({value, format, expected}) => {
 			expect(formatTextValue(value, format)).toBe(expected);
