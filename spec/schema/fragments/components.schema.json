@@ -34,6 +34,46 @@
         }
       }
     },
+    "HeaderCellConfig": {
+      "description": "Text styling configuration for column header cells",
+      "additionalProperties": false,
+      "properties": {
+        "scale": {
+          "$ref": "./primitives.schema.json#/definitions/TextScale",
+          "description": "Semantic importance level for header typography"
+        },
+        "traits": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/TextTrait"
+          },
+          "type": "array",
+          "description": "Semantic text traits for header styling"
+        }
+      },
+      "type": "object"
+    },
+    "BodyCellConfig": {
+      "description": "Formatting and styling configuration for column body cells",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "$ref": "./text-format.schema.json#/definitions/TextFormat",
+          "description": "Value formatting (number, date, currency, etc.)"
+        },
+        "scale": {
+          "$ref": "./primitives.schema.json#/definitions/TextScale",
+          "description": "Semantic importance level for cell typography"
+        },
+        "traits": {
+          "items": {
+            "$ref": "./primitives.schema.json#/definitions/TextTrait"
+          },
+          "type": "array",
+          "description": "Semantic text traits for cell styling"
+        }
+      },
+      "type": "object"
+    },
     "DataTableColumn": {
       "description": "Column configuration for data table components.\n\nDefines display properties for a single column. The accessor references a field in accessor_bindings, linking display config to data semantics.\n\nColumn order in the array determines display order (left-to-right).\n\nSortability and filterability are derived from affordances, not defined per-column.",
       "additionalProperties": false,
@@ -62,6 +102,14 @@
         "description": {
           "type": "string",
           "description": "Optional description for tooltip or help text"
+        },
+        "header": {
+          "$ref": "#/definitions/HeaderCellConfig",
+          "description": "Optional styling for the column header cell"
+        },
+        "body": {
+          "$ref": "#/definitions/BodyCellConfig",
+          "description": "Optional formatting and styling for body cells in this column"
         }
       },
       "required": ["accessor", "label"],
