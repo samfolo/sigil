@@ -18,6 +18,8 @@ import type {
 	TextFormat,
 } from '@sigil/src/lib/generated/types/specification';
 
+import {DEFAULT_LOCALE, DEFAULT_TIMEZONE} from '../../constants';
+
 import {formatElapsedTime} from './formatElapsedTime';
 
 // ============================================================================
@@ -36,6 +38,10 @@ export interface FormatTextValueOptions {
 	 * Timezone for date/time output. Defaults to 'utc'.
 	 */
 	timezone?: string;
+	/**
+	 * Locale for number, currency, and duration formatting. Defaults to 'en-GB'.
+	 */
+	locale?: string;
 }
 
 /**
@@ -94,7 +100,11 @@ const TIME_FORMAT_LONG = 'HH:mm:ss ZZZZ';
 export const formatTextValue = (
 	value: unknown,
 	format: TextFormat | undefined,
-	options: FormatTextValueOptions = {}
+	{
+		now = DateTime.utc(),
+		timezone = DEFAULT_TIMEZONE,
+		locale = DEFAULT_LOCALE,
+	}: FormatTextValueOptions = {}
 ): string => {
 	if (format === undefined) {
 		return stringifyValue(value);
@@ -103,25 +113,25 @@ export const formatTextValue = (
 	try {
 		switch (format.type) {
 			case 'decimal':
-				return formatDecimal(value, format.options);
+				return formatDecimal(value, format.options, locale);
 
 			case 'currency':
-				return formatCurrency(value, format.currency, format.options);
+				return formatCurrency(value, format.currency, format.options, locale);
 
 			case 'percent':
-				return formatPercent(value, format.options);
+				return formatPercent(value, format.options, locale);
 
 			case 'unit':
-				return formatUnit(value, format.unit, format.display);
+				return formatUnit(value, format.unit, format.display, locale);
 
 			case 'relative':
-				return formatRelativeDate(value, options.now, options.timezone);
+				return formatRelativeDate(value, now, timezone, locale);
 
 			case 'absolute':
-				return formatAbsoluteDate(value, format.display, format.style, options.timezone);
+				return formatAbsoluteDate(value, format.display, format.style, timezone);
 
 			case 'elapsed':
-				return formatElapsed(value, format.style);
+				return formatElapsed(value, format.style, locale);
 
 			default: {
 				const _exhaustive: never = format;
@@ -140,13 +150,13 @@ export const formatTextValue = (
 /**
  * Format as decimal number
  */
-const formatDecimal = (value: unknown, options?: DecimalFormatOptions): string => {
+const formatDecimal = (value: unknown, options: DecimalFormatOptions | undefined, locale: string): string => {
 	const numResult = toNumber(value);
 	if (isErr(numResult)) {
 		return stringifyValue(value);
 	}
 
-	return new Intl.NumberFormat(undefined, {
+	return new Intl.NumberFormat(locale, {
 		style: 'decimal',
 		minimumFractionDigits: options?.minimum_fraction_digits,
 		maximumFractionDigits: options?.maximum_fraction_digits,
@@ -160,14 +170,15 @@ const formatDecimal = (value: unknown, options?: DecimalFormatOptions): string =
 const formatCurrency = (
 	value: unknown,
 	currency: string,
-	options?: CurrencyFormatOptions
+	options: CurrencyFormatOptions | undefined,
+	locale: string
 ): string => {
 	const numResult = toNumber(value);
 	if (isErr(numResult)) {
 		return stringifyValue(value);
 	}
 
-	return new Intl.NumberFormat(undefined, {
+	return new Intl.NumberFormat(locale, {
 		style: 'currency',
 		currency,
 		minimumFractionDigits: options?.minimum_fraction_digits,
@@ -191,13 +202,13 @@ const mapCurrencyDisplay = (
 /**
  * Format as percentage
  */
-const formatPercent = (value: unknown, options?: PercentFormatOptions): string => {
+const formatPercent = (value: unknown, options: PercentFormatOptions | undefined, locale: string): string => {
 	const numResult = toNumber(value);
 	if (isErr(numResult)) {
 		return stringifyValue(value);
 	}
 
-	return new Intl.NumberFormat(undefined, {
+	return new Intl.NumberFormat(locale, {
 		style: 'percent',
 		minimumFractionDigits: options?.minimum_fraction_digits,
 		maximumFractionDigits: options?.maximum_fraction_digits,
@@ -210,14 +221,15 @@ const formatPercent = (value: unknown, options?: PercentFormatOptions): string =
 const formatUnit = (
 	value: unknown,
 	unit: string,
-	display: UnitDisplay = 'short'
+	display: UnitDisplay = 'short',
+	locale: string
 ): string => {
 	const numResult = toNumber(value);
 	if (isErr(numResult)) {
 		return stringifyValue(value);
 	}
 
-	return new Intl.NumberFormat(undefined, {
+	return new Intl.NumberFormat(locale, {
 		style: 'unit',
 		unit,
 		unitDisplay: display,
@@ -227,7 +239,7 @@ const formatUnit = (
 /**
  * Format as relative date (e.g., '2 days ago', 'in 3 hours')
  */
-const formatRelativeDate = (value: unknown, now = DateTime.utc(), timezone = 'utc'): string => {
+const formatRelativeDate = (value: unknown, now: DateTime, timezone: string, locale: string): string => {
 	const dateResult = toDateTime(value);
 	if (isErr(dateResult)) {
 		return stringifyValue(value);
@@ -235,7 +247,7 @@ const formatRelativeDate = (value: unknown, now = DateTime.utc(), timezone = 'ut
 
 	const dt = dateResult.data.setZone(timezone);
 	const diff = dt.diff(now.setZone(timezone), ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds']);
-	const rtf = new Intl.RelativeTimeFormat(undefined, {numeric: 'auto'});
+	const rtf = new Intl.RelativeTimeFormat(locale, {numeric: 'auto'});
 
 	// Find the largest non-zero unit
 	const unitValue = selectRelativeTimeUnit(diff);
@@ -289,7 +301,7 @@ const formatAbsoluteDate = (
 	value: unknown,
 	display: DateTimeDisplay = 'datetime',
 	style: DateTimeStyle = 'medium',
-	timezone = 'utc'
+	timezone: string
 ): string => {
 	const dateResult = toDateTime(value);
 	if (isErr(dateResult)) {
@@ -344,12 +356,13 @@ const formatTimeISO = (dt: DateTime, style: DateTimeStyle): string => {
  */
 const formatElapsed = (
 	value: unknown,
-	style: 'compact' | 'expanded' = 'compact'
+	style: 'compact' | 'expanded' = 'compact',
+	locale: string
 ): string => {
 	// Try to parse as ISO 8601 duration string
 	if (typeof value === 'string') {
 		const duration = parseISO8601Duration(value);
-		return formatElapsedTime(duration, style);
+		return formatElapsedTime(duration, style, locale);
 	}
 
 	// If it's a number, assume milliseconds and convert to duration
@@ -361,7 +374,8 @@ const formatElapsed = (
 				minutes: Math.floor(luxonDuration.minutes),
 				seconds: Math.floor(luxonDuration.seconds),
 			},
-			style
+			style,
+			locale
 		);
 	}
 

@@ -4,12 +4,14 @@
  * Uses luxon's Duration.toHuman() for locale-aware formatting.
  *
  * Supports two display styles:
- * - compact: '2 hr, 30 min' (narrow unit display)
+ * - compact: '2 hrs, 30 mins' (short unit display)
  * - expanded: '2 hours, 30 minutes' (long unit display)
  */
 
 import type {Duration as ISO8601Duration} from 'iso8601-duration';
 import {Duration} from 'luxon';
+
+import {DEFAULT_LOCALE} from '../../constants';
 
 /**
  * Display style for elapsed time formatting
@@ -51,12 +53,13 @@ const isZeroDuration = (duration: ISO8601Duration): boolean => {
  *
  * @param duration - ISO 8601 duration object from iso8601-duration parse()
  * @param style - Display style for the output
+ * @param locale - Locale for formatting
  * @returns Formatted duration string
  *
  * @example
  * ```typescript
  * formatElapsedTime({hours: 2, minutes: 30}, 'compact');
- * // → '2 hr, 30 min'
+ * // → '2 hrs, 30 mins'
  *
  * formatElapsedTime({hours: 2, minutes: 30}, 'expanded');
  * // → '2 hours, 30 minutes'
@@ -64,14 +67,15 @@ const isZeroDuration = (duration: ISO8601Duration): boolean => {
  */
 export const formatElapsedTime = (
 	duration: ISO8601Duration,
-	style: ElapsedTimeStyle
+	style: ElapsedTimeStyle,
+	locale = DEFAULT_LOCALE
 ): string => {
 	// Handle zero duration
 	if (isZeroDuration(duration)) {
 		return style === 'compact' ? ZERO_DURATION_COMPACT : ZERO_DURATION_EXPANDED;
 	}
 
-	const luxonDuration = toLuxonDuration(duration);
+	const luxonDuration = toLuxonDuration(duration).reconfigure({locale});
 
 	return luxonDuration.toHuman({
 		unitDisplay: style === 'compact' ? 'short' : 'long',
