@@ -5,7 +5,7 @@
 import type {SpecError} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import type {Result} from '@sigil/src/common/errors/result';
-import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
+import type {FieldMetadata, TextFormat} from '@sigil/src/lib/generated/types/specification';
 
 import {JSONPATH_ROOT} from '../constants';
 import type {Column, FormattedValue} from '../types';
@@ -89,18 +89,24 @@ export const enrichQueryErrors = (
 };
 
 /**
- * Applies value mapping transformation if defined in FieldMetadata
+ * Formats a cell value for display
  *
- * Value mapping process:
+ * Processing order:
  * 1. Check value_mappings first (allows mapping null/undefined to placeholders)
  * 2. Pass through null/undefined if no mapping exists
- * 3. Otherwise, stringify the raw value
+ * 3. Apply format via formatTextValue if provided
+ * 4. Otherwise, stringify the raw value
  *
  * @param rawValue - Original value from data
  * @param metadata - Field metadata containing value_mappings
+ * @param format - Optional TextFormat from Column.body.format
  * @returns Display string, null, or undefined
  */
-export const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): FormattedValue => {
+export const formatCellValue = (
+	rawValue: unknown,
+	metadata?: FieldMetadata,
+	format?: TextFormat,
+): FormattedValue => {
 	// Check for value mapping first (takes precedence, including for null/undefined)
 	// String(null) → "null", String(undefined) → "undefined"
 	if (metadata?.value_mappings) {
@@ -120,6 +126,6 @@ export const applyValueMapping = (rawValue: unknown, metadata?: FieldMetadata): 
 		return undefined;
 	}
 
-	// Stringify without format (plain conversion)
-	return formatTextValue(rawValue, undefined);
+	// Apply format if provided, otherwise stringify
+	return formatTextValue(rawValue, format);
 };

@@ -128,7 +128,6 @@ export const DATA_WITH_ARRAYS = {
 		'$[*].scores[1]': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '0.0',
 		},
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: [JSONPATH_ROOT],
@@ -180,7 +179,6 @@ export const DEEPLY_NESTED_DATA = {
 		'$[*].company.department.budget': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '£0,0',
 		},
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: [JSONPATH_ROOT],
@@ -441,7 +439,6 @@ export const COMPLEX_VALUE_MAPPINGS = {
 		'$[*].count': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '0,0',
 		},
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: [JSONPATH_ROOT],
@@ -570,7 +567,6 @@ export const CSV_ARRAY_OF_ARRAYS_BASIC = {
 		'$[*][2]': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '$0,0.00',
 		},
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: [JSONPATH_ROOT],
@@ -608,7 +604,6 @@ export const CSV_ARRAY_OF_ARRAYS_WITH_MAPPINGS = {
 		'$[*][2]': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '0',
 		},
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: [JSONPATH_ROOT],
@@ -736,7 +731,6 @@ export const OBJECT_OF_OBJECTS_NO_KEYS = {
 		'$[*].price': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '$0,0.00',
 		},
 		'$[*].inStock': {
 			data_types: ['boolean' as const],
@@ -789,7 +783,6 @@ export const OBJECT_OF_OBJECTS_NESTED = {
 		'$[*].budget': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '$0,0',
 		},
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: [JSONPATH_ROOT],
@@ -865,7 +858,6 @@ export const ARRAY_OF_ARRAYS_WITH_OBJECTS = {
 		'$[*][1].price': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '$0,0.00',
 		},
 		'$[*][2].active': {
 			data_types: ['boolean' as const],
@@ -913,7 +905,6 @@ export const DATA_SOURCE_NESTED_ARRAY = {
 		'$[*].revenue': {
 			data_types: ['number' as const],
 			roles: ['value'],
-			format: '$0,0',
 		},
 	} satisfies Record<string, FieldMetadata>,
 	pathContext: [JSONPATH_ROOT],

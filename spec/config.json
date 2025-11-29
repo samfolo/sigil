@@ -251,8 +251,8 @@
           "type": "ChipValueMappingDisplayConfig"
         },
         {
-          "value": "label",
-          "type": "LabelValueMappingDisplayConfig"
+          "value": "text",
+          "type": "TextValueMappingDisplayConfig"
         },
         {
           "value": "badge",

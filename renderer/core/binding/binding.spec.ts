@@ -621,9 +621,7 @@ describe('bindTabularData - CSV array-of-arrays binding', () => {
 		expect(result.data.at(0)?.cells['$[*][1]'].raw).toBe('Features: GPS tracking');
 		expect(result.data.at(0)?.cells['$[*][2]'].raw).toBe(299.99);
 
-		// Number formatting not yet implemented, display is unformatted
 		expect(result.data.at(0)?.cells['$[*][2]'].display).toBe('299.99');
-		expect(result.data.at(0)?.cells['$[*][2]'].format).toBe('$0,0.00');
 	});
 
 	it('should apply value mappings in CSV data', () => {
@@ -753,9 +751,7 @@ describe('bindTabularData - object-of-objects binding', () => {
 		// Values should be extracted correctly
 		expect(result.data.at(0)?.cells['$[*].name'].raw).toBe('Laptop');
 		expect(result.data.at(0)?.cells['$[*].price'].raw).toBe(999.99);
-		// Number formatting not yet implemented, display is unformatted
 		expect(result.data.at(0)?.cells['$[*].price'].display).toBe('999.99');
-		expect(result.data.at(0)?.cells['$[*].price'].format).toBe('$0,0.00');
 		expect(result.data.at(0)?.cells['$[*].inStock'].display).toBe('In Stock');
 	});
 

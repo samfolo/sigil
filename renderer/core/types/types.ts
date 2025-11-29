@@ -12,9 +12,11 @@
  */
 
 import type {
+	DataTableColumn,
+	DataTableConfig,
+	HorizontalStackLayoutNode,
 	LayoutNodeSpacing,
 	Padding,
-	SizeConstraint,
 	StackLayoutNodeAlignment,
 	TextConfig,
 } from '@sigil/src/lib/generated/types/specification';
@@ -53,44 +55,13 @@ export type RenderComponent = RenderDataTable | RenderHierarchy | RenderComposit
 /**
  * Common size constraint fields for layout nodes
  *
- * All constraints are optional and work together:
- * - width/height: preferred size
- * - min_width/min_height: minimum bounds
- * - max_width/max_height: maximum bounds
- *
- * The rendering engine calculates final size based on constraints and content.
+ * Derived from spec layout node size properties. All constraints are optional
+ * and work together to define layout bounds.
  */
-export interface SizeConstraints {
-	/**
-	 * Preferred width of the element
-	 */
-	width?: SizeConstraint;
-
-	/**
-	 * Preferred height of the element
-	 */
-	height?: SizeConstraint;
-
-	/**
-	 * Minimum width constraint
-	 */
-	min_width?: SizeConstraint;
-
-	/**
-	 * Maximum width constraint
-	 */
-	max_width?: SizeConstraint;
-
-	/**
-	 * Minimum height constraint
-	 */
-	min_height?: SizeConstraint;
-
-	/**
-	 * Maximum height constraint
-	 */
-	max_height?: SizeConstraint;
-}
+export type SizeConstraints = Pick<
+	HorizontalStackLayoutNode,
+	'width' | 'height' | 'min_width' | 'max_width' | 'min_height' | 'max_height'
+>;
 
 /**
  * Horizontal stack layout - arranges children left-to-right
@@ -357,22 +328,13 @@ export interface TextProps {
 /**
  * TableProps contains all processed data needed to render a data table
  *
- * This is the contract between the core renderer and the presentation layer.
- * All data transformations (value mappings, type coercion, etc.) are complete.
+ * Derives title/description from spec DataTableConfig. This is the contract
+ * between the core renderer and the presentation layer. All data transformations
+ * (value mappings, type coercion, etc.) are complete.
  */
-export interface TableProps {
+export interface TableProps extends Pick<DataTableConfig, 'title' | 'description'> {
 	/**
-	 * Optional title for the table
-	 */
-	title?: string;
-
-	/**
-	 * Optional description explaining the table's purpose
-	 */
-	description?: string;
-
-	/**
-	 * Column definitions derived from accessor_bindings
+	 * Column definitions derived from spec columns and accessor_bindings
 	 */
 	columns: Column[];
 
@@ -383,28 +345,21 @@ export interface TableProps {
 }
 
 /**
- * Column definition derived from FieldMetadata in accessor_bindings
+ * Column definition derived from DataTableColumn and FieldMetadata
+ *
+ * Combines spec column config (label, alignment, header, body) with
+ * runtime-resolved properties (id from accessor, dataType from FieldMetadata).
  */
-export interface Column {
+export interface Column extends Pick<DataTableColumn, 'label' | 'alignment' | 'header' | 'body'> {
 	/**
-	 * Field accessor (e.g., "name", "email")
+	 * Field accessor used as column identifier (derived from DataTableColumn.accessor)
 	 */
 	id: string;
-
-	/**
-	 * Display label for the column header
-	 */
-	label: string;
 
 	/**
 	 * Primary data type from FieldMetadata.data_types[0]
 	 */
 	dataType: string;
-
-	/**
-	 * Horizontal alignment of cell content. Default: 'left' for text, 'right' for numbers
-	 */
-	alignment?: 'left' | 'center' | 'right';
 }
 
 /**
@@ -437,16 +392,11 @@ export interface CellValue {
 	raw: unknown;
 
 	/**
-	 * Display value after applying value_mappings and formatting.
-	 * Applies value_mappings first, then format strings for dates/numbers.
+	 * Display value after applying value_mappings and Column.body.format.
+	 * Applies value_mappings first, then format for non-mapped values.
 	 * Null/undefined pass through from original data values.
 	 */
 	display: FormattedValue;
-
-	/**
-	 * Optional format string from FieldMetadata (e.g., 'dd/mM/yyyy', '0,0.00')
-	 */
-	format?: string;
 
 	/**
 	 * Data type from FieldMetadata for format hint

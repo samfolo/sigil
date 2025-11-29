@@ -10,7 +10,7 @@ import type {FieldMetadata} from '@sigil/src/lib/generated/types/specification';
 import type {CellValue, Column, Row} from '../types';
 import {queryJSONPath} from '../utils/queryJSONPath';
 
-import {applyValueMapping, convertWildcardToRowAccessor, enrichQueryErrors} from './utils';
+import {convertWildcardToRowAccessor, enrichQueryErrors, formatCellValue} from './utils';
 
 /**
  * Binds object-based data (object-of-objects, object-of-arrays) using row-oriented strategy
@@ -62,8 +62,7 @@ export const bindObjectBased = (
 
 			cells[column.id] = {
 				raw: rawValue,
-				display: applyValueMapping(rawValue, metadata),
-				format: metadata?.format,
+				display: formatCellValue(rawValue, metadata, column.body?.format),
 				dataType: metadata?.data_types?.at(0),
 			};
 		}

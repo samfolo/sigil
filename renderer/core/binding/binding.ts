@@ -36,8 +36,10 @@ import {hasWildcardAccessor, isRecord} from './utils';
 export const extractColumns = (columns: DataTableColumn[]): Column[] => columns.map((col) => ({
 	id: col.accessor,
 	label: col.label,
-	dataType: 'unknown', // Will be enriched from accessor_bindings in buildRenderTree
+	dataType: 'unknown', // Will be enriched from accessor_bindings
 	alignment: col.alignment,
+	header: col.header,
+	body: col.body,
 }));
 
 /**
