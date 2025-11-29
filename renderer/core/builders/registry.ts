@@ -7,10 +7,11 @@ import type {
 	TextConfig,
 } from '@sigil/src/lib/generated/types/specification';
 
-import type {TableProps} from '../types';
+import type {TableProps, TextProps} from '../types';
 
 import {DataTableBuilder} from './dataTable';
-import type {ComponentBuilder} from './types';
+import {TextBuilder} from './text';
+import type {ComponentBuilder, PrimitiveBuilder} from './types';
 
 /**
  * Registry interface mapping each ComponentType to its specific builder
@@ -20,7 +21,13 @@ interface ComponentBuilderRegistry {
 	'hierarchy': ComponentBuilder<HierarchyConfig, Record<string, never>>;
 	'composition': ComponentBuilder<CompositionConfig, Record<string, never>>;
 	'text-insight': ComponentBuilder<TextInsightConfig, Record<string, never>>;
-	'text': ComponentBuilder<TextConfig, Record<string, never>>;
+}
+
+/**
+ * Registry interface mapping primitive types to their builders
+ */
+interface PrimitiveBuilderRegistry {
+	'text': PrimitiveBuilder<TextConfig, TextProps>;
 }
 
 /**
@@ -29,7 +36,7 @@ interface ComponentBuilderRegistry {
  * Maps ComponentType discriminator to builder instance.
  * Add new entries as component builders are implemented.
  */
-export const componentBuilders: ComponentBuilderRegistry = {
+export const COMPONENT_BUILDERS: ComponentBuilderRegistry = {
 	'data-table': new DataTableBuilder(),
 	get 'hierarchy'(): never {
 		throw new Error('HierarchyBuilder not yet implemented');
@@ -40,25 +47,38 @@ export const componentBuilders: ComponentBuilderRegistry = {
 	get 'text-insight'(): never {
 		throw new Error('TextInsightBuilder not yet implemented');
 	},
-	get 'text'(): never {
-		throw new Error('TextBuilder not yet implemented');
-	},
 };
 
 /**
- * Type-safe builder lookup
+ * Registry of primitive builders
  *
- * Returns correctly typed builder for the given component type.
- *
- * @param type - ComponentType discriminator
- * @returns ComponentBuilder with correct Config and Props types
- *
- * @example
- * ```typescript
- * const builder = getBuilder('data-table');
- * // builder: ComponentBuilder<DataTableConfig, TableProps>
- * ```
+ * Maps primitive type discriminator to builder instance.
  */
-export const getBuilder = <Type extends ComponentType>(
+export const PRIMITIVE_BUILDERS: PrimitiveBuilderRegistry = {
+	'text': new TextBuilder(),
+};
+
+/**
+ * Type-safe component builder lookup
+ *
+ * @param type - Component type discriminator (excludes primitives)
+ * @returns ComponentBuilder with correct Config and Props types
+ */
+export const getComponentBuilder = <Type extends keyof ComponentBuilderRegistry>(
 	type: Type
-): ComponentBuilderRegistry[Type] => componentBuilders[type];
+): ComponentBuilderRegistry[Type] => COMPONENT_BUILDERS[type];
+
+/**
+ * Type-safe primitive builder lookup
+ *
+ * @param type - Primitive type discriminator
+ * @returns PrimitiveBuilder with correct Config and Props types
+ */
+export const getPrimitiveBuilder = <Type extends keyof PrimitiveBuilderRegistry>(
+	type: Type
+): PrimitiveBuilderRegistry[Type] => PRIMITIVE_BUILDERS[type];
+
+/**
+ * Check if a component type is a primitive
+ */
+export const isPrimitiveType = (type: ComponentType): type is keyof PrimitiveBuilderRegistry => type === 'text';

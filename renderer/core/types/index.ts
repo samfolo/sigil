@@ -12,4 +12,5 @@ export type {
 	Row,
 	SizeConstraints,
 	TableProps,
+	TextProps,
 } from './types';

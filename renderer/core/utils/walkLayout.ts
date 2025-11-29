@@ -274,7 +274,10 @@ const createComponentPlaceholder = (
 			return ok({
 				type: 'text',
 				componentId,
-				props: {},
+				props: {
+					config: {accessor: ''},
+					formattedValue: '',
+				},
 			});
 
 		default: {

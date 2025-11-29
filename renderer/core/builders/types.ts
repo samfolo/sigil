@@ -30,3 +30,23 @@ export interface ComponentBuilder<Config, Props> {
 		dataSource?: string
 	) => Result<Props, SpecError[]>;
 }
+
+/**
+ * Simplified interface for primitive builders
+ *
+ * Primitives like text only need config and data to resolve accessors.
+ * No bindings metadata or path context required.
+ *
+ * @typeParam Config - Primitive-specific configuration type (e.g., TextConfig)
+ * @typeParam Props - Primitive-specific props type (e.g., TextProps)
+ */
+export interface PrimitiveBuilder<Config, Props> {
+	/**
+	 * Builds primitive props from configuration and data
+	 *
+	 * @param config - Primitive configuration from validated spec
+	 * @param data - Raw data for accessor resolution
+	 * @returns Result containing props or accessor resolution errors
+	 */
+	build: (config: Config, data: unknown) => Result<Props, SpecError[]>;
+}

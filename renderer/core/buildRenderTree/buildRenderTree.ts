@@ -12,7 +12,7 @@
 import {err, isErr, ok, type Result, type SpecError} from '@sigil/src/common/errors';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
-import {getBuilder} from '../builders/registry';
+import {getComponentBuilder, getPrimitiveBuilder} from '../builders/registry';
 import {JSONPATH_ROOT} from '../constants';
 import type {
 	RenderComponent,
@@ -228,7 +228,7 @@ const replaceComponentPlaceholder = (
 
 			const config = componentNode.config;
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
-			const builder = getBuilder('data-table');
+			const builder = getComponentBuilder('data-table');
 
 			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
@@ -251,7 +251,7 @@ const replaceComponentPlaceholder = (
 
 			const config = componentNode.config;
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
-			const builder = getBuilder('hierarchy');
+			const builder = getComponentBuilder('hierarchy');
 
 			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
@@ -274,7 +274,7 @@ const replaceComponentPlaceholder = (
 
 			const config = componentNode.config;
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
-			const builder = getBuilder('composition');
+			const builder = getComponentBuilder('composition');
 
 			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
@@ -297,7 +297,7 @@ const replaceComponentPlaceholder = (
 
 			const config = componentNode.config;
 			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
-			const builder = getBuilder('text-insight');
+			const builder = getComponentBuilder('text-insight');
 
 			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
 
@@ -319,10 +319,9 @@ const replaceComponentPlaceholder = (
 			}
 
 			const config = componentNode.config;
-			const accessorBindings = spec.root.accessor_bindings[componentId] ?? {};
-			const builder = getBuilder('text');
+			const builder = getPrimitiveBuilder('text');
 
-			const propsResult = builder.build(config, data, accessorBindings, pathContext, dataSource);
+			const propsResult = builder.build(config, data);
 
 			if (isErr(propsResult)) {
 				return propsResult;

@@ -1,3 +1,10 @@
-export type {ComponentBuilder} from './types';
+export type {ComponentBuilder, PrimitiveBuilder} from './types';
 export {DataTableBuilder} from './dataTable';
-export {componentBuilders, getBuilder} from './registry';
+export {TextBuilder} from './text';
+export {
+	COMPONENT_BUILDERS,
+	PRIMITIVE_BUILDERS,
+	getComponentBuilder,
+	getPrimitiveBuilder,
+	isPrimitiveType,
+} from './registry';
