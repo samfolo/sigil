@@ -21,7 +21,7 @@ ESLint handles mechanical enforcement. These standards cover judgment calls—th
 
 Earn your complexity. Every abstraction, type, comment, file, and function should justify its existence. Question whether each addition clarifies intent or reduces duplication significantly; if not, inline it or delete it.
 
-Run `npm run lint` and `npm run tsc` liberally.
+Run `npm run lint -- --fix` and `npm run tsc` liberally.
 
 ## Architectural Philosophy
 
