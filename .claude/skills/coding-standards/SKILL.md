@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Defines code standards for the Sigil project. Applies when implementing features, reviewing commits, or answering questions about project conventions. Covers architectural philosophy, error handling, type discipline, naming, code style, file organisation, and React patterns.
+description: Detailed code standards for the Sigil project with examples, edge cases, and review checklists. Consult when implementing features, reviewing code, refactoring, or answering questions about project conventions. Extends CLAUDE.md essentials with type discipline patterns, naming conventions, code style guidance, and architectural principles.
 ---
 
 # Code Standards
@@ -20,6 +20,8 @@ This is not a versioned public API. Make clean breaking changes freely; no depre
 ESLint handles mechanical enforcement. These standards cover judgment calls—the decisions that require understanding intent, not just syntax.
 
 Earn your complexity. Every abstraction, type, comment, file, and function should justify its existence. Question whether each addition clarifies intent or reduces duplication significantly; if not, inline it or delete it.
+
+**Leave code better than you found it.** When working on a file, proactively bring nearby code up to standard. If you see opportunities to improve code quality—splitting large files, extracting types, consolidating duplicates, applying patterns from these standards—do so as part of the work. Don't just implement the requested change; strengthen the surrounding code. This incremental improvement is how the codebase stays healthy.
 
 Run `npm run lint -- --fix` and `npm run tsc` liberally.
 
@@ -105,7 +107,55 @@ export type QueryState<Data, Err = Error> =
   | {status: 'error'; error: Err};
 ```
 
-Forbidden practices: `as` casting for simplicity, `any` for convenience, `!` non-null assertion without guards, `null as never` to bypass type safety. Use instead: `satisfies` for type checking without widening, `instanceof`/`typeof`/`in` for narrowing, Zod schemas for runtime validation, and type predicates for custom guards.
+Generic type parameters use descriptive names: `Data`, `Err`, `Output`—never single letters like `T`, `E`, `O`. Use `Err` rather than `Error` to avoid shadowing the built-in Error type.
+
+### Forbidden Practices
+
+Never use these for convenience:
+
+- `as` casting without exhausting alternatives
+- `any` to bypass type checking
+- `!` non-null assertion without guards
+- `null as never` to silence the compiler
+
+Use instead: `satisfies` for type checking without widening, `instanceof`/`typeof`/`in` for narrowing, Zod schemas for runtime validation, and type predicates for custom guards.
+
+When you need to narrow an unknown type, prefer these alternatives in order:
+
+1. **Built-in type guards** for primitives and built-ins:
+```typescript
+if (isErr(result) && result.error instanceof Error) {
+  console.log(result.error.message);
+}
+```
+
+2. **Zod schemas** for complex runtime validation (preferred for most cases):
+```typescript
+const customErrorSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+});
+
+if (isErr(result)) {
+  const parsed = customErrorSchema.safeParse(result.error);
+  if (parsed.success) {
+    console.log(parsed.data.code, parsed.data.message);
+  }
+}
+```
+
+3. **Type predicates** only when Zod would be overkill (rare—e.g., checking for a single property):
+```typescript
+const hasMessage = (value: unknown): value is {message: string} =>
+  typeof value === 'object' &&
+  value !== null &&
+  'message' in value &&
+  typeof (value as {message: unknown}).message === 'string';
+```
+
+Prefer Zod schemas over type predicates in almost all cases—they're more maintainable, self-documenting, and provide better error messages.
+
+### Type Guards Over Status Checks
 
 Always use type guards over direct status checks:
 
@@ -119,9 +169,9 @@ if (result.success) { ... }
 if (state.status === 'loading') { ... }
 ```
 
-Generic type parameters use descriptive names: `Data`, `Err`, `Output`—never single letters like `T`, `E`, `O`. Use `Err` rather than `Error` to avoid shadowing the built-in Error type.
+### Make Invalid States Unrepresentable
 
-Make invalid states unrepresentable. Use the type system to prevent bad states rather than checking at runtime:
+Use the type system to prevent bad states rather than checking at runtime:
 
 ```typescript
 // Wrong: invalid state (verified without email) is representable
@@ -143,6 +193,50 @@ For unimplemented code paths, use runtime guards that fail fast with clear messa
 get 'hierarchy'(): never {
   throw new Error('HierarchyBuilder not yet implemented');
 }
+```
+
+### Type Structure
+
+**Flat interfaces**: All interfaces must be flat—extract nested object shapes into their own named interfaces. Nested definitions can't be reused, documented, or referenced independently.
+
+```typescript
+// Correct: separate flat interfaces
+interface ResultMetadata {
+  count: number;
+  timestamp: string;
+}
+
+interface Result {
+  data: string;
+  metadata: ResultMetadata;
+}
+```
+
+**Named over inline**: Extract inline type literals to named interfaces. If a function signature contains `{...}`, that shape deserves a name—it makes signatures scannable and types reusable.
+
+```typescript
+// Wrong: inline literal
+const extract = (items: Item[]): {foo?: Foo; bar?: Bar} => {...};
+
+// Correct: named interface
+interface ExtractedItems {
+  foo?: Foo;
+  bar?: Bar;
+}
+const extract = (items: Item[]): ExtractedItems => {...};
+```
+
+**Record over array**: When mapping from a union type to values, use `Record<UnionType, Value>` instead of arrays of objects. Records enforce exhaustiveness at compile time; arrays silently become incomplete when the union grows.
+
+```typescript
+// Wrong: array doesn't enforce completeness
+const SCALE_CLASSES: Array<{scale: TextScale; classes: string[]}> = [...];
+
+// Correct: missing key is a compile error
+const SCALE_CLASSES: Record<TextScale, string[]> = {
+  display: ['text-4xl'],
+  body: ['text-base'],
+};
 ```
 
 ### Types and Schemas
@@ -181,23 +275,9 @@ Test code and build tooling may use `.parse()` since they control the data and p
 
 When types accumulate: if few and not exported, keep them in the implementation file. If building up, move to `types.ts`. If `types.ts` becomes a dumping ground, split concerns into separate directories. Multiple complex functions with many types signals the need to split into separate files.
 
-## Function Signatures
+## Naming
 
 For parameter count: 1-2 parameters stay bare; 3+ parameters warrant an options object. Options objects are always the final parameter and named `{FunctionName}Options`. Keep parameter positions consistent across similar functions.
-
-Prefer default parameters over nullish coalescing:
-
-```typescript
-// Preferred
-const format = (value: string, precision: number = 2) => { ... }
-
-// Avoid unless there's a functional reason
-const format = (value: string, precision?: number) => {
-  const p = precision ?? 2;
-}
-```
-
-## Naming
 
 Functions start with verbs indicating their behaviour. Common verbs (non-exhaustive):
 
@@ -272,25 +352,55 @@ Comments describe the current state of the code, never its history or future pla
 
 Unicode characters in output use `✓ × ⚠ ⓘ → ← ↑ ↓`—never emoji variants like ✅ or ❌.
 
-## JSDoc
+### Magic Values
 
-Use multi-line format even for short descriptions:
+No magic numbers, strings, or booleans—extract as named constants:
 
 ```typescript
-/**
- * Brief, precise description.
- */
+// Correct
+const MAX_RETRY_COUNT = 3;
+const DEFAULT_TIMEOUT_MS = 5000;
+
+if (retries < MAX_RETRY_COUNT) {
+  setTimeout(retry, DEFAULT_TIMEOUT_MS);
+}
+
+// Wrong
+if (retries < 3) {
+  setTimeout(retry, 5000);
+}
 ```
 
-Never compress to single-line `/** description */` format.
+Exception: `0` is acceptable for array indices, counters, and mathematical identity unless it represents a configurable default.
 
-Each constant and interface field gets its own JSDoc—the purpose is enabling IntelliSense to show context when hovering anywhere in the codebase. Module-level JSDoc at the top of every file is recommended to provide orientation.
+### Minimise Mutable Bindings
 
-Keep documentation concise and precise. It should not reference specific values that might change. Examples are warranted only when complexity demands them; if many examples are needed, question why the function is so complex.
+Use `const` by default. If you reach for `let`, ask whether restructuring would eliminate the need:
 
-## Control Flow
+- Handle values in-branch rather than extracting for later processing
+- Use `map`/`filter`/`reduce` instead of push loops
+- Compute values in expressions rather than accumulating through statements
 
-Use switch statements with exhaustiveness checks for enums and string unions where all cases must be handled:
+Each `let` is a variable whose value you must trace; each `const` is a value you can reason about locally.
+
+### Destructuring Defaults
+
+Destructure with defaults rather than applying defaults after extraction:
+
+```typescript
+// Correct: defaults at point of extraction
+const {scale = DEFAULT_SCALE, traits = []} = config;
+
+// Noisier
+const scale = config.scale ?? DEFAULT_SCALE;
+const traits = config.traits ?? [];
+```
+
+### Exhaustive Switch
+
+Use switch statements with `never` exhaustiveness checks for unions. The `never` assignment catches additions and removals at type-check time.
+
+For direct value handling:
 
 ```typescript
 const handle = (type: SomeUnion): Result => {
@@ -307,7 +417,63 @@ const handle = (type: SomeUnion): Result => {
 };
 ```
 
-The `never` assignment catches additions and removals at type-check time.
+For collection iteration, use a single loop with exhaustive switch rather than multiple `.find()` calls—O(n) instead of O(n×m), and new discriminator values are caught at compile time:
+
+```typescript
+for (const item of items) {
+  switch (item.type) {
+    case 'foo':
+      applyFoo(item);  // Handle completely here
+      break;
+    case 'bar':
+      applyBar(item);  // Handle completely here
+      break;
+    default: {
+      const _exhaustive: never = item;
+      throw new Error(`Unknown: ${_exhaustive}`);
+    }
+  }
+}
+```
+
+Prefer handling items completely within each switch branch rather than extracting for later processing. Use a `Set` for uniqueness tracking if duplicates are possible.
+
+## JSDoc
+
+Use multi-line format even for short descriptions:
+
+```typescript
+/**
+ * Brief, precise description.
+ */
+```
+
+Never compress to single-line `/** description */` format.
+
+Each constant and interface field gets its own JSDoc—the purpose is enabling IntelliSense to show context when hovering anywhere in the codebase:
+
+```typescript
+/**
+ * Configuration for text rendering.
+ */
+interface TextConfig {
+  /**
+   * Semantic scale determining base font size.
+   */
+  scale: TextScale;
+
+  /**
+   * Optional traits to apply (e.g., muted, strong).
+   */
+  traits?: TextTrait[];
+}
+```
+
+Parameters in function-shaped types don't need individual JSDoc comments—the function's description should suffice.
+
+Module-level JSDoc at the top of every file is recommended to provide orientation.
+
+Keep documentation concise and precise. It should not reference specific values that might change. Examples are warranted only when complexity demands them; if many examples are needed, question why the function is so complex.
 
 ## File Organisation
 
@@ -329,24 +495,34 @@ moduleName/
 utilityName.ts
 ```
 
-Barrel files contain exports only, never implementation. Constants files are named `constants.ts`, never `const.ts`. If constants are few and not exported, keep them in the implementation file. Logic shared across directories lives in a `common/` directory at the shared parent level.
+Constants files are named `constants.ts`, never `const.ts`. If constants are few and not exported, keep them in the implementation file. Logic shared across directories lives in a `common/` directory at the shared parent level.
+
+### Barrel Files
+
+Barrel files (index.ts) contain exports only, never implementation:
+
+```typescript
+export {buildRenderTree} from './buildRenderTree';
+export {extractColumns, bindData} from './binding';
+export type {RenderTree} from './types';
+```
 
 ### Imports
 
-All imports use the `@sigil/*` alias (configured in tsconfig). Run `npm run lint -- --fix` to auto-organise import order.
-
-Separate `import type` statements onto their own lines:
+All imports use the `@sigil/*` alias (configured in tsconfig). Separate `import type` statements onto their own lines, even when importing from the same path:
 
 ```typescript
-import {useState} from 'react';
-
-import type {Analysis} from '@sigil/src/types';
-import {formatData} from '@sigil/src/utils';
+import type {Analysis} from '@sigil/src/common/types/analysisSchema';
+import {analysisSchema} from '@sigil/src/common/types/analysisSchema';
 ```
 
 For imports and exports, write `export type {Foo}` not `export {type Foo}`.
 
+Import order: third-party packages → internal `@sigil/*` → parent imports by depth (`../../../`, `../../`, `../`) → sibling imports (`./`) → CSS imports. Run `npm run lint -- --fix` to auto-organise.
+
 ## Testing
+
+For comprehensive testing guidance, consult the **writing-unit-tests** skill.
 
 Test files use `Name.spec.ts`; fixtures use `Name.fixtures.ts`. Fixtures reference module constants rather than magic numbers:
 
@@ -384,42 +560,6 @@ DataTable.displayName = 'DataTable';
 
 Accessibility is non-negotiable: WCAG AA and WAI-ARIA compliance. Apply ARIA attributes wherever applicable—roles (`role="table"`, `role="grid"`), states (`aria-expanded`, `aria-busy`), properties (`aria-label`, `aria-describedby`, `aria-errormessage`), relationships (`aria-controls`, `aria-labelledby`), grid/table attributes (`aria-colindex`, `aria-rowindex`), and live regions (`aria-live`, `aria-atomic`). Don't omit accessibility attributes where they can be sensibly applied.
 
-## Code Review Process
+## Code Review
 
-When reviewing code, first obtain the diff. If a commit hash is provided, use it; otherwise default to uncommitted and unstaged changes. If there are no changes to review, ask for a commit hash or file path.
-
-Calibrate review depth to change size: small fixes warrant standards compliance checks only; new features warrant full architectural review; refactors focus on pattern consistency and maintainability.
-
-Beyond flagging violations, actively look for opportunities to consolidate duplicate logic, extract shared utilities, and simplify complex code. Ask whether new code could reuse existing patterns or whether similar logic elsewhere should be unified. These improvements strengthen the codebase even when nothing is technically wrong.
-
-Present findings with file paths and line numbers. Use `×` for violations that must be fixed, `ⓘ` for suggestions to consider, and `✓` for positive observations:
-
-```
-× Result type missing for fallible operation
-  path/to/module.ts:45
-  Current: const data = JSON.parse(input)
-  Required: Wrap in try-catch, return Result
-
-ⓘ Consider extracting to shared utility
-  path/to/module.ts:78-95
-  Same validation pattern appears in three places
-
-✓ Good use of discriminated union for ParseResult
-```
-
-## Review Checklist
-
-When reviewing code, ask these questions: What happens if data is empty? What happens if data is malformed? What happens if this operation fails? Can this be extended without modification? Will someone understand this in a week?
-
-Flag these issues:
-
-- Result types missing for fallible operations
-- Type safety bypasses without guards (`as`, `any`, `!`)
-- Direct status checks instead of type guards
-- Magic numbers or strings (extract to named constants)
-- Comments describing past or future state
-- Unnecessary abstractions that don't earn their complexity
-- State stored outside the IR
-- Missing ARIA attributes on interactive or semantic elements
-- `.parse()` in implementation code (should be `.safeParse()`)
-- Workarounds for IR deficiencies (consider schema changes instead)
+See [CODE_REVIEW.md](./CODE_REVIEW.md) for the review process, output format, and checklist of common issues to flag.
