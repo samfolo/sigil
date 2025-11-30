@@ -166,7 +166,9 @@ describe('bindTabularData - successful binding', () => {
 		);
 
 		expect(isOk(result)).toBe(true);
-		if (!isOk(result)) {return;}
+		if (!isOk(result)) {
+			return;
+		}
 
 		const nameCell = result.data.at(0)?.cells['$[*].name'];
 		expect(nameCell?.dataType).toBe('string');

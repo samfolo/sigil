@@ -284,7 +284,7 @@ Use multi-line format even for short descriptions:
 
 Never compress to single-line `/** description */` format.
 
-Each constant gets its own JSDoc—the purpose is enabling IntelliSense to show context when hovering anywhere in the codebase. Module-level JSDoc at the top of every file is recommended to provide orientation.
+Each constant and interface field gets its own JSDoc—the purpose is enabling IntelliSense to show context when hovering anywhere in the codebase. Module-level JSDoc at the top of every file is recommended to provide orientation.
 
 Keep documentation concise and precise. It should not reference specific values that might change. Examples are warranted only when complexity demands them; if many examples are needed, question why the function is so complex.
 
@@ -344,7 +344,7 @@ import type {Analysis} from '@sigil/src/types';
 import {formatData} from '@sigil/src/utils';
 ```
 
-For exports, write `export type {Foo}` not `export {type Foo}`.
+For imports and exports, write `export type {Foo}` not `export {type Foo}`.
 
 ## Testing
 
@@ -382,7 +382,7 @@ export const DataTable = memo(DataTableComponent);
 DataTable.displayName = 'DataTable';
 ```
 
-Accessibility is non-negotiable: WCAG AA and WAI-ARIA compliance. Apply ARIA attributes wherever applicable—roles (`role="table"`, `role="grid"`), states (`aria-expanded`, `aria-busy`), properties (`aria-label`, `aria-describedby`, `aria-errormessage`), relationships (`aria-controls`, `aria-labelledby`), grid/table attributes (`aria-colindex`, `aria-rowindex`), and live regions (`aria-live`, `aria-atomic`). Don't omit accessibility attributes because "it's not interactive yet."
+Accessibility is non-negotiable: WCAG AA and WAI-ARIA compliance. Apply ARIA attributes wherever applicable—roles (`role="table"`, `role="grid"`), states (`aria-expanded`, `aria-busy`), properties (`aria-label`, `aria-describedby`, `aria-errormessage`), relationships (`aria-controls`, `aria-labelledby`), grid/table attributes (`aria-colindex`, `aria-rowindex`), and live regions (`aria-live`, `aria-atomic`). Don't omit accessibility attributes where they can be sensibly applied.
 
 ## Code Review Process
 

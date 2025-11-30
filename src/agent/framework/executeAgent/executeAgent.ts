@@ -109,10 +109,6 @@ const DEFAULT_ATTEMPT_STATE_INITIALISER = <Attempt>(): Attempt => ({} as Attempt
  * }
  * ```
  */
-/**
- * Options for building execution metadata
- */
-
 export const executeAgent = async <
   Input,
   Output,

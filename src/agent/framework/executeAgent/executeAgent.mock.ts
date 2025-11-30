@@ -15,7 +15,6 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages';
 import type {Mock} from 'vitest';
 
-
 import type {AgentExecutionContext} from '@sigil/src/agent/framework';
 import type {ValidationLayerMetadata, ValidationLayerResult} from '@sigil/src/agent/framework/validation';
 

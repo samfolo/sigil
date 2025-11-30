@@ -81,7 +81,6 @@ describe('walkLayout - horizontal stack layouts', () => {
 			return;
 		}
 
-
 		expect(result.data.children).toHaveLength(HORIZONTAL_STACK_MULTIPLE_CHILDREN.children.length);
 		expect(result.data.spacing).toBe(HORIZONTAL_STACK_MULTIPLE_CHILDREN.spacing);
 		expect(result.data.children.at(0)?.type).toBe('data-table');
@@ -221,7 +220,6 @@ describe('walkLayout - grid layouts', () => {
 		if (result.data.type !== 'grid') {
 			return;
 		}
-
 
 		const [firstFixture, secondFixture] = GRID_EXPLICIT_POSITIONING.children;
 		const firstChild = result.data.children.at(0);
@@ -563,7 +561,6 @@ describe('walkLayout - error handling', () => {
 		}
 
 		expect(result.error.length).toBeGreaterThanOrEqual(2);
-
 
 		const firstChild = NESTED_LAYOUT_WITH_ERRORS.children.at(0);
 		const secondChild = NESTED_LAYOUT_WITH_ERRORS.children.at(1);
