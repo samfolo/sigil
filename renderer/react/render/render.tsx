@@ -14,7 +14,7 @@ import {SpecProcessingError} from '@sigil/src/common/errors';
 import {isErr} from '@sigil/src/common/errors/result';
 import type {ComponentSpec} from '@sigil/src/lib/generated/types/specification';
 
-import {DataTable, Grid, GridChild, HorizontalStack, VerticalStack} from '../components';
+import {DataTable, Grid, GridChild, HorizontalStack, Text, VerticalStack} from '../components';
 
 /**
  * Recursively renders a RenderTree node as React element
@@ -66,8 +66,18 @@ const renderTreeNode = (tree: RenderTree): ReactElement => {
 		case 'data-table':
 			return <DataTable {...tree.props} />;
 
-		default:
-			throw new Error(`Unknown render node type: ${tree.type}`);
+		case 'text':
+			return <Text {...tree.props} />;
+
+		case 'hierarchy':
+		case 'composition':
+		case 'text-insight':
+			throw new Error(`Component type '${tree.type}' not yet implemented`);
+
+		default: {
+			const _exhaustive: never = tree;
+			throw new Error(`Unknown render node type: ${JSON.stringify(_exhaustive)}`);
+		}
 	}
 };
 
