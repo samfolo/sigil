@@ -30,7 +30,7 @@ When reviewing code, ask these questions: What happens if data is empty? What ha
 Flag these issues:
 
 - Result types missing for fallible operations
-- Type safety bypasses without guards (`as`, `any`, `!`)
+- Type safety bypasses without guards—`as`, `any`, non-null assertion (!)
 - Direct status checks instead of type guards
 - Magic numbers or strings (extract to named constants)
 - Mutable bindings (`let`) that could be restructured as `const`

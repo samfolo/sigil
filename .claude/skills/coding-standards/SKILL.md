@@ -115,7 +115,7 @@ Never use these for convenience:
 
 - `as` casting without exhausting alternatives
 - `any` to bypass type checking
-- `!` non-null assertion without guards
+- non-null assertion (!) without guards
 - `null as never` to silence the compiler
 
 Use instead: `satisfies` for type checking without widening, `instanceof`/`typeof`/`in` for narrowing, Zod schemas for runtime validation, and type predicates for custom guards.

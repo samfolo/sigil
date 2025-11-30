@@ -58,6 +58,11 @@ export const TRAIT_CLASS_MAP: Record<TextTrait, string> = {
 };
 
 /**
+ * Styling for inline code elements (mono trait)
+ */
+const CODE_ELEMENT_CLASSES = 'font-mono bg-muted px-1 rounded text-[0.9em]';
+
+/**
  * Truncation styling result
  */
 interface TruncationStyles {
@@ -115,11 +120,7 @@ const wrapWithSemanticElements = (content: ReactNode, traits: TextTrait[]): Reac
 	let wrapped = content;
 
 	if (hasMono) {
-		wrapped = (
-			<code className="font-mono bg-muted px-1 rounded text-[0.9em]">
-				{wrapped}
-			</code>
-		);
+		wrapped = <code className={CODE_ELEMENT_CLASSES}>{wrapped}</code>;
 	}
 
 	if (hasSuperscript) {
