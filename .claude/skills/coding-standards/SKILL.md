@@ -1,6 +1,6 @@
 ---
-name: code-standards
-description: Code standards for the Sigil project. Use when implementing features, reviewing commits, or answering questions about project conventions. Covers architectural philosophy, error handling, type discipline, naming, code style, file organisation, and React patterns.
+name: coding-standards
+description: Defines code standards for the Sigil project. Applies when implementing features, reviewing commits, or answering questions about project conventions. Covers architectural philosophy, error handling, type discipline, naming, code style, file organisation, and React patterns.
 ---
 
 # Code Standards
@@ -21,7 +21,7 @@ ESLint handles mechanical enforcement. These standards cover judgment calls—th
 
 Earn your complexity. Every abstraction, type, comment, file, and function should justify its existence. Question whether each addition clarifies intent or reduces duplication significantly; if not, inline it or delete it.
 
-Run `npm run lint` liberally.
+Run `npm run lint` and `npm run tsc` liberally.
 
 ## Architectural Philosophy
 
