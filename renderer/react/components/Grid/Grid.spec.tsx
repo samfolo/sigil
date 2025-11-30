@@ -5,7 +5,7 @@
 import {render, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
-import {getByLayoutType, objectToEntries} from '@sigil/renderer/react/common';
+import {getByElementType, objectToEntries} from '@sigil/renderer/react/common';
 import {COLUMN_GAP_CLASS_MAP, ROW_GAP_CLASS_MAP} from '@sigil/renderer/react/utils';
 
 import {Grid} from './Grid';
@@ -20,7 +20,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		const gridDiv = getByLayoutType(container, 'grid');
+		const gridDiv = getByElementType(container, 'grid');
 		expect(gridDiv).toBeInTheDocument();
 		expect(gridDiv).toHaveClass('grid');
 		expect(screen.getByText('First')).toBeInTheDocument();
@@ -34,7 +34,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		expect(getByLayoutType(container, 'grid')).toHaveStyle({
+		expect(getByElementType(container, 'grid')).toHaveStyle({
 			gridTemplateColumns: 'repeat(3, 1fr)',
 		});
 	});
@@ -46,7 +46,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		expect(getByLayoutType(container, 'grid')).toHaveStyle({
+		expect(getByElementType(container, 'grid')).toHaveStyle({
 			gridTemplateRows: 'repeat(3, 1fr)',
 		});
 	});
@@ -58,7 +58,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		const style = getByLayoutType(container, 'grid')?.getAttribute('style') ?? '';
+		const style = getByElementType(container, 'grid')?.getAttribute('style') ?? '';
 		expect(style).not.toContain('grid-template-rows');
 	});
 
@@ -71,7 +71,7 @@ describe('Grid', () => {
 				</Grid>
 			);
 
-			expect(getByLayoutType(container, 'grid')).toHaveClass(expectedClass);
+			expect(getByElementType(container, 'grid')).toHaveClass(expectedClass);
 		}
 	);
 
@@ -84,7 +84,7 @@ describe('Grid', () => {
 				</Grid>
 			);
 
-			expect(getByLayoutType(container, 'grid')).toHaveClass(expectedClass);
+			expect(getByElementType(container, 'grid')).toHaveClass(expectedClass);
 		}
 	);
 
@@ -95,7 +95,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		const gridDiv = getByLayoutType(container, 'grid');
+		const gridDiv = getByElementType(container, 'grid');
 		expect(gridDiv).toHaveClass('gap-x-2', 'gap-y-6');
 	});
 
@@ -106,7 +106,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		const gridDiv = getByLayoutType(container, 'grid');
+		const gridDiv = getByElementType(container, 'grid');
 		Object.values(COLUMN_GAP_CLASS_MAP).forEach((className) => {
 			expect(gridDiv).not.toHaveClass(className);
 		});
@@ -122,7 +122,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		expect(getByLayoutType(container, 'grid')).toHaveStyle({padding: '16px'});
+		expect(getByElementType(container, 'grid')).toHaveStyle({padding: '16px'});
 	});
 
 	it('applies individual padding for object value', () => {
@@ -132,7 +132,7 @@ describe('Grid', () => {
 			</Grid>
 		);
 
-		expect(getByLayoutType(container, 'grid')).toHaveStyle({
+		expect(getByElementType(container, 'grid')).toHaveStyle({
 			paddingTop: '8px',
 			paddingBottom: '8px',
 		});
@@ -140,14 +140,14 @@ describe('Grid', () => {
 });
 
 describe('GridChild', () => {
-	it('should render with data-layout-type="grid-child"', () => {
+	it('should render with data-element-type="grid-child"', () => {
 		const {container} = render(
 			<GridChild>
 				<div>Content</div>
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toBeInTheDocument();
 	});
 
@@ -158,7 +158,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toHaveClass('min-w-0');
 		expect(gridChild).toHaveClass('min-h-0');
 	});
@@ -180,7 +180,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toHaveStyle({gridColumnStart: 2});
 	});
 
@@ -191,7 +191,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toHaveStyle({gridRowStart: 3});
 	});
 
@@ -202,7 +202,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toHaveStyle({gridColumn: 'span 2'});
 	});
 
@@ -213,7 +213,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toHaveStyle({gridRow: 'span 3'});
 	});
 
@@ -224,7 +224,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toHaveStyle({gridColumn: '2 / span 3'});
 	});
 
@@ -235,7 +235,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).toHaveStyle({gridRow: '1 / span 2'});
 	});
 
@@ -246,7 +246,7 @@ describe('GridChild', () => {
 			</GridChild>
 		);
 
-		const gridChild = container.querySelector('[data-layout-type="grid-child"]');
+		const gridChild = getByElementType(container, 'grid-child');
 		expect(gridChild).not.toHaveAttribute('style');
 	});
 });

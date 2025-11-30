@@ -30,7 +30,7 @@ const HorizontalStackComponent = ({
 
 	return (
 		<div
-			data-layout-type="horizontal-stack"
+			data-element-type="horizontal-stack"
 			className={className}
 			style={getPaddingStyle(padding)}
 		>

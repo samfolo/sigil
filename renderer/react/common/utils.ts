@@ -3,9 +3,12 @@
  */
 
 /**
- * Valid layout types for data-layout-type attribute
+ * Valid element types for data-element-type attribute
+ *
+ * Includes layout types (horizontal-stack, vertical-stack, grid) and
+ * component types (text) for test selection.
  */
-export type LayoutType = 'horizontal-stack' | 'vertical-stack' | 'grid';
+export type ElementType = 'horizontal-stack' | 'vertical-stack' | 'grid' | 'grid-child' | 'text';
 
 /**
  * Type-preserving Object.entries wrapper
@@ -18,19 +21,19 @@ export const objectToEntries = <Key extends string, Value>(
 ): [Key, Value][] => Object.entries(obj) as [Key, Value][];
 
 /**
- * Finds element by data-layout-type attribute
+ * Finds element by data-element-type attribute
  *
  * @param container - Container element to search within
- * @param layoutType - Type of layout to find
- * @returns Element with matching data-layout-type, or null if not found
+ * @param elementType - Type of element to find
+ * @returns Element with matching data-element-type, or null if not found
  */
-export const getByLayoutType = (container: HTMLElement, layoutType: LayoutType): HTMLElement | null => container.querySelector(`[data-layout-type="${layoutType}"]`);
+export const getByElementType = (container: HTMLElement, elementType: ElementType): HTMLElement | null => container.querySelector(`[data-element-type="${elementType}"]`);
 
 /**
- * Finds all elements by data-layout-type attribute
+ * Finds all elements by data-element-type attribute
  *
  * @param container - Container element to search within
- * @param layoutType - Type of layout to find
- * @returns Array of elements with matching data-layout-type
+ * @param elementType - Type of element to find
+ * @returns Array of elements with matching data-element-type
  */
-export const getAllByLayoutType = (container: HTMLElement, layoutType: LayoutType): HTMLElement[] => Array.from(container.querySelectorAll(`[data-layout-type="${layoutType}"]`));
+export const getAllByElementType = (container: HTMLElement, elementType: ElementType): HTMLElement[] => Array.from(container.querySelectorAll(`[data-element-type="${elementType}"]`));

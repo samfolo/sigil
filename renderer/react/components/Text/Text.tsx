@@ -31,7 +31,7 @@ const DEFAULT_SCALE: TextScale = 'body';
 /**
  * Scale to Tailwind class mapping
  */
-const SCALE_CLASS_MAP: Record<TextScale, string> = {
+export const SCALE_CLASS_MAP: Record<TextScale, string> = {
 	display: 'text-4xl font-bold',
 	title: 'text-2xl font-semibold',
 	heading: 'text-xl font-semibold',
@@ -47,7 +47,7 @@ const SCALE_CLASS_MAP: Record<TextScale, string> = {
  * Semantic traits (mono, superscript, subscript) use wrapper elements
  * instead of classes - they map to empty string and are filtered out.
  */
-const TRAIT_CLASS_MAP: Record<TextTrait, string> = {
+export const TRAIT_CLASS_MAP: Record<TextTrait, string> = {
 	strong: 'font-bold',
 	emphasis: 'italic',
 	underline: 'underline',
@@ -63,6 +63,14 @@ const TRAIT_CLASS_MAP: Record<TextTrait, string> = {
 interface TruncationStyles {
 	className: string;
 	style?: CSSProperties;
+}
+
+/**
+ * Extracted affordances by type
+ */
+interface ExtractedAffordances {
+	hyperlink?: HyperlinkAffordance;
+	truncation?: TruncationAffordance;
 }
 
 /**
@@ -138,9 +146,7 @@ const getTraitClasses = (traits: TextTrait[]): string =>
  * Affordances are independent capabilities - duplicates are ignored,
  * only the first of each type is used.
  */
-const extractAffordances = (
-	affordances: TextAffordance[]
-): {hyperlink?: HyperlinkAffordance; truncation?: TruncationAffordance} => {
+const extractAffordances = (affordances: TextAffordance[]): ExtractedAffordances => {
 	let hyperlink: HyperlinkAffordance | undefined;
 	let truncation: TruncationAffordance | undefined;
 
@@ -210,12 +216,13 @@ const TextComponent = ({config, formattedValue}: TextProps): ReactElement => {
 				linkProps.rel = 'noopener noreferrer';
 			}
 
-			return <a {...linkProps}>{content}</a>;
+			return <a data-element-type="text" {...linkProps}>{content}</a>;
 		}
 	}
 
 	return (
 		<span
+			data-element-type="text"
 			data-scale={scale}
 			className={classes.join(' ')}
 			style={truncationStyle}

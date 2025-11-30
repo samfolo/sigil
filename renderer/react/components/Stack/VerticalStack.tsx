@@ -30,7 +30,7 @@ const VerticalStackComponent = ({
 
 	return (
 		<div
-			data-layout-type="vertical-stack"
+			data-element-type="vertical-stack"
 			className={className}
 			style={getPaddingStyle(padding)}
 		>

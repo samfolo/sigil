@@ -5,7 +5,7 @@
 import {render, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
-import {getByLayoutType, objectToEntries} from '@sigil/renderer/react/common';
+import {getByElementType, objectToEntries} from '@sigil/renderer/react/common';
 import {ALIGNMENT_CLASS_MAP, SPACING_CLASS_MAP} from '@sigil/renderer/react/utils';
 
 import {HorizontalStack} from './HorizontalStack';
@@ -20,7 +20,7 @@ describe('HorizontalStack', () => {
 			</HorizontalStack>
 		);
 
-		const stackDiv = getByLayoutType(container, 'horizontal-stack');
+		const stackDiv = getByElementType(container, 'horizontal-stack');
 		expect(stackDiv).toBeInTheDocument();
 		expect(stackDiv).toHaveClass('flex', 'flex-row');
 		expect(screen.getByText('First')).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('HorizontalStack', () => {
 				</HorizontalStack>
 			);
 
-			expect(getByLayoutType(container, 'horizontal-stack')).toHaveClass(expectedClass);
+			expect(getByElementType(container, 'horizontal-stack')).toHaveClass(expectedClass);
 		}
 	);
 
@@ -49,7 +49,7 @@ describe('HorizontalStack', () => {
 				</HorizontalStack>
 			);
 
-			expect(getByLayoutType(container, 'horizontal-stack')).toHaveClass(expectedClass);
+			expect(getByElementType(container, 'horizontal-stack')).toHaveClass(expectedClass);
 		}
 	);
 
@@ -60,7 +60,7 @@ describe('HorizontalStack', () => {
 			</HorizontalStack>
 		);
 
-		const stackDiv = getByLayoutType(container, 'horizontal-stack');
+		const stackDiv = getByElementType(container, 'horizontal-stack');
 		Object.values(ALIGNMENT_CLASS_MAP).forEach((className) => {
 			expect(stackDiv).not.toHaveClass(className);
 		});
@@ -73,7 +73,7 @@ describe('HorizontalStack', () => {
 			</HorizontalStack>
 		);
 
-		expect(getByLayoutType(container, 'horizontal-stack')).toHaveStyle({padding: '16px'});
+		expect(getByElementType(container, 'horizontal-stack')).toHaveStyle({padding: '16px'});
 	});
 
 	it('applies individual padding for object value', () => {
@@ -83,7 +83,7 @@ describe('HorizontalStack', () => {
 			</HorizontalStack>
 		);
 
-		expect(getByLayoutType(container, 'horizontal-stack')).toHaveStyle({
+		expect(getByElementType(container, 'horizontal-stack')).toHaveStyle({
 			paddingTop: '8px',
 			paddingBottom: '16px',
 		});
@@ -99,7 +99,7 @@ describe('VerticalStack', () => {
 			</VerticalStack>
 		);
 
-		const stackDiv = getByLayoutType(container, 'vertical-stack');
+		const stackDiv = getByElementType(container, 'vertical-stack');
 		expect(stackDiv).toBeInTheDocument();
 		expect(stackDiv).toHaveClass('flex', 'flex-col');
 		expect(screen.getByText('First')).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('VerticalStack', () => {
 				</VerticalStack>
 			);
 
-			expect(getByLayoutType(container, 'vertical-stack')).toHaveClass(expectedClass);
+			expect(getByElementType(container, 'vertical-stack')).toHaveClass(expectedClass);
 		}
 	);
 
@@ -128,7 +128,7 @@ describe('VerticalStack', () => {
 				</VerticalStack>
 			);
 
-			expect(getByLayoutType(container, 'vertical-stack')).toHaveClass(expectedClass);
+			expect(getByElementType(container, 'vertical-stack')).toHaveClass(expectedClass);
 		}
 	);
 
@@ -139,7 +139,7 @@ describe('VerticalStack', () => {
 			</VerticalStack>
 		);
 
-		const stackDiv = getByLayoutType(container, 'vertical-stack');
+		const stackDiv = getByElementType(container, 'vertical-stack');
 		Object.values(ALIGNMENT_CLASS_MAP).forEach((className) => {
 			expect(stackDiv).not.toHaveClass(className);
 		});
@@ -152,7 +152,7 @@ describe('VerticalStack', () => {
 			</VerticalStack>
 		);
 
-		expect(getByLayoutType(container, 'vertical-stack')).toHaveStyle({padding: '24px'});
+		expect(getByElementType(container, 'vertical-stack')).toHaveStyle({padding: '24px'});
 	});
 
 	it('applies individual padding for object value', () => {
@@ -162,7 +162,7 @@ describe('VerticalStack', () => {
 			</VerticalStack>
 		);
 
-		expect(getByLayoutType(container, 'vertical-stack')).toHaveStyle({
+		expect(getByElementType(container, 'vertical-stack')).toHaveStyle({
 			paddingLeft: '12px',
 			paddingRight: '12px',
 		});

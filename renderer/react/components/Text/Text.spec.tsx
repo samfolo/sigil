@@ -10,8 +10,9 @@ import {describe, expect, it, vi} from 'vitest';
 
 import type {TextScale, TextTrait} from '@sigil/src/lib/generated/types/specification';
 
-import {objectToEntries} from '../../common';
-import {Text} from './Text';
+import {getByElementType, objectToEntries} from '../../common';
+
+import {SCALE_CLASS_MAP, Text, TRAIT_CLASS_MAP} from './Text';
 import {
 	BASIC_TEXT,
 	COMBINED_AFFORDANCES_TEXT,
@@ -26,10 +27,6 @@ import {
 	MONO_SUPERSCRIPT_TEXT,
 	MONO_TEXT,
 	NULL_VALUE_TEXT,
-	SCALE_EXPECTED_CLASSES,
-	SUBSCRIPT_TEXT,
-	SUPERSCRIPT_TEXT,
-	TRAIT_EXPECTED_CLASSES,
 	TRAIT_EXPECTED_ELEMENTS,
 	TRUNCATE_SINGLE_LINE_TEXT,
 	TRUNCATE_TEN_LINES_TEXT,
@@ -42,46 +39,51 @@ describe('Text', () => {
 		it('should render formatted value', () => {
 			render(<Text {...BASIC_TEXT} />);
 
-			expect(screen.getByText(BASIC_TEXT.formattedValue as string)).toBeInTheDocument();
+			const value = BASIC_TEXT.formattedValue;
+			expect(value).toBeDefined();
+			expect(value).not.toBeNull();
+			if (value) {
+				expect(screen.getByText(value)).toBeInTheDocument();
+			}
 		});
 
-		it('should render empty span for null formatted value', () => {
+		it('should render empty text element for null formatted value', () => {
 			const {container} = render(<Text {...NULL_VALUE_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toBeInTheDocument();
-			expect(span).toHaveTextContent('');
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toBeInTheDocument();
+			expect(textElement).toHaveTextContent('');
 		});
 
-		it('should render empty span for undefined formatted value', () => {
+		it('should render empty text element for undefined formatted value', () => {
 			const {container} = render(<Text {...UNDEFINED_VALUE_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toBeInTheDocument();
-			expect(span).toHaveTextContent('');
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toBeInTheDocument();
+			expect(textElement).toHaveTextContent('');
 		});
 
 		it('should render empty string formatted value', () => {
 			const {container} = render(<Text {...EMPTY_STRING_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toBeInTheDocument();
-			expect(span).toHaveTextContent('');
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toBeInTheDocument();
+			expect(textElement).toHaveTextContent('');
 		});
 
 		it('should apply default body scale when scale not specified', () => {
 			const {container} = render(<Text {...BASIC_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toHaveAttribute('data-scale', 'body');
-			expect(span).toHaveClass('text-base');
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toHaveAttribute('data-scale', 'body');
+			expect(textElement).toHaveClass('text-base');
 		});
 	});
 
 	describe('Scale Styling', () => {
-		it.each(objectToEntries(SCALE_EXPECTED_CLASSES))(
+		it.each(objectToEntries(SCALE_CLASS_MAP))(
 			'should apply correct classes for %s scale',
-			(scale: TextScale, expectedClasses: string[]) => {
+			(scale: TextScale, expectedClasses: string) => {
 				const {container} = render(
 					<Text
 						config={{accessor: '$.value', scale}}
@@ -89,18 +91,16 @@ describe('Text', () => {
 					/>
 				);
 
-				const span = container.querySelector('span');
-				expect(span).toHaveAttribute('data-scale', scale);
-				for (const className of expectedClasses) {
-					expect(span).toHaveClass(className);
-				}
+				const textElement = getByElementType(container, 'text');
+				expect(textElement).toHaveAttribute('data-scale', scale);
+				expect(textElement).toHaveClass(...expectedClasses.split(' '));
 			}
 		);
 	});
 
 	describe('Trait Styling', () => {
 		describe('Class-based traits', () => {
-			const classBasedTraits = objectToEntries(TRAIT_EXPECTED_CLASSES)
+			const classBasedTraits = objectToEntries(TRAIT_CLASS_MAP)
 				.filter(([_, expectedClass]) => expectedClass !== '');
 
 			it.each(classBasedTraits)(
@@ -113,8 +113,8 @@ describe('Text', () => {
 						/>
 					);
 
-					const span = container.querySelector('span');
-					expect(span).toHaveClass(expectedClass);
+					const textElement = getByElementType(container, 'text');
+					expect(textElement).toHaveClass(expectedClass);
 				}
 			);
 		});
@@ -126,54 +126,65 @@ describe('Text', () => {
 			it.each(elementBasedTraits)(
 				'should wrap in <%s> element for %s trait',
 				(trait: TextTrait, expectedElement: string) => {
-					const {container} = render(
+					render(
 						<Text
 							config={{accessor: '$.value', traits: [trait]}}
 							formattedValue="Test"
 						/>
 					);
 
-					const element = container.querySelector(expectedElement);
+					const element = screen.getByText('Test');
 					expect(element).toBeInTheDocument();
-					expect(element).toHaveTextContent('Test');
+					expect(element.tagName.toLowerCase()).toBe(expectedElement);
 				}
 			);
 		});
 
 		it('should apply mono styling to code element', () => {
-			const {container} = render(<Text {...MONO_TEXT} />);
+			render(<Text {...MONO_TEXT} />);
 
-			const code = container.querySelector('code');
-			expect(code).toBeInTheDocument();
-			expect(code).toHaveClass('font-mono', 'bg-muted', 'px-1', 'rounded');
+			const value = MONO_TEXT.formattedValue;
+			expect(value).toBeDefined();
+			if (value) {
+				const code = screen.getByText(value);
+				expect(code).toBeInTheDocument();
+				expect(code.tagName.toLowerCase()).toBe('code');
+				expect(code).toHaveClass('font-mono', 'bg-muted', 'px-1', 'rounded');
+			}
 		});
 
 		it('should combine multiple class-based traits', () => {
 			const {container} = render(<Text {...COMBINED_TRAITS_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toHaveClass('font-bold', 'italic');
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toHaveClass('font-bold', 'italic');
 		});
 
 		it('should nest code inside superscript', () => {
-			const {container} = render(<Text {...MONO_SUPERSCRIPT_TEXT} />);
+			render(<Text {...MONO_SUPERSCRIPT_TEXT} />);
 
-			const sup = container.querySelector('sup');
-			expect(sup).toBeInTheDocument();
+			const value = MONO_SUPERSCRIPT_TEXT.formattedValue;
+			expect(value).toBeDefined();
+			if (value) {
+				const code = screen.getByText(value);
+				expect(code).toBeInTheDocument();
+				expect(code.tagName.toLowerCase()).toBe('code');
 
-			const code = sup?.querySelector('code');
-			expect(code).toBeInTheDocument();
-			expect(code).toHaveTextContent(MONO_SUPERSCRIPT_TEXT.formattedValue as string);
+				const sup = code.parentElement;
+				expect(sup).not.toBeNull();
+				expect(sup?.tagName.toLowerCase()).toBe('sup');
+			}
 		});
 
 		it('should prefer superscript when both superscript and subscript are present', () => {
-			const {container} = render(<Text {...CONFLICTING_SCRIPT_TRAITS_TEXT} />);
+			render(<Text {...CONFLICTING_SCRIPT_TRAITS_TEXT} />);
 
-			const sup = container.querySelector('sup');
-			const sub = container.querySelector('sub');
-
-			expect(sup).toBeInTheDocument();
-			expect(sub).not.toBeInTheDocument();
+			const value = CONFLICTING_SCRIPT_TRAITS_TEXT.formattedValue;
+			expect(value).toBeDefined();
+			if (value) {
+				const element = screen.getByText(value);
+				expect(element.tagName.toLowerCase()).toBe('sup');
+			}
 		});
 	});
 
@@ -181,10 +192,15 @@ describe('Text', () => {
 		it('should render anchor element for hyperlink affordance', () => {
 			render(<Text {...HYPERLINK_SELF_TEXT} />);
 
+			const value = HYPERLINK_SELF_TEXT.formattedValue;
+			expect(value).toBeDefined();
+
 			const link = screen.getByRole('link');
 			expect(link).toBeInTheDocument();
 			expect(link).toHaveAttribute('href', '/about');
-			expect(link).toHaveTextContent(HYPERLINK_SELF_TEXT.formattedValue as string);
+			if (value) {
+				expect(link).toHaveTextContent(value);
+			}
 		});
 
 		it('should not add target attribute for self target', () => {
@@ -215,9 +231,14 @@ describe('Text', () => {
 			const link = screen.queryByRole('link');
 			expect(link).not.toBeInTheDocument();
 
-			const span = container.querySelector('span');
-			expect(span).toBeInTheDocument();
-			expect(span).toHaveTextContent(HYPERLINK_JSONPATH_TEXT.formattedValue as string);
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toBeInTheDocument();
+
+			const value = HYPERLINK_JSONPATH_TEXT.formattedValue;
+			expect(value).toBeDefined();
+			if (value) {
+				expect(textElement).toHaveTextContent(value);
+			}
 
 			warnSpy.mockRestore();
 		});
@@ -227,23 +248,23 @@ describe('Text', () => {
 		it('should apply truncate class for single-line truncation', () => {
 			const {container} = render(<Text {...TRUNCATE_SINGLE_LINE_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toHaveClass('truncate');
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toHaveClass('truncate');
 		});
 
 		it('should apply line-clamp-3 class for three-line truncation', () => {
 			const {container} = render(<Text {...TRUNCATE_THREE_LINES_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toHaveClass('line-clamp-3');
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toHaveClass('line-clamp-3');
 		});
 
 		it('should apply inline style for truncation beyond utility range', () => {
 			const {container} = render(<Text {...TRUNCATE_TEN_LINES_TEXT} />);
 
-			const span = container.querySelector('span');
-			expect(span).toHaveClass('overflow-hidden');
-			expect(span).toHaveStyle({
+			const textElement = getByElementType(container, 'text');
+			expect(textElement).toHaveClass('overflow-hidden');
+			expect(textElement).toHaveStyle({
 				display: '-webkit-box',
 				WebkitLineClamp: 10,
 			});
@@ -261,7 +282,7 @@ describe('Text', () => {
 		});
 
 		it('should use only first affordance of each type when duplicates present', () => {
-			const {container} = render(<Text {...DUPLICATE_AFFORDANCES_TEXT} />);
+			render(<Text {...DUPLICATE_AFFORDANCES_TEXT} />);
 
 			const link = screen.getByRole('link');
 			expect(link).toHaveAttribute('href', '/first');

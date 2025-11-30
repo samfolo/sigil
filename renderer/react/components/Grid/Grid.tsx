@@ -41,7 +41,7 @@ const GridComponent = ({
 
 	return (
 		<div
-			data-layout-type="grid"
+			data-element-type="grid"
 			className={className}
 			style={{
 				gridTemplateColumns: `repeat(${columns}, 1fr)`,

@@ -81,7 +81,7 @@ const GridChildComponent = ({
 
 	return (
 		<div
-			data-layout-type="grid-child"
+			data-element-type="grid-child"
 			className="min-h-0 min-w-0"
 			style={hasPositioning ? positionStyle : undefined}
 		>

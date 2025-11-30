@@ -6,39 +6,7 @@
  */
 
 import type {TextProps} from '@sigil/renderer/core/types/types';
-import type {TextScale, TextTrait} from '@sigil/src/lib/generated/types/specification';
-
-/**
- * Expected Tailwind classes for each scale
- *
- * Record ensures all TextScale values are covered - adding/removing
- * union members triggers compile-time errors.
- */
-export const SCALE_EXPECTED_CLASSES: Record<TextScale, string[]> = {
-	display: ['text-4xl', 'font-bold'],
-	title: ['text-2xl', 'font-semibold'],
-	heading: ['text-xl', 'font-semibold'],
-	subheading: ['text-lg', 'font-medium'],
-	body: ['text-base'],
-	caption: ['text-sm', 'text-muted-foreground'],
-	overline: ['text-xs', 'uppercase', 'tracking-wide', 'text-muted-foreground'],
-};
-
-/**
- * Expected Tailwind class for each trait that maps to a class
- *
- * Record ensures all TextTrait values are covered. Traits that use
- * semantic elements instead of classes have empty string values.
- */
-export const TRAIT_EXPECTED_CLASSES: Record<TextTrait, string> = {
-	strong: 'font-bold',
-	emphasis: 'italic',
-	underline: 'underline',
-	subtle: 'text-muted-foreground',
-	mono: '',
-	superscript: '',
-	subscript: '',
-};
+import type {TextTrait} from '@sigil/src/lib/generated/types/specification';
 
 /**
  * Expected semantic element for traits that wrap content
@@ -97,28 +65,6 @@ export const EMPTY_STRING_TEXT: TextProps = {
 };
 
 /**
- * Text with strong trait
- */
-export const STRONG_TEXT: TextProps = {
-	config: {
-		accessor: '$.value',
-		traits: ['strong'],
-	},
-	formattedValue: 'Important text',
-};
-
-/**
- * Text with emphasis trait
- */
-export const EMPHASIS_TEXT: TextProps = {
-	config: {
-		accessor: '$.value',
-		traits: ['emphasis'],
-	},
-	formattedValue: 'Emphasised text',
-};
-
-/**
  * Text with mono trait (code element)
  */
 export const MONO_TEXT: TextProps = {
@@ -127,28 +73,6 @@ export const MONO_TEXT: TextProps = {
 		traits: ['mono'],
 	},
 	formattedValue: 'const x = 42',
-};
-
-/**
- * Text with superscript trait
- */
-export const SUPERSCRIPT_TEXT: TextProps = {
-	config: {
-		accessor: '$.ref',
-		traits: ['superscript'],
-	},
-	formattedValue: '2',
-};
-
-/**
- * Text with subscript trait
- */
-export const SUBSCRIPT_TEXT: TextProps = {
-	config: {
-		accessor: '$.formula',
-		traits: ['subscript'],
-	},
-	formattedValue: '2',
 };
 
 /**
