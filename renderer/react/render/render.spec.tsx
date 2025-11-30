@@ -9,7 +9,7 @@
 import {render as renderComponent, screen, within} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 
-import {getByLayoutType} from '@sigil/renderer/react/common';
+import {getByElementType} from '@sigil/renderer/react/common';
 import {ERROR_CODES, SpecProcessingError} from '@sigil/src/common/errors';
 import type {ComponentType, DataType} from '@sigil/src/lib/generated/types/specification';
 
@@ -329,11 +329,11 @@ describe('render', () => {
 			const {container} = renderComponent(element);
 
 			// Verify layout structure: vertical stack containing summary table and horizontal stack
-			const verticalStack = getByLayoutType(container, 'vertical-stack');
+			const verticalStack = getByElementType(container, 'vertical-stack');
 			expect(verticalStack).toBeInTheDocument();
 
 			// Horizontal stack should be nested inside vertical stack
-			const horizontalStack = verticalStack ? getByLayoutType(verticalStack, 'horizontal-stack') : null;
+			const horizontalStack = verticalStack ? getByElementType(verticalStack, 'horizontal-stack') : null;
 			expect(horizontalStack).toBeInTheDocument();
 
 			// Get all three tables
@@ -385,7 +385,7 @@ describe('render', () => {
 			const {container: horizontalContainer} = renderComponent(horizontalElement);
 
 			// Horizontal stack should render with correct layout type
-			const horizontalStack = getByLayoutType(horizontalContainer, 'horizontal-stack');
+			const horizontalStack = getByElementType(horizontalContainer, 'horizontal-stack');
 			expect(horizontalStack).toBeInTheDocument();
 		});
 
@@ -394,7 +394,7 @@ describe('render', () => {
 			const {container} = renderComponent(element);
 
 			// Grid should render with correct layout type
-			const grid = getByLayoutType(container, 'grid');
+			const grid = getByElementType(container, 'grid');
 			expect(grid).toBeInTheDocument();
 
 			// All four tables should render within the grid
@@ -412,7 +412,7 @@ describe('render', () => {
 			const {container} = renderComponent(element);
 
 			// Grid should render
-			const grid = getByLayoutType(container, 'grid');
+			const grid = getByElementType(container, 'grid');
 			expect(grid).toBeInTheDocument();
 
 			// All three tables should render within the grid
