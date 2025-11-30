@@ -25,8 +25,6 @@ import {
 } from '@sigil/src/agent/framework/prompts/templateLoader';
 import {isErr} from '@sigil/src/common/errors/result';
 
-// Import the full ComponentSpec schema as raw JSON
-
 import type {GenerateSigilIRInput} from '../types';
 
 /**
